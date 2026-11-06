@@ -1,0 +1,13 @@
+build/
+releases/
+requests/
+data-backups/
+.ideajotter-import.*
+*.zip
+*.mp4
+*.webm
+*.gif
+src/build*/
+src/out/
+src/saves/
+tools/__pycache__/
