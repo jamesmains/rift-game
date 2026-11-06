@@ -1,0 +1,52 @@
+[start]
+speaker=Raider Envoy Kesh
+text=A truce town. Raiders and settlers, drinking the same water. Don't look so surprised - the dragon made us civilised. You're going after it?
+option=I am.|help|q_dragon>=1&!kesh_helped
+option=Not yet.|end
+option=How does the water work here?|well|!q_well>=1
+option=I have a valve for the pump.|well_valve|q_well>=1&item:brass_valve&!q_well>=2
+option=Goodbye.|end
+
+[help]
+speaker=Raider Envoy Kesh
+text=Then take these. Salamander charms - my people wear them when we cross the burning sands. Burn the beast with its own fire; it hates the cold more.
+set=kesh_helped
+give=charm_fire:2,scroll_frost:2
+option=Thank you.|end
+
+[well]
+speaker=Raider Kesh
+text=It doesn't, right now. The old pump in the square cracked its valve last week. We haul water from the oasis in buckets - settlers and raiders both, side by side, sweating and glaring. Bring a brass valve and I'll fit it. Scavengers in Ashfall sell them. Nabir too, when he's carrying.
+option=I'll find one.|well_yes
+option=Good luck with that.|end
+
+[well_yes]
+speaker=Raider Kesh
+text=Then we have a decision to make, you and I. Sefa wants the water free. My people want a toll - we kept this outpost alive for twenty years. Think about it on the way.
+set=q_well=1
+quest=Water Rights
+option=I will.|end
+
+[well_valve]
+speaker=Raider Kesh
+text=(Kesh fits the valve; the pump coughs, then gushes.) There she runs. So, $hero. Whose well is it now? Mine and my people's - a copper a bucket, and a share of the toll for you? Or Sefa's, free for all, and my people can go thirsty with everyone else's dignity?
+take=brass_valve
+option=Free water for everyone. No tolls.|well_free
+option=Your people kept this place alive. Charge your toll.|well_toll
+
+[well_free]
+speaker=Raider Kesh
+text=...Free. Fine. Sefa will be insufferable. But I suppose it's hard to be raiders when everyone's drinking from the same bucket. Maybe that's the idea.
+set=q_well=2,well_free
+xp=200
+rep=sunscar:15
+option=It's the right thing.|end
+
+[well_toll]
+speaker=Raider Kesh
+text=A copper a bucket. Fair is fair. Here's your share - in advance, since I like you. Sefa won't, mind you.
+set=q_well=2,well_toll
+gold=250
+xp=150
+rep=sunscar:-5
+option=Pleasure.|end

@@ -1,0 +1,50 @@
+frames 5
+dblclick 50 86
+frames 5
+click 200 160
+click 280 319
+frames 60
+flag q_main
+teleport hollowmere 31 7
+frames 5
+keys RIGHT
+frames 60
+key ENTER
+frames 60
+key ENTER
+frames 30
+dump
+teleport hollowmere 20 20
+keys DOWN DOWN LEFT LEFT DOWN DOWN DOWN
+frames 5
+shot party.png
+key TAB
+frames 5
+shot menu_party.png
+key RIGHT
+frames 5
+key ENTER
+frames 5
+shot menu_items2.png
+key DOWN
+key ENTER
+frames 5
+shot menu_items3.png
+key DOWN
+key ENTER
+frames 5
+shot menu_items4.png
+log
+key ESC
+key ESC
+frames 5
+combat goblin,goblin,goblin_archer
+frames 60
+shot pcombat.png
+key 1
+frames 2
+shot pcombat_menu.png
+key ESC
+key 3
+frames 2
+shot pcombat_spells.png

@@ -1,0 +1,32 @@
+[start]
+speaker=Sister Maud
+text=The shrine sells what pilgrims need. Potions, feathers for the fallen, charms against the cold.
+option=Show me.|shop
+option=Do you need anything?|wolves|!q_maud>=1
+option=The frost wolves are thinned out.|wolves_done|q_maud>=1&kills:frost_wolf:4&!q_maud>=2
+option=Goodbye.|end
+
+[shop]
+shop=shrine_keeper
+
+[wolves]
+speaker=Sister Maud
+text=Frost wolves. They've been taking the pilgrims' mules on the high road, and last week a pilgrim. Thin the packs - four will do, they're clever, the rest will move on. I'll make you something warm from what's left. Nothing wasted at Frosthold.
+option=Four wolves.|wolves_yes
+option=Not now.|end
+
+[wolves_yes]
+speaker=Sister Maud
+text=They hunt the snowfields around the shrine, mostly at dusk. Be quick, be warm.
+set=q_maud=1
+quest=Cold Hands
+option=I'll be back.|end
+
+[wolves_done]
+speaker=Sister Maud
+text=The mule drivers say the road's quiet. Here - I've been sewing since you left. Turn them inside out in a blizzard; trust me.
+give=wolfhide_mittens
+xp=180
+set=q_maud=2
+rep=frosthold:10
+option=They're beautiful.|end

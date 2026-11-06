@@ -1,0 +1,11 @@
+# S is both a name character and the down movement binding; class should move only after Tab.
+frames 5
+dblclick 50 28
+frames 3
+type Te
+key S
+type st
+shot name_focus.png
+key TAB
+key DOWN
+shot class_focus.png

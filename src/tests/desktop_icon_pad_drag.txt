@@ -1,0 +1,7 @@
+# Hold confirm and move the left stick to reposition the selected desktop icon.
+frames 5
+pad 1
+key DOWN
+hold ENTER 30 1 0
+frames 3
+shot pad_icons_after.png

@@ -1,0 +1,26 @@
+# Input given while an attack plays out is not lost: Defend pressed during the swing still happens afterwards.
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+flag q_main
+teleport hollowmere 20 20
+frames 5
+combat goblin_chief
+frames 300
+expect mode == COMBAT
+combatdump
+target
+key D
+frames 60
+expect log contains defensive stance

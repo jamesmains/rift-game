@@ -1,0 +1,4 @@
+[start]
+speaker=Pig
+text=Oink.
+option=...|end

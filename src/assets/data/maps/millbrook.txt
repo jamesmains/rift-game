@@ -1,0 +1,191 @@
+[map]
+id=millbrook
+name=Millbrook Farm
+kind=town
+spawn=2,13
+bg=20,40,20
+
+[legend]
+. = floor_grass
+, = floor_dirt
+r = road
+T = tree|tree|tree2
+t = pine_t
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = bush
+
+[rows]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TT..TT...T.T..T.TTT.TTT..T...TTT..TT
+T.......T..T.TT.....T.T.T..........T
+TT.....T....F....T..##########.....T
+T.....########......#HhhhhhhH#.....T
+T.....#BhhhhA#......#hhhhhhhh#.....T
+T.....#hhhhhh#......#hhhhhhhh#.....T
+T.....#hhhhhh#......#Hhhhhhhh#.....T
+T.....#W#D##W#......#W##D###W#.....T
+T......................F...........T
+T.................o................T
+T.........................F........T
+TrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrT
+TrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrT
+T..fffffff.ffffff..................T
+T..fccccccccccccf..F.fffff.ffff....T
+T..fccccccccccccf....f........f....T
+TF.fccccccccccccf....f........f....T
+T..fccccccccccccf....f........f....T
+T..fccccccccccccf....f........f....T
+T..fccccccccccccf....f........f....T
+T..fccccccccccccf....ffffffffff....T
+T.Fffffffffffffff..................T
+T..................................T
+T...............F..................T
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+[exit]
+x=1
+y=12
+w=1
+h=2
+to=overworld
+tx=59
+ty=96
+
+[exit]
+x=34
+y=12
+w=1
+h=2
+to=overworld
+tx=61
+ty=96
+
+[npc]
+id=jory
+name=Trapper Jory
+sprite=117,27
+x=24
+y=6
+dialogue=trapper_jory
+
+[npc]
+id=nyx
+name=Nyx
+sprite=156,23
+x=24
+y=11
+dialogue=nyx
+hide=joined_ranger
+
+[npc]
+id=farmer
+name=Goodwife Ada
+sprite=104,1
+x=9
+y=6
+dialogue=goodwife_ada
+
+[npc]
+id=cow
+name=Cow
+sprite=0,16
+x=25
+y=18
+dialogue=cow
+wander=1
+
+[npc]
+id=pig
+name=Pig
+sprite=2,16
+x=27
+y=19
+dialogue=pig
+wander=1
+
+[npc]
+id=chicken
+name=Chicken
+sprite=8,16
+x=23
+y=17
+dialogue=chicken
+wander=1
+
+[chest]
+x=12
+y=7
+flag=mb_chest
+items=bread:3,cheese:1
+
+[sign]
+x=17
+y=11
+text=MILLBROOK FARM. Beware of the goose.
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=9
+y=10
+board=millbrook
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=11
+y=10
+travel=1
+
+# 1.0: a goblin peddler, if the tribe from Greywood was spared
+[npc]
+id=snig
+name=Snig the Peddler
+sprite=113,4
+x=31
+y=10
+dialogue=snig
+show=goblin_chief_spared&q_main>=3

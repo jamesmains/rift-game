@@ -1,0 +1,53 @@
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 80
+keys ENTER ENTER ENTER
+frames 20
+expect mode == EXPLORE
+combat rat,rat
+frames 60
+target
+frames 30
+target
+frames 30
+key T
+frames 240
+target
+frames 30
+target
+frames 30
+key T
+frames 240
+target
+frames 30
+target
+frames 30
+key T
+frames 240
+target
+frames 30
+target
+frames 30
+key T
+frames 240
+combatdump
+dump
+log
+shot afterfight.png
+key ENTER
+frames 10
+dump
+shot after2.png
+expect log contains Victory
+expect mode == EXPLORE

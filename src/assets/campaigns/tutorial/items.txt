@@ -1,0 +1,9 @@
+# Items only the tutorial has (the base game's items are all here too: the tutorial builds on it with inherit=1).
+[item]
+id=warden_badge
+name=Warden's Badge
+type=accessory
+tile=0,43
+bonus=con:1
+value=5
+desc=A tin badge stamped with a lantern. Every recruit gets one; most lose it in a week.

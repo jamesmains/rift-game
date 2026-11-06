@@ -1,0 +1,8 @@
+[start]
+speaker=Merchant Ilsa
+text=Bread, bandages, arrows and anything else that fell off a cart. Looking to buy?
+option=Let me see your goods.|shop
+option=Just looking.|end
+
+[shop]
+shop=hollowmere_general

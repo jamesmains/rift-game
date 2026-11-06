@@ -1,0 +1,7 @@
+[quest]
+id=gull_main
+name=The Gullwatch Light
+stage=gull_started | Maren asks you to climb to the lighthouse on the north-east headland and find out why the lamp went dark. Her husband Corin went up three nights ago. @gullwatch
+stage=tide_caller_dead | The Tide-Caller is gone. Light the great lamp at the top of the tower - it will need a flame. @gullwatch
+stage=gull_lamp>=1 | The light burns again. Tell Maren.
+stage=gull_done | DONE Gullwatch has its light back, and Maren has her answer.

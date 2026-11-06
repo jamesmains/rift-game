@@ -1,0 +1,21 @@
+# 0.9.0: Campaign tab right column - Play from a state, and Export .zip (on the Gullwatch campaign)
+frames 5
+editor
+frames 5
+click 800 14
+frames 5
+click 400 261
+frames 5
+tab 18
+frames 5
+shot ed_campaign_right.png
+click 700 458
+frames 5
+shot ed_exported.png
+expect savefile:exports/gullwatch_1.0.zip == 1
+click 800 360
+frames 30
+shot play_from_state.png
+expect campaign == gullwatch
+expect gold == 500
+expect level == 1

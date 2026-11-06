@@ -1,0 +1,63 @@
+[start]
+speaker=Bram
+text=$hero! Tell me the elder's finally sending someone after those goblins. Tell me it's you.
+option=It's me. Want to come?|join|q_main>=1
+option=Not yet.|end
+option=Who are you again?|who
+
+[who]
+speaker=Bram
+text=Bram. Blacksmith's cousin, former Brasswick militia, current drinker. I swing a sword better than I hold a job.
+option=Want to come with me?|join|q_main>=1
+option=Later.|end
+
+[join]
+speaker=Bram
+text=Finally! Let me get my shield. Lead on, boss.
+join=warrior:Bram:105,22
+approve=warrior:5
+option=Let's go.|end
+
+[camp]
+speaker=Bram
+text=Boss. Need something?
+option=How are you holding up?|chat
+option=You said you were militia. What happened?|story|approval:warrior:15
+option=About that shield...|shield_turnin|bram_quest&bandit_leader_dead&!q_bram_done
+option=Nothing. Carry on.|end
+
+[chat]
+speaker=Bram
+text=Fed, armed and nobody's bleeding. Better than most days I had in Brasswick.
+approve=warrior:1
+option=Good.|end
+
+[story]
+speaker=Bram
+text=Captain Sedge ran the militia. Good man. When the bandits hit the east road he went out with six of us and came back with two. The Thornhollow Camp crowd took his shield off his body. I've wanted it back for three years.
+option=Then let's go get it. Bandit camp, east road.|accept
+option=That's a lot of bandits.|coward
+
+[coward]
+speaker=Bram
+text=Yeah. It is.
+approve=warrior:-3
+option=...|end
+
+[accept]
+speaker=Bram
+text=You mean that? ...Right. Right. Their leader carries it. Kill him and it's ours.
+set=bram_quest
+quest=Bram: The Captain's Shield
+approve=warrior:5
+option=Let's move.|end
+
+[shield_turnin]
+speaker=Bram
+text=That's it. Dented where the arrow went through, same as I remember. Sedge would've wanted someone to carry it. You take it, boss - I've got my own.
+give=militia_shield:1
+set=q_bram_done
+xp=120
+approve=warrior:15
+quest=Bram: The Captain's Shield - done
+option=I'll carry it well.|end

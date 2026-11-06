@@ -1,0 +1,27 @@
+[start]
+speaker=The Hermit
+text=A visitor! Forty years alone and now they come in droves. Well. I collect things that don't belong. Bring me a Bear Claw, a Circuit Board, and a Rough Gem, and I'll show you something that really doesn't belong.
+option=I'll find them.|quest|!q_hermit>=1
+option=I have all three.|turnin|q_hermit>=1&item:bear_claw&item:circuit&item:gem_rough&!q_hermit>=2
+option=What's in the chest?|chest|q_hermit>=2
+option=Goodbye.|end
+
+[quest]
+speaker=The Hermit
+text=Bears in the deep woods. Drones in Ashfall. Gems in any cave worth the name. Off you go.
+set=q_hermit=1
+option=Right.|end
+
+[turnin]
+speaker=The Hermit
+text=Claw, board, stone. Fire, lightning, and the earth's own patience. Here - the key to my chest. I've been saving it for someone who could use it.
+take=bear_claw:1,circuit:1,gem_rough:1
+set=q_hermit=2
+give=rift_heart:1
+xp=400
+option=Thank you.|end
+
+[chest]
+speaker=The Hermit
+text=Socks, mostly.
+option=Right.|end

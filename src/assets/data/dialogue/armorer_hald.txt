@@ -1,0 +1,20 @@
+[start]
+speaker=Armorer Hald
+text=Steel for every purse, as the sign says. Mostly the bigger purses.
+option=Show me.|shop
+option=I have materials. Can you work them?|forge
+option=I need a workbench.|bench
+option=Just browsing.|end
+
+[shop]
+shop=brasswick_armory
+
+[forge]
+speaker=Armorer Hald
+text=The forge is out back. Show me what you have.
+craft=forge
+
+[bench]
+speaker=Armorer Hald
+text=Leatherworking bench by the window. Don't bleed on the hides.
+craft=workbench

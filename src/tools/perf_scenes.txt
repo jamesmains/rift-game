@@ -1,0 +1,32 @@
+# Worst-case scenes for frame time (tools, not the test suite):  ./triffall_headless tools/perf_scenes.txt out/
+# Software rendering at 640x480 + game update, single core. 60 fps needs under 16.7 ms a frame.
+setting tips 0
+newgame Perf warrior 1
+god
+con join mage
+con join scavenger
+con join cleric
+teleport hollowmere 20 28
+perf 300 town_day
+con weather storm
+con time 23:00
+perf 300 town_storm_night
+teleport overworld 80 60
+con weather snow
+perf 300 overworld_snow
+con weather storm
+perf 300 overworld_storm
+teleport rift_core 13 24
+settle
+con time 2:00
+walk 24 20
+settle
+expect mode == EXPLORE
+perf 300 scar_dark_explore
+con spawn rift_horror,demon,alien_warrior,cultist,cultist,rift_wisp,rift_wisp,imp,imp,demon,rift_horror,alien_warrior
+expect mode == COMBAT
+perf 600 scar_dark_fight_16_units
+combatdump
+teleport ashfall 30 40
+con weather rain
+perf 300 ashfall_rain

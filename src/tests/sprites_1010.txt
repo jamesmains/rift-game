@@ -1,0 +1,22 @@
+# 1.0.10 sprite pass: townsfolk, props and monsters picked from the Tilebook look like what they are.
+newgame Kai warrior 1
+god
+teleport hollowmere 9 7
+frames 30
+shot spr_hollowmere_elder.png
+teleport hollowmere 33 13
+frames 30
+shot spr_hollowmere_smith.png
+teleport brasswick 14 11
+frames 30
+shot spr_brasswick_mayor.png
+teleport brasswick 10 15
+frames 30
+shot spr_brasswick_reyna.png
+teleport ashfall 18 27
+frames 30
+shot spr_ashfall_barkeep.png
+teleport goblin_cave 12 15
+con spawn skeleton,wolf,bandit_archer,ogre
+frames 240
+shot spr_combat1.png

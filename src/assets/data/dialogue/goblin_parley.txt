@@ -1,0 +1,39 @@
+# 1.0 story choice #1: the goblin chief offers terms before the fight in Greywood Cave.
+[start]
+speaker=Goblin Chief
+text=STOP. Stop, tall-folk. Is enough. You kill my hunters, you kill my diggers. Grakk is not stupid. Grakk talks first, then maybe Grakk dies.
+next=offer
+
+[offer]
+speaker=Grakk, Goblin Chief
+text=This crown - violet glass, fell from the sky on the night it opened. It sings to Grakk. It say: take farms, take more, take ALL. Grakk listen too long. You take crown. Grakk takes tribe over the mountain and never come back. Deal?
+option=Hand over the crown and go. If I see a goblin near Hollowmere again, I'll finish this.|spare|kills:goblin:3
+option=You took Tobb's boy and burned three farms. There's no deal.|fight
+option=Why should I believe you?|why
+
+[why]
+speaker=Grakk, Goblin Chief
+text=Because Grakk is ALIVE, tall-folk, and wants to stay so. Goblins keep promises that keep goblins alive. Also - look how many are left. Not many to keep promise WITH.
+option=Hand over the crown and go.|spare
+option=No deal.|fight
+
+[spare]
+speaker=Grakk, Goblin Chief
+text=Hah! Grakk owes you a life. Goblins remember. Here - take the singing thing. Grakk is glad to be rid of it.
+give=goblin_crown
+set=goblin_chief_spared,q_goblins_done
+rep=hollowmere:-5
+xp=150
+quest=The Rift Stirs - the goblins are leaving Greywood
+next=spare2
+
+[spare2]
+speaker=$hero
+text=By the time you reach the cave mouth the tribe is already a line of torches climbing into the hills, carrying their pots and their old ones. Some of Hollowmere won't like this. Mara will want to see the crown.
+option=(Leave the cave.)|end
+
+[fight]
+speaker=Grakk, Goblin Chief
+text=Then Grakk dies with sword in hand, like a chief. GRAKK'S HUNTERS! KILL THEM!
+set=goblin_parley_refused
+option=(Draw your weapon.)|end

@@ -1,0 +1,74 @@
+# 0.8.9: controller on the desktop - start button below the icons, start menu, New Game (campaign picker, on-screen
+# keyboard), Settings (row-by-row moves, fine volume steps), Load, Minesweeper, Achievements
+frames 30
+pad 1
+keys DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+shot c_startbtn.png
+key PADA
+frames 3
+shot c_startmenu.png
+keys DOWN DOWN DOWN
+key RIGHT
+shot c_startmenu_trap.png
+key PADB
+frames 3
+key PADSTART
+frames 2
+key DOWN
+key PADA
+frames 8
+shot c_newgame.png
+key DOWN
+frames 2
+key PADA
+frames 4
+shot c_osk.png
+key PADA
+key RIGHT
+key PADA
+frames 2
+shot c_osk_typed.png
+key PADB
+frames 2
+key PADB
+frames 4
+key PADSTART
+frames 2
+keys DOWN DOWN DOWN
+key PADA
+frames 8
+shot c_settings.png
+keys DOWN DOWN DOWN DOWN
+shot c_settings_vsync.png
+key DOWN
+shot c_settings_scale.png
+key DOWN
+shot c_settings_master.png
+key RIGHT
+key RIGHT
+key LEFT
+shot c_settings_vol.png
+key PADB
+frames 4
+key PADSTART
+frames 2
+keys DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+key PADA
+frames 8
+shot c_mine.png
+key PADA
+frames 2
+key RIGHT
+key RIGHT
+key PADX
+frames 2
+shot c_mine_play.png
+key PADB
+frames 4
+key PADSTART
+frames 2
+keys UP UP UP
+key PADA
+frames 8
+keys DOWN DOWN DOWN DOWN DOWN
+shot c_achievements.png

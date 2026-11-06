@@ -1,0 +1,33 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+teleport hollowmere 7 13
+frames 3
+con time 23:00
+key DOWN
+frames 12
+dump
+log
+con time 12:00
+key DOWN
+frames 12
+dump
+key DOWN
+frames 12
+con time 23:00
+key UP
+frames 12
+key UP
+frames 12
+dump

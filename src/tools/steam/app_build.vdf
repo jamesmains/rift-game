@@ -1,0 +1,11 @@
+"AppBuild"
+{
+	"AppID" "YOUR_APP_ID"
+	"Desc" "Triffall build"
+	"ContentRoot" "..\..\content\"
+	"BuildOutput" "..\..\steam_build_output\"
+	"Depots"
+	{
+		"YOUR_DEPOT_ID" "depot_build.vdf"
+	}
+}

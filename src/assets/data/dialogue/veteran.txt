@@ -1,0 +1,4 @@
+[start]
+speaker=Veteran
+text=I was at the Wreck once, as a lad. The crew weren't people, you know. Not all of them. Some were made of metal, and some were... grey. They're still in there.
+option=Unsettling.|end

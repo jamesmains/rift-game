@@ -1,0 +1,13 @@
+# 0.8: see tests/README.md
+frames 5
+editor
+frames 5
+click 800 14
+frames 5
+shot ed_picker.png
+click 400 261
+frames 5
+shot ed_gull.png
+click 120 14
+frames 5
+shot ed_gull_items.png

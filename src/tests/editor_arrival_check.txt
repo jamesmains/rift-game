@@ -1,0 +1,13 @@
+# Map Check flags an overworld arrival point far from the exit back out (N over a tile sets it).
+frames 5
+editor
+frames 5
+tab 0
+frames 2
+move 100 120
+wheel -2
+frames 2
+click 40 106
+frames 3
+click 177 196
+frames 2

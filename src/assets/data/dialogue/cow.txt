@@ -1,0 +1,4 @@
+[start]
+speaker=Cow
+text=Moo.
+option=...|end

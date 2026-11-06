@@ -1,0 +1,62 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+god
+teleport barrow 16 17
+frames 10
+shot barrow_in.png
+con give shovel 1
+key UP
+frames 30
+shot barrow_obstacle.png
+key ENTER
+frames 200
+key ENTER
+frames 20
+key UP
+frames 10
+dump
+log
+shot barrow_dug.png
+teleport metro 0 0
+frames 10
+shot metro_in.png
+con give torch_item 2
+con give blasting_charge 2
+teleport metro 21 3
+frames 5
+key RIGHT
+frames 5
+dump
+log
+teleport metro 20 15
+frames 5
+shot metro_drained.png
+teleport ashfall 52 40
+frames 5
+key UP
+frames 30
+shot af_obstacle.png
+key ENTER
+frames 200
+key ENTER
+frames 10
+hold DOWN 20
+frames 30
+shot fuse.png
+frames 200
+dump
+log
+shot af_boom.png

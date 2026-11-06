@@ -1,0 +1,33 @@
+# 1.0: a theme for every town and kind of dungeon, the night overworld, and ambient loops under the music
+newgame Lia warrior 1
+teleport brasswick 30 40
+audio
+expect music == brasswick
+expect ambient == amb_town
+teleport hollowmere 20 28
+con time 12:00
+frames 10
+audio
+expect music == town
+teleport overworld 44 93
+con weather clear
+con time 23:00
+frames 10
+audio
+expect music == overworld_night
+expect ambient == amb_night
+teleport crypt 12 22
+frames 10
+audio
+expect music == crypt
+expect ambient == amb_cave
+teleport marsh 11 4
+frames 10
+audio
+expect music == swamp
+expect ambient == amb_swamp
+teleport lab 14 21
+frames 10
+audio
+expect music == tech
+expect ambient == amb_machine

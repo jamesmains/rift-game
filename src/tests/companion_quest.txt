@@ -1,0 +1,49 @@
+# companion talk (Party menu, T) and Bram's personal quest via console flags
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+con join warrior
+con approve warrior 20
+con flag bandit_leader_dead
+frames 2
+key TAB
+frames 2
+key RIGHT
+frames 2
+shot party_talk.png
+key T
+frames 3
+shot camp.png
+keys DOWN ENTER
+frames 3
+shot story.png
+key ENTER
+frames 3
+dump
+key ENTER
+frames 3
+key T
+frames 2
+key TAB
+frames 2
+key RIGHT
+key T
+frames 3
+keys DOWN DOWN ENTER
+frames 3
+shot turnin.png
+key ENTER
+frames 3
+dump
+con give wolf_pelt 1

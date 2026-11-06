@@ -1,0 +1,12 @@
+[start]
+speaker=Goodwife Ada
+text=Sit, eat, you look thin. The road to Brasswick is east past the mill. Don't stray into the woods at night.
+option=Thank you.|heal|!ada_fed
+option=Thank you, Ada.|end|ada_fed
+
+[heal]
+speaker=Goodwife Ada
+text=Here - take some bread for the road. No, don't argue. If you're hurt, Wren will patch you up; if you're tired, there's the inn.
+give=bread:3
+set=ada_fed=1
+option=Goodbye.|end

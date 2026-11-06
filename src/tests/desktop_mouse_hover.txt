@@ -1,0 +1,12 @@
+# Mouse hover should immediately highlight My Computer rows and the Settings close button.
+frames 5
+dblclick 50 405
+frames 3
+move 160 144
+shot mycomputer_hover.png
+click 538 78
+frames 3
+dblclick 50 135
+frames 3
+move 518 38
+shot settings_close_hover.png

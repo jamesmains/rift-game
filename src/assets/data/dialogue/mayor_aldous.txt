@@ -1,0 +1,82 @@
+[start]
+speaker=Mayor Aldous
+text=Brasswick welcomes you, traveller, though you'll forgive me if I don't rise. Gout. What brings you to the hall?
+option=I carry a letter from Elder Mara.|letter|item:elder_letter&!q_main>=3
+option=I have the Rift Shard from Dunmarrow.|shard|item:rift_shard&!q_main>=4
+option=The cult of the Open Sky is broken.|cult|q_cult>=2&!q_cult>=3
+option=About the Scar...|scar|q_main>=4
+option=Can I help the city?|help|!q_ears>=1
+option=Goodbye.|end
+
+[letter]
+speaker=Mayor Aldous
+text=Mara? She still lives? Give it here... "The Scar is waking." Hm. She always did have a talent for understatement.
+take=elder_letter
+next=letter2
+
+[letter2]
+speaker=Mayor Aldous
+text=Forty years ago, when the sky tore, three shards of the thing that fell were scattered across Aldmoor. The old archive says one was entombed in Dunmarrow Crypt to the north, sealed with the lich who tried to keep it.
+next=letter3
+
+[letter3]
+speaker=Mayor Aldous
+text=If the Rift is waking, the shards will call to it - and to whoever holds them. Bring me the shard from Dunmarrow before something worse digs it up. The crypt lies north through the woods. Take this for your trouble.
+set=q_main=3
+gold=120
+give=potion_red2:1
+xp=100
+option=I'll bring it back.|end
+
+[shard]
+speaker=Mayor Aldous
+text=By the old kings... it hums. Keep it, keep it - I would not hold that thing for all the gold in the vault. Listen. The second shard was taken to Ashfall, the fallen city, by the scholars who studied the Rift.
+next=shard2
+
+[shard2]
+speaker=Mayor Aldous
+text=Their Research Annex still stands south of the ruins. A scavenger girl named Tessa knows its doors - she sells scrap at the Ashfall market. Go north-east along the road. And here - the city owes you more than gold.
+set=q_main=4
+gold=200
+give=mayor_seal:1
+xp=200
+option=Ashfall, then.|end
+
+[scar]
+speaker=Mayor Aldous
+text=When you hold all three shards the Scar will open for you. Nobody has gone in and come out since the Rift closed. Make sure your boots are good and your friends are better.
+option=Understood.|end
+
+[help]
+speaker=Mayor Aldous
+text=Captain Reyna in the west barracks pays bounties on goblin ears. Merchant Pell in the market lost a caravan to bandits. And there's a hermit south of the city who asks strangers for odd things.
+set=q_ears=1
+option=Thank you.|end
+
+[cult]
+speaker=Mayor Aldous
+text=A cult. Under Ashfall. With a key to the Scar. I am going to need a larger desk for all the things nobody told me. You've done the city a service it will never know about - which is the best kind, politically. Take this, and the key, and finish it.
+set=q_cult=3
+gold=250
+xp=300
+give=potion_red2:2
+option=About Vell's followers...|cult_spared|converts_spared
+option=About Vell's followers...|cult_judged|converts_judged
+option=Some of Vell's followers are still in Ashfall.|cult_open|!converts_spared&!converts_judged
+option=I will.|end
+
+[cult_spared]
+speaker=Mayor Aldous
+text=Yes, I heard. You let them stay in Ashfall and called it "watching the sky". The court of Brasswick had a rope ready, and now it has a grievance instead. ...But I'll admit the reports from Ashfall are calmer than they've been in years. Go on.
+option=I will.|end
+
+[cult_judged]
+speaker=Mayor Aldous
+text=They walked in on their own, nine of them, singing. Most unnerving thing I've seen in this hall. The court gave them road work. Brasswick is grateful - and so, surprisingly, are they.
+option=I will.|end
+
+[cult_open]
+speaker=Mayor Aldous
+text=Then they are Ashfall's problem, or yours. My court would try them fairly; Ashfall would probably rather have them back. You know them better than I do. Decide, and let me know.
+option=I will.|end
+

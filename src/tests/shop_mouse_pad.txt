@@ -1,0 +1,34 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+teleport hollowmere 10 10
+con gold 300
+con shop hollowmere_general
+frames 3
+click 100 58
+frames 2
+move 100 120
+frames 2
+move 370 256
+frames 2
+click 457 256
+click 457 256
+frames 2
+shot shop_mouse.png
+click 420 282
+frames 2
+expect log contains Bought 3
+pad 1
+frames 2
+shot shop_pad.png

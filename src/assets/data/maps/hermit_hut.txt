@@ -1,0 +1,104 @@
+[map]
+id=hermit_hut
+name=Hermit's Hut
+kind=town
+spawn=11,18
+bg=10,25,10
+
+[legend]
+. = floor_grass
+, = floor_dirt
+r = road
+T = tree|tree|tree2
+t = pine_t
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = bush
+
+[rows]
+TTTTTTTTTTTTTTTTTTTTTTTT
+T......................T
+Tj......T....TT....T...T
+T.T.....T.T.......T....T
+T...........T.....TT...T
+T..........T..T........T
+T.................T....T
+T...T....######..T..T..T
+T.TT.....#Bhhu#........T
+T........#hhhK#........T
+T....T...#hhhh.....T...T
+T........#WD#W#.......jT
+T...T......,...........T
+T..........,.......T...T
+T..........,..T.T.j....T
+T..........,...T...j...T
+T..........,.....T.....T
+T...T.....,,,,.........T
+T.TT......,r,,..Tj.....T
+TTTTTTTTTTrrrrTTTTTTTTTT
+
+[exit]
+x=10
+y=19
+w=4
+h=1
+to=overworld
+tx=96
+ty=91
+
+[npc]
+id=hermit
+name=The Hermit
+sprite=104,23
+x=12
+y=9
+dialogue=hermit
+
+[chest]
+x=10
+y=10
+flag=hermit_chest
+items=potion_blue:1,potion_red:2
+
+[savepoint]
+x=14
+y=10

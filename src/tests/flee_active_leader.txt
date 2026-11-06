@@ -1,0 +1,28 @@
+# Force successful flee cleanup with a non-slot-0 party leader; final pos should match party=1.
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 354
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+con join ranger
+key TAB
+key DOWN
+key L
+key ESC
+key RIGHT
+frames 5
+frames 5
+combat rat
+combatdump
+forceflee
+dump
+combatdump

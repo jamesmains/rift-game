@@ -1,0 +1,53 @@
+[start]
+speaker=Elder Mara
+text=Ah, $hero. Sit. No, stand, there's no time. The goblins of Greywood have grown bold - three farms raided this week, and Tobb's boy came home with an arrow in his leg.
+option=What do you need from me?|ask|!q_main>=1
+option=I'll handle it.|accept|!q_main>=1
+option=The goblin chief is dead.|done|q_goblins_done&!goblin_chief_spared&!q_main>=2
+option=The goblins are gone. Their chief surrendered this crown.|done_spared|goblin_chief_spared&!q_main>=2
+option=About the letter...|letter|q_main>=2&!q_main>=3
+option=Anything else?|chat|q_main>=1
+option=Goodbye.|end
+
+[ask]
+speaker=Elder Mara
+text=Their cave is north-east of the village, past the mill road. Something has stirred them up - goblins don't gather like this on their own. Find out what, and if there's a chief, make him stop breathing.
+option=I'll handle it.|accept
+
+[accept]
+speaker=Elder Mara
+text=Good. Take this for the road, and don't go alone - Bram at the inn has been itching for a fight since the harvest. And take torches: that cave is black as a boot. Goblins see in the dark; you don't. Come back when it's done.
+set=q_main=1
+gold=30
+give=potion_red:2,torch_item:3
+option=Understood.|end
+
+[done]
+speaker=Elder Mara
+text=Dead? Truly? Then the farms can sleep. But what you describe - a goblin chief wearing a crown of violet glass - that is no goblin matter. That is the Rift.
+next=done2
+
+[done_spared]
+speaker=Elder Mara
+text=Surrendered? A goblin? ...You let them walk. Tobb will spit when he hears it, and I can't say he'd be wrong. But nobody else's boy comes home with an arrow in him - and this crown... violet glass. That is no goblin matter. That is the Rift.
+take=goblin_crown
+next=done2
+
+[done2]
+speaker=Elder Mara
+text=Forty years ago I watched the sky tear. Mayor Aldous of Brasswick keeps the old records. Take this letter to him, east along the road. Tell him Mara says the Scar is waking.
+set=q_main=2
+give=elder_letter
+xp=60
+gold=50
+option=I'll go at once.|end
+
+[letter]
+speaker=Elder Mara
+text=Brasswick is east along the road, past Millbrook Farm. Aldous is a careful man - show him the letter and he'll listen.
+option=Thank you.|end
+
+[chat]
+speaker=Elder Mara
+text=The world is bigger than Hollowmere, child. There's a shrine in the snows to the north, a swamp village far to the east, and the fallen city of Ashfall where nothing should live but something does. Be careful out there.
+option=Goodbye.|end

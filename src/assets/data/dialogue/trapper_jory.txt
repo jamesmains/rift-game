@@ -1,0 +1,22 @@
+[start]
+speaker=Trapper Jory
+text=Wolves've been thick as fleas this year. I pay thirty gold for four good pelts if you've a mind to thin them out.
+option=I'll bring pelts.|quest|!q_pelts>=1
+option=I have four pelts.|turnin|q_pelts>=1&!q_pelts>=2&item:wolf_pelt
+option=Goodbye.|end
+
+[quest]
+speaker=Trapper Jory
+text=Forest's north of here, between the farm and Greywood. Mind the bears.
+set=q_pelts=1
+option=Right.|end
+
+[turnin]
+speaker=Trapper Jory
+text=Fine pelts. Here's thirty, and a bow I don't use any more.
+take=wolf_pelt:4
+set=q_pelts=2
+gold=30
+give=long_bow:1
+xp=120
+option=Thanks.|end

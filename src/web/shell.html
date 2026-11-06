@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triffall</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #stage { position: fixed; inset: 0; background: #000; }
+  #canvas { display: block; width: 100%; height: 100%; outline: none; cursor: none; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 18px; background: #000; color: #c0c0c0; font: 16px/1.4 "Courier New", Courier, monospace; text-align: center; padding: 16px; box-sizing: border-box; }
+  .screen[hidden] { display: none; }
+  #power { font: bold 18px "Courier New", Courier, monospace; color: #000; background: #c0c0c0; padding: 10px 26px; cursor: pointer;
+           border: 2px solid; border-color: #fff #404040 #404040 #fff; }
+  #power:active { border-color: #404040 #fff #fff #404040; }
+  #power:disabled { color: #808080; cursor: default; }
+  #status { color: #808080; min-height: 1.4em; }
+  .small { color: #808080; font-size: 13px; max-width: 34em; }
+  #shutdown { color: #ff9a00; font-size: 22px; cursor: pointer; }
+  #error { position: absolute; left: 0; right: 0; bottom: 0; background: #000080; color: #fff; font: 13px/1.4 "Courier New", Courier, monospace;
+           padding: 10px 16px; white-space: pre-wrap; max-height: 40%; overflow: auto; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="start" class="screen">
+    <div>TRIFFALL</div>
+    <button id="power" disabled>Loading&hellip;</button>
+    <div id="status"></div>
+    <div class="small">Saves are kept in this browser. Clearing your browser's site data deletes them.</div>
+  </div>
+  <div id="shutdown" class="screen" hidden>
+    <div>It's now safe to turn off your computer.</div>
+    <div class="small">Click to start Triffall again.</div>
+  </div>
+  <div id="error" hidden></div>
+</div>
+<script>
+  // keys the game uses that a browser would otherwise act on (F5 reloads the page, F11 is the game's own fullscreen,
+  // Tab moves focus, arrows scroll).
+  // Not keys that type text: blocking their keydown would stop the typed character reaching the game.
+  window.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (/^F([1-9]|1[01])$/.test(k) || k === 'Tab' || k === 'Backspace' || k.indexOf('Arrow') === 0 || k === 'PageUp' || k === 'PageDown' || k === 'Home' || k === 'End')
+      e.preventDefault();
+  }, true);
+  window.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false });
+  // the game draws its own cursor while the pointer is over it
+  var cv = document.getElementById('canvas');
+  ['pointerenter', 'pointermove', 'pointerdown'].forEach(function (t) { cv.addEventListener(t, function () { Module.triffallPointerInside = true; }); });
+  cv.addEventListener('pointerleave', function () { Module.triffallPointerInside = false; });
+  cv.addEventListener('pointerdown', function () { cv.focus(); });
+
+  var power = document.getElementById('power'), statusEl = document.getElementById('status');
+  var runtimeReady = false;
+  function maybeReady() {
+    if (runtimeReady && Module.triffallReady) { power.disabled = false; power.textContent = 'Power on'; statusEl.textContent = ''; }
+  }
+  power.addEventListener('click', function () {
+    document.getElementById('start').hidden = true;
+    var c = document.getElementById('canvas'); c.focus();
+    Module.ccall('web_start', null, [], []);
+  });
+  document.getElementById('shutdown').addEventListener('click', function () { location.reload(); });
+
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    setStatus: function (t) { statusEl.textContent = t ? t.replace(/\(.*\)/, '').trim() : ''; },
+    onRuntimeInitialized: function () { runtimeReady = true; maybeReady(); },
+    onTriffallReady: maybeReady,
+    triffallShutdown: function () {
+      if (document.fullscreenElement) document.exitFullscreen();
+      document.getElementById('shutdown').hidden = false;
+    },
+    printErr: function (t) { console.warn(t); }
+  };
+  // any error is shown on top of the game (and only the first few), so a problem never looks like a plain black screen
+  var errorsShown = 0;
+  function showError(msg) {
+    if (errorsShown++ > 4) return;
+    var box = document.getElementById('error'); box.hidden = false;
+    box.textContent += (box.textContent ? '\n' : 'Triffall hit a problem. Please send this text to the developer:\n') + msg;
+  }
+  Module.triffallError = showError;
+  Module.onAbort = function (what) { showError('abort: ' + what); };
+  window.addEventListener('error', function (e) { showError((e.message || 'error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '')); });
+  window.addEventListener('unhandledrejection', function (e) { var r = e.reason; if (r && /orientation/.test(String(r))) return; showError('promise: ' + r); });
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

@@ -1,0 +1,36 @@
+# 0.8.7: notice boards come from bounties.txt (or the maps' board= NPCs); courier letters only go to real boards
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport ashfall 0 0
+teleport thornhollow 0 0
+teleport brasswick 0 0
+teleport frosthold 0 0
+teleport hollowmere 0 0
+frames 5
+con day 2
+con bounty hollowmere
+frames 3
+shot board.png
+key ESC
+con day 3
+con bounty hollowmere
+key ESC
+con day 4
+con bounty hollowmere
+key ESC
+con day 5
+con bounty brasswick
+key ESC
+con bounties

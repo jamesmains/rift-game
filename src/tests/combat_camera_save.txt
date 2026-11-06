@@ -1,0 +1,93 @@
+frames 5
+shot desktop.png
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+dump
+key ESC
+frames 3
+shot pause.png
+key ESC
+keys LEFT LEFT LEFT LEFT UP
+frames 5
+key F5
+frames 5
+shot saveui.png
+key ENTER
+frames 5
+dump
+shot aftersave.png
+key ESC
+frames 3
+key DOWN
+key DOWN
+key DOWN
+key ENTER
+frames 5
+shot loadui.png
+key ESC
+frames 3
+flag q_main
+gold 300
+teleport hollowmere 20 20
+frames 5
+combat goblin,goblin,goblin_archer
+frames 60
+shot c1.png
+key A
+frames 3
+shot c2_aimed.png
+rdrag 400 200 300 150
+frames 20
+shot c3_panned.png
+click 622 70
+frames 30
+shot c4_portrait.png
+key C
+frames 30
+shot c5_center.png
+key S
+frames 3
+shot c6_spells.png
+key ESC
+god
+target
+frames 30
+target
+frames 30
+key T
+frames 300
+target
+frames 30
+target
+frames 30
+key T
+frames 300
+target
+frames 30
+target
+frames 30
+target
+frames 30
+key T
+frames 300
+target
+frames 30
+target
+frames 30
+target
+frames 30
+frames 120
+dump
+log
+shot c7_end.png

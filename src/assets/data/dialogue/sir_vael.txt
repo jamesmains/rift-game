@@ -1,0 +1,37 @@
+[start]
+speaker=Sir Vael
+text=*The armour turns its empty helm toward you with a sound like a drawbridge.* Seal-bearer. You may approach. Mind the rust; it is the only thing about me that still has opinions.
+option=You... talk.|talk|!q_vael>=1
+option=I found Oathkeeper.|sword|item:oathkeeper&q_vael>=1&!q_vael>=2
+option=Drill me, Sir Vael.|drill|q_vael>=2
+option=Where was your sword again?|where|q_vael>=1&!q_vael>=2
+option=Farewell.|end
+
+[talk]
+speaker=Sir Vael
+text=I was Vael, captain of this keep, forty years ago. I went down into Dunmarrow after the thing that became the lich. It won. It kept my body. My oath, being stubborn, stayed here in the armour. A poor trade for both of us.
+next=talk2
+
+[talk2]
+speaker=Sir Vael
+text=My blade, Oathkeeper, lies with my bones in Dunmarrow, near the lich's hall. Bring it into the light again and I will teach you every way of fighting I ever knew - and I knew a great many.
+set=q_vael=1
+quest=The Armour That Talks
+option=I'll find it.|end
+
+[where]
+speaker=Sir Vael
+text=Dunmarrow, north of the city. Near the lich's own hall; it liked to keep its trophies close. Bring fire. The dead dislike it.
+option=Understood.|end
+
+[sword]
+speaker=Sir Vael
+text=*The helm bows.* Oathkeeper. Carry it, seal-bearer; a sword belongs in a hand, not on a shelf. And as promised - whenever you wish to change your ways of fighting, come to me. No fee. I have nothing to spend it on.
+set=q_vael=2
+xp=250
+option=Thank you.|end
+
+[drill]
+speaker=Sir Vael
+text=Stand straight. Forget what you know. Choose again.
+respec=free

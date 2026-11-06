@@ -1,0 +1,31 @@
+# 1.0 story choice #2: Vell's surviving followers wait outside the old chapel in Ashfall.
+[start]
+speaker=Sister Ilse
+text=You killed him. ...No, don't reach for your sword. We're done with all that. There are nine of us left, the ones who didn't run. Vell told us the sky would open and make us more than scavengers picking at a dead city.
+next=ask
+
+[ask]
+speaker=Sister Ilse
+text=Some of us helped him do terrible things. Some of us only sang. Brasswick wants us hanged; Ashfall wants us gone, or back, depending who you ask. You broke the Open Sky. I suppose that makes it your choice. What happens to us now?
+option=Stay. Help Ashfall rebuild - and watch the sky for us. If it so much as twitches, I want to hear of it.|mercy
+option=You'll answer to Brasswick's court. The Mayor will be fair. Fairer than Vell.|judge
+option=I need to think about it.|end
+
+[mercy]
+speaker=Sister Ilse
+text=...Watch the sky. We can do that. We know how it looks when it's wrong better than anyone. Thank you. We'll call ourselves something new - Sky Wardens, perhaps. Something with less screaming in it.
+set=converts_spared
+rep=ashfall:15,brasswick:-5
+xp=150
+quest=The Open Sky - Vell's followers stay in Ashfall
+option=Don't make me regret it.|end
+
+[judge]
+speaker=Sister Ilse
+text=...Yes. That's fair. More than fair. We'll walk to Brasswick on our own; you won't need to drag anyone. Tell the Mayor we're coming, so his guards don't shoot. (The Mayor's standing bounty on cultists: 150 gold.)
+set=converts_judged
+rep=brasswick:10,ashfall:-10
+gold=150
+xp=150
+quest=The Open Sky - Vell's followers go to Brasswick's court
+option=Go, then.|end

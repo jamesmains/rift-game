@@ -1,0 +1,22 @@
+# Controller navigation should be able to target My Computer file rows and Settings close.
+frames 5
+dblclick 50 405
+frames 3
+pad 1
+key RIGHT
+shot mycomputer_file_focus.png
+key ESC
+frames 2
+pad 0
+dblclick 50 135
+frames 3
+pad 1
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+shot settings_close_focus.png

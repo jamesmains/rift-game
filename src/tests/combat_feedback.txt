@@ -1,0 +1,18 @@
+# 1.0 combat feedback: big damage numbers, hit flash and shove, sidestep on a miss, a beat of stillness and a burst
+# on a kill, "CRITICAL", the round / turn banner and the NOW / NEXT turn order strip.
+newgame Kai warrior 1
+god
+teleport goblin_cave 12 15
+con spawn rat,rat,rat
+frames 240
+shot fb_turn.png
+target
+frames 4
+shot fb_hit.png
+frames 14
+shot fb_numbers.png
+target
+frames 4
+shot fb_hit2.png
+settle
+expect mode == EXPLORE

@@ -1,0 +1,47 @@
+frames 5
+dblclick 50 86
+frames 5
+click 200 160
+click 280 319
+frames 60
+flag q_main
+god
+teleport hollowmere 31 7
+keys RIGHT
+frames 60
+key ENTER
+frames 60
+key ENTER
+frames 30
+give potion_red 5
+give scroll_fire 3
+give grenade 3
+give steel_sword 1
+give phoenix_feather 2
+teleport goblin_cave 0 0
+fuzz 4000 1
+dump
+teleport overworld 44 93
+fuzz 4000 2
+dump
+teleport brasswick 30 30
+fuzz 3000 3
+dump
+teleport crypt 0 0
+fuzz 4000 4
+dump
+teleport ashfall 30 20
+fuzz 3000 5
+dump
+teleport lab 0 0
+fuzz 4000 6
+dump
+teleport wreck 27 24
+fuzz 3000 7
+dump
+teleport murkwater 20 20
+fuzz 2000 8
+dump
+teleport rift_core 0 0
+fuzz 4000 9
+dump

@@ -1,0 +1,177 @@
+[map]
+id=sunscar
+name=Sunscar Outpost
+kind=town
+spawn=20,26
+bg=90,70,40
+music=sunscar
+
+[legend]
+. = floor_sand
+, = floor_dirt
+r = road
+T = cactus
+t = rocks
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = dune
+
+[rows]
+tttttttttttttttttttttttttttttttttttttttt
+t..T.........y.........................t
+t...y....T.......................T.....t
+t..........T............y...........y..t
+t.y....y...............................t
+t..............................y.......t
+ty...y............rrrr.............y.T.t
+t.................rrrr.................t
+t.......========..rrrr..########.......t
+t....y..=mmmmmm=..rrrr..#hhhhhh#.....y.t
+t.......=mmmmmm=..rrrr..#hhhhhh#.......t
+t.......=mmmmmm=..rrrr..#hhhhhh#.......t
+t.......=W=D==W=..rrrr..#WsD##W#.......t
+t.................rrrr.................t
+t..y.y............rror.................t
+t.................rrrr.................t
+t.......########..rrrr..========.......t
+t.......#hhhhhh#..rrrr..=mmmmmm=.......t
+t...y...#hhhhhh#..rrrr..=mmmmmm=.......t
+t.T.....#hhhhhh#..rrrr..=mmmmmm=.......t
+t.......#WiD##W#..rrrr..=W=D==W=.....yyt
+t.................rrrr.................t
+t....y.........y..rrrr.................t
+t...........y.....rOrrO................t
+t...........y.....rrrr....y............t
+t..........T......rrrr............T....t
+t.................rrrr.............y...t
+ttttttttttttttttttrrrrtttttttttttttttttt
+
+[exit]
+x=18
+y=27
+w=4
+h=1
+to=overworld
+tx=32
+ty=117
+
+[npc]
+id=sefa
+name=Matriarch Sefa
+sprite=104,22
+x=11
+y=9
+dialogue=matriarch_sefa
+
+[npc]
+id=raider_env
+name=Raider Envoy Kesh
+sprite=107,22
+x=27
+y=17
+dialogue=raider_kesh
+
+[npc]
+id=sun_trader
+name=Trader Nabir
+sprite=105,1
+x=27
+y=9
+dialogue=trader_nabir
+
+[npc]
+id=sun_inn
+name=Innkeeper Ora
+sprite=104,1
+x=11
+y=17
+dialogue=innkeeper_ora
+
+[npc]
+id=sun_kid
+name=Sand Dancer
+sprite=104,0
+x=20
+y=18
+dialogue=sand_dancer
+wander=1
+
+[npc]
+id=camel
+name=Goat
+sprite=1,16
+x=14
+y=14
+dialogue=goat
+wander=1
+
+[chest]
+x=14
+y=9
+flag=ss_chest
+items=potion_red:2,charm_fire:1
+
+[sign]
+x=16
+y=24
+text=SUNSCAR OUTPOST. Water is life. Do not waste it.
+
+[savepoint]
+x=21
+y=14
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=10
+y=14
+board=sunscar
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=12
+y=14
+travel=1

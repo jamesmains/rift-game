@@ -1,0 +1,9 @@
+# Save upgrades. When a patch renames or removes something a save may hold, say so here and old saves keep loading.
+# Every [rename] line maps an old id to its new one (the format is old>new):
+#   item=old_item>new_item     inventory, equipment, favourites and crafted (affixed) items
+#   flag=old_flag>new_flag     story and quest flags
+#   map=old_map>new_map        where the party stands, visited places, explored maps, the last town
+#   spell=old_spell>new_spell  known spells
+# An id the game no longer knows (and that has no rename) is dropped on load, with a line in the message log.
+# Saves carry the format they were written in (version= in [game]); src/core/version.h has the current one.
+[rename]

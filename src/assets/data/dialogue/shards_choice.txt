@@ -1,0 +1,42 @@
+# 1.0 story choice #3: what to do with the three shards once the Unmade King is gone. Each answer sets a flag the
+# epilogue (epilogue.txt) reads, then win= rolls the ending.
+[start]
+speaker=$hero
+text=The Unmade King comes apart like smoke in a wind. Where it stood, the three shards hang in the air, turning slowly, humming the same note. You can feel the Rift on the other side of them - a door held shut by three small stones.
+next=choose
+
+[choose]
+speaker=$hero
+text=They will do whatever you ask of them. That is the problem.
+option=Break them. Let the Rift close for good, and everything it brought begin to fade.|seal
+option=Carry them home. Elder Mara will bury them where Hollowmere can watch them.|watch
+option=Keep them. Someone has to hold this power - better you than the next Vell.|claim
+option=(Ask the companions what they think.)|ask|party:mage
+
+[ask]
+speaker=Elowen
+text=Break them and we lose more than the Rift - half the magic in Aldmoor drank from it. Keep them and you'll be standing here again in forty years, only on the other side. ...Carry them home. Watching is a job. It's not glamorous, but it's honest.
+option=Break them.|seal
+option=Carry them home.|watch
+option=Keep them.|claim
+
+[seal]
+speaker=$hero
+text=You close your fist around the first shard and squeeze. It doesn't break so much as give up.
+set=ending_seal
+approve=mage:-5,scavenger:-5,cleric:10,warrior:5
+win=The three shards crack, one after another, like ice on a spring river.|The Rift folds in on itself and is gone - not sealed, not sleeping: gone.|Over Ashfall the violet sky fades to blue for the first time in forty years. Down in the ruins, one by one, the machines go quiet.|You walk home across Aldmoor, and for once nothing follows.
+
+[watch]
+speaker=$hero
+text=You wrap the shards in your cloak. They are warm, and quieter than before, as if they were listening.
+set=ending_watch
+approve=all:5
+win=The Scar sighs closed behind you like a door in an empty house.|Over Ashfall the violet sky dims to a bruise, then to dusk-blue. It will never be quite the colour it was.|In Hollowmere, under the old well-house, three stones are buried in lead and salt, and a lamp is kept burning over them.|You walk home across Aldmoor, and for once nothing follows.
+
+[claim]
+speaker=$hero
+text=You take them. All three. They fit your hand as if they had been cut for it.
+set=ending_claim
+approve=all:-10
+win=The Scar closes at your word. It obeys you now. Everything here obeys you now.|Over Ashfall the violet sky does not fade. It turns, very slowly, to follow you.|You walk home across Aldmoor, and the wind walks with you, and the birds go quiet as you pass.|Somewhere very far away, something unmade begins, patiently, to wait.

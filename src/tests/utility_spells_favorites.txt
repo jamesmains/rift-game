@@ -1,0 +1,46 @@
+frames 5
+dblclick 50 28
+frames 5
+type Vesper
+click 200 190
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+level 2000
+keys RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT DOWN RIGHT RIGHT RIGHT
+key ENTER
+frames 5
+dump
+key S
+frames 3
+shot sp1.png
+key DOWN
+key DOWN
+key 1
+frames 2
+shot sp2.png
+key ENTER
+frames 3
+log
+key ESC
+frames 3
+teleport goblin_cave 0 0
+frames 5
+shot cave_dark.png
+key 1
+frames 5
+shot cave_light.png
+log
+teleport hollowmere 20 20
+combat goblin,goblin
+frames 60
+key 1
+frames 3
+log

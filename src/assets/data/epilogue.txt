@@ -1,0 +1,268 @@
+# The epilogue: shown after the last battle (the win= action), one slide at a time.
+# Each [slide] has a group=; within a group the FIRST slide whose if= condition holds is shown and the rest are skipped
+# (a slide without if= always matches, so put it last as the fallback). Groups appear in the order they first occur.
+# Conditions are the usual ones: flags, !flag, rep:town:N, approval:class:N, party:class, item:id, level:N, kills:x:N.
+# Keys: title=, text= (a | starts a new paragraph), tile=col,row (a picture), member=class (that companion's portrait),
+# color=r,g,b (tints the picture). Text may use $hero {days} {kills} {level} {campaign} and the quest counters
+# ({itemn:id} {flag:name} {gold}). A campaign can ship its own epilogue.txt and credits.txt.
+
+# ---- the shards (story choice #3) ----
+[slide]
+group=rift
+if=ending_seal
+title=The Rift
+tile=4,22
+text=The shards are gone and so is the Rift. Within a year the violet glass that littered Aldmoor turns to grey sand, and the strange machines of Ashfall fall silent one by one.|Some people miss the wonders. Nobody misses the sky.
+
+[slide]
+group=rift
+if=ending_watch
+title=The Rift
+tile=26,22
+text=Under Hollowmere's well-house three stones sleep in lead and salt, and a lamp burns over them every night. The sky over Ashfall never quite heals, but it never opens either.|Every spring someone new is taught how to keep the lamp lit. Mara insists on doing the teaching herself.
+
+[slide]
+group=rift
+if=ending_claim
+title=The Rift
+tile=26,23
+color=200,120,255
+text=$hero came home from the Scar and did not take off the shards. The harvests were good that year, and the next. The roads were safe; the raiders simply stopped coming.|People were grateful. Then careful. Then quiet. Forty years is a long time to hold a door shut, and the thing on the other side is very patient.
+
+# ---- Hollowmere and the goblins (story choice #1) ----
+[slide]
+group=hollowmere
+if=goblin_chief_spared&goblins_allies
+title=Hollowmere
+tile=104,24
+text=Grakk kept his promise. The goblins never came back to raid - they came back to trade, with Snig at the head of every caravan, and in time even Farmer Tobb would buy his nails from them. He still won't say thank you.
+
+[slide]
+group=hollowmere
+if=goblin_chief_spared
+title=Hollowmere
+tile=104,24
+text=The goblins of Greywood never raided again. Somewhere over the mountains a tribe tells the story of the tall-folk who let them walk, and Hollowmere tells it too - though not always kindly.
+
+[slide]
+group=hollowmere
+if=rep:hollowmere:60
+title=Hollowmere
+tile=104,24
+text=Greywood is quiet and the farms are full. Hollowmere puts up a carved post on the village green with $hero's name on it, misspelled. Nobody has the heart to fix it.
+
+[slide]
+group=hollowmere
+title=Hollowmere
+tile=104,24
+text=The goblin raids ended with their chief, and Hollowmere went back to worrying about the weather. Elder Mara told anyone who would listen that she had seen it all coming, which was very nearly true.
+
+# ---- Brasswick ----
+[slide]
+group=brasswick
+if=converts_judged
+title=Brasswick
+tile=104,1
+text=Vell's followers spent five years mending the roads they had prayed to see burn. Mayor Aldous called it the most successful trial in Brasswick's history and had it painted, at some length, on the wall of the hall.
+
+[slide]
+group=brasswick
+if=q_vael>=2
+title=Brasswick
+tile=104,1
+text=Sir Vael stands guard in the keep to this day, Oathkeeper at his side, drilling a new generation of militia in every style you please. The Mayor bought a larger desk.
+
+[slide]
+group=brasswick
+title=Brasswick
+tile=104,1
+text=Brasswick's clocks kept ticking. Mayor Aldous wrote a long history of the Rift years and left out every part he had not personally witnessed, which made it a short history.
+
+# ---- Ashfall (story choice #2) ----
+[slide]
+group=ashfall
+if=converts_spared
+title=Ashfall
+tile=104,17
+text=The Sky Wardens kept their watch on the old chapel roof, two at a time, every night. Ashfall's scavengers grumbled, then traded with them, then married into them. The fallen city has more lights in its windows now than it has had in forty years.
+
+[slide]
+group=ashfall
+if=converts_judged
+title=Ashfall
+tile=104,17
+text=With the cult gone to Brasswick's court, Ashfall's scavengers had the ruins to themselves again. Some were glad. Some had lost a cousin to the Open Sky and a second time to the Mayor's road crews, and they never quite forgave either.
+
+[slide]
+group=ashfall
+if=q_cult>=2
+title=Ashfall
+tile=104,17
+text=Vell's last followers drifted away into the ruins and were not seen again. Every so often a scavenger finds a violet sigil scratched into a fresh wall, and walks a little faster.
+
+# ---- the far places ----
+[slide]
+group=murkwater
+if=q_hydra>=2
+title=Murkwater
+tile=104,24
+text=With the hydra dead, Murkwater's fishermen went back to the deep pools. Old Fenwick tells the story every night at the inn, and every night the hydra has one more head.
+
+[slide]
+group=murkwater
+title=Murkwater
+tile=104,24
+text=Something still drags fishermen under in the Drowning Marsh. Murkwater learned to fish the shallows, and to keep its children away from the black water.
+
+[slide]
+group=sunscar
+if=q_dragon>=2
+title=Sunscar
+tile=104,1
+text=Sunscar's raiders and settlers still argue about everything except one thing: the night Ashwing fell. They sing about it together, badly, every year.
+
+[slide]
+group=sunscar
+title=Sunscar
+tile=104,1
+text=Ashwing still circles the old mine on hot nights. Sunscar keeps its water barrels full and its eyes on the sky.
+
+[slide]
+group=sunscar_well
+if=well_free
+title=Sunscar's Well
+tile=104,1
+text=The pump in Sunscar's square never charged a copper. Raiders and settlers queue at it together every morning, and in time nobody remembers which family was which.
+
+[slide]
+group=sunscar_well
+if=well_toll
+title=Sunscar's Well
+tile=104,1
+text=Kesh's toll made the raiders of Sunscar rich and the settlers thirsty. The truce held - just. Every year it held a little less.
+
+[slide]
+group=pilgrim
+if=pilgrim_truth
+title=The Pilgrim
+tile=123,0
+text=The pilgrim from Murkwater went home and told her mother the truth. Every year after, two women from the swamp climbed to Frosthold to say one name.
+
+[slide]
+group=pilgrim
+if=pilgrim_lie
+title=The Pilgrim
+tile=123,0
+text=The pilgrim from Murkwater went north to find her sister, and kept going. Travellers on the high roads still meet her sometimes, asking after a woman with green prayer beads.
+
+[slide]
+group=frosthold
+if=q_frost>=2
+title=Frosthold
+tile=123,0
+text=Rimehollow is quiet. The pilgrims climb to Frosthold again, and the abbot has had the bones of the colossus laid to rest with the old prayers.
+
+# ---- companions ----
+[slide]
+group=bram
+if=joined_warrior&q_bram_done&approval:warrior:60
+title=Bram
+member=warrior
+text=Bram hung Captain Sedge's shield over the bar of the Weary Goat and trained Hollowmere's first proper militia under it. When people ask who taught him to fight like that, he points at $hero and buys them a drink.
+
+[slide]
+group=bram
+if=joined_warrior&approval:warrior:20
+title=Bram
+member=warrior
+text=Bram went back to Hollowmere and his cousin's forge, and was much less bored than before. He kept his sword sharp, just in case anyone else ever needed it.
+
+[slide]
+group=bram
+if=joined_warrior
+title=Bram
+member=warrior
+text=Bram and $hero parted on the road home with a nod and not much more. He drinks less now. He says it has nothing to do with anything.
+
+[slide]
+group=elowen
+if=joined_mage&q_elowen_done&approval:mage:60
+title=Elowen
+member=mage
+text=Elowen wrote the book on the Rift - the real one, with the parts the Mayor left out. It is required reading at every school of magic in Aldmoor, and banned in two of them.
+
+[slide]
+group=elowen
+if=joined_mage&ending_seal
+title=Elowen
+member=mage
+text=When the Rift closed, Elowen felt her magic thin like air on a mountain. She never fully forgave $hero, and never fully blamed them either. She teaches now. Smaller spells, but her own.
+
+[slide]
+group=elowen
+if=joined_mage
+title=Elowen
+member=mage
+text=Elowen went back to the Brasswick archive with three chests of notes and has not been seen in daylight since. Her letters arrive every month, mostly footnotes.
+
+[slide]
+group=tessa
+if=joined_scavenger&q_tessa_done&approval:scavenger:60
+title=Tessa
+member=scavenger
+text=Tessa got the Annex running again - lights, doors, the terminal that laughed at her. She charges admission. Mayor Aldous is her best customer.
+
+[slide]
+group=tessa
+if=joined_scavenger&ending_seal
+title=Tessa
+member=scavenger
+text=When Ashfall's machines went quiet, Tessa sat with her drone until its lamp went out. Then she picked up a hammer and learned to fix things that run on steam. She's annoyingly good at it.
+
+[slide]
+group=tessa
+if=joined_scavenger
+title=Tessa
+member=scavenger
+text=Tessa went back to the Ashfall market with a pack full of things she "found" in the Wreck. She still sends $hero a crate of scrap every winter. Nobody knows what to do with it.
+
+[slide]
+group=nyx
+if=joined_ranger&q_nyx_done&approval:ranger:60
+title=Nyx
+member=ranger
+text=Nyx went north with two cloaks and came back with one, and never said a word about it. She keeps the hills above Frosthold safe now, and leaves a pelt on $hero's doorstep every first snow.
+
+[slide]
+group=nyx
+if=joined_ranger
+title=Nyx
+member=ranger
+text=Nyx disappeared into the hills the day after the Scar, as quietly as she had arrived. Hunters near Millbrook say a ranger with a grey cloak still watches the trails.
+
+[slide]
+group=orin
+if=joined_cleric&q_orin_done&approval:cleric:60
+title=Orin
+member=cleric
+text=Orin said the names of every soul in Dunmarrow, one by one, until the crypt was quiet. Then he went back to Frosthold and became the kind of abbot who answers the door himself.
+
+[slide]
+group=orin
+if=joined_cleric
+title=Orin
+member=cleric
+text=Orin returned to the shrine in the snows. He prays for $hero every morning - for their health, and, after some thought, for their judgement.
+
+# ---- the hero ----
+[slide]
+group=hero
+if=ending_claim
+title=$hero
+color=200,120,255
+text={days} days after leaving a cottage in Hollowmere, $hero holds the fate of Aldmoor in one hand. History will decide what kind of hand it was.
+
+[slide]
+group=hero
+title=$hero
+text={days} days after leaving a cottage in Hollowmere with a borrowed sword, $hero came home. The world was a little smaller, a little safer, and a great deal quieter.|This is where the story ends - but not, if you like, the walking.

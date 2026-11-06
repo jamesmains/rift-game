@@ -1,0 +1,50 @@
+# 0.8.8: item categories / sorting in the inventory and shops; quest items can't be dropped or sold
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+give elder_letter
+give shovel
+give iron_ore 3
+gold 200
+key Q
+frames 3
+shot inv_all.png
+keys T T T T
+frames 2
+shot inv_quest.png
+key ENTER
+frames 2
+key ENTER
+frames 2
+log
+shot inv_nodrop.png
+key ESC
+key ESC
+key ESC
+frames 2
+con shop brasswick_market
+frames 3
+key R
+frames 2
+shot shop_sorted.png
+key PGDN
+frames 2
+keys T T T T
+frames 2
+shot shop_sell_quest.png
+key ENTER
+frames 2
+log
+expect log contains needed for a quest - you won
+expect item:elder_letter == 1

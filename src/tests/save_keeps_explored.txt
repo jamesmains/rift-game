@@ -1,0 +1,26 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+teleport goblin_cave 0 0
+frames 10
+hold RIGHT 60
+hold DOWN 40
+frames 10
+saveload
+teleport overworld 0 0
+frames 10
+saveload
+teleport goblin_cave 0 0
+frames 60
+shot explored_after_load.png

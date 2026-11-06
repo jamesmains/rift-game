@@ -1,0 +1,30 @@
+[start]
+speaker=Junk-Dealer Vosk
+text=Guns, ammo, medkits, the occasional thing that beeps. Everything's salvage, nothing's guaranteed.
+option=Show me.|shop
+option=I want to build something.|bench
+option=I have a copper still coil.|coil|item:copper_coil&q_still>=1&!q_still>=2
+option=Goodbye.|end
+
+[shop]
+shop=scrapyard
+
+[bench]
+speaker=Junk-Dealer Vosk
+text=Bench in the back. Everything on it is for sale, including the bench.
+craft=workbench
+
+[coil]
+speaker=Junk Vosk
+text=Is that... Rusty's coil? Ha! Hand-wound copper, three-quarter bore. I'll give you a hundred and fifty for it, right now, no questions. Rusty can make tea.
+option=Sold.|coil_sell
+option=It goes back to Rusty.|end
+
+[coil_sell]
+speaker=Junk Vosk
+text=Pleasure doing business. If anyone asks, I found it.
+take=copper_coil
+gold=150
+set=coil_sold
+rep=ashfall:-5
+option=...|end

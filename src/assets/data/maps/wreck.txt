@@ -1,0 +1,172 @@
+[map]
+id=wreck
+name=The Wreck - Upper Hull
+kind=ruins
+spawn=27,34
+bg=25,22,30
+
+[legend]
+. = wasteland
+, = floor_road
+r = road_line
+# = wall_concrete
+= = wall_metal
+h = floor_tile
+m = floor_metal
+D = door_metal
+W = window
+k = crate
+b = box
+x = void
+c = car|car2
+C = car_red
+u = truck
+l = streetlamp
+g = trafficlight
+S = sign_stop
+z = sign_warn
+P = pipe_v
+p = pipe_h
+V = vending
+E = terminal
+e = terminal2
+v = server
+K = computer
+T = deadtree_t
+t = trash
+~ = rubble
+R = riftscar
+a = altar
+B = building
+n = building2
+N = building3
+o = building4
+O = building_red
+L = torch
+Y = cryopod
+I = reactor
+w = floor_water
+F = floor_grid
+j = satellite
+J = rocket_wreck
+U = ufo
+y = wall_hull
+A = table
+q = chair
+f = fence
+G = grave
+
+[rows]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~....~.............~R......~..............~......~
+~...T~...................~.............~~..~.....~
+~...T..............~~.........~.......R..........~
+~.......~..T................~..R..R....~...~..~..~
+~...~..................~..................T.U....~
+~~..............R~...~~.............~~...........~
+~T.......T.R................~~~..~...............~
+~T~.........yyyyWyyyyWyyyyWyyyyWyyyyWyyyyy.......~
+~...........yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy.......~
+~.R.....~.~RyyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.....~.~
+~.....T.....yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~...~..~.R..yyFFFFFFYFFFFFIFFFFFYFFFFFFFyy.......~
+~...~.......yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~....~......yyFFFFFFFFFFFFrFFFFFFFFFFFFFyy.......~
+~...........yyFFFFFFFFkFFFFFFFkFFFFFFFFFyy.~...T.~
+~.....~.....yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.~.....~
+~~~..~......yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~.~.........yyFFFFFFFFFFFFEFFFFFFFFFFFFFyy.......~
+~...........yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy~......~
+~.......~...yyFFvFFFFFFFFFFFFFFFFFFFvFFFyy.~.....~
+~...........yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~...........yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~.R.........yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~
+~....T......yyyyyyyyyyyyyyyFyyyyyyyyyyyyyy..~....~
+~.....~.....yyyyyyyyyyyyyyyDyyyyyyyyyyyyyy......~~
+~.....~...~........~.....,,,,....................~
+~..........~........~..~.,,,,T......~~...........~
+~......~...~......~...~..,,,,~..~..~.~......~....~
+~.~.~.~.........~.....~~.,,,,.....T..........~...~
+~.......J...~............,,,,....~........j..~...~
+~R......~.R....T.~.......,,,,...~...........T....~
+~.....~~........~.~......,,,,~...R..~............~
+~..~......T.......~.R...~,,,,.........R.~~.......~
+~.....R~..R..R~~.........,,r,.......~.......~.~..~
+~~~~~~~~~~~~~~~~~~~~~~~rrrrrr~~~~~~~~~~~~~~~~~~~~~
+
+[exit]
+x=23
+y=35
+w=6
+h=1
+to=overworld
+tx=126
+ty=29
+
+[exit]
+x=26
+y=14
+to=ship
+tx=0
+ty=0
+item=keycard_blue
+locked=The hatch needs a blue keycard.
+
+[npc]
+id=ship_ai
+name=Dormant Android
+sprite=78,13
+x=27
+y=18
+dialogue=ship_android
+
+[npc]
+id=ship_vendor
+name=Quartermaster Unit
+sprite=105,43
+x=16
+y=21
+dialogue=ship_vendor
+
+[enemy]
+x=36
+y=12
+group=scrap_drone,scrap_drone,security_bot
+aggro=5
+flag=wr_guard1
+
+[enemy]
+x=18
+y=16
+group=alien,alien
+aggro=5
+flag=wr_guard2
+
+[enemy]
+x=40
+y=28
+group=security_bot,scrap_drone
+aggro=4
+flag=wr_guard3
+
+[chest]
+x=23
+y=12
+flag=wr_chest1
+items=keycard_blue:1,cell:20
+
+[chest]
+x=36
+y=22
+flag=wr_chest2
+items=stimpak:2,emp_grenade:2
+gold=50
+
+[sign]
+x=26
+y=27
+text=HULL BREACH 7 - "ARGENT DAWN" - colony vessel - (the rest is scorched away)
+
+[savepoint]
+x=28
+y=18

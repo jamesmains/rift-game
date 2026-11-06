@@ -1,0 +1,8 @@
+[start]
+speaker=Trader Mosk
+text=Boots that don't rot, cloaks that don't soak. Swamp goods. Interested?
+option=Show me.|shop
+option=No thanks.|end
+
+[shop]
+shop=dunmarrow_trader

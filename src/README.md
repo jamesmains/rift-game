@@ -1,0 +1,541 @@
+# Triffall
+
+An old-school open-world RPG with X-COM / Fallout-style turn-based tactical combat,
+wrapped in a fake Windows 98 desktop that serves as the main menu.
+
+Forty years ago the sky over Aldmoor tore open. When it closed, pieces of other worlds
+lay scattered across the land: a city of glass and asphalt, a starship, machines that
+still hum. Now the Rift is waking again - and your village elder has sent for you.
+
+* 5 classes (Warrior, Ranger, Mage, Scavenger, Cleric) you **multiclass** into rank by rank, 5 recruitable
+  companions (respec at a shrine priest or with a Draught of Forgetting), party of 4
+* Hand-crafted overworld and dungeons (all plain ASCII maps you can edit), 6 towns, an extra
+  chapter (The Open Sky) and side areas; **campaigns** add their own desktop icon (see Campaigns)
+* Darkness that matters: torches, lanterns, light spells and flares; enemies with darkvision
+* World objects: rubble to dig or blast, ice to melt, levers, sluices, NPCs that move when the story says so
+* Deep crafting: station skill, formulas, failure chance, fine/masterwork rolls, reinforcing, enchanting, salvage
+* Easy / Normal / Hard difficulty
+* Swords, bows, guns, lasers, spells; 50+ monsters; 130+ items; 20 side quests (three or four in every town), 5 companion quests and a 7-stage
+  main quest with three choices that change the ending (break, bury or keep the shards)
+* Proximity-triggered tactical combat fought in place: AP, movement points, hit chances,
+  aimed shots, cover-free line of sight, area spells, grenades, status effects, fleeing
+* Save shrines + 3 named save slots
+* Keyboard, mouse and gamepad
+* Chiptune soundtrack and sound effects, all data-driven and replaceable (see Audio)
+* Cover, flanking, overwatch and attacks of opportunity; companions with banter and approval
+* Day/night, weather, shop hours; crafting and random affixes on loot; world map with fast travel
+* Journal with quests (map pins, checklists, branching endings and failure), bestiary, stats, notes; notice-board
+  bounties; town reputation that moves shop prices; 33 achievements
+* A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
+
+## 1.0.10 the right sprites
+
+* **Every sprite checked against the Tilebook** description of the Urizen sheet (its names, row/race and column/pose tags,
+  and which cells are empty). About 120 fixes, in the base game, the Tutorial and The Gullwatch Light:
+  * **People look like people**: the elders, the mayor, Abbot Tyr, Old Fenwick, Old Hesk and Nyx were skeletons; the
+    Warrior class, Bram, Reyna, Warden Hale and the guards were genies; bandits and scavengers were satyrs; the priests
+    and healers were ice genies; the smiths were kobolds. Nyx now carries a bow in a grey cloak, guards wear helmets.
+  * **Monsters**: skeletons were a crowd of townsfolk, wolf/bear/bat/spider were rat-men, the boar a monkey, the
+    scorpion a satyr with a hammer, robots were civilians on skateboards. Archers and rangers hold bows (the old
+    "bow" column was a book), the goblin chief carries his banner, the necromancer is a skull wizard.
+  * **Props that were invisible** now show: cauldron, fountain, well, levers, sparkles, street lamps and traffic lights.
+    Forge, anvil, bed, coffin, chair, shelf, pillar, altar, statue and shop sign point at the right pictures, and
+    sci-fi walls are walls instead of doors and windows.
+  * **Icons**: keys are keys (they were heraldic crests), gold is coins (it was a banner), the coil, tape, valve,
+    music box, firewater, mittens, beads and bandage have their own icons, and the five blank achievements have pictures.
+* `tiles.h` row and pose names now match the sheet (ROW_SKELETON is row 10, CHAR_COL_BOW is 156...).
+* `build_windows.sh`: MinGW-w64 build script (cross-compile or MSYS2/w64devkit) next to `build_windows.bat`.
+* `tests/sprites_1010.txt` screenshots the towns and a fight with the new sprites.
+
+## 1.0.9 your desktop
+
+* **Your desktop, kept**: right-click an icon (or E / pad X on the selected one) for Open, **Change Icon...** (any picture
+  in the icon sheet) and Default Icon. Icon pictures, where each icon sits and the wallpaper are saved in
+  `saves/desktop.ini` and come back on the next launch; new campaigns take the first free spot. The Start menu shows the
+  same pictures.
+* Every campaign icon uses the New Game controllers; the editor is now just **Editor** (desktop, Start menu, its own
+  screens and these docs) with the cube icon.
+* Icon names too long for their spot end in "..." and show in full under the pointer or when selected.
+* `tests/desktop_persist.txt` changes an icon, moves one and picks a wallpaper, then reloads the desktop and checks them.
+
+## 1.0.8 the Tutorial
+
+* **The Tutorial replaces the tips.** The one-time pop-up tips (and Settings > Show tips) are gone. In their place is
+  a **Tutorial** campaign (`assets/campaigns/tutorial`, first of the campaign icons on the desktop, and ticked by default
+  on the setup wizard's last page): ten minutes in the Wardens' training hall, one room per lesson - walking, a chest,
+  equipping from the party screen, a shop, a save shrine, the journal, a rat fight, a level-up, the hotbar and a goblin
+  fight with cover - each door opening when its lesson is done. A green **Training** panel says what to do next and stays
+  up until it's done; it's driven by the campaign's `hints.txt` (see Campaigns). At the end Warden Hale sends you back to
+  the desktop with New Game open for the main game. Achievements don't unlock in it.
+* **Combat action bar**: every button carries its key the way shops and menus show them (a key chip, or the controller
+  button when a pad is in use), and so does the action menu (R).
+* `tests/tutorial.txt` plays the whole Tutorial the way a new player would.
+
+## 1.0.7 playtest fixes
+
+* **Font choice** (Settings > Access > Font, and on the setup wizard's last page): *Classic* is the tileset's own letters,
+  *Clear* is Spleen 6x12 (BSD licence, `assets/LICENSE-spleen.txt`), plainer and easier to read. It applies everywhere
+  at once - desktop, game and editor; the TRIFFALL logo keeps its own letters.
+* **Ambience volume**: wind, rain, town and the other loops have their own slider (Settings > General) and their
+  default mix in `sounds.txt` is much lower (they were about as loud as the music).
+* **Quest text wraps**: the party screen's Quests tab wraps each quest to the width of the list and scrolls; the journal
+  wraps checklist lines too, keeps the opened quest on screen, and closed rows end in ".." when there is more.
+* **Favorites in a fight**: with the Spells or Items list open, press 1-8 to put the highlighted entry on that hotbar slot
+  (the list shows which slot each entry is on).
+* **Tips** only showed while the chest or person they talked about was in plain view. (1.0.8 replaced the tips with
+  the Tutorial.)
+* **A calm first morning**: a new game starts clear, and the first half hour of play never rolls fog or storms.
+* Frost Bolt, Blizzard, Power Armor and the Reactor Plate pointed at blank tiles; they have icons again.
+
+## 1.0: a game you can finish
+
+* **The ending**: after the Unmade King, an epilogue (`assets/data/epilogue.txt`): the shards, every town and every
+  companion you recruited, chosen by your choices, reputation and approval; then the journey in numbers, the credits
+  (`assets/data/credits.txt`) and **Keep exploring** (the world stays open, autosaved first) or back to the desktop.
+* **Three story choices**: Grakk the goblin chief asks for terms in Greywood (spare the tribe and a goblin peddler turns
+  up at Millbrook later; Hollowmere's farmers don't forgive you), Vell's followers in Ashfall (mercy: they become the Sky
+  Wardens and heal you; the court: they work Brasswick's roads), and the shards at the Scar (break, bury or keep them -
+  three endings). Six new achievements follow them (hidden until earned).
+* **Nine new side quests** (two each in Ashfall, Murkwater, Sunscar and Frosthold, one in Hollowmere): A Letter for
+  Fenna, Rusty's Still, Signal in the Static, Lanterns on the Water, Tam's Big One, Water Rights, Spin Spin Spin, The
+  Pilgrim's Sister, Cold Hands - with branches, a temptation or two, and failures. Ashfall is a reputation faction now.
+* **Balance**: experience is no longer split between the party - everyone standing gets the full award (with the split a
+  full party finished around level 7 in a game whose last dungeon is level 11). Bosses keep to their lairs (the Lich
+  used to walk into the first fight of Dunmarrow) and take half the map's level bonus; the Lich and the Scar are a
+  little gentler. Fights where nobody can reach anybody break off after three quiet rounds instead of looping forever.
+  A gun or bow with no ammo can still club someone standing next to you.
+* **Saves you can trust**: saves carry a format version and are upgraded on load (`assets/data/migrations.txt` lists
+  renamed items, flags, maps and spells for future patches; ids that no longer exist are dropped with a note); every
+  save is written to a temporary file and swapped in, and the previous save is kept as `.bak` and loaded automatically
+  if a save is ever damaged; an **autosave** is made whenever you reach a new place (Load Game > Autosave); a save from a
+  newer version is refused with a clear message.
+* **Crashes**: a crash writes `saves/crash.log` (version, place, party, last messages) and tries an emergency
+  `saves/crash_recovery.sav`; the next start says so and offers to restore it.
+* **Settings > Access**: large text (dialogue, messages, cutscenes, tips, epilogue), text speed (slow / normal / fast /
+  instant), colour-blind friendly colours (blue / orange for sides, hit chances and cover), reduced flashing.
+  **Small screens**: integer scaling is only used when 2x or more fits; below that (a Steam Deck's 1280x800 fits only
+  1x of 640x480) the frame is drawn sharp at 2x and scaled smoothly to fill the screen.
+* **Combat feel**: big damage numbers, a white flash and a shove on a hit, a sidestep on a miss, a beat of stillness and a
+  burst on a kill, CRITICAL with a short freeze, Round / your-turn banners, NOW and NEXT in the turn order strip,
+  a coloured hit chance, and a cover bar on the side of the target that faces you ("in half cover", "FLANKED").
+* **Music and sound**: a theme for Brasswick, Ashfall, Murkwater, Sunscar and Frosthold, crypt / swamp / Scar music,
+  a night overworld, an ending theme, and ambient loops under the music (wind, cave drips, swamp, rain, town, machines,
+  night insects, the Rift) chosen by place, weather and time (`[ambient]` in sounds.txt, `ambient=` in a map header).
+* **First impression**: a logo splash after the BIOS lines, and on the very first launch a Win98 setup wizard whose last
+  page asks two real questions (tips, large text). The Readme starts with "How to play - the first ten minutes".
+* **Demo**: `cmake -DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`) builds the demo: no editor, the base campaign
+  limited to the maps in `assets/data/demo.txt` (Hollowmere to Brasswick), the demo's ending when the Mayor sends you to
+  Dunmarrow, a Wishlist icon on the desktop. Demo saves carry over to the full game. Gullwatch plays in full.
+* `discord=` in `saves/settings.ini` (as this README always claimed) now really points the Discord icon somewhere.
+* **Testing**: a playthrough bot (`src/platform/bot.h`) walks, talks, chooses and fights its way through
+  `tests/main_quest.txt` (cottage to the ending, every story flag checked) and `tests/side_quests_1_0.txt`;
+  `tools/pacing.sh` plays the main quest on several seeds with and without god mode and writes the level / gold / time
+  curve; `tools/perf_scenes.txt` measures the worst scenes. See BALANCE.md and RELEASE_CHECKLIST.md.
+
+## 0.9.0 depth, tools and the first hour
+
+* **Reputation**: towns (`assets/data/factions.txt`) remember the party, -100 to 100, in six tiers from Hated to
+  Honoured. Dialogue changes it with `rep=hollowmere:10`, conditions test it with `rep:hollowmere:30`, achievements with
+  `rep:hollowmere>=60`. Shops with `faction=` price by it (up to 15% off / 25% more), paid bounties raise the board's
+  town (`rep=` on the board, default 3). The journal's Stats page lists every standing; the shop shows its town's.
+  Healer Wren's Moonleaf quest now earns +10 with Hollowmere, and a new achievement (Local Hero) wants Honoured.
+* **Quest failure and branches**: `fail=COND | text` in a quest ends it as FAILED (red in the journal, no map pin)
+  unless a DONE stage already shows; several DONE stages behind different flags give a quest several endings.
+* **Summon spells**: `summon=creature[:count]` with `duration=` turns. Rangers learn Call Wolf (rank 5), Scavengers
+  Deploy Turret (rank 8), Necromancers raise two skeletons. Allied summons (blue frame) are moved by the AI, leave no
+  body, XP or loot, and crumble when their caster dies.
+* **Smarter enemies**: monsters finish off what they can kill this turn, pile onto the target their side already hit,
+  care less about summons than summoners, and archers step into cover (when they can still shoot from there) before
+  firing. Summoners call help early in a fight.
+* **First hour**: one-time tips (`assets/data/tips.txt`) the first time you walk, meet someone, see a chest, fight,
+  shop, level up or open the map - naming the keys or buttons of the device in use (Settings > Show tips turns them
+  off). The main quest is in the journal from the first minute ("go to Elder Mara", with a map pin). The world map
+  now has a controller button (left stick click; overwatch keeps it in fights).
+* **Rebinding**: item category next / previous and sort are normal actions in Settings > Controls (default T / G / R,
+  RT / LT / Y).
+* **Steam / Steam Deck**: the New Game name field opens the Deck's (or Big Picture's) own keyboard when there is one,
+  falling back to the built-in one; counter achievements show Steam's progress toast at the half-way mark.
+* **Editor**:
+  * Dialogue **Graph** view (header toggle): boxes and arrows for every node, colour-coded links, drag to arrange,
+    Shift-drag an option onto a node to relink it, double-click to jump to the text.
+  * **Factions** tab with a Used-by list; shop `faction` picker; quest stage cards have **fail conditions** (and the
+    preview shows FAILED); spells get a creature picker for `summon`; Check all knows all of it.
+  * Campaign tab: **Play from a state** (class, level, gold, flags, items, companions for every playtest, saved in
+    the campaign's `playtest.txt`) and **Export .zip** (the whole campaign plus install notes, into `saves/exports`).
+  * Guide topics for every new key, `rep=` / `rep:` in the dialogue syntax panel.
+
+## 0.8.9 controller and UI pass
+
+* **New Game** has a campaign picker (the campaign icons still open it with theirs selected), a **Random** name button
+  and an **on-screen keyboard** (A on the name field, or the Keyboard button). Space no longer starts the game while
+  typing a name - only Enter does.
+* **Controller on the desktop**: Down past the last icon reaches the Start button; the Start menu keeps the cursor in
+  it until Start or B; the D-pad moves row by row in windows (Settings: V-Sync -> Window scale -> volumes); volume
+  sliders step by 1 (hold to run); a window puts the cursor on its first control when it opens; picking a save slot
+  jumps to Load; Minesweeper (A reveal, X flag) and Solitaire (A pick / drop, X send to the foundations, B cancel)
+  are playable; Achievements scroll with the D-pad.
+* Nothing behind an open Start menu reacts to the mouse any more.
+* **In the game**: the pause menu sits centred above the party bar; walking has one constant pace (no speed-up);
+  the combat Item and Spell lists scroll (ten rows, names cut to fit, three lines of description); on a controller
+  LT / RT change item categories and Y sorts; the combat action bar shows controller buttons while a pad is in use;
+  mouse clicks in menus make a soft tick (`ui_click`) instead of the confirm sound.
+* **Resource nodes** are drawn in their own colour (ore copper, herbs green, tech cyan; `color=` on the gather object
+  overrides it) and turn grey once picked; the small item icon that sat inside herb patches is gone.
+
+## Running (Windows)
+
+Unzip and run `Triffall.exe`. The `assets/` folder must sit next to the exe; a `saves/`
+folder is created on first run (settings.ini + slot1-3.sav live there).
+
+The boot screen shows in a window for a few seconds, then the desktop goes borderless
+fullscreen. **F11** (or Alt+Enter) toggles fullscreen at any time; the Settings window
+also has the option.
+
+Edit `discord=` in `saves/settings.ini` to point the Discord icon at your own server.
+
+## Controls
+
+Everything is rebindable in **Settings > Controls** on the desktop (two keyboard keys + one
+gamepad button per action). Defaults:
+
+| Action | Keyboard / mouse | Gamepad |
+|---|---|---|
+| Move / cursor | Arrows or WASD (arrows only in combat), click a neighbouring tile | D-pad / left stick |
+| Interact / confirm | E, Enter, Space, left click | A |
+| Back / pause menu (save, load, settings) | Esc | B |
+| Party, items, spells, quests | Tab or I | Start |
+| Spell menu / item menu | B (or S outside of walking) / Q | LB / LT |
+| Favorites hotbar | 1-8 (assign in the Spells/Items menu with 1-8) | - |
+| Toggle normal / aimed attack (combat) | A | Y |
+| Defend / Flee / Action menu (combat) | D / F / R | RT / - / Back |
+| End turn (combat) | T | RB |
+| Center camera | C | RS |
+| Pan camera (combat) | right-drag, screen edges, click a portrait in the turn strip | right stick |
+| Overwatch (combat) | O | LS |
+| World map | M (also in the pause menu) | - |
+| Journal (quests, bounties, bestiary, stats, notes, achievements) | J | Back |
+| Dev console | ` (grave) | - |
+| Quick save (on a shrine) | F5 | - |
+| Fullscreen | F11 / Alt+Enter | - |
+
+Saving happens at save shrines (walk onto one, or F5 while standing on it); loading is in the pause menu. The desktop
+Load/Save icons still work when no game is running.
+
+## Systems
+
+* **Combat**: standing next to a wall, tree or other blocking tile gives **half cover** (-20% to be hit) or
+  **full cover** (-40%) against attacks coming from that side; a target with an enemy adjacent on two sides is
+  **flanked** (+15% to hit, +15% crit). **Overwatch** (O) spends the turn to fire at the first enemy that moves
+  into range and line of sight. Walking out of a melee enemy's reach draws an **attack of opportunity**.
+  Fights start with everyone exactly where they stood on the map (the leader in front, followers on their
+  trail), so a narrow corridor really does keep the fighter in front. **Fleeing** needs a full turn, nobody in
+  melee reach, and a roll (20% + 2 x DEX, -12% per enemy within 5 tiles, -25% against a boss; haste and
+  stealth help); escaping drops 5% of your gold.
+  The hit-chance readout names each modifier.
+* **Companions** comment on what happens (`banter.txt`), gain or lose **approval** through dialogue choices
+  (`approve=class:n`), and at 60+ approval each one opens a personal quest. The party tab lets you pick who
+  walks in front (**leader**).
+* **Time and weather**: a day is 24 minutes of walking; the HUD shows the day, time and weather. Night tints the
+  map and swaps encounter tables to `<table>_night` where one exists; shops keep `hours=7-20` and their front
+  door is locked while closed (inns never close; anyone already inside can always walk out); rain, storms,
+  fog and snow depend on the biome and change visibility. Inns (`rest=1`) skip to morning.
+* **Inns and healers**: inns (`rest=1`) restore HP and MP overnight for a few coins. Healers (`healer=1` in a
+  dialogue node) charge for what an inn can't do: tend wounds right now (HP only), cleanse lingering poison and
+  burns, raise a fallen companion, and a blessing that shields and mends the party for its next three fights.
+* **Companion chatter** frequency (off / rare / normal / often) is in Settings > General.
+* **Controller / keyboard-only**: every list shows a blinking marker on the focused row; the party screen moves
+  up/down through members and right into their equipment; on the desktop the D-pad walks the icon grid, the
+  Start/Menu button opens the Start menu, and inside windows the D-pad (or arrow keys) hops the cursor between
+  buttons, checkboxes, sliders (left/right adjusts) and key-binding boxes, A/Enter clicks. Pad buttons can be
+  bound by clicking a binding box and pressing the button.
+* **Classes**: every level gives a **rank point** to spend on any class (the level-up screen shows your ranks,
+  what each class gives and what every stat does, with a before/after preview). Hit points and mana grow with
+  the hit/mana die of the classes you rank up; spells unlock by class rank. Companions start with their class
+  and can be **respecced** (shrine priests for gold, or a Draught of Forgetting).
+* **Darkness and light**: dungeons are dark; you see only what your light reaches. Torches (equip or use), the
+  Warden's Lantern, the Light spell and flares push the dark back, and burning braziers/torches on the map light
+  areas. Attacking into darkness costs accuracy unless the attacker has darkvision (undead, machines...).
+  Fire and shock flash light for a moment.
+* **Combat**: whole groups join a fight when they can hear it (linked groups like a chief and his guards always
+  come together; nearby groups join on later rounds). Area spells and grenades hit **everyone** in the area,
+  caster included - the preview warns you. Resistances and weaknesses matter more and are recorded when
+  discovered. Moving reveals the map; paths are recalculated when a body stops blocking a corridor. The cursor
+  shows a tile panel (terrain, cover, light, who stands there).
+* **World objects**: `[obstacle]`s (rubble, vines, ice, rusted doors) are cleared by digging (Shovel, which
+  wears out), blasting (Blast spell / blasting powder - a 3-second fuse that hurts anyone too close),
+  burning, melting or brute force; `[lever]`s and `[change]`s rewrite tiles when a flag is set; doors can need
+  keys (`require=`) or open on a flag (`openIf=`); NPCs can move (`moveif=`). Herb/ore `[gather]` nodes sparkle.
+* **Crafting**: `recipes.txt`; a smith (forge), alchemist (alchemy) or tinker (workbench) in each town opens
+  the crafting screen with tabs **Craft / Reinforce / Enchant / Salvage**. Each station has its own skill that
+  rises as you craft; hard recipes can fail (losing half the materials) and better skill rolls **fine** and
+  **masterwork** results with extra affixes. Many recipes need a **formula** (found, bought or rewarded).
+  Gold is scarcer and shops stock limited gear that restocks every few days; buy/sell work in stacks
+  (Left/Right, hold to accelerate, E for max). **Loot tiers**: equipment from chests and kills can roll affixes from `affixes.txt`
+  ("Keen Iron Sword of Burning"); uncommon = one affix, rare = two, with coloured names.
+* **World map** (M, or the pause menu): discovered locations with quest (yellow) and bounty (cyan) pins. The map
+  itself is just a map; to **travel**, talk to the **coachman** in any town square: he takes you to any place you
+  have visited for a fare (8 gold + 6 per league). Travel takes game time and can be interrupted by an ambush.
+* **Journal** (J): quests with "show on map", bounties, a **bestiary** that fills in kills and reveals
+  resistances as you fight each creature, play stats, notes picked up from signs and lore files, achievements.
+* **Bounties**: each town's notice board posts a few offers per day; take up to 3 at a time, drop one from the
+  journal (E), hand them in at the board. Courier jobs give you a letter and send you one way only.
+* **Achievements**: `achievements.txt` (conditions over stats and flags), unlocked across all save slots,
+  popped up Win98-style and listed in the desktop Achievements window. With a Steam build they are forwarded
+  to Steam (see `STEAM.md`).
+* **Dev console** (`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
+  weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run, difficulty,
+  auto (lets the AI fight for the party - handy for balance testing)...
+* **Desktop toys**: Minesweeper, Solitaire, My Computer (lore files in `assets/data/lore`), and a starfield
+  screensaver after 90 seconds idle.
+
+## The editor (Editor)
+
+Double-click **Editor** on the desktop. It runs at 960x720 and edits the files under `assets/data`:
+
+* **Guide** - **? Guide** in the header (or **F1**) opens a built-in manual: every tab, every field of every data
+  file, every map object key, conditions, scripts, flags, encounters and the world map, with a searchable topic list,
+  Back and "see also" links. Small **?** buttons sit on every tab and next to most fields and open the guide on that
+  exact page (e.g. Achievements has one for the tab and one each for id, name, desc, cond, tile, hidden). In the map
+  header, click a field's name. The text lives in `assets/editor_guide.txt` and can be edited like any data file.
+* **Flags** tab - every flag the campaign uses, gathered from dialogue (`set=`, `flag=`, `inc=`, `clear=`, option
+  conditions), map objects (chest / enemy / trigger / door / obstacle / lever `flag=`, `show` `hide` `moveif` `openif`
+  `require` `if`, scripts), quest stages, dungeon boss flags, achievements, banter, locations and the campaign's starting
+  flags. Each flag lists **Set by** and **Checked by** (click to jump to the dialogue line / map object / entry), flags
+  that are checked but never set are shown first in red, and you can write a note per flag (saved in `flags.txt`).
+  Flag and condition fields elsewhere get a **flag** / **+ flag** picker, and hovering a condition reads it in English.
+* **Quests** - stages are broken out into cards: *shows when* (with a flag picker and a plain-English reading),
+  journal text, DONE, map pin, move up/down; under each stage, where its flags are set. A **Preview** box lets you set
+  flag values and see which stage the journal would show.
+* **Encounters** - a "Where this table is used" panel: tile kinds whose biome rolls it, maps that roll it on those
+  tiles, maps and dungeons with `table=`, the night/day pairing, and an **(unused)** marker in the list. The Maps header
+  `table` and the Tiles tab `biome` have pickers.
+* **Check all** (header) - checks the whole campaign at once: every map, dialogue file, flag, quest, shop, class,
+  creature, recipe, encounter table, dungeon and location for references to things that don't exist (and a few
+  warnings, like unused tables). Click a finding to jump to it.
+* **Used by** - Items, Creatures, Spells and Shops show every place that uses the selected entry (chests, shops, loot,
+  recipes, dialogue, encounter tables...), and the Dialogue tab shows which NPCs and scripts open the file.
+* **Rename a flag everywhere** - from the Flags tab; rewrites and saves every dialogue, map, quest, dungeon,
+  location, achievement, banter line and the campaign start that use it.
+* **Bounties** tab - `bounties.txt`: each notice board (`[board]`: name, map, notices per day, kinds, the dungeons /
+  creatures / items it draws from, which boards its courier letters may go to, reward %) and hand-written notices
+  (`[bounty]`: a fixed kill / fetch / deliver job with your own title and text, optional condition and repeat).
+  Courier letters now only go to real boards whose town you have visited; without a bounties.txt every `board=` in the
+  maps is found automatically. Problems (a board no NPC opens, letters to something that isn't a board) show beside
+  the entry and in Check all.
+* **Items**: `quest=1` marks a quest item that can't be dropped or sold (every `type=key` item is one by default), and
+  `category=` files an item under its own heading. The party menu's Items tab and shops show category chips (T / RB or
+  click) and a sort order (R / Back: as found, name, value, category).
+* **Undo** in every form tab: Ctrl+Z / Ctrl+Y (or the Undo button).
+* **Quest objectives** - `objective=STAGE | DONE-CONDITION | TEXT` adds a checklist line under a stage in the journal
+  (counters like `{itemn:herb_moon}` update live); the Quests tab cards have "+ objective".
+* **World** - the overworld preview now updates live (moving or editing locations, painting `maps/overworld.txt` in the
+  Maps tab, even before saving).
+
+* **Maps** - paint tiles (paint / fill / rect), place and edit objects (NPCs, enemies, chests,
+  exits, triggers, signs, doors, save points), resize, check for problems, save. Right-click picks
+  the tile under the cursor; middle-drag, wheel or WASD scroll; Delete removes the selected object.
+  The **Select** tool drags a region: Ctrl+C / Ctrl+X copy or cut it (tiles and objects), Ctrl+V
+  then click stamps it (shift-click keeps stamping), Delete clears it with the brush, Ctrl+A selects
+  all. Ctrl+Z undoes any map edit, Ctrl+S saves.
+* Every text field supports mouse / Shift selection, double-click select-all and Ctrl+A/C/X/V with
+  the system clipboard. The dialogue editor adds multi-line selection, Ctrl+Z undo and Ctrl+D
+  (duplicate line).
+* **Arrival points**: the map view marks the spawn (S) and where each overworld location drops the party (A).
+  Press **N** over a tile to make it the overworld arrival point; *Check* warns when the arrival is far from the
+  exit back out.
+* **Map <-> Tiles**: in the map view press **K** over a tile (or click *edit* next to the brush) to jump to
+  that tile kind in the Tiles tab; *< Back* or Esc returns to the map.
+* **Play >** in the map header (or **P** over a tile) saves everything, leaves the editor and drops the
+  party onto the open map at the spawn point (or under the cursor). With no game running a level-1
+  tester with 500 gold is created; a running game is moved there instead.
+* **Campaign** (header button): pick which campaign you are editing, or **New campaign**. Each campaign is a separate
+  game: the editor shows only that campaign's own maps, dialogue, items, monsters and so on, never the base game's.
+  A new campaign starts with a starter map, an intro dialogue, a quest and a copy of the base game's classes, spells,
+  items, monsters, recipes and affixes, so it is playable at once; that copy belongs to the campaign from then on.
+  Tiles, sprites and sounds are shared by every campaign.
+* **Campaign tab**: the campaign's name, description and desktop icon; **where a new game begins** (start map and
+  tile); the intro cutscene lines; the dialogue that opens after the intro; starting gold, items and flags; and what
+  the **world map (M)** shows (see Campaigns).
+  *Play from the start* saves and opens New Game for the campaign.
+* **New-game start**: the Maps tab marks the start tile with a yellow **START**. Point at a tile and press **B** to
+  make new games begin there; *Check* warns if it sits on a blocked tile.
+* **World > Bake to paintable map** turns the overworld into `maps/overworld.txt`; from then on it's painted
+  in the Maps tab like any other map (locations still come from `overworld.txt`).
+* Map objects also include obstacles, levers, changes and gather nodes (with templates).
+* **Dungeons > Bake map** turns a generated dungeon (with the current seed) into `maps/<id>.txt` and opens
+  it in the Maps tab. A map file with a dungeon's id takes priority over the generator, so you can hand-edit
+  a dungeon from then on (delete the file to go back to generating it).
+* **Dialogue > Check / Check all** lints dialogue files: missing `[start]`, options and `next=` that lead
+  nowhere, unknown items/creatures/classes/shops/maps, flags that nothing ever sets, unreachable nodes,
+  dialogues no NPC uses. Click a finding to jump to its line.
+* **Recipes, Affixes, Banter, Achievements** - form editors over the new data files.
+* **Sounds** - every sound event and music track the game knows about: change which file(s) it plays,
+  volume, random pitch, looping, preview it, add new events or tracks, import your own .wav/.ogg/.mp3
+  (copied into `assets/audio`). Items, spells and creatures get a `sound=` field (creatures also
+  `attacksound=`), maps and dungeons a `music=` field, all with pickers. Stats, resistances, damage ranges and colours are number fields; types, AI,
+  targets and the like are dropdowns; sprites and tiles have a picker; loot, spells, shop stock,
+  encounter groups and roads are built with "+ add" pickers.
+* **Tiles** - every tile kind: ground tiles, overlay prop, walkable / blocks sight / water,
+  tint and background colour, encounter weight and biome, move cost. This is where you fix a
+  wrong door sprite: pick `door_wood` and change its prop.
+* **World** - the overworld preview with its locations; click to move one, edit its fields.
+* **Items, Creatures, Spells, Classes, Shops, Encounters, Quests, Dungeons** - form editors over
+  the data files (tile/sprite fields have a picker, colours show a swatch).
+* **Dialogue** - a text editor for dialogue files with a syntax cheat-sheet.
+* **Tileset** - browse the sheet and read off tile coordinates.
+
+Saved changes are reloaded by the game when you leave the editor (a running game re-enters its
+current map). All shipped dungeons and the overworld are baked map files; a dungeon or overworld with no
+map file still falls back to the generator.
+
+## Building from source
+
+Requirements: CMake 3.16+, a C++17 compiler, git (raylib 5.5 is fetched automatically).
+
+**Without the editor (release build):**
+
+    build_windows.bat release          (Visual Studio)
+    build_windows.bat mingw release    (MinGW-w64 / w64devkit)
+
+or with CMake directly (use a separate build folder so the editor build's cached settings aren't reused):
+
+    cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DTRIFFALL_EDITOR=OFF
+    cmake --build build-release --config Release --target Triffall
+
+The exe lands in `build-release\Release\` (Visual Studio) or `build-release\` (MinGW) with `assets\` copied next to
+it. That build has no Editor icon or start-menu entry and none of the editor code; the game still reads the same
+data files, so anything you made with the editor ships as-is. Campaign folders in `assets\campaigns\` still get
+their desktop icons.
+
+**With the editor (development build):**
+
+    build_windows.bat          (Visual Studio)
+    build_windows.bat mingw    (MinGW-w64 / w64devkit)
+
+or on any platform:
+
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+    cmake --build build --config Release
+
+**Windows from Linux or macOS** (cross-compiling with llvm-mingw; this is how the 1.0 exe was built):
+
+    cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=tools/mingw-toolchain.cmake -DLLVM_MINGW=/path/to/llvm-mingw
+    cmake --build build-win --target Triffall -j
+
+**The demo:** add `-DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`); see STEAM.md "The demo".
+
+**Browser build (itch.io):** install [Emscripten](https://emscripten.org) (emsdk) and Ninja, load `emsdk_env`, then
+
+    emcmake cmake -S . -B build-web -G Ninja -DTRIFFALL_DEMO=ON
+    cmake --build build-web
+
+Zip `index.html`, `index.js`, `index.wasm` and `index.data` from `build-web` and upload the zip to itch.io as an
+HTML game. The browser build uses `src/platform/main_web.cpp` and `web/shell.html`; the game code is the same.
+Saves live in the browser (IndexedDB). Browsers keep Esc for leaving fullscreen, so in the browser Backspace works as
+Esc too (except while typing a name). On itch, set the embed's viewport to fit the page (960 x 720 suits the default
+page width) and tick "Fullscreen button".
+
+Targets: `Triffall` (the game) and `triffall_headless` (a scripted test driver that
+renders frames to PNG without a window - see `tests/`).
+
+## Project layout
+
+    src/core/      software renderer (gfx), input, utils
+    src/game/      data loading, world/maps, procedural generation, exploration,
+                   combat, dialogue, menus, save/load
+    src/desktop/   the Windows 98 desktop shell
+    src/editor/    Editor (edui.h widgets + editor.cpp)
+    src/platform/  raylib shell (main_raylib.cpp + rl_shim.c) and the headless driver
+    assets/        tiles.png (Urizen 1-bit tileset), icons.png, and data/
+    assets/data/   items, spells, creatures, classes, shops, encounters, quests,
+                   dungeons, overworld locations, maps/ (ASCII maps), dialogue/
+    tools/         mkmaps.py (generates the town maps), kindview / owview / mapcheck dev tools
+    tests/         scripts for the headless driver
+
+## Campaigns
+
+A campaign is a separate game in `assets/campaigns/<id>/`: `campaign.txt` plus its own data files, in the same
+layout as `assets/data` (`maps/`, `dialogue/`, `items.txt`, `creatures.txt`, `classes.txt`, `spells.txt`, `shops.txt`,
+`quests.txt`...). It uses only its own folder; tiles (`tilekinds.txt` can be added to change or add tile kinds),
+sprites, sounds and the My Computer lore are shared. Each campaign gets its own **desktop icon**; double-clicking it
+opens New Game for that campaign, and saves remember which campaign they belong to.
+
+The easiest way to make one is the Editor's **Campaign > New campaign**, then the **Campaign tab**. `campaign.txt`:
+
+    [campaign]
+    name=The Gullwatch Light
+    desc=A short adventure on the storm coast.
+    icon=3,4            ; icons.png cell
+    start=gullwatch,12,20   ; where a new game begins: map,x,y (0,0 = that map's spawn) - B in the Maps tab sets it
+    intro=...           ; opening cutscene, one line per screen ($hero = the hero's name)
+    dialogue=gull_intro ; dialogue that opens after the intro
+    items=torch_item:2,potion_red:2
+    gold=40
+    flags=some_flag
+    worldmap=current    ; what M shows: overworld (default) | off | current (automap of the map you're on) | a map id
+
+Order on a new game: character creation -> intro lines -> the party appears on the start tile -> the opening dialogue.
+
+**World map for indoor campaigns.** A campaign that never goes outside would leave the overworld map blank, so
+`worldmap=` picks what M shows: `off` (no world map; the pause menu entry is greyed and the journal hides "show on map"),
+`current` (an automap of whatever map the party is on), or a map id (that map always - e.g. a castle's great hall; the
+places listed are its exits, named after where they lead, and quest pins may name a map id). To fill a map in without
+walking it, dialogue and scripts can use `revealmap=<map>` (all of it) or `revealmap=<map>,x,y,radius`, and an overworld
+location with `reveal=N` uncovers the overworld within N tiles of itself when its map is entered. Coach travel always
+uses the overworld. A map's own header can override all of this with `worldmap=self|off|overworld|<map id>`
+(a sewer level that shows the sewer hub, say), and a consumable with `effect=revealmap:<map>[,x,y,r]` is a map the
+player can buy or find (the base game's Surveyor's Map at the Brasswick market reveals the overworld).
+`inherit=1` (advanced) makes a campaign build on the base game instead, taking any file it lacks from `assets/data`.
+
+**Tutorial hints** (`hints.txt`, 1.0.8): a list of `[hint]` blocks with `if=` (a condition), optional `title=` and
+`text=`; the last one whose condition holds is shown in the Training panel and stays until it stops holding - quest
+stages for teaching. Extra conditions for it (usable anywhere): `mode:explore|combat|shop|menu|journal|levelup|worldmap`,
+`equipped:<item>`, `fav:<item or spell>` / `fav:any`, `map:<id>`. `{interact}`, `{menu}` and the other action names
+become the key (or pad button) in use - in hints, dialogue, signs and messages. `finish=<campaign>|line|line` in dialogue
+ends a campaign without the epilogue: closing lines, then the desktop with New Game open for that campaign.
+`order=` sorts the campaign icons (the Tutorial is 0) and `achievements=0` keeps achievements from unlocking.
+
+`assets/campaigns/tutorial` is the Tutorial, built only from these pieces (one map, five dialogues, a shop, a quest,
+`hints.txt`, one item and one tile kind). `assets/campaigns/gullwatch` is a small sample campaign. `triffall_headless bakeall` bakes every generated
+dungeon/overworld to map files.
+
+## Modding
+
+Almost everything is plain text:
+
+* `assets/data/maps/*.txt` - ASCII maps with a legend; objects (NPCs, exits, chests,
+  enemies, signs, doors, save points, triggers) are listed below the rows.
+* `assets/data/dialogue/*.txt` - dialogue trees: `[node]` blocks with `speaker`, `text`,
+  `option=Label|target|condition` and actions (`set`, `give`, `take`, `gold`, `xp`, `join`,
+  `shop`, `combat`, `teleport`, `heal`, `rest`, `message`, `cutscene`, `revealmap`...).
+* `hidenpc=id` now keeps the NPC hidden for good (saved); `shownpc=id` brings it back.
+* `assets/editor_guide.txt` - the Editor guide (`== topic.id | Title`, `see: a, b`, then the text).
+* `assets/data/dungeons.txt` - procedural dungeon definitions (style, size, monsters, boss).
+* `assets/data/overworld.txt` - where locations sit on the overworld and which roads link them.
+* `assets/data/tilekinds.txt` - the tile kinds (what each map cell type looks like and does).
+  Delete it to regenerate the built-in defaults.
+* `assets/data/recipes.txt`, `affixes.txt`, `banter.txt`, `achievements.txt`, `lore/*.txt` - crafting, loot affixes,
+  companion lines, achievements and the My Computer files. Each has a format comment at the top.
+* `assets/data/bounties.txt`, `factions.txt` - notice boards and hand-written bounties, and the towns the party has a
+  reputation with. A campaign's `hints.txt` is tutorial guidance (see Campaigns).
+* `assets/data/sounds.txt` - sound events and music tracks (`[sound]` / `[music]` blocks with `id`, `file`,
+  `volume`, `pitchvar`, `loop`, `desc`). Delete it to regenerate the defaults.
+* Tile art is referenced by (column,row) in the tileset; `src/game/tiles.h` names the ones the
+  code uses directly.
+
+## Audio
+
+All default sounds and music are synthesized by `tools/mksounds.py` (numpy + ffmpeg) into `assets/audio/sfx/*.wav`
+and `assets/audio/music/*.ogg`; re-run it to regenerate them. `assets/data/sounds.txt` maps event ids to files,
+so replacing a sound is either dropping a new file over the old one or pointing the event at a different file in
+the Sounds tab. Several files on one event are picked at random; `pitchvar` adds random pitch.
+
+Music is picked automatically: `title` on the desktop, `overworld`, `town` (kind=town/interior), `dungeon`,
+`tech` (tech/ship dungeons), `forest` (other maps), `combat` / `boss` during fights, `gameover`; a map's `music=`
+or a dungeon's `music=` overrides it. Volumes come from the desktop Settings sliders.
+
+## Credits
+
+Art: [Urizen 1-bit tileset v2.0](https://vurmux.itch.io/urizen-onebit-tilesets) by vurmux (CC0) and
+[Cute Desktop Icons 32x32](https://mayke-arth.itch.io/cute-desktop-icons-32x32) by Mayke-Arth. Built on raylib.
+Sound and music are generated by `tools/mksounds.py`.

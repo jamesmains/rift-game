@@ -1,0 +1,41 @@
+[start]
+speaker=Lookout
+text=Keep your head down near the south gate. The security bots patrol there and they don't ask questions.
+option=Seen people in violet robes?|cult|q_cult>=1&!metro_open
+option=Heard anything strange lately?|signal|q_main>=4&!q_signal>=1
+option=I have the tape from the Annex.|signal_back|item:signal_tape&q_signal>=1&!q_signal>=2
+option=Thanks.|end
+
+[cult]
+speaker=Lookout
+text=The glass-eye lot? They slip in and out by the old metro stairs, south-east corner of the square. Stairs caved in years back - they must have a crawl-hole. You won't fit. Dig it out (Gorran in Hollowmere sells shovels) or blow it open; Vosk sells charges. Light the fuse and RUN, mind.
+option=Thanks.|end
+
+[signal]
+speaker=Lookout
+text=Strange? Every night at the third bell my old radio picks up the same thing - a voice from the Annex, reading numbers. Sometimes a name. Somebody left a recorder running on the roof transmitter forty years ago. I want to know whose voice it is.
+option=I'll look for it in the Annex.|signal_yes
+option=Some things should stay switched off.|end
+
+[signal_yes]
+speaker=Lookout
+text=There's a tape room by the Annex's front entrance, just inside. Bring me the spool. I'll make it worth the walk.
+set=q_signal=1
+quest=Signal in the Static
+option=On my way.|end
+
+[signal_back]
+speaker=Lookout
+text=(She threads the tape through a machine older than both of you. Static. Then a woman's voice: "...third shard stable. The thing in the cradle is dreaming. Dr. Vey recording. If anyone hears this - it isn't dead. It's waiting to be put back together. Don't. Put. It. Back.") ...That's my mother's voice.
+take=signal_tape
+set=q_signal=2
+xp=200
+gold=120
+give=grounding_strap
+note=Signal in the Static|A tape from the Annex roof, in Dr. Vey's voice: "The thing in the cradle is dreaming. It isn't dead. It's waiting to be put back together. Don't put it back."
+option=I'm sorry.|signal_end
+
+[signal_end]
+speaker=Lookout
+text=Don't be. Forty years I thought she ran. She stayed and kept recording. ...Take the strap. It was hers - keeps the shocks off. Go on.
+option=(Leave her with the tape.)|end

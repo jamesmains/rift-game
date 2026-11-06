@@ -1,0 +1,15 @@
+# 1.0: Vell's followers, spared - Ashfall's Sky Wardens
+[start]
+speaker=Ilse, Sky Warden
+text=The sky is quiet tonight. We take turns on the old chapel roof - two at a time, all night. Ashfall's scavengers bring us scrap and soup now. Funny, what people forgive when you're useful.
+option=We could use a healer.|heal
+option=Anything to report?|report
+option=Keep watching.|end
+
+[heal]
+healer=We learned to mend what Vell's rites broke. Sit. This won't take long - and it's cheaper than Brasswick.
+
+[report]
+speaker=Ilse, Sky Warden
+text=The violet light over the Scar pulses slower than it did. Like a heart after a run. Whatever's under it knows you're coming. ...That's not a prophecy. Just what it looks like from the roof.
+option=Thank you, Ilse.|end

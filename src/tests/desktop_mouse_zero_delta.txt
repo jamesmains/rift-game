@@ -1,0 +1,6 @@
+# Absolute mouse movement with zero relative delta must still move the software cursor.
+frames 5
+dblclick 50 405
+frames 3
+warp 160 144
+shot zero_delta_hover.png

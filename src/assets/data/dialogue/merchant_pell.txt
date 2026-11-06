@@ -1,0 +1,25 @@
+[start]
+speaker=Merchant Pell
+text=Welcome to Pell's Provisions! Potions, scrolls, sundries. Or if you've a sword and a free afternoon, a problem.
+option=Let's trade.|shop
+option=What problem?|quest|!q_caravan>=1
+option=The bandit captain is dead.|done|q_caravan_done&!q_caravan>=2
+option=Goodbye.|end
+
+[shop]
+shop=brasswick_market
+
+[quest]
+speaker=Merchant Pell
+text=Bandits hit my caravan south of the city and dragged the lot to their camp at Thornhollow. Kill their captain, get my goods back, and I'll pay 150 gold. The guard won't lift a finger.
+set=q_caravan=1
+option=Consider it done.|end
+
+[done]
+speaker=Merchant Pell
+text=Dead? And my goods? ...Well, most of them. Here's your 150, and take this - it came with the caravan and I've no idea what it does.
+set=q_caravan=2
+gold=150
+give=band_speed:1
+xp=250
+option=Thanks.|end

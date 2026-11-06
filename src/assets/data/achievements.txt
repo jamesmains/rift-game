@@ -1,0 +1,245 @@
+# Achievements (global across saves; stored in saves/achievements.ini). cond= terms joined by &:
+# flag:NAME kills:N fights:N fled:N gold:N(earned) level:N chests:N maps:N crafted:N bounties:N bestiary:N(kinds) steps:N day:N travels:N crits:N
+# boss:CREATURE party:N quests:N spells:N damage:N knockouts:N notes:N item:ID approval:CLASS>=N rep:FACTION>=N    tile= icon (col,row)   hidden=1 hides the text until unlocked
+
+[achievement]
+id=first_blood
+name=First Blood
+desc=Win your first fight.
+cond=fights:1
+tile=0,19
+
+[achievement]
+id=goblin_slayer
+name=Goblin Problem
+desc=Deal with the goblins of Greywood Cave.
+cond=flag:q_goblins_done
+tile=104,4
+
+[achievement]
+id=fellowship
+name=Fellowship
+desc=Travel with a full party of four.
+cond=party:4
+tile=104,0
+
+[achievement]
+id=packrat
+name=Packrat
+desc=Open 25 chests.
+cond=chests:25
+tile=6,47
+
+[achievement]
+id=hundred
+name=One Hundred
+desc=Slay 100 enemies.
+cond=kills:100
+tile=104,19
+
+[achievement]
+id=naturalist
+name=Naturalist
+desc=Catalogue 20 different kinds of creature in the bestiary.
+cond=bestiary:20
+tile=6,9
+
+[achievement]
+id=wanderer
+name=Wanderer
+desc=Visit 12 different places.
+cond=maps:12
+tile=37,46
+
+[achievement]
+id=wayfarer
+name=Wayfarer
+desc=Use fast travel 10 times.
+cond=travels:10
+tile=30,24
+
+[achievement]
+id=tinker
+name=Tinker
+desc=Craft 10 items.
+cond=crafted:10
+tile=27,46
+
+[achievement]
+id=bounty_hunter
+name=Bounty Hunter
+desc=Complete 5 notice-board bounties.
+cond=bounties:5
+tile=28,20
+
+[achievement]
+id=veteran
+name=Veteran
+desc=Reach level 10.
+cond=level:10
+tile=0,19
+
+[achievement]
+id=sharpshooter
+name=Sharpshooter
+desc=Land 50 critical hits.
+cond=crits:50
+tile=117,0
+
+[achievement]
+id=rich
+name=Comfortably Off
+desc=Earn 5000 gold in total.
+cond=gold:5000
+tile=36,46
+
+[achievement]
+id=night_owl
+name=Night Owl
+desc=Survive to the dawn of day 10.
+cond=day:10
+tile=80,16
+
+[achievement]
+id=coward
+name=Discretion
+desc=Flee from 5 fights. Nobody's judging.
+cond=fled:5
+tile=104,15
+
+[achievement]
+id=rift_closed
+name=Rift Closed
+desc=Finish the main quest.
+cond=flag:game_won
+tile=30,43
+hidden=1
+
+[achievement]
+id=dragon
+name=Dragonslayer
+desc=Slay a dragon.
+cond=boss:dragon
+tile=112,42
+hidden=1
+
+[achievement]
+id=lich
+name=Unlife Ended
+desc=Destroy the lich.
+cond=boss:lich
+tile=26,48
+hidden=1
+
+[achievement]
+id=scholar
+name=Scholar
+desc=Collect 15 journal notes.
+cond=notes:15
+tile=39,14
+
+[achievement]
+id=arcanist
+name=Arcanist
+desc=Cast 100 spells.
+cond=spells:100
+tile=109,0
+
+[achievement]
+id=open_sky
+name=Closed Sky
+desc=Break the cult of the Open Sky beneath Ashfall.
+cond=flag:hierophant_dead
+tile=109,17
+
+[achievement]
+id=demolition
+name=Fire in the Hole
+desc=Blow open the old metro stairs in Ashfall.
+cond=flag:metro_open
+tile=0,42
+
+[achievement]
+id=warden
+name=Warden's Light
+desc=Return the Warden's medal to Old Hesk.
+cond=flag:q_barrow>=2
+tile=26,22
+
+[achievement]
+id=oathkeeper
+name=Oath Kept
+desc=Bring Sir Vael's sword back into the light.
+cond=flag:q_vael>=2
+tile=29,6
+
+[achievement]
+id=artisan
+name=Artisan
+desc=Craft 25 things.
+cond=crafted:25
+tile=59,18
+
+[achievement]
+id=reinforced
+name=Plus Three
+desc=Reinforce a piece of gear to +3.
+cond=flag:reinforced3
+tile=7,46
+hidden=1
+
+
+[achievement]
+id=local_hero
+name=Local Hero
+desc=Be Honoured in any town.
+cond=rep:hollowmere>=60
+tile=33,25
+
+# ---- 1.0: the story's choices and endings ----
+[achievement]
+id=grakk_owes_you
+name=Grakk Owes You
+desc=Let the goblins of Greywood walk away.
+cond=flag:goblin_chief_spared
+tile=113,4
+hidden=1
+
+[achievement]
+id=sky_wardens
+name=Watchers on the Roof
+desc=Give Vell's followers a second chance.
+cond=flag:converts_spared
+tile=104,17
+hidden=1
+
+[achievement]
+id=ending_seal
+name=Nothing Follows
+desc=Break the three shards.
+cond=flag:ending_seal
+tile=4,22
+hidden=1
+
+[achievement]
+id=ending_watch
+name=Keeper of the Lamp
+desc=Bring the three shards home to Hollowmere.
+cond=flag:ending_watch
+tile=26,22
+hidden=1
+
+[achievement]
+id=ending_claim
+name=The Patient Dark
+desc=Keep the three shards for yourself.
+cond=flag:ending_claim
+tile=26,23
+hidden=1
+
+[achievement]
+id=good_neighbour
+name=Good Neighbour
+desc=Finish ten quests.
+cond=quests:10
+tile=104,24

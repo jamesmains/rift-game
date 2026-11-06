@@ -1,0 +1,31 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport overworld 44 93
+frames 10
+shot ow.png
+key M
+frames 5
+shot owmap.png
+key ESC
+frames 3
+editor
+frames 5
+tab 2
+frames 5
+shot ed_world.png
+tab 0
+frames 5
+shot ed_maps.png

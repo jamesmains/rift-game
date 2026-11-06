@@ -1,0 +1,231 @@
+[map]
+id=hollowmere
+name=Hollowmere
+kind=town
+spawn=20,29
+bg=20,40,20
+
+[legend]
+. = floor_grass
+, = floor_dirt
+r = road
+T = tree|tree|tree2
+t = tree2
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+h = floor_wood
+D = door_wood
+W = window
+o = well
+w = floor_water
+= = bridge
+c = crop|crop2
+H = hay
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+m = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+g = grave2
+a = altar
+e = fence
+Q = loc_house
+
+[rows]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTT.........TTT........TTTT.........TTT.TTTT
+TT.....F.......T.......T..............TTT.TT
+T...#######....T.......T...#########....T..T
+T...#hhhhh#............T...#hhhhhhh#.......T
+T...#hKhhh#.......F....T...#hAAhhhh#.......T
+T...#hhhAC#............TT..#hhhhhBh#.......T
+T...#hhhhh#.F...........TT.#hhBhhhh#...F...T
+T...##WDW##..............T.#ii#DW###.......T
+T......r.......F.F.......T....r....FF......T
+T......r............Q.wwwwww..r............T
+T.F....rrrrrrrrrrrrrrr=======rrrrrrrr......T
+T......r...r..........wwwwww......r........T
+T......r...r..F....ww...........F.r........T
+T..####D###r.....ww....o..........r..###...T
+T..#hhhhhh#r....ww...........######r.#B#...T
+T..#hhbbhh#r....w...........#hhhhhh#r#h#...T
+T..#hShhhh#r...ww...F.......#hhmhnh#r#h#...T
+T..#hhhhhh#r...w............#hhhhhh#r#h#...T
+T..##sW#D##r...ww...........##sWD###r#D#...T
+T.......rrrrrrrrr....F.......rrrr...rrr....T
+T.......r.............................r....T
+T.......r..............ccccc...........r...T
+T..ff...r..............ccccc.........GgG...T
+T..fc...r..............ccccc.........gGg...T
+T..fc...r........H.....ccccc.........GgG...T
+T..ff...r..................................T
+T.......r.................................TT
+TT......r......................T.........TTT
+TTT....rrr.....................TT......TTTTT
+TTTT...rrr....TTTT.....TTTT.....TTT..TTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+# ---- exits ----
+[exit]
+x=7
+y=30
+w=3
+h=1
+to=overworld
+tx=44
+ty=93
+
+[exit]
+x=20
+y=10
+to=hollowmere_home
+tx=5
+ty=7
+
+# ---- NPCs ----
+[npc]
+id=elder
+name=Elder Mara
+sprite=141,1
+x=7
+y=5
+dialogue=elder_mara
+
+[npc]
+id=innkeeper
+name=Innkeeper Doss
+sprite=105,0
+x=31
+y=5
+dialogue=innkeeper_doss
+
+[npc]
+id=bram
+name=Bram
+sprite=121,0
+x=32
+y=7
+dialogue=bram
+hide=joined_warrior
+
+[npc]
+id=shopkeeper
+name=Merchant Ilsa
+sprite=104,1
+x=5
+y=16
+dialogue=merchant_ilsa
+
+[npc]
+id=smith
+name=Smith Gorran
+sprite=105,2
+x=33
+y=16
+dialogue=smith_gorran
+
+[npc]
+id=wren
+name=Healer Wren
+sprite=122,1
+x=38
+y=16
+dialogue=healer_wren
+
+[npc]
+id=villager1
+name=Farmer Tobb
+sprite=104,24
+x=26
+y=24
+dialogue=farmer_tobb
+wander=1
+
+[npc]
+id=villager2
+name=Little Pip
+sprite=104,0
+x=14
+y=12
+dialogue=little_pip
+wander=1
+
+[npc]
+id=villager3
+name=Old Hesk
+sprite=141,22
+x=36
+y=24
+dialogue=old_hesk
+
+[npc]
+id=dog
+name=Mutt
+sprite=10,16
+x=23
+y=15
+dialogue=mutt
+wander=1
+
+# ---- signs ----
+[sign]
+x=12
+y=9
+text=HOLLOWMERE - pop. 61. Mind the goats.
+
+[sign]
+x=9
+y=19
+text=Ilsa's Goods: bread, bandages, bits and bobs.
+
+[sign]
+x=33
+y=9
+text=The Weary Goat Inn. Rooms 10 gold. No goblins.
+
+# ---- chests ----
+[chest]
+x=8
+y=4
+flag=hm_elder_chest
+items=potion_blue:1
+locked=
+
+[chest]
+x=34
+y=4
+flag=hm_inn_chest
+items=cheese:2
+gold=5
+
+# ---- save ----
+[savepoint]
+x=39
+y=26
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=10
+y=10
+board=hollowmere
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=12
+y=10
+travel=1

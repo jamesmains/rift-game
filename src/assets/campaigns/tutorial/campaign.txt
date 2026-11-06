@@ -1,0 +1,19 @@
+# The tutorial: a short campaign that teaches Triffall by playing it - one room per lesson, each door opening when its
+# lesson is done. The green Training panel (hints.txt) says what to do next and stays up until it's done. It builds on
+# the base game (inherit=1) for classes, items, monsters and spells; its own folder has the map, dialogue, quest, shop
+# and hints. At the end, finish= takes the player back to the desktop with New Game open for the main campaign.
+[campaign]
+name=Tutorial
+desc=Ten minutes in the Wardens' training hall that teach the game by playing it. Recommended before your first game.
+author=Parent House
+version=1.0
+icon=0,7
+order=0
+inherit=1
+achievements=0
+start=tut_hall,0,0
+gold=20
+intro=Before the Wardens send anyone out into Aldmoor, they walk the training hall.
+intro=$hero has come to walk it.
+dialogue=tut_intro
+worldmap=current

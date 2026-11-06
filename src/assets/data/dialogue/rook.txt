@@ -1,0 +1,32 @@
+[start]
+speaker=Rook
+text=Hey - hey! You're not wearing a robe. Get these chains off me before the Zealots come back for their "offering".
+option=(Break the chains.)|free|!rook_freed
+option=Thanks for the tip-off, Rook.|later|rook_freed&!rook_paid
+option=How's the scrap trade?|chat|rook_paid
+option=Later.|end
+
+[free]
+speaker=Rook
+text=Ow. Ow. Thank you. Listen: their Hierophant - Vell - is in the old chapel past the blast door. The door's dead without station power; the power room is north off the tunnel. And there's a thing guarding the chapel. They call it the Vigil. It's armour, but nobody's in it. Shock fries it - I heard them arguing about the wiring.
+set=rook_freed
+xp=80
+next=free2
+
+[free2]
+speaker=Rook
+text=I'm going up while I still have legs. Find me in Ashfall and I'll make it worth your while.
+option=Go. Quietly.|end
+
+[later]
+speaker=Rook
+text=You came back up! Here - everything I had stashed. And a trick: rub storm oil on your blade before you hit anything made of metal.
+give=oil_shock:3,flare:2
+gold=90
+set=rook_paid
+option=Much obliged.|end
+
+[chat]
+speaker=Rook
+text=Better since the glass-eyes stopped dragging people downstairs. That's on you.
+option=Glad to hear it.|end

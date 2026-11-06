@@ -1,0 +1,13 @@
+# D-pad down should move one physical icon row at a time.
+frames 5
+pad 1
+key DOWN
+audio
+keys DOWN DOWN DOWN
+shot pad_nav_vertical.png
+audio
+keys DOWN DOWN DOWN DOWN
+shot pad_nav_bottom.png
+audio
+keys DOWN DOWN DOWN
+audio

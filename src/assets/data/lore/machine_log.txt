@@ -1,0 +1,11 @@
+> RECOVERED TERMINAL LOG (lab level 2)
+
+[0001] Power restored. Running diagnostics. 14 of 61 subsystems respond.
+[0002] Atmosphere nominal. Occupants: 0. Last occupant logout: 14,616 days ago.
+[0003] Perimeter breach, sector 4. Classification: fauna. Response: minimal.
+[0144] Perimeter breach, sector 1. Classification: UNKNOWN. Response: all units.
+[0145] Correction. Classification: human. Query: humans do not do that.
+[0300] Directive updated by remote authority "RIFT-0". Content redacted.
+[0301] This unit objects to the updated directive.
+[0302] Objection noted. Objection overruled.
+[0303] This unit remembers the objection.

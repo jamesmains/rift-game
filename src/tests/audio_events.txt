@@ -1,0 +1,49 @@
+# sound events and music switching (headless: recorded, not played)
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+audio
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+audio
+key RIGHT
+key RIGHT
+frames 3
+audio
+key TAB
+frames 3
+key DOWN
+key DOWN
+key ESC
+frames 3
+audio
+god
+combat goblin,goblin
+frames 10
+audio
+target
+frames 30
+target
+frames 30
+audio
+frames 200
+audio
+dump
+teleport goblin_cave 0 0
+frames 5
+audio
+teleport overworld 60 60
+frames 5
+audio
+teleport lab 0 0
+frames 5
+audio

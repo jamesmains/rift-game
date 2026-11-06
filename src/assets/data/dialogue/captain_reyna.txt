@@ -1,0 +1,27 @@
+[start]
+speaker=Captain Reyna
+text=Barracks are off limits unless you're here about the bounty. Five gold a goblin ear, no questions, no haggling.
+option=I have ears to sell.|sell|item:goblin_ear
+option=What bounty?|about|!q_ears>=1
+option=Any work for a sword?|work
+option=Goodbye.|end
+
+[about]
+speaker=Captain Reyna
+text=Goblins raid the farms, the farms stop paying taxes, the Mayor shouts at me. Bring me ears from Greywood and I'll make it worth your while.
+set=q_ears=1
+option=Understood.|end
+
+[sell]
+speaker=Captain Reyna
+text=Let's see them. ...Fine work. Here's your coin. Bring more.
+take=goblin_ear:1
+gold=5
+set=q_ears=2
+option=I have more.|sell|item:goblin_ear
+option=That's all.|end
+
+[work]
+speaker=Captain Reyna
+text=Thornhollow, south of the city. Bandits took a merchant's caravan and my men can't spare the week. Pell in the market will pay if you clear them out. The keep? Sealed on the Mayor's orders. Don't ask.
+option=Noted.|end

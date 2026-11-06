@@ -1,0 +1,18 @@
+[start]
+speaker=Innkeeper Ora
+text=The Dry Well. Eight gold a night. We've no water to waste on baths, so don't ask.
+option=Rent a bed. (8 gold)|room|gold:8
+option=Rent a bed.|poor|!gold:8
+option=Goodbye.|end
+
+[room]
+speaker=Innkeeper Ora
+text=Sleep. The sand sings at night; it's nothing.
+gold=-8
+rest=1
+option=Thanks.|end
+
+[poor]
+speaker=Innkeeper Ora
+text=Eight gold.
+option=Right.|end

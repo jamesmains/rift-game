@@ -1,0 +1,28 @@
+# 0.8.5: Flags tab, quest stage cards, encounter usage panel, guide window
+frames 5
+editor
+frames 5
+tab 19
+frames 3
+shot ed_flags.png
+click 100 100
+frames 2
+shot ed_flags_sel.png
+tab 9
+frames 3
+click 60 102
+frames 2
+shot ed_quests.png
+tab 8
+frames 3
+click 60 102
+frames 2
+shot ed_encounters.png
+key F1
+frames 3
+shot ed_guide_f1.png
+key ESC
+frames 2
+guide achievement.cond
+frames 2
+shot ed_guide_topic.png

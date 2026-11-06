@@ -1,0 +1,18 @@
+# 1.0 demo: the base campaign is limited to demo.txt's maps (here switched on from the console; a real demo build is
+# cmake -DTRIFFALL_DEMO=ON), the road on is closed with a message, and the demo's ending plays when the Mayor sends
+# the party to Dunmarrow. Other campaigns would play in full.
+newgame Dee warrior 1
+con demo 1
+teleport overworld 62 42
+con flag q_main 3
+frames 5
+expect mode == ENDING
+autoending 1
+settle
+expect mode == EXPLORE
+teleport overworld 62 41
+frames 10
+key UP
+frames 10
+expect map == overworld
+expect mode == MESSAGE

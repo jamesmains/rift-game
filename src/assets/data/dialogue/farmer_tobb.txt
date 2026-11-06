@@ -1,0 +1,18 @@
+[start]
+speaker=Farmer Tobb
+text=Those goblins took my best sow and put an arrow in my boy. If you're going up to Greywood, give 'em one from me.
+option=I will.|end|!q_goblins_done
+option=The chief is dead. It's over.|killed|q_goblins_done&!goblin_chief_spared
+option=The goblins are gone. I let them leave.|spared|goblin_chief_spared
+
+[killed]
+speaker=Farmer Tobb
+text=Good. Good. My boy's walking again - limps, but he walks. Here, take a sack of turnips. Don't argue.
+give=bread:2
+set=tobb_thanked
+option=Thank you, Tobb.|end
+
+[spared]
+speaker=Farmer Tobb
+text=Let them LEAVE? After my boy - ... no. No. Mara says it's done and I'll keep my peace. But don't expect me to shake your hand.
+option=I understand.|end

@@ -1,0 +1,21 @@
+# The credits shown at the end of the game (after the epilogue). One line each; "= text" is a big heading,
+# "- text" a small gold heading, an empty line is a gap. $hero and {days} work here too.
+= Triffall
+
+- A game by
+Parent House
+
+- Tiles
+Urizen OneBit tileset by vurmux
+
+- Desktop icons
+Cute Desktop Icons by Mayke-Arth (mayke-arth.itch.io)
+
+- Clear font
+Spleen by Frederic Cambus (BSD licence, see LICENSE-spleen.txt)
+
+- Starring
+$hero
+
+
+Thank you for playing.

@@ -1,0 +1,145 @@
+# Pacing route for tools/pacing.sh (not part of the test suite). The main quest plus the side content most players
+# pick up on the way (Bram, Elowen, Tessa, Pell's caravan, Reyna's ears), played by the bot as a careful player:
+# torches underground, potions, inns, shopping, better gear. CLASS / DIFF / SEED / GODLINE are filled in by the script.
+# With god mode it always finishes and the checkpoints show the level, gold and time curve; without it, the first
+# wipe shows where the difficulty outruns the party.
+# 1.0: the whole main quest, cottage to the Unmade King, played by the bot (src/platform/bot.h) with real walking,
+# real dialogue choices and real fights (the combat AI plays the party; god mode keeps one bad roll from ending the run).
+# Every story flag is checked on the way. If any step can't be done - no path, a missing option, a fight that doesn't
+# set its flag - the run fails. Takes a few seconds.
+verbose 0
+strict 1
+GODLINE
+newgame Bot CLASS DIFF SEED
+expect flag:hero_awake == 1
+expect queststatus:main contains Elder Mara sent
+checkpoint start
+
+# --- Hollowmere: the elder, Bram ---
+goto hollowmere
+talk elder
+choose handle it
+expect flag:q_main == 1
+expect queststatus:main contains Greywood
+talk bram
+choose want to come
+settle
+expect members == 2
+checkpoint hollowmere
+
+# --- Greywood Cave ---
+goto goblin_cave
+walk 25 3
+choose no deal
+fight goblin_chief_dead
+expect flag:q_goblins_done == 1
+checkpoint goblin_chief
+goto hollowmere
+talk elder
+choose goblin chief is dead
+expect flag:q_main == 2
+expect item:elder_letter == 1
+
+# --- Brasswick and Dunmarrow ---
+goto brasswick
+talk mayor
+choose letter from Elder Mara
+expect flag:q_main == 3
+checkpoint brasswick
+talk elowen
+choose Join me
+settle
+# a little side content, as most players would: Pell's caravan at Thornhollow, Reyna's goblin ears
+talk reyna
+choose ears to sell
+talk pell
+choose What problem
+goto bandit_camp
+fight bandit_leader_dead
+goto brasswick
+talk pell
+choose bandit captain is dead
+checkpoint caravan
+goto crypt
+fight lich_dead
+expect flag:rift_shard_found == 1
+expect item:rift_shard == 1
+checkpoint lich
+goto brasswick
+talk mayor
+choose Rift Shard from Dunmarrow
+expect flag:q_main == 4
+expect queststatus:main contains Tessa
+
+# --- Ashfall, the Annex ---
+goto ashfall
+talk tessa
+choose shard inside the Annex
+settle
+expect flag:q_main == 5
+expect members >= 3
+checkpoint ashfall
+goto lab
+fight golem_dead
+expect flag:rift_shard2_found == 1
+checkpoint golem
+
+# --- the cult of the Open Sky ---
+goto ashfall
+talk cultist_npc
+choose Never
+expect flag:cult_fought == 1
+walk 45 23
+walk 45 28
+settle
+expect flag:q_cult == 1
+expect item:cult_sigil == 1
+goto hollowmere
+waituntil 9
+talk smith
+choose wares
+buy shovel 1
+settle
+goto ashfall
+bump 52 39
+choose Dig
+expect flag:metro_open == 1
+goto metro
+bump 22 3
+expect flag:metro_drained == 1
+talk rook
+choose Break the chains
+expect flag:rook_freed == 1
+bump 43 4
+expect flag:metro_power == 1
+fight vigil_dead
+fight hierophant_dead
+expect flag:q_cult == 2
+expect item:rift_key == 1
+checkpoint hierophant
+
+# --- the Wreck ---
+goto wreck
+bump 23 12
+expect item:keycard_blue == 1
+goto ship
+fight mech_dead
+expect flag:rift_shard3_found == 1
+expect queststatus:main contains Scar, far to the north-east
+checkpoint walker
+goto brasswick
+talk mayor
+choose cult of the Open Sky is broken
+expect flag:q_cult == 3
+
+# --- the Scar ---
+goto rift_core
+checkpoint scar
+fight rift_lord_dead
+choose Carry them home
+settle
+expect flag:q_main == 7
+expect flag:game_won == 1
+expect queststatus:main contains DONE
+checkpoint ending
+report pacing.csv

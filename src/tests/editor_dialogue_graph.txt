@@ -1,0 +1,25 @@
+# Dialogue tab: open bram.txt ([start] + [camp] bands), switch the middle panel to the node graph,
+# select a node (info strip), pan with a right-drag, then double-click a node to jump back to the text.
+# Coordinates assume the two-row tab bar (TOP=50): the Text|Graph toggle sits in the middle panel header
+# (Text at 582..618, Graph at 620..664, y 55..69).
+frames 5
+editor
+frames 5
+tab 11
+click 60 157
+frames 3
+click 642 62
+frames 3
+shot dlg_graph.png
+click 300 115
+frames 2
+shot dlg_graph_select.png
+rdrag 500 400 350 330
+frames 2
+shot dlg_graph_pan.png
+# Re-layout resets positions and pan
+click 240 81
+frames 2
+dblclick 300 115
+frames 2
+shot dlg_graph_jump.png

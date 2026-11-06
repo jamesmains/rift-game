@@ -1,0 +1,43 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+shot newgame.png
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+con xp 260
+key ESC
+frames 5
+shot levelup1.png
+key DOWN
+key DOWN
+key ENTER
+frames 2
+key RIGHT
+key RIGHT
+key DOWN
+key RIGHT
+frames 2
+shot levelup2.png
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+key ENTER
+frames 5
+dump
+key TAB
+frames 3
+move 200 190
+frames 2
+shot sheet.png

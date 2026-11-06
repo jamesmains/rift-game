@@ -1,0 +1,42 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport brasswick 44 16
+con give mayor_seal 1
+frames 3
+key RIGHT
+frames 120
+dump
+key ENTER
+frames 120
+dump
+key ENTER
+frames 120
+dump
+key ENTER
+frames 60
+key ENTER
+frames 60
+key ENTER
+frames 10
+dump
+key RIGHT
+frames 10
+key UP
+frames 10
+key UP
+frames 10
+dump
+shot keep.png

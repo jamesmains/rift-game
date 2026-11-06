@@ -1,0 +1,30 @@
+# 0.8.6: quest objectives in the journal, map item, per-map world map
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+flag q_moonleaf
+give herb_moon 2
+key J
+frames 3
+keys DOWN DOWN DOWN DOWN
+frames 3
+shot quest_obj.png
+key ESC
+give map_aldmoor 1
+con run revealmap:overworld
+key M
+frames 5
+shot map_revealed.png
+expect item:map_aldmoor == 1
+expect mode == WORLDMAP

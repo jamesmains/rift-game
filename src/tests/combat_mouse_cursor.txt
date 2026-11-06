@@ -1,0 +1,50 @@
+# The combat cursor follows the mouse: after the party moves (which puts the cursor back on the unit for keyboard
+# players) and while the camera moves, the highlighted tile is still the one under the pointer. Keys take it back.
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+flag q_main
+teleport hollowmere 20 20
+frames 5
+combat goblin
+mousein 1
+# the mouse moves while the goblin is still acting...
+move 200 200
+frames 300
+expect mode == COMBAT
+# ...and when Arin's turn comes, the cursor is under the pointer, not on Arin
+expect cursoronunit == 0
+expect cursorundermouse == 1
+mouseunit -2 0
+expect cursorundermouse == 1
+# end the turn without touching the mouse: the next turn puts the cursor on the unit, the mouse should win
+key T
+frames 240
+expect mode == COMBAT
+expect cursorundermouse == 1
+# a keyboard move hands the cursor to the keys and it stays theirs while the mouse is still
+key LEFT
+frames 3
+expect cursorundermouse == 0
+key D
+frames 240
+expect cursoronunit == 1
+# the mouse takes it back the moment it moves
+mouseunit 1 1
+expect cursorundermouse == 1
+# a controller takes it away from the mouse
+pad 1
+frames 3
+mouseunit 2 0
+expect cursorundermouse == 0

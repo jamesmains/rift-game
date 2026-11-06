@@ -1,0 +1,17 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^\\.\\\\build\\\\Debug\\\\triffall_headless\\.exe tests/editor_select_object\\.txt build\\\\Debug\\\\editor_select_object_test$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build-release-final",
+    "cmake.configureArgs": [
+        "-DTRIFFALL_EDITOR=OFF"
+    ],
+    "cmake.defaultVariants": {
+        "buildType": {
+            "default": "release"
+        }
+    }
+}

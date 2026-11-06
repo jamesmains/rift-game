@@ -1,0 +1,187 @@
+#include <filesystem>
+// Headless test driver: runs the app with a scripted sequence of inputs and writes screenshots.
+// Usage: triffall_headless script.txt [outdir]
+#include "../app.h"
+#include "bot.h"
+#include <cstdio>
+#include <map>
+#include <chrono>
+#include <algorithm>
+
+static std::map<std::string, Key> keyMap = {
+    {"UP", K_UP}, {"DOWN", K_DOWN}, {"LEFT", K_LEFT}, {"RIGHT", K_RIGHT}, {"ENTER", K_ENTER}, {"ESC", K_ESCAPE}, {"TAB", K_TAB}, {"SPACE", K_SPACE},
+    {"E", K_E}, {"Q", K_Q}, {"T", K_T}, {"A", K_A}, {"S", K_S}, {"D", K_D}, {"F", K_F}, {"R", K_R}, {"C", K_C}, {"W", K_W}, {"I", K_I}, {"V", K_V}, {"X", K_X}, {"Z", K_Z}, {"K", K_K}, {"P", K_P}, {"B", K_B}, {"J", K_J}, {"M", K_M}, {"O", K_O}, {"GRAVE", K_GRAVE}, {"L", K_L}, {"LEFT2", K_LEFT}, {"L", K_L}, {"N", K_N}, {"F1", K_F1},
+    {"BS", K_BACKSPACE}, {"DEL", K_DELETE}, {"F1", K_F1}, {"F2", K_F2}, {"F5", K_F5}, {"F9", K_F9}, {"F11", K_F11},
+    {"1", K_1}, {"2", K_2}, {"3", K_3}, {"4", K_4}, {"5", K_5}, {"6", K_6}, {"7", K_7}, {"8", K_8}, {"PGUP", K_PAGEUP}, {"PGDN", K_PAGEDOWN}, {"SHIFT", K_SHIFT}, {"PADSTART", K_PAD_START}, {"PADA", K_PAD_A}, {"PADB", K_PAD_B}, {"PADX", K_PAD_X}, {"PADY", K_PAD_Y}, {"PADLB", K_PAD_LB}, {"PADRB", K_PAD_RB}, {"PADLT", K_PAD_LT}, {"PADRT", K_PAD_RT}, {"PADBACK", K_PAD_BACK}, {"PADLS", K_PAD_LS}, {"PADRS", K_PAD_RS}, {"PADUP", K_PAD_UP}, {"PADDOWN", K_PAD_DOWN}, {"PADLEFT", K_PAD_LEFT}, {"PADRIGHT", K_PAD_RIGHT}};
+
+int main(int argc, char** argv) {
+    if (argc < 2) { printf("usage: %s script [outdir]\n", argv[0]); return 1; }
+    std::string outdir = argc > 2 ? argv[2] : ".";
+    App app;
+    if (!app.init("assets", outdir)) { printf("init failed: %s\n", app.error.c_str()); return 1; }
+    app.skipBoot = true;
+    app.game.fixedSeed = 20261022;   // the same dice every run
+    InputState in; in.mouseX = 320; in.mouseY = 240;
+    std::string script; if (!readFile(argv[1], script)) { printf("no script\n"); return 1; }
+    const float dt = 1.0f / 60.0f;
+    std::string clip; bool padMode = false; int fails = 0;
+    auto step = [&](int n) { for (int i = 0; i < n; i++) { if (padMode) in.gamepadActive = true; app.frame(in, dt); if (app.req.hasClipboardOut) { clip = app.req.setClipboard; app.req.hasClipboardOut = false; } bool c = in.down[K_CTRL], sh = in.down[K_SHIFT]; in.beginFrame(); in.down[K_CTRL] = c; in.down[K_SHIFT] = sh; if (c) in.clipboard = clip; if (app.wantsQuit()) break; } };
+    Bot bot(app, in, step, fails);
+    for (auto& raw : split(script, '\n')) {
+        std::string line = trim(raw); if (line.empty() || line[0] == '#') continue;
+        auto p = split(line, ' ');
+        std::string cmd = p[0];
+        if (bot.command(cmd, p, line)) {}
+        else if (cmd == "frames") step(atoi(p[1].c_str()));
+        else if (cmd == "key") { in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); step(1); }
+        else if (cmd == "ctrl") { in.down[K_CTRL] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.clipboard.clear(); step(1); printf("ctrl+%s clip=[%s]\n", p[1].c_str(), clip.substr(0, 40).c_str()); }
+        else if (cmd == "shiftkey") { in.down[K_SHIFT] = true; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_SHIFT] = false; step(1); }
+        else if (cmd == "keys") { for (size_t i = 1; i < p.size(); i++) { in.press(keyMap[p[i]]); step(1); in.release(keyMap[p[i]]); step(8); } }
+        else if (cmd == "hold") { float oldX = in.stickX, oldY = in.stickY; if (p.size() > 3) in.stickX = (float)atof(p[3].c_str()); if (p.size() > 4) in.stickY = (float)atof(p[4].c_str()); in.press(keyMap[p[1]]); step(atoi(p[2].c_str())); in.stickX = oldX; in.stickY = oldY; in.release(keyMap[p[1]]); step(1); }
+        else if (cmd == "press") { in.press(keyMap[p[1]]); step(1); }
+        else if (cmd == "release") { in.release(keyMap[p[1]]); step(1); }
+        else if (cmd == "type") { std::string t = line.substr(5); for (char c : t) { in.typed = std::string(1, c); step(1); } }
+        else if (cmd == "move") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; step(2); }
+        else if (cmd == "warp") { in.mouseX = atoi(p[1].c_str()); in.mouseY = atoi(p[2].c_str()); in.mouseDX = in.mouseDY = 0; step(2); }
+        else if (cmd == "click" || cmd == "dblclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; step(2);
+            int times = cmd == "click" ? 1 : 2; for (int k = 0; k < times; k++) { in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(3); } }
+        else if (cmd == "rclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(1); in.mousePressed[2] = true; step(1); }
+        else if (cmd == "shot") { savePNG(app.canvas, outdir + "/" + p[1]); printf("shot %s state=%d mode=%d map=%s pos=%d,%d\n", p[1].c_str(), (int)app.state, (int)app.game.mode, app.game.mapId.c_str(), app.game.px, app.game.py); }
+        else if (cmd == "rdrag") { int x0 = atoi(p[1].c_str()), y0 = atoi(p[2].c_str()), x1 = atoi(p[3].c_str()), y1 = atoi(p[4].c_str()); in.mouseX = x0; in.mouseY = y0; step(1); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); for (int i = 1; i <= 10; i++) { int nx = x0 + (x1 - x0) * i / 10, ny = y0 + (y1 - y0) * i / 10; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; in.mouseDown[2] = true; step(1); } in.mouseDown[2] = false; in.mouseReleased[2] = true; step(1); }
+        else if (cmd == "drag") { int x0 = atoi(p[1].c_str()), y0 = atoi(p[2].c_str()), x1 = atoi(p[3].c_str()), y1 = atoi(p[4].c_str()); in.mouseX = x0; in.mouseY = y0; step(1); in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); for (int i = 1; i <= 10; i++) { int nx = x0 + (x1 - x0) * i / 10, ny = y0 + (y1 - y0) * i / 10; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; in.mouseDown[0] = true; step(1); } in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); }
+        else if (cmd == "mouseunit") {   // mouseunit DX DY: move the pointer to the tile DX,DY from the acting combat unit
+            auto& G = app.game; if (G.cb.selectedUnit >= 0) { auto& u = G.cb.units[G.cb.selectedUnit]; int nx = (u.x + atoi(p[1].c_str())) * UI::TILE - G.camX + UI::TILE / 2, ny = (u.y + atoi(p[2].c_str())) * UI::TILE - G.camY + UI::TILE / 2; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; } step(2); }
+        else if (cmd == "mousein") { in.mouseInWindow = atoi(p[1].c_str()) != 0; step(1); }   // the pointer is over the window (a real mouse)
+        else if (cmd == "wheel") { in.wheel = atoi(p[1].c_str()); step(1); }
+        else if (cmd == "say") printf("%s\n", line.substr(4).c_str());
+        else if (cmd == "teleport") { app.game.modeStack.clear(); app.game.mode = GMode::EXPLORE; app.game.enterMap(p[1], atoi(p[2].c_str()), atoi(p[3].c_str()), false); step(2); }
+        else if (cmd == "saveload") {   // round-trip the game through its save format (what a save + load does)
+            auto cnt = [&]() { int n = 0; if (app.game.map) for (auto& c : app.game.map->cells) n += c.explored; return n; };
+            int before = cnt(); std::string s = app.game.serialize(); bool ok = app.game.deserialize(s); step(2);
+            printf("saveload ok=%d explored %d -> %d map=%s\n", ok ? 1 : 0, before, cnt(), app.game.mapId.c_str());
+        }
+        else if (cmd == "god") { app.game.godMode = true; }
+        else if (cmd == "reloaddesktop") {   // a fresh desktop, as on the next launch: it reads saves/desktop.ini back
+            App& A = app; A.desktop.~Desktop(); new (&A.desktop) Desktop(); A.desktop.init(&A.tileset, &A.font, &A.data, &A.game, &A.settings, &A.req, A.saveDir, "assets/icons.png"); step(2); }
+        else if (cmd == "campaign") { bool ok = app.game.switchCampaign(p[1]); printf("campaign %s ok=%d\n", p[1].c_str(), ok ? 1 : 0); }   // the next newgame plays this campaign
+        else if (cmd == "setting") {   // setting NAME VALUE: accessibility and other options as Settings would set them
+            GameSettings& st = app.settings; int v = p.size() > 2 ? atoi(p[2].c_str()) : 1;
+            if (p[1] == "largetext") st.largeText = v; else if (p[1] == "colorblind") st.colorblind = v; else if (p[1] == "textspeed") st.textSpeed = v; else if (p[1] == "reduceflash") st.reduceFlashing = v; else if (p[1] == "font") st.fontStyle = v; else if (p[1] == "ambient") st.ambientVolume = v;
+            else printf("unknown setting %s\n", p[1].c_str()); }
+        else if (cmd == "boot") { app.desktop.drawBoot(app.canvas, (float)atof(p[1].c_str())); }   // render the boot screen at time T (then 'shot')
+        else if (cmd == "setupwizard") { app.desktop.openWindow("setup"); step(2); }
+        else if (cmd == "perf") {   // perf N [LABEL]: run N frames and report the time one frame takes (update + software render)
+            int n = atoi(p[1].c_str()); std::vector<double> ms; ms.reserve(n);
+            for (int i = 0; i < n; i++) { auto t0 = std::chrono::steady_clock::now(); step(1); ms.push_back(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count()); }
+            std::sort(ms.begin(), ms.end()); double sum = 0; for (double v : ms) sum += v;
+            printf("PERF %-28s frames=%d avg=%.2fms p95=%.2fms max=%.2fms (60 fps = 16.7ms)\n", p.size() > 2 ? p[2].c_str() : "", n, sum / n, ms[(size_t)(n * 0.95)], ms.back()); }
+        else if (cmd == "segfault") { volatile int* bad = nullptr; *bad = 1; }   // test the crash handler for real (not in the suite)
+        else if (cmd == "saveslot") { app.game.saveToSlot(atoi(p[1].c_str()) - 1); }
+        else if (cmd == "loadslot") { int sl = p[1] == "auto" ? Game::AUTOSAVE_SLOT : atoi(p[1].c_str()) - 1; bool ok = app.game.loadFromSlot(sl); printf("loadslot %s ok=%d %s\n", p[1].c_str(), ok ? 1 : 0, app.game.loadError.c_str()); step(2); }
+        else if (cmd == "filereplace") {   // filereplace NAME OLD NEW: edit a file in the save directory (damage / age a save)
+            std::string t, path = outdir + "/" + p[1]; readFile(path, t); size_t at = t.find(p[2]); if (at != std::string::npos) t.replace(at, p[2].size(), p.size() > 3 ? p[3] : ""); writeFile(path, t); }
+        else if (cmd == "rmfile") { std::error_code ec; std::filesystem::remove(outdir + "/" + p[1], ec); }
+        else if (cmd == "truncate") { std::string t, path = outdir + "/" + p[1]; readFile(path, t); writeFile(path, t.substr(0, t.size() / 3)); }
+        else if (cmd == "clock") { app.game.clockMin = atoi(p[1].c_str()); }
+        else if (cmd == "con") { app.game.runConsole(line.substr(4)); for (auto& o : app.game.consoleOut) printf("  con: %s\n", o.c_str()); app.game.consoleOut.clear(); step(2); }
+        else if (cmd == "weather") { app.game.weather = p[1]; app.game.weatherSteps = 9999; app.game.precip.clear(); }
+        else if (cmd == "interactmoving") { app.settings.interactWhileMoving = atoi(p[1].c_str()) != 0; }
+        else if (cmd == "cheststate") { int cx = atoi(p[1].c_str()), cy = atoi(p[2].c_str()); Chest* c = app.game.map ? app.game.map->chestAt(cx, cy) : nullptr; printf("chest %d,%d found=%d opened=%d\n", cx, cy, c != nullptr, c && c->opened); }
+        else if (cmd == "editor") { app.desktop.launchEditor = true; app.state = AppState::DESKTOP; step(2); }
+#ifndef TRIFFALL_NO_EDITOR
+        else if (cmd == "guide") { app.editor.openGuide(p.size() > 1 ? p[1] : "start"); step(2); }
+        else if (cmd == "tab") { app.editor.tab = atoi(p[1].c_str()); step(2); }
+        else if (cmd == "checkall") {   // the Editor's Check all over the whole campaign; errors count as failures
+            app.editor.open(); app.editor.runCampaignCheck(); int errs = 0;
+            for (auto& f : app.editor.report) { printf("  check %s: %s\n", f.err ? "ERROR" : "warn", f.text.c_str()); if (f.err) errs++; }
+            printf("checkall: %d findings, %d errors\n", (int)app.editor.report.size(), errs);
+            if (p.size() > 1 && p[1] == "strict") fails += errs; }
+#endif
+        else if (cmd == "flag") { app.game.setFlag(p[1]); }
+        else if (cmd == "audio") { gAudio.update(5.0f); printf("music=%s ambient=%s recent:", gAudio.currentMusic.c_str(), gAudio.currentAmbient.c_str()); for (auto& r : gAudio.recent) printf(" %s", r.c_str()); printf("\n"); if (!gAudio.missing.empty()) { printf("MISSING:"); for (auto& m : gAudio.missing) printf(" %s", m.c_str()); printf("\n"); } gAudio.recent.clear(); }
+        else if (cmd == "fuzz" || cmd == "fuzzed") { bool ed = cmd == "fuzzed"; int n = atoi(p[1].c_str()); Rng fr(p.size() > 2 ? atoi(p[2].c_str()) : 7); static const Key ks[] = {K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ENTER, K_ESCAPE, K_TAB, K_E, K_Q, K_T, K_1, K_2, K_3, K_4, K_5, K_F5, K_PAGEUP, K_PAGEDOWN, K_A, K_S, K_D, K_F, K_R, K_C, K_W, K_SPACE, K_K, K_P, K_DELETE, K_Z, K_J, K_M, K_O, K_B, K_GRAVE, K_L};
+            for (int i = 0; i < n; i++) { int r = fr.range(0, 9); if (r < 6) { Key k = ks[fr.range(0, 35)]; in.press(k); step(1); in.release(k); step(fr.range(1, 6)); } else if (r < 8) { in.mouseX = fr.range(0, app.canvas.w - 1); in.mouseY = fr.range(0, app.canvas.h - 1); in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; step(2); } else step(10); if (ed && app.state == AppState::GAME) { app.state = AppState::DESKTOP; app.desktop.windows.clear(); app.desktop.launchEditor = true; step(2); } if (app.state == AppState::DESKTOP) { if (ed) { app.desktop.windows.clear(); app.desktop.launchEditor = true; step(2); } else if (app.game.running) { app.state = AppState::GAME; app.desktop.windows.clear(); } else break; } if (app.wantsQuit()) break; }
+            printf("fuzz done: state=%d mode=%d map=%s\n", (int)app.state, (int)app.game.mode, app.game.mapId.c_str()); }
+        else if (cmd == "pad") { padMode = atoi(p[1].c_str()) != 0; in.gamepadActive = padMode; }
+        else if (cmd == "fuzzdesk") { int n = atoi(p[1].c_str()); Rng fr(p.size() > 2 ? atoi(p[2].c_str()) : 3); static const Key dk[] = {K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ENTER, K_ESCAPE, K_TAB, K_F1, K_F9, K_SPACE, K_A, K_B};
+            for (int i = 0; i < n; i++) { int r = fr.range(0, 9); if (r < 3) { Key k = dk[fr.range(0, 11)]; in.press(k); step(1); in.release(k); step(2); } else if (r < 9) { in.mouseX = fr.range(0, 639); in.mouseY = fr.range(0, 479); int b = fr.range(0, 5) == 0 ? 2 : 0; in.mousePressed[b] = true; in.mouseDown[b] = true; step(1); in.mouseDown[b] = false; step(fr.range(1, 3)); if (fr.range(0, 3) == 0) { in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; step(1); } } else step(5);
+                if (app.state == AppState::GAME) { app.game.requestDesktop = true; step(2); } if (app.state == AppState::EDITOR) {
+#ifndef TRIFFALL_NO_EDITOR
+                    app.editor.wantsClose = true;
+#endif
+                    step(2); } if (app.desktop.quit || app.shuttingDown) { app.desktop.quit = false; app.shuttingDown = false; app.desktop.windows.clear(); } if (app.wantsQuit()) break; }
+            printf("fuzzdesk done: windows=%d\n", (int)app.desktop.windows.size()); }
+        else if (cmd == "target") {   // aim at the enemy nearest the unit whose turn it is, and confirm
+            auto& G = app.game; int best = -1, bd = 1 << 20; int ax = 0, ay = 0; if (G.cb.selectedUnit >= 0) { ax = G.cb.units[G.cb.selectedUnit].x; ay = G.cb.units[G.cb.selectedUnit].y; }
+            for (size_t i = 0; i < G.cb.units.size(); i++) { auto& u = G.cb.units[i]; if (!u.ch.alive || u.friendly()) continue; int d = std::max(abs(u.x - ax), abs(u.y - ay)); if (d < bd) { bd = d; best = (int)i; } }
+            if (best >= 0) { G.cb.selX = G.cb.units[best].x; G.cb.selY = G.cb.units[best].y; }
+            in.press(K_ENTER); step(1); in.release(K_ENTER); step(1); }
+        else if (cmd == "combat") { std::vector<std::string> cs; for (auto& c : split(p[1], ',')) cs.push_back(c); app.game.startCombat(cs, app.game.px + 3, app.game.py, 0, {}, ""); step(2); }
+        else if (cmd == "forceflee") { if (app.game.mode == GMode::COMBAT) { app.game.cb.ending = true; app.game.cb.fled = true; app.game.cb.endTimer = 0; step(2); } }
+        else if (cmd == "gold") { app.game.party.gold += atoi(p[1].c_str()); }
+        else if (cmd == "give") { app.game.giveItem(p[1], p.size() > 2 ? atoi(p[2].c_str()) : 1); }
+        else if (cmd == "level") { app.game.party.members[0].xp += atoi(p[1].c_str()); app.game.checkLevelUps(); }
+        else if (cmd == "log") { for (auto& l : app.game.msgLog) printf("  log: %s\n", l.c_str()); for (auto& l : app.game.cb.log) printf("  cb: %s\n", l.c_str()); }
+        else if (cmd == "expect") {   // expect KEY OP VALUE - a check; any failure makes the run exit with code 1
+            if (p.size() < 4) { printf("EXPECT bad line: %s\n", line.c_str()); fails++; continue; }
+            std::string key = p[1], op = p[2], want = p[3]; for (size_t i = 4; i < p.size(); i++) want += " " + p[i];
+            Game& g = app.game; std::string got; bool num = true;
+            static const char* MODES[] = {"EXPLORE", "DIALOGUE", "COMBAT", "MENU", "SHOP", "MESSAGE", "TRANSITION", "GAMEOVER", "LEVELUP", "NAME", "VICTORY", "PAUSE", "CUTSCENE", "SAVELOAD", "JOURNAL", "WORLDMAP", "CRAFT", "CONSOLE", "BOUNTY", "ENDING"};
+            if (key == "gold") got = std::to_string(g.party.gold);
+            else if (key == "x") got = std::to_string(g.px); else if (key == "y") got = std::to_string(g.py);
+            else if (key == "hp") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].hp);
+            else if (key == "level") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].level);
+            else if (key == "members") got = std::to_string(g.party.members.size());
+            else if (key == "running") got = g.running ? "1" : "0";
+            else if (key == "state") got = std::to_string((int)app.state);
+            else if (key == "bounties") got = std::to_string(g.bounties.size());
+            else if (key == "windows") got = std::to_string(app.desktop.windows.size());
+            else if (startsWith(key, "flag:")) { auto it = g.flags.find(key.substr(5)); got = std::to_string(it == g.flags.end() ? 0 : it->second); }
+            else if (startsWith(key, "item:")) got = std::to_string(g.party.countItem(key.substr(5)));
+            else if (startsWith(key, "savefile:")) { std::error_code ec; got = std::filesystem::exists(app.saveDir + "/" + key.substr(9), ec) ? "1" : "0"; }
+            else if (key == "cursorundermouse") { const int T = UI::TILE; got = (g.cb.selX == (in.mouseX + g.camX) / T && g.cb.selY == (in.mouseY + g.camY) / T) ? "1" : "0"; }
+            else if (key == "cursoronunit") { got = "0"; if (g.cb.selectedUnit >= 0) { auto& u = g.cb.units[g.cb.selectedUnit]; got = (g.cb.selX == u.x && g.cb.selY == u.y) ? "1" : "0"; } }
+            else if (key == "cblog") { got.clear(); for (auto& l : g.cb.log) got += l + "\n"; num = false; }
+            else if (key == "allies" || key == "summons") { int c = 0; for (auto& u : g.cb.units) if (u.ch.alive && (key == "allies" ? u.ally : u.summoned)) c++; got = std::to_string(c); }
+            else if (startsWith(key, "rep:")) { auto it = g.reputation.find(key.substr(4)); got = std::to_string(it == g.reputation.end() ? 0 : it->second); }
+            else if (startsWith(key, "queststatus:")) { got = ""; for (auto& q : g.quests) if (q.id == key.substr(12)) got = g.questStatus(q); }
+            else if (startsWith(key, "price:")) { const ItemDef* d = g.gd->item(key.substr(6)); got = d ? std::to_string(g.itemBuyPrice(*d)) : "-1"; }
+            else if (startsWith(key, "quest:")) { got = "0"; for (auto& q : g.quests) if (q.id == key.substr(6)) got = std::to_string(g.questStageIndex(q)); }
+            else { num = false;
+                if (key == "mode") got = (int)g.mode >= 0 && (int)g.mode < 20 ? MODES[(int)g.mode] : "?";
+                else if (key == "map") got = g.mapId;
+                else if (key == "campaign") got = g.campaignId;
+                else if (key == "music") got = gAudio.currentMusic;
+                else if (key == "ambient") got = gAudio.currentAmbient;
+                else if (key == "weather") got = g.weather;
+                else if (startsWith(key, "iconpos:") || startsWith(key, "icon:")) { got = "none"; bool pos = startsWith(key, "iconpos:"); std::string act = key.substr(pos ? 8 : 5);
+                    for (size_t i = 0; i < app.desktop.iconDefs.size(); i++) if (app.desktop.iconDefs[i].action == act) got = pos ? fmt("%d,%d", app.desktop.iconPositions[i][0], app.desktop.iconPositions[i][1]) : fmt("%d,%d", app.desktop.iconDefs[i].ic, app.desktop.iconDefs[i].ir); }
+                else if (key == "wallpaper") got = std::to_string(app.desktop.wallpaper);
+                else if (key == "hint") { int h = g.currentHint(); got = h >= 0 ? g.hintDefs[h].text : ""; }
+                else if (startsWith(key, "fav:")) { int f = atoi(key.substr(4).c_str()) - 1; got = g.party.members.empty() || f < 0 || f > 7 ? "" : g.party.members[0].favs[f]; }
+                else if (key == "window") got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().type;
+                else if (key == "log") { got = ""; for (auto& l : g.msgLog) got += l + "\n"; }
+                else { printf("EXPECT unknown key %s\n", key.c_str()); fails++; continue; } }
+            bool ok;
+            if (op == "contains") ok = got.find(want) != std::string::npos;
+            else if (op == "lacks") ok = got.find(want) == std::string::npos;
+            else if (num) { long a = atol(got.c_str()), b = atol(want.c_str()); ok = op == "==" ? a == b : op == "!=" ? a != b : op == ">=" ? a >= b : op == "<=" ? a <= b : op == ">" ? a > b : op == "<" ? a < b : false; }
+            else ok = op == "==" ? got == want : op == "!=" ? got != want : false;
+            if (!ok) { fails++; printf("EXPECT FAIL: %s %s %s (got %s)\n", key.c_str(), op.c_str(), want.c_str(), got.c_str()); } else printf("expect ok: %s %s %s\n", key.c_str(), op.c_str(), want.c_str());
+        }
+        else if (cmd == "dump") { printf("mode=%d stack=%d map=%s pos=%d,%d hp=%d gold=%d flags:", (int)app.game.mode, (int)app.game.modeStack.size(), app.game.mapId.c_str(), app.game.px, app.game.py, app.game.party.members.empty() ? 0 : app.game.party.members[0].hp, app.game.party.gold); for (auto& f : app.game.flags) printf(" %s=%d", f.first.c_str(), f.second); printf("\n"); }
+#ifndef TRIFFALL_NO_EDITOR
+        else if (cmd == "bakeall") {   // bake every generated dungeon and the overworld into editable map files (dev tool)
+            app.editor.open(); std::string err; int n = 0;
+            for (auto& sec : app.editor.dungeonSections()) { if (fileExists(app.assetDir + "/data/maps/" + sec.get("id") + ".txt")) { printf("  skip %s (exists)\n", sec.get("id").c_str()); continue; } if (app.editor.bakeDungeon(sec, err)) { n++; printf("  baked %s\n", sec.get("id").c_str()); } else printf("  FAIL %s: %s\n", sec.get("id").c_str(), err.c_str()); }
+            if (!fileExists(app.assetDir + "/data/maps/overworld.txt")) { app.editor.bakeOverworld(); printf("  baked overworld\n"); }
+            printf("baked %d dungeons\n", n);
+        }
+#endif
+        else if (cmd == "combatdump") { for (auto& u : app.game.cb.units) printf("  unit %s party=%d pos=%d,%d hp=%d alive=%d ap=%d\n", u.ch.name.c_str(), u.partyIndex, u.x, u.y, u.ch.hp, u.ch.alive, u.ch.ap); }
+        if (app.wantsQuit()) { printf("app quit\n"); break; }
+        if (bot.strict && fails) { printf("stopping at the first failure (strict)\n"); break; }
+    }
+    if (fails) { printf("%d EXPECT FAILURE(S)\n", fails); return 1; }
+    return 0;
+}

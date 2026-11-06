@@ -1,0 +1,10 @@
+[start]
+speaker=Dormant Android
+text=...power at four percent... crew status: unknown... passenger: hostile... The core. They put it in the Walker. Do not go below without a red- *static* -card...
+option=Where is the red keycard?|card
+option=Goodbye.|end
+
+[card]
+speaker=Dormant Android
+text=Command deck. Below. The Walker has it. The Walker has everything. *power at three percent*
+option=Understood.|end

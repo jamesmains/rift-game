@@ -1,0 +1,17 @@
+[start]
+speaker=Keep Guard
+text=The keep is sealed. Only the Mayor's seal opens the vault inside, and he hasn't shown his face in there for years.
+option=I have the seal.|seal|item:mayor_seal&!keep_open
+option=(The guard nods you through.)|open|keep_open
+option=Fine.|end
+
+[seal]
+speaker=Keep Guard
+text=...That's genuine. Well. Go on in, but if you find the old vault, don't touch the armour. It talks.
+set=keep_open
+option=Noted.|end
+
+[open]
+speaker=Keep Guard
+text=Seal-bearer. The keep's yours. Mind the armour.
+option=Thanks.|end

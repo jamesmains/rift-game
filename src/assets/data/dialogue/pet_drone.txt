@@ -1,0 +1,4 @@
+[start]
+speaker=Pet Drone
+text=*bzzt* *whirr* *happy beeping*
+option=Good drone.|end

@@ -1,0 +1,560 @@
+# Spells and abilities. target: enemy | ally | self | any | ground. area = radius in tiles.
+# summon=creature[:count] calls creatures onto free tiles around the target (target=ground); they fight for the caster's side
+# for duration= of their own turns (0 = the whole fight), leave no body, XP or loot; a caster keeps at most 3 at once.
+# ---- mage ----
+[spell]
+id=spark
+name=Spark
+desc=A crackle of arcane energy.
+tile=80,39
+cost=3
+ap=3
+range=5
+dmg=4-8
+dmgtype=shock
+stat=int
+
+[spell]
+id=frost_bolt
+name=Frost Bolt
+desc=A shard of ice that may freeze the target.
+tile=89,37
+cost=4
+ap=4
+range=5
+dmg=5-10
+dmgtype=cold
+effect=freeze
+duration=2
+stat=int
+
+[spell]
+id=fireball
+name=Fireball
+desc=An exploding orb of flame that burns everything near the target.
+tile=79,33
+cost=8
+ap=4
+range=6
+area=1
+dmg=10-18
+dmgtype=fire
+effect=burn
+duration=2
+stat=int
+level=3
+
+[spell]
+id=lightning
+name=Lightning
+desc=A bolt from the sky. Devastating against machines.
+tile=80,39
+cost=9
+ap=4
+range=7
+dmg=14-24
+dmgtype=shock
+effect=stun
+stat=int
+level=8
+
+[spell]
+id=blizzard
+name=Blizzard
+desc=Freezing winds over a wide area.
+tile=90,37
+cost=14
+ap=5
+range=6
+area=2
+dmg=10-16
+dmgtype=cold
+effect=freeze
+duration=2
+stat=int
+level=11
+
+[spell]
+id=chain_lightning
+name=Chain Lightning
+desc=Arcs between everything nearby.
+tile=80,39
+cost=16
+ap=5
+range=7
+area=2
+dmg=16-26
+dmgtype=shock
+stat=int
+level=14
+
+[spell]
+id=meteor
+name=Meteor
+desc=Calls a fragment of the Rift down upon your foes.
+tile=81,21
+cost=24
+ap=6
+range=8
+area=2
+dmg=30-45
+dmgtype=fire
+effect=burn
+duration=3
+stat=int
+level=18
+
+[spell]
+id=light
+name=Light
+desc=A floating light that widens your view in dark places for a long while. (Outside combat)
+tile=82,39
+cost=4
+ap=2
+range=0
+target=self
+utility=light
+level=2
+
+[spell]
+id=knock
+name=Knock
+desc=Opens a locked door or chest next to you without a key. (Outside combat)
+tile=0,45
+cost=6
+ap=2
+range=0
+target=self
+utility=unlock
+level=5
+
+[spell]
+id=recall
+name=Recall
+desc=Teleports the party back to the last town visited. (Outside combat)
+tile=78,18
+cost=15
+ap=2
+range=0
+target=self
+utility=recall
+level=7
+
+# ---- cleric ----
+[spell]
+id=heal
+name=Heal
+desc=Restores health to one ally.
+tile=78,37
+cost=5
+ap=3
+range=6
+heal=18
+target=ally
+stat=wis
+
+[spell]
+id=holy_light
+name=Holy Light
+desc=Radiant damage; doubly effective on the undead.
+tile=80,33
+cost=5
+ap=4
+range=5
+dmg=6-12
+dmgtype=magic
+stat=wis
+
+[spell]
+id=bless
+name=Bless
+desc=An ally's attacks become more accurate for a few turns.
+tile=81,39
+cost=5
+ap=3
+range=6
+effect=aim
+duration=3
+target=ally
+stat=wis
+level=3
+
+[spell]
+id=cure
+name=Cure
+desc=Removes poison, burning and weakness.
+tile=85,39
+cost=4
+ap=3
+range=6
+effect=cure
+target=ally
+stat=wis
+level=6
+
+[spell]
+id=smite
+name=Smite
+desc=A hammer of light. Chance to stun.
+tile=81,33
+cost=10
+ap=4
+range=5
+dmg=14-22
+dmgtype=magic
+effect=stun
+stat=wis
+level=9
+
+[spell]
+id=revive
+name=Revive
+desc=Brings a fallen ally back to the fight.
+tile=79,39
+cost=18
+ap=5
+range=5
+effect=revive
+target=ally
+stat=wis
+level=12
+
+[spell]
+id=sanctuary
+name=Sanctuary
+desc=Heals and shields everyone around the caster.
+tile=80,33
+cost=20
+ap=5
+range=0
+area=2
+heal=25
+effect=shield
+duration=3
+target=ally
+stat=wis
+level=15
+
+[spell]
+id=sense_treasure
+name=Sense Treasure
+desc=Reveals every unopened chest on the map for a while. (Outside combat)
+tile=87,34
+cost=6
+ap=2
+range=0
+target=self
+utility=detect
+level=4
+
+# ---- warrior ----
+[spell]
+id=war_cry
+name=War Cry
+desc=Steel yourself: +STR for several turns.
+tile=82,33
+cost=4
+ap=2
+range=0
+effect=strength
+duration=4
+target=self
+stat=str
+level=3
+
+[spell]
+id=shield_bash
+name=Shield Bash
+desc=Slam an adjacent enemy, stunning it.
+tile=84,38
+cost=5
+ap=3
+range=1
+dmg=8-14
+dmgtype=physical
+effect=stun
+stat=str
+level=6
+
+[spell]
+id=cleave
+name=Cleave
+desc=A sweeping blow that hits everything adjacent to the target.
+tile=82,38
+cost=8
+ap=4
+range=1
+area=1
+dmg=12-20
+dmgtype=physical
+stat=str
+level=10
+
+[spell]
+id=iron_skin
+name=Iron Skin
+desc=Harden your body against blows.
+tile=84,38
+cost=8
+ap=2
+range=0
+effect=shield
+duration=4
+target=self
+stat=con
+level=14
+
+# ---- ranger ----
+[spell]
+id=mark_target
+name=Mark Target
+desc=Study a foe: your next shots are far more accurate.
+tile=99,33
+cost=3
+ap=2
+range=0
+effect=aim
+duration=3
+target=self
+stat=dex
+level=3
+
+[spell]
+id=volley
+name=Volley
+desc=A rain of arrows on a small area.
+tile=31,10
+cost=8
+ap=4
+range=6
+area=1
+dmg=8-14
+dmgtype=physical
+stat=dex
+level=6
+
+[spell]
+id=camouflage
+name=Camouflage
+desc=Blend in: harder to hit in combat; outside combat monsters mostly ignore you for a long while.
+tile=87,34
+cost=6
+ap=2
+range=0
+effect=shield
+duration=3
+target=self
+stat=dex
+utility=stealth
+level=8
+
+[spell]
+id=poison_arrow
+name=Poison Arrow
+desc=A coated shaft that poisons its victim.
+tile=84,33
+cost=8
+ap=4
+range=7
+dmg=10-16
+dmgtype=poison
+effect=poison
+duration=4
+stat=dex
+level=14
+
+[spell]
+id=call_wolf
+name=Call Wolf
+desc=Whistle up a wolf that fights at your side for 5 turns. Stronger as you level.
+tile=14,14
+cost=10
+ap=4
+range=3
+target=ground
+summon=wolf
+duration=5
+stat=wis
+level=5
+
+# ---- scavenger ----
+[spell]
+id=hack
+name=Hack
+desc=Pops an electronic lock or a locked crate next to you. (Outside combat)
+tile=81,7
+cost=5
+ap=2
+range=0
+target=self
+utility=unlock
+level=4
+
+[spell]
+id=flashlight
+name=Flashlight
+desc=A salvaged lamp: widens your view in the dark for a long while. (Outside combat)
+tile=10,42
+cost=2
+ap=2
+range=0
+target=self
+utility=light
+level=2
+
+[spell]
+id=quick_fix
+name=Quick Fix
+desc=Patch up an ally with scavenged supplies.
+tile=58,9
+cost=5
+ap=3
+range=3
+heal=14
+target=ally
+stat=int
+level=3
+
+[spell]
+id=emp_pulse
+name=EMP Pulse
+desc=A burst of shock that cripples machines around the target.
+tile=80,39
+cost=8
+ap=4
+range=5
+area=1
+dmg=8-14
+dmgtype=shock
+effect=stun
+stat=int
+level=6
+
+[spell]
+id=overcharge
+name=Overcharge
+desc=Rig your weapon for a devastating shot (+STR for a few turns).
+tile=54,9
+cost=6
+ap=2
+range=0
+effect=strength
+duration=3
+target=self
+stat=int
+level=10
+
+[spell]
+id=drone_strike
+name=Drone Strike
+desc=Call down a salvaged attack drone on an area.
+tile=102,13
+cost=16
+ap=5
+range=8
+area=1
+dmg=20-30
+dmgtype=fire
+effect=burn
+duration=2
+stat=int
+level=14
+
+[spell]
+id=deploy_turret
+name=Deploy Turret
+desc=Unfold a salvaged auto-turret on a nearby tile. It shoots your enemies for 4 turns.
+tile=87,4
+cost=14
+ap=5
+range=2
+target=ground
+summon=turret
+duration=4
+stat=int
+level=8
+
+# ---- monster spells ----
+[spell]
+id=raise_dead
+name=Raise Dead
+desc=Two skeletons claw out of the ground to serve the caster.
+tile=108,41
+cost=15
+ap=5
+range=3
+target=ground
+summon=skeleton:2
+stat=int
+level=6
+
+[spell]
+id=dark_bolt
+name=Dark Bolt
+desc=Necrotic energy.
+tile=82,33
+cost=4
+ap=4
+range=6
+dmg=6-12
+dmgtype=magic
+
+[spell]
+id=venom_spit
+name=Venom Spit
+desc=Poisonous spittle.
+tile=84,33
+cost=2
+ap=4
+range=4
+dmg=3-7
+dmgtype=poison
+effect=poison
+duration=3
+
+[spell]
+id=laser_beam
+name=Laser Beam
+desc=A focused energy beam.
+tile=89,6
+cost=3
+ap=4
+range=7
+dmg=8-14
+dmgtype=fire
+
+[spell]
+id=rift_surge
+name=Rift Surge
+desc=A pulse of raw Rift energy.
+tile=82,33
+cost=8
+ap=5
+range=6
+area=1
+dmg=12-20
+dmgtype=magic
+effect=weaken
+duration=3
+
+[spell]
+id=drain
+name=Drain Life
+desc=Steals vitality.
+tile=83,37
+cost=6
+ap=4
+range=4
+dmg=8-14
+dmgtype=magic
+
+[spell]
+id=dark_heal
+name=Dark Mending
+desc=Mends an ally with dark magic.
+tile=78,37
+cost=6
+ap=4
+range=6
+heal=16
+target=ally

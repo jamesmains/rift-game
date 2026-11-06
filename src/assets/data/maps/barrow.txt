@@ -1,0 +1,138 @@
+[map]
+id=barrow
+name=Hesk's Barrow
+kind=dungeon
+spawn=16,19
+dark=1
+light=3
+bg=0,0,0
+music=crypt
+
+[legend]
+# = wall_gray
+. = floor_stone
+< = stairs_up
+C = coffin
+D = door_wood
+I = pillar
+O = brazier
+T = torch_wall
+U = tomb
+b = bones
+s = skull
+t = floor_tile
+
+[rows]
+##################################
+##################################
+##################################
+##################################
+##T....####################OtUtO##
+##.....#T..C.C......C.C..T#ttttt##
+##.....#..I...I....I...I..#ttttt##
+##........................#ttttt##
+##..........b.............Dttttt##
+##...C.#.............b....#ttttt##
+##.b...#..I...I....I...I..#ttttt##
+########s...............b.#ttttt##
+################.##########tbttt##
+################.#################
+################.#################
+################.#################
+################.#################
+#############T.....T##############
+#############.......##############
+#############.......##############
+#############...<...##############
+#############.......##############
+##################################
+##################################
+
+[exit]
+x=16
+y=20
+to=overworld
+tx=33
+ty=86
+
+[savepoint]
+x=18
+y=20
+
+[sign]
+x=14
+y=17
+text=Carved over the lintel: HERE SLEEP THE WARDENS OF HOLLOWMERE. LET THEM. Someone has added, in charcoal: TOO LATE
+
+[obstacle]
+x=16
+y=15
+name=Fallen passage
+needs=rubble
+clear=floor_stone
+flag=barrow_dug
+text=The passage into the barrow has caved in: earth and old stone, packed to the ceiling. Cold air seeps between the slabs.
+
+[lever]
+x=3
+y=5
+flag=barrow_lever
+name=Bronze lever
+toggle=0
+text=Somewhere east, stone grinds on stone.
+
+[door]
+x=26
+y=8
+openif=barrow_lever
+locked=A slab of carved stone, no handle, no keyhole. There must be a mechanism somewhere in the barrow.
+
+[enemy]
+group=skeleton,skeleton
+x=12
+y=8
+aggro=4
+flag=barrow_g1
+
+[enemy]
+group=skeleton_archer,zombie
+x=21
+y=8
+aggro=4
+flag=barrow_g2
+
+[enemy]
+group=zombie
+x=4
+y=7
+aggro=3
+flag=barrow_g3
+
+[enemy]
+group=barrow_wight,skeleton
+x=29
+y=8
+aggro=5
+flag=barrow_wight_dead
+ondefeat=notify:The wight crumbles. The tomb is quiet again.
+
+[chest]
+x=30
+y=11
+items=hesk_medal:1,iron_ingot:2,oil_blessed:1
+gold=40
+flag=barrow_tomb_chest
+
+[chest]
+x=5
+y=5
+items=torch_item:3,potion_red:1
+gold=15
+flag=barrow_wing_chest
+
+[gather]
+x=8
+y=11
+item=bone_dust
+count=1-2
+respawn=4

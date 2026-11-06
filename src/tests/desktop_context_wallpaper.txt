@@ -1,0 +1,11 @@
+# Right-click wallpaper, open Properties, and select the second desktop background.
+frames 5
+rclick 300 180
+frames 2
+shot context_menu.png
+click 340 240
+frames 3
+shot display_properties.png
+click 250 205
+frames 3
+shot blue_scanlines.png

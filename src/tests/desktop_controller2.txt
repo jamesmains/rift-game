@@ -1,0 +1,35 @@
+# 0.8.9: controller - My Computer focus, Solitaire, keyboard name entry (space is a letter)
+frames 5
+pad 1
+key PADSTART
+frames 2
+keys DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+key PADA
+frames 8
+shot c2_mycomputer.png
+key PADA
+frames 2
+shot c2_mycomputer_open.png
+key PADB
+frames 4
+key PADSTART
+frames 2
+keys DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+key PADA
+frames 8
+keys DOWN DOWN
+key PADA
+frames 2
+shot c2_sol_pick.png
+key PADX
+frames 2
+shot c2_sol.png
+key PADB
+key PADB
+frames 4
+pad 0
+dblclick 50 28
+frames 5
+type Sir Ivo
+frames 2
+shot c2_name_space.png

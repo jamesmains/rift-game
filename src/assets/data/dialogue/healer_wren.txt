@@ -1,0 +1,32 @@
+[start]
+speaker=Healer Wren
+text=Come in, come in. You look healthy enough, which is more than I can say for half the village since the goblins started.
+option=We need a healer.|heal
+option=Need anything?|quest|!q_moonleaf>=1
+option=I have the Moonleaf.|turnin|q_moonleaf>=1&!q_moonleaf>=2&item:herb_moon
+option=Can you make a remedy from herbs I found?|alchemy
+option=Goodbye.|end
+
+[heal]
+healer=Hold still and tell me where it hurts. Coin first, mind - herbs don't grow on goodwill. (For sleep, Doss at the Weary Goat has beds.)
+
+[quest]
+speaker=Healer Wren
+text=Moonleaf. Three sprigs. It only grows in the Drowning Marsh past Murkwater, far to the east, and the toads there spit poison. Bring it and I'll make it worth your while.
+set=q_moonleaf=1
+option=I'll find it.|end
+
+[turnin]
+speaker=Healer Wren
+text=Three sprigs! Oh, this will do nicely. Take these - a healer's thanks.
+take=herb_moon:3
+set=q_moonleaf=2
+rep=hollowmere:10
+give=potion_red2:2,potion_purple:1,formula_alchemy:1
+xp=120
+option=Glad to help.|end
+
+[alchemy]
+speaker=Healer Wren
+text=Of course. Moonherb, mostly - the rest is patience.
+craft=alchemy

@@ -1,0 +1,4 @@
+[start]
+speaker=Washerwoman
+text=Keep off my clean sheets with those boots! ...Sorry. It's the goblins, everyone's on edge.
+option=Sorry.|end

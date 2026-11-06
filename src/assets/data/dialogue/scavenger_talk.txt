@@ -1,0 +1,4 @@
+[start]
+speaker=Scavenger
+text=Every drone you drop has a circuit board in it. Hermits and tinkers pay good coin. Just saying.
+option=Noted.|end

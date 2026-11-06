@@ -1,0 +1,21 @@
+[start]
+speaker=Old Fenwick
+text=Three fishermen this month, dragged under the black water east of here. Something big. Something with more heads than it needs.
+option=I'll kill it.|quest|!q_hydra>=1
+option=The hydra is dead.|done|q_hydra_done&!q_hydra>=2
+option=Goodbye.|end
+
+[quest]
+speaker=Old Fenwick
+text=The marsh entrance is east of the village. Take antidotes. Lots of antidotes.
+set=q_hydra=1
+option=Right.|end
+
+[done]
+speaker=Old Fenwick
+text=Dead? All of it? Lad, lass, whichever - you've saved this village. Take this, it was my father's and I've no use for it.
+set=q_hydra=2
+gold=200
+give=amulet_wis:1
+xp=350
+option=Thank you.|end

@@ -1,0 +1,47 @@
+# 1.0.7 playtest feedback: a clearer font, quieter ambience, quest text that wraps, favorites from the combat lists,
+# and a calm first morning. (The chest-tip fix went with the tips themselves: the Tutorial campaign replaced them.)
+newgame Ana mage 1
+frames 30
+expect weather == clear
+goto hollowmere
+frames 30
+expect weather == clear
+shot outside.png
+# quest text wraps in the party screen (Tab > Quests) and in the journal, in both fonts
+con flag q_caravan 1
+con flag q_moonleaf 1
+con flag q_hydra 1
+key TAB
+frames 3
+keys PGDN PGDN PGDN
+frames 3
+shot quests_classic.png
+key ESC
+setting font 1
+key J
+frames 3
+keys DOWN DOWN
+frames 3
+shot journal_clear.png
+key ESC
+frames 3
+setting font 0
+# favorites from the combat Spells list: highlight one and press a number
+con learn heal
+teleport goblin_cave 12 15
+combat goblin,goblin
+frames 120
+key B
+frames 5
+key DOWN
+frames 3
+key 3
+frames 3
+expect fav:3 == spell:frost_bolt
+expect log contains Frost Bolt set as favorite 3
+shot combat_fav.png
+key ESC
+frames 3
+key 3
+frames 3
+expect log contains Choose a target for Frost Bolt

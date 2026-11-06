@@ -1,0 +1,6 @@
+# Drag New Game from the top-left grid slot into the open desktop area.
+frames 5
+shot icons_before.png
+drag 50 28 210 90
+frames 3
+shot icons_after.png

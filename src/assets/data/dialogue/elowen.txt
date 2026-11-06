@@ -1,0 +1,63 @@
+[start]
+speaker=Elowen
+text=You carry Rift-touched things, don't you? I can feel them from here, like a draught under a door. I've studied the Rift my whole life and never seen it. Take me with you.
+option=Join me.|join
+option=Who are you?|who
+option=Not now.|end
+
+[who]
+speaker=Elowen
+text=Elowen, journeyman of the Gilded Circle, and bored to tears of inventory spells. I know fire, frost and the sky's own lightning. Morrow says I'm reckless. Morrow is correct.
+option=Join me.|join
+option=Later.|end
+
+[join]
+speaker=Elowen
+text=Yes! Morrow, I quit - no, I'll be back, probably. Lead on, $hero.
+join=mage:Elowen:109,17
+approve=mage:5
+option=Let's go.|end
+
+[camp]
+speaker=Elowen
+text=Yes? I was in the middle of a thought.
+option=What are you working on?|chat
+option=You study the Rift. Why?|story|approval:mage:15
+option=I've put down three wisps.|wisp_turnin|elowen_quest&kills:rift_wisp:3&!q_elowen_done
+option=Never mind.|end
+
+[chat]
+speaker=Elowen
+text=A way to make the light spell last longer. Walking in the dark with you people is exhausting.
+approve=mage:1
+option=Fair.|end
+
+[story]
+speaker=Elowen
+text=My mother walked into the Scar the week after it opened and never walked out. The Circle says nothing survives the Rift. I think the wisps are what the Rift makes of what it takes. I need to be sure.
+option=Then we hunt wisps. Three should tell you something.|accept
+option=Some things are better left alone.|refuse
+
+[refuse]
+speaker=Elowen
+text=Said every coward in history.
+approve=mage:-3
+option=...|end
+
+[accept]
+speaker=Elowen
+text=Thank you. They drift near the Scar at night. Bring me what's left of three of them and I'll know.
+set=elowen_quest
+quest=Elowen: What the Rift Keeps
+approve=mage:5
+option=Let's go.|end
+
+[wisp_turnin]
+speaker=Elowen
+text=...It's not her. It's not anyone. They're just light with a hunger in it. I don't know whether that's better or worse. Here - I wrote this down for you years ago and never had a reason to give it to anyone.
+give=scroll_frost:2
+set=q_elowen_done
+xp=120
+approve=mage:15
+quest=Elowen: What the Rift Keeps - done
+option=I'm sorry, Elowen.|end

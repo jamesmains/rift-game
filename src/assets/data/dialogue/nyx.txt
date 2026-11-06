@@ -1,0 +1,64 @@
+[start]
+speaker=Nyx
+text=You're the one from Hollowmere going after the goblins. I've been tracking that band for a month. Their chief wears something that glows. I want to see it up close - through a bow sight, preferably.
+option=Come along, then.|join
+option=Who are you?|who
+option=Maybe later.|end
+
+[who]
+speaker=Nyx
+text=Nyx. I hunt what the farms can't. Wolves, mostly. Goblins when they pay. I don't miss and I don't talk much, which you'll come to appreciate.
+option=Come along.|join
+option=Later.|end
+
+[join]
+speaker=Nyx
+text=Lead. I'll watch the trees.
+join=ranger:Nyx:117,10
+approve=ranger:5
+option=Let's go.|end
+
+[camp]
+speaker=Nyx
+text=Mm?
+option=Anything out there?|chat
+option=You don't talk about where you're from.|story|approval:ranger:15
+option=I have the pelts.|pelt_turnin|nyx_quest&itemn:wolf_pelt:4&!q_nyx_done
+option=Nothing.|end
+
+[chat]
+speaker=Nyx
+text=Tracks. Always tracks. Most of them are ours, which is the problem with walking in a group.
+approve=ranger:1
+option=Noted.|end
+
+[story]
+speaker=Nyx
+text=Frosthold. A hunter's hut outside the wall. The frost wolves took my father in the winter the Rift opened; the pack still runs those hills. I'm not after revenge. I want four pelts for a cloak, like the one he made. That's all.
+option=Four pelts. We'll get them.|accept
+option=That sounds like revenge with extra steps.|refuse
+
+[refuse]
+speaker=Nyx
+text=Maybe. Forget I said anything.
+approve=ranger:-3
+option=...|end
+
+[accept]
+speaker=Nyx
+text=The hills north of Frosthold. Wolves come out at night.
+set=nyx_quest
+quest=Nyx: Four Pelts
+approve=ranger:5
+option=Let's go.|end
+
+[pelt_turnin]
+speaker=Nyx
+text=These are good. Thick. ...Give me an evening by a fire and there'll be two cloaks out of this. One's yours.
+take=wolf_pelt:4
+give=ranger_cloak:1
+set=q_nyx_done
+xp=120
+approve=ranger:15
+quest=Nyx: Four Pelts - done
+option=Thank you.|end

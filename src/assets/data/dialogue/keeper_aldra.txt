@@ -1,0 +1,43 @@
+[start]
+speaker=Keeper Aldra
+text=The Shrine of the Drowned. We tend the lost. The marsh gives little, but it gives Moonleaf, if you're brave.
+option=Heal us.|heal
+option=Buy supplies.|shop
+option=May I use your still?|still
+option=Can I help the shrine?|lanterns|!q_lanterns>=1
+option=The lanterns are lit.|lanterns_done|q_lanterns>=1&marsh_lantern_1&marsh_lantern_2&marsh_lantern_3&!q_lanterns>=2
+option=Goodbye.|end
+
+[heal]
+healer=1
+
+[shop]
+shop=shrine_keeper
+
+[still]
+speaker=Keeper Aldra
+text=The shrine's still has boiled Moonleaf for a hundred years. Use it well.
+craft=alchemy
+
+[lanterns]
+speaker=Keeper Aldra
+text=There are three drowned lanterns in the marsh to the east - old shrine lamps on the walls. When they burn, the drowned sleep. When they go out, they walk. They have been out since the hydra came. Light them, and Murkwater will owe you more than I can say.
+option=Three lanterns. I'll light them.|lanterns_yes
+option=Not today.|end
+
+[lanterns_yes]
+speaker=Keeper Aldra
+text=One by the first cistern, west of the stair. One in the north hall. One by the old drain, south-west. Take care in there.
+set=q_lanterns=1
+quest=Lanterns on the Water
+option=I will.|end
+
+[lanterns_done]
+speaker=Keeper Aldra
+text=I saw them from the shrine roof - three little green lights on the water. The drowned are sleeping. Here. Every keeper wears one of these. You've earned yours.
+give=lantern_charm
+xp=250
+gold=100
+set=q_lanterns=2
+rep=murkwater:15
+option=Thank you, Keeper.|end

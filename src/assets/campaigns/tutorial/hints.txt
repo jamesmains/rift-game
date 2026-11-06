@@ -1,0 +1,82 @@
+# The Training panel. The LAST [hint] whose if= holds is shown (like quest stages), so later lessons sit lower down.
+# {action} names the key (or pad button) for that action on the device in use; {move} = how to walk; {click} = " (or click)".
+# Extra conditions: mode:explore|combat|shop|menu|journal|levelup|worldmap, equipped:item, fav:item|spell|any, map:id.
+
+[hint]
+if=!tut_intro
+text=Talk to Warden Hale: walk up to him and press {interact}.
+
+[hint]
+if=tut_intro
+text=Walk with {move}{click}. Go and stand on the glowing marker in the south-east corner of the hall.
+
+[hint]
+if=tut_moved
+text=Open the supply chest in the north-west corner: walk into it, or stand next to it and press {interact}.
+
+[hint]
+if=tut_chest
+text=You found a Warden's Badge. Wear it: open the party screen with {menu} and go to the Items tab ({pagedown}).
+
+[hint]
+if=tut_chest&mode:menu&!equipped:warden_badge
+text=On the Items tab highlight the Warden's Badge and press {confirm}, choose Equip on..., then pick your hero. {pageup}/{pagedown} change tabs, {cancel} goes back.
+
+[hint]
+if=equipped:warden_badge
+text=Badge on - the east door is open. Go through and meet the quartermaster.
+
+[hint]
+if=tut_r2
+text=Talk to Quartermaster Ott ({interact} next to him) and buy a Bandage. The sign by the east door is read the same way.
+
+[hint]
+if=tut_r2&mode:shop
+text=Shopping: {up}/{down} choose, {confirm} buys, {left}/{right} change how many. {pageup}/{pagedown} switch to Sell. {cancel} leaves the shop.
+
+[hint]
+if=tut_r2&item:bandage
+text=Bandage bought. Leave the shop ({cancel}) and go through the east door.
+
+[hint]
+if=tut_r3
+text=The glowing altar is a save shrine: stand on it and press {interact} (or {quicksave}) to save. Then talk to Sergeant Brin.
+
+[hint]
+if=tut_brin
+text=Your journal ({journal}) lists your quests; {worldmap} shows the map. When you're ready, go through the east door.
+
+[hint]
+if=tut_r4
+text=Two giant rats. Walk towards them - the fight starts when they see you.
+
+[hint]
+if=tut_r4&mode:combat
+title=Combat
+text=Fights take turns. On yours: walk by clicking a lit tile (or move the cursor with the arrows and press {confirm}). Attack with {attackmode}, then pick a rat. Moving and attacking use AP; {endturn} ends your turn. The buttons along the top show every key.
+
+[hint]
+if=tut_rats
+text=Well fought. Now put your Bandage on the hotbar: party screen ({menu}), Items, highlight the Bandage and press 1.
+
+[hint]
+if=tut_rats&fav:any
+text=That's your hotbar, bottom right: press 1 to use whatever is on slot 1, in a fight or out of one. On to the east door.
+
+[hint]
+if=tut_rats&mode:levelup
+title=Level up
+text=Pick the class that gets your new rank - your own, or another one (that's multiclassing) - then spend 3 stat points. The preview shows what changes.
+
+[hint]
+if=tut_r5
+text=Goblins, and one has a bow. Crates and rocks give cover. Walk in when you're ready.
+
+[hint]
+if=tut_r5&mode:combat
+title=Combat
+text=Keep a crate between you and the archer: cover makes you harder to hit. {spells} spells, {items} items - in those lists, press 1-8 to put the highlighted one on the hotbar. {defend} braces, {overwatch} shoots the next thing that moves, {flee} runs.
+
+[hint]
+if=tut_goblins
+text=That's the training done. Warden Hale is waiting in the last room.

@@ -1,0 +1,177 @@
+# Companion banter. [banter] class=<class id or any>  when=enter|idle|victory|night|rain|dungeon|town|overworld  map=<optional map id>
+# if=<condition, same syntax as dialogue>  flag=<name: line plays once per game>  text=... (several text= lines = several variants). $hero = hero's name.
+
+[banter]
+class=warrior
+when=victory
+text=Ha! That's how it's done.
+text=Next time, let me take point, $hero.
+text=They never learn.
+
+[banter]
+class=warrior
+when=dungeon
+text=Watch the corners. Things like to jump out of corners.
+text=Smells like goblin in here.
+
+[banter]
+class=warrior
+when=night
+text=We should make camp soon. Nothing good walks at night.
+
+[banter]
+class=warrior
+when=rain
+text=Rust. Everything I own is going to rust.
+
+[banter]
+class=warrior
+when=town
+text=An inn. A real bed. Don't you dare walk past it.
+
+[banter]
+class=ranger
+when=overworld
+text=Tracks. Fresh. Keep your eyes open.
+text=The wind's changing. Weather'll turn before long.
+text=I could live out here. Not with you lot snoring, but out here.
+
+[banter]
+class=ranger
+when=night
+text=Owls are quiet tonight. That's not a good sign.
+
+[banter]
+class=ranger
+when=victory
+text=Clean shot.
+text=Told you to stay out of my line of fire.
+
+[banter]
+class=ranger
+when=dungeon
+text=I hate caves. Give me sky.
+
+[banter]
+class=mage
+when=idle
+text=Did you feel that? The Rift is... humming.
+text=I've been thinking about the shards. They want to be together. That should worry us.
+text=Magic is just physics that hasn't been written down yet.
+
+[banter]
+class=mage
+when=dungeon
+text=These walls are old. Older than the Rift. Fascinating.
+
+[banter]
+class=mage
+when=victory
+text=Textbook. Well, my textbook.
+text=Remind me to write that spell down properly.
+
+[banter]
+class=mage
+when=rain
+text=Rain. Wonderful. Wet spellbooks.
+
+[banter]
+class=scavenger
+when=idle
+text=Don't touch that. Actually, do, I want to see what it does.
+text=Everything out here is worth something to somebody.
+text=You know what I miss? Coffee. Real coffee. There was a machine in the Annex.
+
+[banter]
+class=scavenger
+when=dungeon
+text=Tech ruins pay better than caves. Just saying.
+text=If it beeps, don't open it. If it hums, definitely open it.
+
+[banter]
+class=scavenger
+when=victory
+text=Check the bodies. Everybody check the bodies.
+text=Dibs on anything with wires.
+
+[banter]
+class=cleric
+when=idle
+text=Walk with the light, $hero. Even when it's dim.
+text=I keep a list of everyone we couldn't save. It's short. Let's keep it short.
+
+[banter]
+class=cleric
+when=night
+text=The dead are restless after dark. Stay close.
+
+[banter]
+class=cleric
+when=victory
+text=Rest now. You were lost long before we found you.
+text=Is everyone whole? Let me look at that.
+
+[banter]
+class=cleric
+when=town
+text=A shrine here would do these people good.
+
+[banter]
+class=any
+when=enter
+map=ashfall
+flag=ashfall_first
+text=So this is Ashfall. A whole city fell out of the sky and nobody caught it.
+
+[banter]
+class=any
+when=enter
+map=wreck
+flag=wreck_first
+text=That is a ship. From the stars. And we are walking into it.
+
+[banter]
+class=any
+when=enter
+map=brasswick
+flag=brasswick_first
+text=Brasswick. Keep your purse close and your opinions closer.
+
+[banter]
+class=any
+when=enter
+map=metro
+flag=b_metro
+text=Trains used to run down here. Before the sky fell on the city.
+
+[banter]
+class=scavenger
+when=idle
+map=metro
+text=Line 3. My mother rode this to work. Or so she said.
+text=Hear that? Water in the walls. Pumps must still have juice somewhere.
+
+[banter]
+class=cleric
+when=idle
+map=metro
+text=Whatever they worship down here, it isn't listening. Or it is, and that's worse.
+
+[banter]
+class=any
+when=enter
+map=barrow
+flag=b_barrow
+text=Wardens of Hollowmere... my gran used to tell stories about them.
+
+[banter]
+class=mage
+when=dungeon
+text=Light first, questions later. The dark has better aim than we do.
+text=If I can't see it, I can't set it on fire. Remember that.
+
+[banter]
+class=ranger
+when=dungeon
+text=Can't shoot what I can't see. Throw a flare if it gets thick down here.
+

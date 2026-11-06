@@ -1,0 +1,26 @@
+frames 5
+editor
+frames 5
+shot ed_maps.png
+tab 1
+shot ed_tiles.png
+tab 2
+shot ed_world.png
+tab 3
+click 100 120
+frames 2
+shot ed_items.png
+tab 4
+click 100 120
+frames 2
+shot ed_creatures.png
+tab 11
+click 100 120
+frames 2
+shot ed_dialogue.png
+tab 12
+shot ed_tileset.png
+tab 0
+click 100 110
+frames 2
+shot ed_map2.png

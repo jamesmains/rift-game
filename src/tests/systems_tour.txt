@@ -1,0 +1,74 @@
+# tour of the v2.4 systems: journal, world map, console, crafting, bounty board, weather, combat cover/overwatch, achievements
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+key J
+frames 3
+shot j_quests.png
+key RIGHT
+frames 2
+shot j_bestiary.png
+key RIGHT
+frames 2
+shot j_stats.png
+key RIGHT
+frames 2
+shot j_notes.png
+key RIGHT
+frames 2
+shot j_achievements.png
+key ESC
+frames 2
+teleport overworld 60 60
+frames 5
+clock 1320
+weather storm
+frames 30
+shot night_storm.png
+key M
+frames 3
+shot worldmap.png
+key ESC
+frames 2
+con help
+con give wolf_pelt 3
+con give herb_moon 4
+con craft
+frames 3
+shot craft.png
+key ESC
+frames 2
+teleport hollowmere 10 10
+frames 5
+con bounty
+frames 3
+shot bounty.png
+key ESC
+frames 2
+key GRAVE
+frames 2
+type stats
+key ENTER
+frames 2
+shot console.png
+key ESC
+frames 2
+god
+combat goblin,goblin_archer,goblin
+frames 10
+key O
+frames 5
+shot combat_cover.png
+dump
+audio

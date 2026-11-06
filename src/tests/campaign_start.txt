@@ -1,0 +1,24 @@
+# 0.8: see tests/README.md
+frames 5
+shot desk.png
+dblclick 134 244
+frames 5
+shot camp_new.png
+type Ivo
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER
+frames 60
+key ENTER
+frames 60
+key ENTER
+frames 30
+dump
+shot camp_start.png
+teleport lighthouse 0 0
+frames 10
+shot lighthouse.png
+expect map == lighthouse
+expect campaign == gullwatch

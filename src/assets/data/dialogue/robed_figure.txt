@@ -1,0 +1,18 @@
+[start]
+speaker=Robed Figure
+text=The Unmade King stirs. The shards return to him. You carry one - no, you carry MORE. Give them to us, and be spared the unmaking.
+option=Who are you people?|who
+option=Never.|fight
+option=I'll think about it.|end
+
+[who]
+speaker=Robed Figure
+text=We are the Open Sky. Forty years ago the world was cracked open like an egg, and something beautiful looked in. The Hierophant will finish what the Rift began. The shards are only the knock on the door.
+option=Then I'll keep them.|fight
+option=...|end
+
+[fight]
+speaker=Robed Figure
+text=Then be unmade!
+set=cult_fought
+combat=cultist,cultist,imp

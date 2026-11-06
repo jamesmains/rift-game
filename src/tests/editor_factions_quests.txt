@@ -1,0 +1,19 @@
+# 0.9.0: Factions tab (reputation, used by) and quest fail conditions in the stage cards
+frames 5
+editor
+frames 5
+tab 21
+frames 5
+click 80 110
+frames 5
+shot ed_factions.png
+tab 9
+frames 5
+click 80 110
+frames 5
+shot ed_quest_fail.png
+click 430 413
+frames 5
+shot ed_quest_fail_added.png
+tab 5
+frames 5

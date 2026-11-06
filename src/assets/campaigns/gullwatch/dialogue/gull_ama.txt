@@ -1,0 +1,14 @@
+[start]
+speaker=Herbwife Ama
+text=Burns, chills, things that bite. Sit down if you're bleeding.
+option=Can I use your still?|still
+option=Heal us.|heal
+option=Goodbye.|end
+
+[still]
+speaker=Herbwife Ama
+text=Clean it after.
+craft=alchemy
+
+[heal]
+healer=Hold still. Salt and seaweed work wonders - for a price.

@@ -1,0 +1,32 @@
+# 0.8.5: ? buttons on every tab + the guide window, campaign world map control
+frames 5
+editor
+frames 5
+shot h_maps.png
+click 60 120
+frames 2
+tab 1
+frames 2
+shot h_tiles.png
+tab 18
+frames 2
+shot h_campaign.png
+tab 11
+click 60 102
+frames 2
+shot h_dialogue.png
+tab 12
+frames 2
+shot h_sounds.png
+tab 17
+click 60 102
+frames 2
+shot h_achievements.png
+tab 0
+frames 2
+guide start
+frames 2
+shot h_guide_start.png
+guide tab.items
+frames 2
+shot h_guide_items.png

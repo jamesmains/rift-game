@@ -1,0 +1,11 @@
+[start]
+speaker=Street Urchin
+text=Psst. The hermit south of here pays real gold for junk - bear claws, shiny rocks, bits of the drones from Ashfall. Give us a coin for the tip?
+option=Here's a coin. (1 gold)|coin|gold:1
+option=No.|end
+
+[coin]
+speaker=Street Urchin
+text=Ta!
+gold=-1
+option=Scram.|end

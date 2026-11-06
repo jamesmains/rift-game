@@ -1,0 +1,216 @@
+# Quest log entries. Each stage = condition | text. The LAST matching stage is shown. Prefix text with DONE to grey it out.
+# objective=STAGE | DONE-CONDITION | TEXT adds a checklist line under stage STAGE (0 = all); TEXT may use {itemn:id} {kills:creature} {flag:name} {gold}.
+# End a stage text with " @location_id" (from overworld.txt) to pin it on the world map (M) and show it in the journal.
+[quest]
+id=main
+name=The Rift Stirs
+stage=hero_awake | Elder Mara sent her runner before dawn. Her house is at the north-west edge of Hollowmere - leave your cottage and head there. @hollowmere
+stage=q_main>=1 | Elder Mara asked you to deal with the goblins in Greywood Cave, north-east of Hollowmere. @greywood
+stage=q_goblins_done | The goblin chief is dead. Report back to Elder Mara in Hollowmere. @hollowmere
+stage=goblin_chief_spared&!q_main>=2 | Grakk, the goblin chief, gave up his crown of violet glass and led his tribe out of Greywood. Tell Elder Mara in Hollowmere. @hollowmere
+stage=q_main>=2 | Carry the Elder's letter to Mayor Aldous in Brasswick, east along the road. @brasswick
+stage=q_main>=3 | The Mayor believes a Rift Shard lies in Dunmarrow Crypt, north of Brasswick. Retrieve it. @dunmarrow
+stage=rift_shard_found | You hold a Rift Shard. Show it to Mayor Aldous in Brasswick. @brasswick
+stage=q_main>=4 | Find Tessa in Ashfall, the fallen city to the north-east. She knows the Research Annex. @ashfall
+stage=q_main>=5 | Enter the Research Annex south of Ashfall and recover the second shard from the reactor golem. @lab
+stage=rift_shard2_found | Two shards. The third is in the Wreck, the starship north of Ashfall. @wreck
+stage=q_main>=6 | Explore the Wreck's lower decks and take the third shard from whatever guards it. @wreck
+stage=rift_shard3_found&!item:rift_key | Three shards - but the Scar's inner seal is held shut by a key the cult of the Open Sky carries. Find their Hierophant. @ashfall
+stage=rift_shard3_found&item:rift_key | All three shards burn in your pack, and the Hierophant's key is cold in your hand. The Scar, far to the north-east, will open for you now. @scar
+stage=q_main>=7 | DONE The Unmade King is destroyed and the Rift is sealed. Aldmoor is free.
+stage=q_main>=7&ending_watch | DONE The Unmade King is destroyed. The three shards lie buried under Hollowmere's well-house, watched day and night.
+stage=q_main>=7&ending_claim | DONE The Unmade King is destroyed. The three shards are yours, and the Scar answers to you now.
+
+[quest]
+id=ears
+name=Goblin Bounty
+stage=q_ears>=1 | Captain Reyna of Brasswick pays 5 gold per goblin ear. @greywood
+stage=q_ears>=2 | DONE You've collected the bounty on goblin ears. She'll keep paying for more.
+
+[quest]
+id=caravan
+name=The Stolen Caravan
+stage=q_caravan>=1 | Merchant Pell's caravan was taken by bandits camped at Thornhollow, south of Brasswick. @thornhollow
+stage=q_caravan_done | The bandit captain is dead. Tell Pell in the Brasswick market. @brasswick
+stage=q_caravan>=2 | DONE Pell rewarded you for recovering his goods.
+
+[quest]
+id=moonleaf
+name=Moonleaf for the Healer
+stage=q_moonleaf>=1 | Healer Wren in Hollowmere needs 3 Moonleaf from the swamps near Murkwater. @murkwater
+stage=q_moonleaf>=2 | DONE Wren brewed her remedy and thanked you.
+objective=1 | itemn:herb_moon:3 | Gather Moonleaf in the Murkwater swamps ({itemn:herb_moon}/3)
+
+[quest]
+id=hydra
+name=The Drowning Marsh
+stage=q_hydra>=1 | Something in the marsh east of Murkwater is dragging fishermen under. Kill it. @marsh
+stage=q_hydra_done | The Hydra is dead. Tell Old Fenwick in Murkwater. @murkwater
+stage=q_hydra>=2 | DONE Murkwater is safe and Fenwick paid you.
+
+[quest]
+id=dragon
+name=Ashwing
+stage=q_dragon>=1 | A dragon nests in the old mine west of Sunscar Outpost. The raiders want it gone as badly as the settlers. @old_mine
+stage=q_dragon_done | Ashwing is slain. Tell Matriarch Sefa in Sunscar. @sunscar
+stage=q_dragon>=2 | DONE Sunscar sings of your deed.
+
+[quest]
+id=frost
+name=Bones in the Snow
+stage=q_frost>=1 | Orin at Frosthold Shrine says a bone colossus walks in Rimehollow to the west. Destroy it. @troll_cave
+stage=q_frost_done | The colossus is destroyed. Tell Orin. @frosthold
+stage=q_frost>=2 | DONE Orin blessed you for cleansing Rimehollow.
+
+[quest]
+id=hermit
+name=The Hermit's Riddle
+stage=q_hermit>=1 | The hermit south of Brasswick wants a Bear Claw, a Circuit Board and a Rough Gem. @hermit
+stage=q_hermit>=2 | DONE The hermit gave you his treasure.
+
+[quest]
+id=pelts
+name=Pelts for the Trapper
+stage=q_pelts>=1 | Trapper Jory at Millbrook Farm wants 4 Wolf Pelts. @farm
+stage=q_pelts>=2 | DONE Jory paid for the pelts.
+
+[quest]
+id=bram_quest
+name=Bram: The Captain's Shield
+stage=bram_quest | Kill the bandit leader at Thornhollow Camp and recover Captain Sedge's shield. @thornhollow
+stage=bram_quest&bandit_leader_dead | The bandit leader is dead. Talk to Bram (Party menu, T).
+stage=q_bram_done | DONE Bram carries his captain's memory; you carry the shield.
+
+[quest]
+id=elowen_quest
+name=Elowen: What the Rift Keeps
+stage=elowen_quest | Destroy three rift wisps near the Scar at night and tell Elowen what you saw. @scar
+stage=elowen_quest&kills:rift_wisp:3 | Three wisps down. Talk to Elowen (Party menu, T).
+stage=q_elowen_done | DONE Elowen has her answer, such as it is.
+
+[quest]
+id=nyx_quest
+name=Nyx: Four Pelts
+stage=nyx_quest | Bring Nyx four wolf pelts from the hills north of Frosthold. @frosthold
+stage=nyx_quest&itemn:wolf_pelt:4 | You have the pelts. Talk to Nyx (Party menu, T).
+stage=q_nyx_done | DONE Two cloaks, one fire, no words needed.
+
+[quest]
+id=orin_quest
+name=Orin: Let Them Rest
+stage=orin_quest | Destroy the lich in Dunmarrow Crypt so Orin's parish can rest. @dunmarrow
+stage=orin_quest&lich_dead | The lich is gone. Talk to Orin (Party menu, T).
+stage=q_orin_done | DONE The names were said. The crypt is quiet.
+
+[quest]
+id=tessa_quest
+name=Tessa: One Question
+stage=tessa_quest | Collect three circuit boards from machines for Tessa's terminal. @lab
+stage=tessa_quest&itemn:circuit:3 | Three boards. Talk to Tessa (Party menu, T).
+stage=q_tessa_done | DONE The terminal answered. Tessa is not satisfied.
+
+[quest]
+id=cult
+name=The Open Sky
+stage=q_cult>=1 | A cultist in Ashfall carried a sigil and orders to bring you "below". Ask around Ashfall where the cult comes and goes. @ashfall
+stage=q_cult>=1&metro_open | The old metro beneath Ashfall is open. The cult's Hierophant waits somewhere down there. @ashfall
+stage=q_cult>=1&rook_freed&!q_cult>=2 | Rook says Hierophant Vell is in the chapel past a dead blast door; restore the station power, and bring shock for the Vigil. @ashfall
+stage=q_cult>=2 | Hierophant Vell is dead and his key is yours. Tell Mayor Aldous in Brasswick. @brasswick
+stage=q_cult>=3 | DONE The Open Sky is broken. The Hierophant's key will open the Scar's inner seal.
+
+[quest]
+id=barrow
+name=Grandfather's Barrow
+stage=q_barrow>=1 | Old Hesk's grandfather, a Warden, lies in the barrow west of Hollowmere. The passage has caved in - dig (shovels at Gorran's) or blast through and bring back his medal. @barrow
+stage=item:hesk_medal&!q_barrow>=2 | You have the Warden's medal. Bring it to Old Hesk in Hollowmere. @hollowmere
+stage=q_barrow>=2 | DONE Old Hesk has his grandfather's medal back; you carry the Warden's Lantern.
+
+[quest]
+id=vael
+name=The Armour That Talks
+stage=q_vael>=1 | Sir Vael, an animated suit of armour in Brasswick's keep, lost his sword Oathkeeper in Dunmarrow Crypt when the lich killed him. Find it. @dunmarrow
+stage=item:oathkeeper&q_vael>=1&!q_vael>=2 | You found Oathkeeper. Bring it to Sir Vael in Brasswick's keep. @brasswick
+stage=q_vael>=2 | DONE Sir Vael has seen his sword again, and offers to drill you in any style you please.
+
+[quest]
+id=converts
+name=Vell's Followers
+stage=q_cult>=2 | Vell's surviving followers wait outside the old chapel in Ashfall. Someone has to decide what becomes of them. @ashfall
+stage=converts_spared | DONE You let Vell's followers stay in Ashfall. They call themselves the Sky Wardens now.
+stage=converts_judged | DONE Vell's followers walked to Brasswick to face the Mayor's court.
+
+# ================= 1.0 side quests =================
+[quest]
+id=letter
+name=A Letter for Fenna
+stage=q_letter>=1 | Innkeeper Doss of Hollowmere asked you to take a letter, unopened, to his sister Fenna at the Copper Kettle in Brasswick. @brasswick
+stage=q_letter>=2 | Fenna has her brother's letter. She'd give a great deal to see their mother's ring again - Doss pawned it at Pell's counter in the Brasswick market. Tell Doss the kettle's on. @hollowmere
+stage=doss_thanked | DONE Doss and Fenna are talking again.
+stage=doss_thanked&letter_ring | DONE Doss and Fenna are talking again, and their mother's ring is home.
+fail=letter_burned | You burned Doss's letter. Fenna will never know.
+objective=2 | doss_thanked | Tell Doss in Hollowmere that "the kettle's on"
+objective=2 | letter_ring | (Optional) Buy back the ring at Pell's counter and bring it to Fenna
+
+[quest]
+id=still
+name=Rusty's Still
+stage=q_still>=1 | Barkeep Rusty's still coil was stolen by scrap drones nesting in the north-west ruins of Ashfall. Get it back. @ashfall
+stage=q_still>=1&item:copper_coil | You have Rusty's copper coil. Junk Vosk would pay well for it - but Rusty is waiting. @ashfall
+stage=q_still>=2 | DONE Rusty's still is bubbling again. The Last Call pours Firewater on the house for you.
+fail=coil_sold | You sold Rusty's coil to Junk Vosk. The Last Call is dry.
+
+[quest]
+id=signal
+name=Signal in the Static
+stage=q_signal>=1 | The lookout in Ashfall hears a voice from the Annex roof every night. Find the tape in the tape room just inside the Research Annex. @lab
+stage=q_signal>=1&item:signal_tape | You have the Annex tape. Bring it to the lookout in Ashfall. @ashfall
+stage=q_signal>=2 | DONE The voice on the tape was the lookout's mother, Dr. Vey. Her warning: the thing in the cradle isn't dead - don't put it back together.
+
+[quest]
+id=lanterns
+name=Lanterns on the Water
+stage=q_lanterns>=1 | Keeper Aldra of Murkwater wants the three drowned lanterns in the Drowning Marsh lit again, so the drowned will sleep. @marsh
+stage=q_lanterns>=1&marsh_lantern_1&marsh_lantern_2&marsh_lantern_3 | All three lanterns burn green. Tell Keeper Aldra. @murkwater
+stage=q_lanterns>=2 | DONE The drowned sleep again, and you wear a keeper's lantern charm.
+objective=1 | marsh_lantern_1 | Light the lantern by the first cistern, west of the stair
+objective=1 | marsh_lantern_2 | Light the lantern in the north hall
+objective=1 | marsh_lantern_3 | Light the lantern by the old drain, south-west
+
+[quest]
+id=gulp
+name=Tam's Big One
+stage=q_gulp>=1 | Old Gulp, the biggest toad in the Drowning Marsh, swallowed Fisher Tam's lucky hook. It lives past the west cistern. @marsh
+stage=q_gulp>=1&item:lucky_hook | You have the lucky hook. Fisher Tam wants it back - and the mud boy thinks it's magic. @murkwater
+stage=hook_to_tam | DONE Tam has his lucky hook back.
+stage=hook_to_boy | DONE The mud boy has a magic hook, and you have a portrait with nine arms.
+
+[quest]
+id=well
+name=Water Rights
+stage=q_well>=1 | Sunscar's well pump needs a brass valve (Ashfall's scrap traders sell them). Then Raider Kesh and Matriarch Sefa want you to decide whose water it is. @sunscar
+stage=q_well>=1&item:brass_valve | You have a brass valve. Bring it to Raider Kesh in Sunscar. @sunscar
+stage=well_free | DONE Sunscar's well runs free for raiders and settlers alike.
+stage=well_toll | DONE Kesh's people charge a copper a bucket for Sunscar's water, and you took a share.
+
+[quest]
+id=dance
+name=Spin, Spin, Spin
+stage=q_dance>=1 | The sand dancer's father took his music box into the old mine west of Sunscar before the dragon came. Find it. @old_mine
+stage=q_dance>=1&item:music_box | You found the dented music box. Bring it to the sand dancer in Sunscar. @sunscar
+stage=q_dance>=2 | DONE Four notes and then the wrong one. The sand dancer has her father's song back.
+
+[quest]
+id=pilgrim
+name=The Pilgrim's Sister
+stage=q_pilgrim>=1 | A pilgrim at Frosthold is looking for her sister, last seen taking the shortcut through Rimehollow. She carries green Murkwater prayer beads. @troll_cave
+stage=q_pilgrim>=1&item:prayer_beads | You found the sister's prayer beads on a frozen body in Rimehollow. Tell the pilgrim. @frosthold
+stage=pilgrim_truth | DONE You told the pilgrim the truth. She has gone home to tell her mother.
+stage=pilgrim_lie | DONE You told the pilgrim her sister walked on north. She has gone north to look for her.
+
+[quest]
+id=maud
+name=Cold Hands
+stage=q_maud>=1 | Sister Maud at Frosthold wants four frost wolves hunted on the snowfields around the shrine. @frosthold
+stage=q_maud>=1&kills:frost_wolf:4 | Enough frost wolves are dead. Tell Sister Maud. @frosthold
+stage=q_maud>=2 | DONE Sister Maud sewed you a pair of wolfhide mittens.
+objective=1 | kills:frost_wolf:4 | Hunt frost wolves ({kills:frost_wolf}/4)

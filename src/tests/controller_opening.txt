@@ -1,0 +1,50 @@
+# 0.9.0: the opening played with a controller only - desktop Start menu, New Game (Random name), the intro, walking out of the cottage, journal (Back), world map (left stick click), party menu (Start)
+frames 30
+pad 1
+key PADSTART
+frames 2
+key PADDOWN
+key PADA
+frames 8
+key PADDOWN
+key PADRIGHT
+frames 2
+key PADA
+frames 3
+keys PADDOWN PADDOWN PADDOWN PADDOWN PADDOWN PADDOWN PADDOWN PADDOWN
+frames 2
+key PADA
+frames 60
+expect state == 2
+keys PADA PADA PADA PADA PADA PADA
+frames 60
+keys PADA PADA PADA PADA PADA PADA
+frames 60
+keys PADA PADA PADA
+frames 30
+expect mode == EXPLORE
+expect map == hollowmere_home
+shot pad_cottage.png
+hold PADDOWN 40
+frames 90
+expect map == hollowmere
+shot pad_village.png
+key PADBACK
+frames 5
+expect mode == JOURNAL
+shot pad_journal.png
+key PADB
+frames 5
+key PADLS
+frames 5
+expect mode == WORLDMAP
+shot pad_worldmap.png
+key PADB
+frames 5
+key PADSTART
+frames 5
+expect mode == MENU
+shot pad_menu.png
+key PADB
+frames 5
+expect mode == EXPLORE

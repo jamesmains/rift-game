@@ -1,0 +1,4 @@
+[start]
+speaker=$hero
+text=Elder Mara's runner knocked before dawn. "Come to the elder's house," he said, "and bring your boots." Something is wrong in Hollowmere.
+next=end

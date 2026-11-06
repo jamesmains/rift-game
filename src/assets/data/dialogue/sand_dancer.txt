@@ -1,0 +1,33 @@
+[start]
+speaker=Sand Dancer
+text=Watch! Spin, spin, spin - the dragon can't catch what doesn't stop moving!
+option=Impressive.|end
+option=Who taught you to dance?|box|!q_dance>=1
+option=I found a music box in the old mine.|box_back|item:music_box&!q_dance>=2
+
+[box]
+speaker=Sand Dancer
+text=My da. He had a music box that played the dancing song, but he took it into the old mine when he went to work, and then the dragon came, and he didn't... (she stops spinning) ...It played four notes and then a wrong one. That was the best part.
+option=If it's in that mine, I'll find it.|box_yes
+option=I'm sorry.|end
+
+[box_yes]
+speaker=Sand Dancer
+text=Really? It's tin. It's got a dent. You'll know it - it's the only thing in there that sings.
+set=q_dance=1
+quest=Spin, Spin, Spin
+option=I'll look.|end
+
+[box_back]
+speaker=Sand Dancer
+text=(She winds it. Four notes, then the wrong one. She laughs so hard she has to sit down.) That's it! That's the wrong note! ...Watch. This is the dance that goes with it.
+take=music_box
+set=q_dance=2
+xp=200
+give=lucky_coin
+option=(Watch her dance.)|box_end
+
+[box_end]
+speaker=Sand Dancer
+text=Da always said the dragon can't catch what doesn't stop moving. Take his lucky coin. He'd want the person who found his box to have it.
+option=Keep spinning.|end

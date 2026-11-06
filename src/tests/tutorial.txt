@@ -1,0 +1,107 @@
+# 1.0.7: the Tutorial campaign, played the way a new player would: walk, open the chest, equip from the party screen,
+# buy in a shop, save at a shrine, talk, two fights, a hotbar favourite, and the finish back to New Game.
+campaign tutorial
+newgame Ana warrior 0
+frames 90
+expect hint contains Talk to Warden Hale
+shot tut_start.png
+choose How will I know
+frames 30
+expect flag:tut_intro == 1
+expect hint contains glowing marker
+walk 9 10
+frames 5
+expect flag:tut_moved == 1
+expect hint contains supply chest
+bump 2 2 chest
+frames 5
+expect item:warden_badge == 1
+expect hint contains Warden's Badge
+# equip it the real way: party screen, Items tab, the badge (4th), Equip on..., the hero
+key TAB
+frames 3
+key PGDN
+frames 3
+expect hint contains Equip on
+shot tut_menu.png
+keys DOWN DOWN DOWN
+key ENTER
+frames 2
+key ENTER
+frames 2
+key ENTER
+frames 2
+key ESC
+frames 2
+key ESC
+frames 3
+expect hint contains Badge on
+walk 14 7
+frames 5
+expect flag:tut_r2 == 1
+talk ott
+frames 3
+expect mode == SHOP
+expect hint contains Shopping
+shot tut_shop.png
+key ENTER
+frames 3
+expect item:bandage == 1
+key ESC
+frames 3
+walk 24 7
+frames 5
+expect flag:tut_r3 == 1
+walk 26 3
+key E
+frames 5
+shot tut_shrine.png
+settle
+talk brin
+choose What's through the door
+frames 5
+expect flag:tut_brin == 1
+expect hint contains journal
+walk 32 7
+frames 5
+expect hint contains Two giant rats
+fight tut_rats
+settle
+expect flag:tut_rats == 1
+expect level >= 2
+expect hint contains hotbar
+# the bandage on hotbar slot 1 from the Items tab (it is the last item: bread, potion, torch, badge... sort as found)
+key TAB
+frames 3
+key PGDN
+frames 3
+shot tut_items2.png
+keys DOWN DOWN DOWN
+key 1
+frames 3
+expect fav:1 == item:bandage
+expect hint contains That's your hotbar
+key ESC
+frames 3
+walk 44 7
+frames 5
+expect flag:tut_r5 == 1
+expect hint contains Goblins
+fight tut_goblins
+settle
+expect flag:tut_goblins == 1
+expect hint contains Warden Hale is waiting
+walk 58 7
+talk hale_end
+key DOWN
+key ENTER
+frames 60
+shot tut_cutscene.png
+keys ENTER ENTER ENTER
+frames 60
+keys ENTER ENTER
+frames 60
+expect running == 0
+expect window == new
+expect campaign == triffall
+shot tut_done.png

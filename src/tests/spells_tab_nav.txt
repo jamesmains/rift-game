@@ -1,0 +1,33 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+con join mage
+con join cleric
+pad 1
+key B
+frames 5
+shot sp0.png
+key LEFT
+key DOWN
+frames 3
+shot sp1.png
+key RIGHT
+key DOWN
+frames 3
+shot sp2.png
+key ESC
+frames 3
+key DOWN
+frames 3
+shot sp3.png

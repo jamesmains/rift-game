@@ -1,0 +1,4 @@
+[start]
+speaker=Chicken
+text=Bawk.
+option=...|end

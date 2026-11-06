@@ -1,0 +1,42 @@
+# 1.0 Settings > Access: large text in dialogue / messages / cutscenes / hints, text speed, colour-blind palette
+# (sides, hit chance, cover), reduced flashing, and the Access tab itself.
+newgame Ana warrior 1
+teleport hollowmere 7 7
+setting largetext 1
+setting textspeed 3
+talk elder
+frames 2
+shot large_dialogue.png
+expect mode == DIALOGUE
+choose What do you need
+frames 2
+shot large_dialogue2.png
+key ESC
+settle
+con run message:A long sign|Large text wraps across the whole width of the screen, so a sign or a letter with several sentences in it still fits on the screen without running off the edge of the box.
+frames 2
+shot large_message.png
+key ENTER
+setting largetext 0
+# combat colours: normal, then colour-blind, with a target in cover
+teleport goblin_cave 12 15
+con spawn goblin_archer,goblin
+frames 30
+target
+frames 2
+shot combat_normal.png
+setting colorblind 1
+frames 2
+shot combat_colorblind.png
+setting colorblind 0
+con kill
+settle
+# lightning: reduced flashing turns the flash off
+setting reduceflash 1
+teleport overworld 44 93
+con weather storm
+frames 600
+shot storm_noflash.png
+# the Access tab in the desktop settings
+key ESC
+frames 4

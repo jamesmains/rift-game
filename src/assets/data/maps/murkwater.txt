@@ -1,0 +1,197 @@
+[map]
+id=murkwater
+name=Murkwater
+kind=town
+spawn=20,28
+bg=15,30,25
+music=murkwater
+
+[legend]
+. = floor_grass
+, = floor_dirt
+r = road
+T = tree|tree|tree2
+t = pine_t
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = bush
+
+[rows]
+TTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTT
+T.w............T..rrrrrr..w.........w..T
+T......ww..T..#######rr#######.......wwT
+T..w....j.w...#hhhhh#rr#hhhhh#.........T
+T....w........#hhhhh#rr#hhhhh#.w.w...wwT
+T....w..w.....#hhhhh#rr#hhhhh#.........T
+T.w..T.w......#WiD#W#rr#WsD#W#.......w.T
+Tw................rrrrrr...............T
+T..w..#####.......rrrrrr......#####....T
+T.....#hhh#.......rrrrrr......#hhh#....T
+T...T.#hhh#.w.....rrrrrr......#hhh#...wT
+T.....#hhh#.......rrrrrr......#hhh#..w.T
+Tw..w.#WDW#..w....rrrrrr......#WDW#....T
+T...~.......~~....rrrrrr....~..........T
+T..w~~~~~~~~~~....rrrrrr....~~~~~~~~...T
+T..j~~~~~~~~~~....rrorrr....~~~~~~~~..wT
+Tw......w.........rrrrrr...............T
+T..........j......rrrrrr......Tw.j.jj..T
+Tj...w............rrrrrr.....jj..w.....T
+T.T...............rrrrrr............T..T
+T...j.#####.w.....rrrrrr......#####....T
+T..j..#hhh#.......rrrrrr......#hhh#....T
+TT....#hhh#...................#hhh#....T
+T.w...#hhh#...w.....a......ww.#hhh#.w..T
+T.....#WDW....................#WDW#.w..T
+T..w.........w.........................T
+T.................rrrrrr...............T
+T....w.w......w...rrrrrrw.............wT
+T...j.............rrrrrr.ww....T.....jwT
+TTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTT
+
+[exit]
+x=19
+y=29
+w=4
+h=1
+to=overworld
+tx=118
+ty=109
+
+[exit]
+x=18
+y=0
+w=6
+h=1
+to=overworld
+tx=118
+ty=107
+
+[npc]
+id=fenwick
+name=Old Fenwick
+sprite=141,0
+x=8
+y=10
+dialogue=old_fenwick
+
+[npc]
+id=shrine_keeper
+name=Keeper Aldra
+sprite=123,1
+x=21
+y=24
+dialogue=keeper_aldra
+
+[npc]
+id=swamp_trader
+name=Trader Mosk
+sprite=105,1
+x=26
+y=4
+dialogue=trader_mosk
+
+[npc]
+id=swamp_inn
+name=Innkeeper Ule
+sprite=104,0
+x=17
+y=4
+dialogue=innkeeper_ule
+
+[npc]
+id=fisher
+name=Fisherwoman Tam
+sprite=104,1
+x=32
+y=22
+dialogue=fisher_tam
+wander=1
+
+[npc]
+id=kid
+name=Mud-caked Boy
+sprite=104,0
+x=22
+y=12
+dialogue=mud_boy
+wander=1
+
+[npc]
+id=frog
+name=Frog
+sprite=130,40
+x=10
+y=24
+dialogue=frog
+wander=1
+
+[chest]
+x=32
+y=10
+flag=mw_chest
+items=herb_moon:1,antidote:2
+
+[sign]
+x=19
+y=21
+text=Shrine of the Drowned. Light a candle for those the marsh took.
+
+[savepoint]
+x=21
+y=25
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=10
+y=17
+board=murkwater
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=12
+y=17
+travel=1

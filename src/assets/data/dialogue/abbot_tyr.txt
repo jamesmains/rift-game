@@ -1,0 +1,32 @@
+[start]
+speaker=Abbot Tyr
+text=Frosthold keeps the northern watch. West of here, in Rimehollow, a colossus of bone has walked for thirty years. Pilgrims do not return. Will you end it?
+option=I will.|quest|!q_frost>=1
+option=The colossus is destroyed.|done|q_frost_done&!q_frost>=2
+option=Heal us.|heal
+option=Perform the Rite of Renewal.|rite
+option=Goodbye.|end
+
+[quest]
+speaker=Abbot Tyr
+text=Fire. The dead fear fire. Go with the shrine's blessing.
+set=q_frost=1
+give=scroll_fire:2
+option=Thank you.|end
+
+[done]
+speaker=Abbot Tyr
+text=Then thirty years of candles can finally go out. Take this: the Amulet of Life, kept for the one who cleansed Rimehollow.
+set=q_frost=2
+give=amulet_life:1
+gold=150
+xp=400
+option=Thank you.|end
+
+[heal]
+healer=1
+
+[rite]
+speaker=Abbot Tyr
+text=Kneel, then. Forget what you were; choose what you will be.
+respec=1

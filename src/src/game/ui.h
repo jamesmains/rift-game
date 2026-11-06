@@ -1,0 +1,48 @@
+// Shared drawing helpers for the in-game (RPG) UI style.
+#pragma once
+#include "../core/gfx.h"
+#include "../core/input.h"
+#include "data.h"
+#include <string>
+#include <vector>
+
+struct Ctx {
+    Tileset* ts = nullptr;
+    Font* font = nullptr;
+    GameData* gd = nullptr;
+    Canvas* cv = nullptr;
+    int frame = 0;
+    float time = 0;
+};
+
+namespace UI {
+constexpr int SCREEN_W = 640, SCREEN_H = 480;
+constexpr int TILE = 24; // 12px tiles drawn at 2x in the world view
+
+void panel(Ctx& c, int x, int y, int w, int h, Color8 fill = C::Panel, Color8 border = C::Gold);
+void panelTitle(Ctx& c, int x, int y, int w, int h, const std::string& title);
+void bar(Ctx& c, int x, int y, int w, int h, int value, int maxValue, Color8 fill, Color8 back = C::DkGray);
+void text(Ctx& c, int x, int y, const std::string& s, Color8 col = C::White, int scale = 1);
+void textCenter(Ctx& c, int cx, int y, const std::string& s, Color8 col = C::White, int scale = 1);
+void textRight(Ctx& c, int rx, int y, const std::string& s, Color8 col = C::White, int scale = 1);
+void textShadow(Ctx& c, int x, int y, const std::string& s, Color8 col = C::White, int scale = 1);
+int  wrapped(Ctx& c, int x, int y, int w, const std::string& s, Color8 col = C::White);
+// A selectable list row; returns true if hovered by mouse.
+bool listRow(Ctx& c, const InputState& in, int x, int y, int w, int h, bool selected);
+void selCursor(Ctx& c, int x, int y, int h);   // pulsing marker to the left of the focused row (clear focus for keyboard/controller users)
+bool button(Ctx& c, const InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled = true, bool selected = false);
+void icon(Ctx& c, Tile t, int x, int y, int scale = 1, Color8 tint = C::White);
+int keyHint(Ctx& c, int x, int y, const std::string& key, const std::string& label);
+// The key (or controller button) bound to an action, drawn as a keyHint chip; returns its width (0 = unbound).
+// draw=false only measures it.
+int keyChip(Ctx& c, int x, int y, int action, bool draw = true);
+Color8 dmgColor(int dmgType);
+// Side / hit-chance / cover colours. With gColorblind (Settings > Access) they come from a palette that stays apart
+// for red-green colour blindness (blue for your side and good odds, orange for foes and bad odds).
+extern bool gColorblind;
+Color8 friendColor(); Color8 foeColor(); Color8 allyColor();
+Color8 friendBack(); Color8 foeBack();
+Color8 hitColor(int pct);            // good / fair / poor odds
+Color8 coverColor(int level);        // 1 half, 2 full
+std::string itemLabel(const ItemDef& d, int count);
+}

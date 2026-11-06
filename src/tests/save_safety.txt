@@ -1,0 +1,41 @@
+# 1.0 robustness: versioned saves, the .bak copy that rescues a damaged save, the autosave, saves from a newer
+# version, items an update removed, and the crash report.
+newgame Tess warrior 1
+# no autosave the moment a game starts (it would overwrite the last hero's); one on arriving somewhere after a minute
+expect savefile:autosave.sav == 0
+frames 3700
+teleport hollowmere 20 28
+expect savefile:autosave.sav == 1
+saveslot 1
+gold 77
+saveslot 1
+expect savefile:slot1.sav == 1
+expect savefile:slot1.sav.bak == 1
+# a save cut short (a crash mid-write before 1.0, a full disk) loads the previous save instead
+truncate slot1.sav
+loadslot 1
+expect log contains damaged
+expect running == 1
+# the main file gone after an interrupted write: the .bak is used
+saveslot 1
+rmfile slot1.sav
+loadslot 1
+expect log contains backup copy
+# a save from a newer version is refused with a clear message, not half-loaded
+saveslot 2
+filereplace slot2.sav version=3 version=99
+loadslot 2
+expect gold != 0
+# an item a patch removed is dropped with a note instead of breaking the load
+saveslot 3
+filereplace slot3.sav inv=potion_red inv=item_removed_in_a_patch
+loadslot 3
+expect log contains no longer exist
+# the autosave loads like a slot
+con autosave
+loadslot auto
+expect running == 1
+# the crash report and emergency save (written for real by the crash handler)
+con crashtest
+expect savefile:crash.log == 1
+expect savefile:crash_recovery.sav == 1

@@ -1,0 +1,57 @@
+# 0.9.0: quest failure (fail=) and town reputation (rep= / rep: / shop faction prices)
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+frames 80
+keys ENTER ENTER ENTER ENTER ENTER ENTER
+frames 20
+expect mode == EXPLORE
+# a quest that fails, one that fails after it was finished (finishing wins)
+flag q_caravan
+con questfail caravan pell_dead | Pell is dead; nobody will pay for the goods now.
+expect queststatus:caravan contains Thornhollow
+flag pell_dead
+expect queststatus:caravan contains FAILED
+key J
+frames 3
+shot journal_failed.png
+key ESC
+frames 3
+flag q_moonleaf
+con questfail moonleaf q_moonleaf>=2 | should never show
+give herb_moon 3
+con dialogue healer_wren turnin
+frames 10
+keys ENTER ENTER
+frames 10
+# (the 120 XP opens the level-up screen; prices below are read directly)
+expect queststatus:moonleaf contains DONE
+expect rep:hollowmere == 10
+# reputation prices: Honoured in Hollowmere = cheaper at the general store
+con shop hollowmere_general
+frames 3
+expect price:potion_red == 36
+shot shop_neutral.png
+key ESC
+frames 3
+con rep hollowmere 60
+con shop hollowmere_general
+frames 3
+expect rep:hollowmere == 70
+expect price:potion_red == 31
+shot shop_honoured.png
+key ESC
+con rep brasswick -80
+expect rep:brasswick == -80
+con achieve local_hero

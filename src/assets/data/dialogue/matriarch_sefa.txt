@@ -1,0 +1,21 @@
+[start]
+speaker=Matriarch Sefa
+text=Sunscar greets you. Water, shade, and a bed are yours. What we do not have is peace - a dragon nests in the old mine to the west, and it takes a goat a week and a child when it can.
+option=I'll deal with the dragon.|quest|!q_dragon>=1
+option=Ashwing is dead.|done|q_dragon_done&!q_dragon>=2
+option=Goodbye.|end
+
+[quest]
+speaker=Matriarch Sefa
+text=Ashwing, they call it. Even the raiders fear it - talk to their envoy Kesh, he may help you. Fire resistance, child. Lots of it.
+set=q_dragon=1
+option=Understood.|end
+
+[done]
+speaker=Matriarch Sefa
+text=Then the song is yours. Sunscar will sing it for a hundred years. Take this - it was forged for the one who would slay it, and we have waited a long time to give it away.
+set=q_dragon=2
+gold=300
+give=katana:1
+xp=600
+option=Thank you.|end

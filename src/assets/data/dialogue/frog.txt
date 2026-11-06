@@ -1,0 +1,4 @@
+[start]
+speaker=Frog
+text=Ribbit.
+option=...|end

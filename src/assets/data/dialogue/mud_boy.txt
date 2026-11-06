@@ -1,0 +1,21 @@
+[start]
+speaker=Mud-caked Boy
+text=I saw it! The thing in the water! It had five heads and it looked at me with ALL of them!
+option=Stay out of the water.|end
+option=I killed the giant toad. Here's what it swallowed.|hook|item:lucky_hook&q_gulp>=1&!q_gulp>=2
+
+[hook]
+speaker=Mud Boy
+text=THE MAGIC HOOK! It's real! Tam said it was just a hook but it was INSIDE A TOAD! Can I keep it? I'll give it back to him when I'm grown up. Probably. I'll draw you a picture! Look!
+option=It's yours. Look after it.|hook_give
+option=It belongs to Tam.|end
+
+[hook_give]
+speaker=Mud Boy
+text=I'm going to catch the BIGGEST fish. Bigger than the hydra. Here's your picture. That's you. Those are your arms.
+take=lucky_hook
+give=mud_drawing
+xp=120
+set=q_gulp=2,hook_to_boy
+rep=murkwater:5
+option=Very good arms.|end

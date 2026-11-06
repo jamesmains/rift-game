@@ -1,0 +1,34 @@
+[start]
+speaker=Old Hesk
+text=Hmph. Graves don't tend themselves. My brother's in that one - went up to Rimehollow in the snows thirty years back and came home in pieces. Something made of bones walks there still.
+option=Is something troubling you?|barrow|!q_barrow>=1
+option=I found your grandfather's medal.|medal|item:hesk_medal&!q_barrow>=2
+option=About the barrow...|reminder|q_barrow>=1&!q_barrow>=2
+option=Sorry for your loss.|end
+
+[barrow]
+speaker=Old Hesk
+text=Troubling. Ha. My grandfather was a Warden - buried in the old barrow west of the village with his medal and his lantern, like they did then. Last winter the passage fell in. And now there's lights in there at night, and the Tobb boy swears he heard digging. From the inside.
+next=barrow2
+
+[barrow2]
+speaker=Old Hesk
+text=I'm too old to dig and too stubborn to ask the Elder. You'd need a shovel - Gorran sells them - or something that goes bang. Bring me his medal and whatever's walking around in there can stay dead.
+set=q_barrow=1
+quest=Grandfather's Barrow
+option=I'll see to it.|end
+
+[reminder]
+speaker=Old Hesk
+text=West of the village, past the tall grass. Shovel from Gorran. Mind the dead.
+option=Right.|end
+
+[medal]
+speaker=Old Hesk
+text=...That's his. Hmph. Something in my eye. The lantern too - keep it, he'd want it used, not buried twice. It never needs oil; never did. Wardens' trick.
+take=hesk_medal
+give=wardens_lantern
+set=q_barrow=2
+xp=180
+gold=40
+option=Rest easy, Warden.|end

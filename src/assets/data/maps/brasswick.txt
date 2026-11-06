@@ -1,0 +1,348 @@
+[map]
+id=brasswick
+name=Brasswick
+kind=town
+spawn=30,41
+bg=20,40,20
+music=brasswick
+
+[legend]
+. = floor_grass
+, = floor_dirt
+r = road
+T = tree|tree|tree2
+t = pine_t
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = bush
+
+[rows]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTT...T..TT.......TT......rrrrrr..T...T.T.TT...T...T...T..T
+T..............TTT........TrrrrrrT....TT......T.........T.TT
+T.TT..T..T....T....T.T...T.rrrrrr...TT...T...T....T..T.TT.TT
+TT..TT...T.F.T..........TTTrrrrrr..T........T.T.......TTT.TT
+T....======================rrrrrr======================....T
+T....=..================...rrrrrr.......============..=T...T
+TF...=..=mKKKKKKKKKKKKm=...rrrrrr..y....=LRRRZRRRRR=..=...TT
+T.TTT=..=mmmmmmmmmmmmmm=...rrrrrr.......=RRRRRRRRRR=..=..TTT
+T....=..=mmmmmmmmmmmmmm=...rrrrrr.......=RRRRRRRRRR=..=T...T
+T....=..=mmmmmmmmmmmmmm=...rrrrrr...y...=RRRRRRRRRR=.F=....T
+TT...=..=%======D=====%=...rrrrrr.......=RRRRRRRRRR=..=....T
+T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr=RRRRRRRRRR=..=....T
+T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr=RRRRRRRRRR=..=..T.T
+T....=======...............rrrrrr.......=RRRRRRRRRR=..=.T..T
+T..T.==BmmB=.#########.....rrrrrr...y...=W==$D$===W=..=....T
+T..T.==mmmm=.#nMhhhhS#..prrrrrrrrrrp............rr....=....T
+T.T..==kmmm=.#hhhhhhh#..rrrrrrrrrrrr..#########.rr....=....T
+T.T..==mmmm=.#hhhhhhh#..rrrrrrrrrrrr..#KhhuhhK#.rr...F=....T
+T....==WD=W=.#hhhhhhh#..rrrrrrrrrrrr.F#hhhhhhh#.rry...=....T
+r....=....rr.#W#sD##W#..rrrrrQQrrrrr..#hhhhhhh#.rr....=....r
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrQQrrrrrrr#W#sD##W#rrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+r....=....rr...F....y...rrrrrrrrrrrr............rr....=.FT.r
+T....=....rr.#########..prrrrrrrrrrp..###########r....=T...T
+T....=######.#ShhhhhS#.....rrrrrr.....#BhhhAAhhB#r....=....T
+T....=#hhhh#.#hhhhhhh#.....rrrrrr.....#hhhhhhhhh#r....=...TT
+T.T..=#hhhh#.#bhhhhhh#.....rrrrrr.....#bhhhhhhhh#r....=TTT.T
+T....=#WD#W#.#W#sD##W#.....rrrrrr.....#hhhhhhhhh#r....=....T
+T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrr#W#iD####W#r....=..T.T
+TT...=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr....=....T
+T....=.......===========F..rrrrrr...............y.....=....T
+TTT..=######.=LmmmammmL=...rrrrrr.....######.######...=....T
+TT...=#hhhh#.=mmmmmmmmm=...rrrrrr...F.#hhhh#.#hhhh#...=....T
+T..F.=#hhhh#.=mmmmmmmmm=...rrrrrr.....#hhhh#.#hhhh#...=....T
+T.F..=#WD#W#.=W===D===W=..Frrrrrr.....#WD#W#.#WD#W#..T=....T
+T....=F.....T..............rrrrrr...............F.....=T...T
+TT...======================rrrrrr======================..TTT
+T.T....T..............T....rrrrrr.........T.T......T.......T
+T..T......T.......T.TTT....rrrrrr...TTT.T.......T......T...T
+T...T.TT....T...TT..T...T..rrrrrr.T.T.TTT.T.T....T..T.TTTTTT
+TTTT..F.....T......TT......rrrrrr....T...T......T.....T.TTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+[exit]
+x=27
+y=43
+w=6
+h=1
+to=overworld
+tx=84
+ty=71
+
+[exit]
+x=27
+y=0
+w=6
+h=1
+to=overworld
+tx=84
+ty=69
+
+[exit]
+x=0
+y=20
+w=1
+h=5
+to=overworld
+tx=83
+ty=70
+
+[exit]
+x=59
+y=20
+w=1
+h=5
+to=overworld
+tx=85
+ty=70
+
+[npc]
+id=mayor
+name=Mayor Aldous
+sprite=104,27
+x=16
+y=8
+dialogue=mayor_aldous
+
+[npc]
+id=clerk
+name=Clerk Benning
+sprite=104,0
+x=11
+y=9
+dialogue=clerk_benning
+
+[npc]
+id=reyna
+name=Captain Reyna
+sprite=166,13
+x=8
+y=16
+dialogue=captain_reyna
+
+[npc]
+id=guard1
+name=Gate Guard
+sprite=113,13
+x=28
+y=37
+dialogue=gate_guard
+
+[npc]
+id=guard2
+name=Keep Guard
+sprite=113,13
+x=45
+y=16
+dialogue=keep_guard
+moveif=keep_open
+movex=47
+movey=16
+
+[npc]
+id=armorer
+name=Armorer Hald
+sprite=105,2
+x=17
+y=17
+dialogue=armorer_hald
+
+[npc]
+id=pell
+name=Merchant Pell
+sprite=105,1
+x=17
+y=27
+dialogue=merchant_pell
+
+[npc]
+id=elowen
+name=Elowen
+sprite=109,28
+x=43
+y=19
+dialogue=elowen
+hide=joined_mage
+
+[npc]
+id=arcanist
+name=Arcanist Morrow
+sprite=104,28
+x=40
+y=19
+dialogue=arcanist_morrow
+
+[npc]
+id=innkeeper2
+name=Innkeeper Fenna
+sprite=104,1
+x=43
+y=28
+dialogue=innkeeper_fenna
+
+[npc]
+id=priest
+name=Brother Caul
+sprite=122,0
+x=17
+y=34
+dialogue=brother_caul
+
+[npc]
+id=townsfolk1
+name=Washerwoman
+sprite=104,1
+x=20
+y=23
+dialogue=townsfolk
+wander=1
+
+[npc]
+id=townsfolk2
+name=Street Urchin
+sprite=104,0
+x=33
+y=23
+dialogue=urchin
+wander=1
+
+[npc]
+id=townsfolk3
+name=Veteran
+sprite=105,0
+x=36
+y=22
+dialogue=veteran
+wander=1
+
+[npc]
+id=bard
+name=Bard Lio
+sprite=104,21
+x=31
+y=27
+dialogue=bard_lio
+
+[npc]
+id=cat
+name=Cat
+sprite=1,14
+x=9
+y=27
+dialogue=cat
+wander=1
+
+[sign]
+x=29
+y=36
+text=BRASSWICK - Free City. Keep your blade sheathed inside the walls.
+
+[sign]
+x=23
+y=20
+text=Hald's Armory - steel for every purse.
+
+[sign]
+x=37
+y=21
+text=The Gilded Circle - arcane supplies.
+
+[sign]
+x=37
+y=30
+text=The Copper Kettle Inn - beds 15 gold.
+
+[chest]
+x=50
+y=7
+flag=bw_keep_chest
+items=steel_sword:1,potion_red2:1
+gold=60
+locked=mayor_seal
+
+[chest]
+x=20
+y=18
+flag=bw_armory_chest
+items=arrows:30
+
+[savepoint]
+x=29
+y=18
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=9
+y=13
+board=brasswick
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=11
+y=13
+travel=1
+
+[npc]
+id=vael
+name=Sir Vael
+sprite=121,13
+color=190,190,205
+x=49
+y=10
+dialogue=sir_vael
+
+# 1.0: Vell's followers, if the party handed them to the Mayor's court
+[npc]
+id=ilse_cell
+name=Ilse (prisoner)
+sprite=104,17
+x=42
+y=13
+dialogue=converts_cell
+show=converts_judged

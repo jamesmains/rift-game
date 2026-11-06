@@ -1,0 +1,7 @@
+# Quartermaster Ott's store in the training hall (always open).
+[shop]
+id=tut_store
+item=bandage
+item=bread
+item=potion_red
+item=torch_item

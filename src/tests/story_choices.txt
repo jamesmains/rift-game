@@ -1,0 +1,80 @@
+# 1.0: the three story choices and the ending screen.
+#  1. Greywood: Grakk asks for terms - spare the tribe (Hollowmere -5, a goblin peddler later) or fight (main_quest.txt)
+#  2. Ashfall: Vell's followers - mercy (Sky Wardens in Ashfall) or Brasswick's court (main_quest.txt)
+#  3. The Scar: break, bury or keep the shards; the epilogue follows every choice, rep and companion approval
+god
+newgame Mira ranger 1
+# --- 1. spare the goblins ---
+con flag q_main 1
+con bestiary goblin 4
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+expect flag:goblin_chief_spared == 1
+expect flag:q_goblins_done == 1
+expect item:goblin_crown == 1
+expect rep:hollowmere == -5
+expect queststatus:main contains led his tribe out
+# the chief's hall is empty now: walk right through it
+walk 35 15
+expect mode == EXPLORE
+teleport hollowmere 7 7
+talk elder
+choose surrendered this crown
+expect flag:q_main == 2
+expect item:goblin_crown == 0
+talk villager1
+choose I let them leave
+con flag q_main 3
+con time 10:00
+teleport millbrook 30 12
+talk snig
+choose tribe
+expect flag:goblins_allies == 1
+talk snig
+choose what you've got
+expect mode == SHOP
+shot snig_shop.png
+settle
+# --- 2. mercy for Vell's followers ---
+con flag q_cult 2
+teleport ashfall 45 36
+talk ilse
+choose Stay. Help Ashfall
+expect flag:converts_spared == 1
+expect rep:ashfall == 15
+expect queststatus:converts contains Sky Wardens
+talk ilse_warden
+choose healer
+shot sky_warden_healer.png
+settle
+# --- 3. break the shards: the ending ---
+autoending 0
+con join mage
+con flag q_main 7
+con dialogue shards_choice
+choose Ask the companions
+choose Break them
+expect flag:ending_seal == 1
+expect flag:game_won == 1
+expect mode == ENDING
+frames 60
+shot ending_slide1.png
+keys ENTER
+frames 40
+shot ending_slide2.png
+key ESC
+frames 40
+shot ending_journey.png
+key ENTER
+frames 400
+shot ending_credits.png
+key ESC
+frames 60
+shot ending_last.png
+key ENTER
+frames 20
+expect mode == EXPLORE
+expect running == 1
+expect queststatus:main contains DONE

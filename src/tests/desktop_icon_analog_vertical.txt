@@ -1,0 +1,6 @@
+# Move one icon row down with the analog stick; focus should land on Load Game.
+frames 5
+pad 1
+key DOWN
+hold DOWN 15 0 1
+shot analog_vertical.png

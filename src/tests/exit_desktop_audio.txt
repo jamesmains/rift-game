@@ -1,0 +1,25 @@
+# Returning from the RPG to the desktop should stop music and end the active run.
+frames 5
+audio
+dblclick 50 28
+frames 5
+type Arin
+click 390 354
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+audio
+shot before_exit.png
+key ESC
+frames 2
+click 320 373
+frames 30
+audio
+shot after_exit.png
+dump

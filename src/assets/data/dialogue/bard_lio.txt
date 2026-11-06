@@ -1,0 +1,4 @@
+[start]
+speaker=Bard Lio
+text=A song for the road? "Oh the sky came down on Aldmoor town, and the stars fell in the sea..." I'm still working on the second verse. It's been forty years.
+option=Take your time.|end

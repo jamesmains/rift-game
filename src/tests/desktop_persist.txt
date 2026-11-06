@@ -1,0 +1,29 @@
+# 1.0.8: the desktop remembers itself. Change the Editor's icon (right-click > Change Icon...), drag New Game somewhere
+# else and pick a wallpaper; then a fresh desktop reads saves/desktop.ini back (reloaddesktop) and everything is where it was.
+frames 5
+rclick 49 290
+frames 3
+click 80 330
+frames 5
+expect window == iconpick
+click 120 80
+frames 3
+expect window == none
+drag 49 30 400 200
+frames 3
+rclick 300 180
+frames 2
+click 340 240
+frames 3
+click 250 205
+frames 3
+key ESC
+frames 3
+shot persist_before.png
+expect savefile:desktop.ini == 1
+reloaddesktop
+frames 3
+expect iconpos:new == 352,170
+expect icon:editor == 0,0
+expect wallpaper == 1
+shot persist_after.png

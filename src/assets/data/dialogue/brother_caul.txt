@@ -1,0 +1,22 @@
+[start]
+speaker=Brother Caul
+text=Peace, traveller. The temple tends all who ask, and asks only that you remember the drowned, the burned and the lost of the night the sky tore.
+option=Heal us, please.|heal
+option=Buy holy supplies.|shop
+option=Tell me about the Rite of Renewal.|rite
+option=Goodbye.|end
+
+[heal]
+healer=1
+
+[shop]
+shop=shrine_keeper
+
+[rite]
+speaker=Brother Caul
+text=Habits harden like old wax. The rite melts them: a warrior may learn the healer's hands, a scholar the bow. Everything you have trained is set aside and chosen anew. The temple asks a donation - forty crowns, and twenty more for every year of hard road behind you.
+option=Perform the rite.|riteyes
+option=Not today.|end
+
+[riteyes]
+respec=1

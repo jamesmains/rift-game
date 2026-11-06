@@ -1,0 +1,63 @@
+[start]
+speaker=Orin
+text=You've the look of someone the Rift has noticed. The Abbot says I'm needed here, tending candles. I say the old shrines were built by people who walked out to meet the dark. Let me come.
+option=Join me.|join
+option=Who are you?|who
+option=Not now.|end
+
+[who]
+speaker=Orin
+text=Orin, cleric of Frosthold. I mend wounds, lift curses and hit things with a mace when prayer runs short. Which it does.
+option=Join me.|join
+option=Later.|end
+
+[join]
+speaker=Orin
+text=Abbot Tyr will understand. Eventually. Let us go.
+join=cleric:Orin:104,26
+approve=cleric:5
+option=Let's go.|end
+
+[camp]
+speaker=Orin
+text=Peace be on you. What do you need?
+option=How is everyone?|chat
+option=Why did a priest pick up a mace?|story|approval:cleric:15
+option=The lich is destroyed.|lich_turnin|orin_quest&lich_dead&!q_orin_done
+option=Nothing, father.|end
+
+[chat]
+speaker=Orin
+text=Tired, bruised, alive. I have said prayers over worse.
+approve=cleric:1
+option=Good.|end
+
+[story]
+speaker=Orin
+text=Dunmarrow Crypt was my parish's crypt. I buried half the village there. When the dead started walking out of it, I understood that the thing in the deep chamber was wearing their faces. I would like them to rest again.
+option=Then we go down and end it.|accept
+option=We have bigger problems than one crypt.|refuse
+
+[refuse]
+speaker=Orin
+text=We do. I will try to remember that.
+approve=cleric:-3
+option=...|end
+
+[accept]
+speaker=Orin
+text=Bless you. The crypt lies north of Brasswick. The lich will not be alone.
+set=orin_quest
+quest=Orin: Let Them Rest
+approve=cleric:5
+option=Let's go.|end
+
+[lich_turnin]
+speaker=Orin
+text=Then it is done. I will say the names tonight, all of them. Take this - it was blessed for the crypt's guardian long ago. It should guard you now.
+give=holy_symbol:1
+set=q_orin_done
+xp=120
+approve=cleric:15
+quest=Orin: Let Them Rest - done
+option=Rest well, Orin.|end

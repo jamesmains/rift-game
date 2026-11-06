@@ -1,0 +1,23 @@
+# 1.0: the boot (BIOS lines, then the logo splash) and the first-launch setup wizard (its options are real
+# settings: large text and the easy-to-read font; Finish starts New Game - the Tutorial when it is ticked). The wizard opens once, on a first launch, when the boot is not skipped.
+boot 1.0
+shot boot_bios.png
+boot 2.9
+shot boot_logo_falling.png
+boot 4.6
+shot boot_logo.png
+frames 5
+setupwizard
+frames 5
+shot setup_welcome.png
+expect window == setup
+click 390 353
+frames 5
+shot setup_components.png
+click 390 353
+frames 200
+shot setup_done.png
+expect savefile:installed.ini == 1
+click 390 353
+frames 5
+expect window == new

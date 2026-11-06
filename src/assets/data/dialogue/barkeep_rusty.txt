@@ -1,0 +1,50 @@
+[start]
+speaker=Barkeep Rusty
+text=Welcome to the Last Call. We've got beds in the back if you need to sleep off the ruins. Twenty gold.
+option=Sleep. (20 gold)|room|gold:20
+option=Sleep.|poor|!gold:20
+option=You look like you lost something.|still|!q_still>=1
+option=I found your coil.|still_back|item:copper_coil&q_still>=1&!q_still>=2
+option=Any rumours?|rumour
+option=Goodbye.|end
+
+[room]
+speaker=Barkeep Rusty
+text=Mind the drones. They get curious at night.
+gold=-20
+rest=1
+option=Thanks.|end
+
+[poor]
+speaker=Barkeep Rusty
+text=Twenty gold. Scrap's cheap, sleep isn't.
+option=Right.|end
+
+[rumour]
+speaker=Barkeep Rusty
+text=The cultists in the old shrine ruin to the south-east have been chanting louder since the lights started over the Scar. And the Wreck's hatch? Needs a blue keycard. Chests on the upper hull sometimes have them.
+option=Thanks.|end
+
+[still]
+speaker=Barkeep Rusty
+text=Lost? Robbed! A pack of scrap drones came through the back wall two nights ago and took the coil off my still. Copper - they love copper. They nest in the north-west ruins, past the burnt bus. No coil, no Firewater. No Firewater, no Last Call.
+option=I'll get it back.|still_yes
+option=Drones aren't my problem.|end
+
+[still_yes]
+speaker=Barkeep Rusty
+text=Bring it back in one piece and you'll drink free till the sky falls again. And don't let Vosk see it. He's been after that coil for years.
+set=q_still=1
+quest=Rusty's Still
+option=Back soon.|end
+
+[still_back]
+speaker=Barkeep Rusty
+text=My coil! Not a dent on her. Sit down, sit DOWN. First batch is yours - careful, it bites.
+take=copper_coil
+give=firewater:3
+gold=60
+xp=120
+set=q_still=2
+rep=ashfall:10
+option=To the Last Call.|end

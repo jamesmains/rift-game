@@ -1,0 +1,21 @@
+# 0.8.6: whole-campaign check, used-by panels, quest objectives in the cards, form undo, rename (on a copy only!)
+frames 5
+editor
+frames 5
+click 924 36
+frames 3
+shot x_check.png
+key ESC
+frames 2
+tab 3
+click 60 117
+frames 3
+shot x_item_usedby.png
+tab 9
+click 60 147
+frames 3
+shot x_quest_objectives.png
+tab 11
+click 60 102
+frames 3
+shot x_dialogue_usedby.png

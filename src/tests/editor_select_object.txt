@@ -1,0 +1,11 @@
+# Selecting an existing map object in the Select tool opens its properties panel.
+frames 5
+editor
+frames 5
+tab 0
+frames 2
+click 140 252
+frames 2
+click 470 272
+frames 2
+shot editor_select_object.png

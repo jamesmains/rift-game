@@ -1,0 +1,69 @@
+# 0.8.8: item categories / sorting in the inventory and shops; quest items can't be dropped or sold
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+give elder_letter
+give shovel
+give iron_ore 3
+gold 200
+key Q
+frames 3
+shot inv_all.png
+# 0.8.9: pause menu position, combat item list (scrolls, names fit), controller category keys, gather nodes
+teleport hollowmere 0 0
+frames 5
+key ESC
+frames 3
+shot r_pause.png
+key ESC
+frames 3
+give potion_red 3
+give potion_blue 2
+give antidote 2
+give potion_str 1
+give potion_haste 1
+give potion_shield 1
+give potion_purple 1
+give phoenix_feather 1
+give bandage 2
+give medkit 1
+give stimpak 1
+give scroll_fire 1
+give scroll_frost 1
+give grenade 2
+give emp_grenade 1
+give oil_fire 1
+give draught_forgetting 1
+pad 1
+key Q
+frames 3
+key PADRT
+key PADRT
+frames 2
+shot r_inv_pad_cat.png
+key PADB
+frames 3
+pad 0
+combat goblin
+frames 200
+key Q
+frames 5
+keys DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+frames 2
+shot r_combat_items.png
+pad 1
+frames 2
+key PADB
+frames 3
+shot r_combat_bar_pad.png

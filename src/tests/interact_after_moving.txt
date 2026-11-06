@@ -1,0 +1,29 @@
+# With automatic interaction disabled, continuous movement stops at a chest; releasing alone does not open it.
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 354
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+interactmoving 0
+teleport hollowmere_home 8 4
+dump
+press UP
+frames 15
+dump
+cheststate 8 2
+log
+release UP
+dump
+cheststate 8 2
+press UP
+cheststate 8 2
+log

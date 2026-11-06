@@ -1,0 +1,29 @@
+[start]
+speaker=Fisherwoman Tam
+text=Moonleaf grows on the hummocks deep in the marsh, where the toads sit. Pick it fast and run faster.
+option=Any work?|gulp|!q_gulp>=1
+option=I got your hook back.|gulp_back|item:lucky_hook&q_gulp>=1&!q_gulp>=2
+option=Noted.|end
+
+[gulp]
+speaker=Fisher Tam
+text=Old Gulp. Biggest toad in the marsh, lives down past the west cistern. Ate my lucky hook - with the fish, the line and half my rod. Thirty years that hook caught fish. Kill the beast and bring it back. Gut it if you have to. I'm not proud.
+option=I'll get your hook.|gulp_yes
+option=No thanks.|end
+
+[gulp_yes]
+speaker=Fisher Tam
+text=And don't let the mud boy see it. He thinks it's magic. He'll never shut up about it.
+set=q_gulp=1
+quest=Tam's Big One
+option=Right.|end
+
+[gulp_back]
+speaker=Fisher Tam
+text=My hook! Look at that - not even bent. Thirty years! Here, here - silver, and a fish supper whenever you're through Murkwater.
+take=lucky_hook
+gold=90
+xp=120
+set=q_gulp=2,hook_to_tam
+rep=murkwater:5
+option=Good fishing, Tam.|end

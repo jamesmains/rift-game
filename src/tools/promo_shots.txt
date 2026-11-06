@@ -1,0 +1,109 @@
+frames 5
+move 639 479
+shot 00_desktop.png
+dblclick 50 28
+frames 5
+type Arin
+click 390 354
+frames 50
+shot 01_newgame.png
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+god
+con gold 400
+con join ranger
+con join mage
+con join cleric
+frames 320
+frames 2
+teleport hollowmere 14 14
+clock 600
+weather clear
+frames 20
+shot 02_town.png
+con approve ranger 50
+teleport hollowmere 11 10
+frames 3
+key UP
+frames 20
+shot 03_dialogue.png
+keys ESC ESC
+frames 3
+teleport overworld 50 86
+clock 1330
+weather storm
+con reveal
+frames 40
+shot 04_overworld_night.png
+teleport overworld 60 60
+clock 900
+weather clear
+frames 20
+shot 05_overworld_day.png
+teleport goblin_cave 0 0
+frames 5
+key RIGHT
+key RIGHT
+frames 10
+con learn light
+frames 2
+shot 06_dungeon.png
+combat goblin,goblin_archer,goblin,goblin_shaman
+frames 20
+shot 07_combat_start.png
+key O
+frames 40
+shot 08_combat_overwatch.png
+teleport overworld 60 60
+con reveal
+teleport hollowmere 14 14
+frames 3
+key M
+frames 3
+shot 09_worldmap.png
+key ESC
+frames 2
+key J
+frames 2
+key RIGHT
+key RIGHT
+frames 2
+shot 10_bestiary.png
+key RIGHT
+key RIGHT
+key RIGHT
+frames 2
+shot 11_achievements.png
+key ESC
+con give wolf_pelt 4
+con give herb_moon 4
+con give scrap 6
+con craft
+frames 3
+shot 12_craft.png
+key ESC
+con bounty
+frames 3
+shot 13_bounty.png
+key ESC
+key TAB
+frames 3
+shot 14_party.png
+key ESC
+frames 2
+teleport ashfall 30 20
+clock 1200
+weather fog
+frames 30
+shot 15_ashfall_fog.png
+teleport frosthold 20 20
+clock 800
+weather snow
+frames 30
+shot 16_frosthold_snow.png

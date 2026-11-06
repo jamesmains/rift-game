@@ -1,0 +1,23 @@
+[start]
+speaker=Warden Hale
+text=There you are, and in one piece. Walking, chests, gear, shops, shrines, the journal, the hotbar, a fight or two. That's most of it.
+option=Anything else I should know?|more
+option=I'm ready.|ready
+
+[more]
+speaker=Warden Hale
+text=A few things you'll learn out there. Fights start when enemies spot you - walk carefully. Talk to everyone; people give quests. Companions can join you. At night shops close and worse things come out. And {menu} shows everything about your party.
+option=Anything about combat?|combat
+option=I'm ready.|ready
+
+[combat]
+speaker=Warden Hale
+text=Use cover - walls, rocks, crates. Two of you next to one enemy flank it. Aimed shots ({attackmode} twice) cost more and hit harder. Overwatch ({overwatch}) shoots whatever moves. And if it goes badly, {flee}. There's no shame in running.
+option=I'm ready.|ready
+
+[ready]
+speaker=Warden Hale
+text=Then go. Aldmoor needs Wardens - and the Rift is stirring again.
+set=tut_done
+quest=Basic Training
+finish=triffall|$hero walks out of the training hall into the morning.|The tutorial is done. Now for the real thing.

@@ -1,0 +1,54 @@
+# Sounds tab, K jump to tile kind + Back, bake dungeon, dialogue lint, P = play here
+# note: the bake step writes assets/data/maps/goblin_cave.txt - delete it afterwards to keep the generated dungeon
+frames 5
+editor
+frames 5
+tab 12
+frames 3
+shot sounds.png
+click 100 120
+frames 3
+shot sounds2.png
+tab 0
+frames 3
+move 332 196
+frames 2
+key K
+frames 3
+shot kinds_jump.png
+key ESC
+frames 3
+shot back_map.png
+tab 10
+frames 3
+click 60 70
+frames 3
+shot dungeons.png
+click 190 503
+frames 3
+shot bake_confirm.png
+key ENTER
+frames 5
+shot baked.png
+dump
+tab 11
+frames 3
+click 60 70
+frames 3
+click 34 497
+frames 3
+shot lint.png
+click 106 497
+frames 5
+shot lint_all.png
+tab 0
+frames 3
+click 40 100
+frames 5
+move 332 196
+frames 2
+key P
+frames 10
+shot play.png
+dump
+audio

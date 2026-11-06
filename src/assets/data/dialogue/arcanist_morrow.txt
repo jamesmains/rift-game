@@ -1,0 +1,14 @@
+[start]
+speaker=Arcanist Morrow
+text=The Gilded Circle: scrolls, staves, and the occasional miracle. Mind the cauldron.
+option=Let's see your wares.|shop
+option=Could you brew something from these herbs?|alchemy
+option=Goodbye.|end
+
+[shop]
+shop=brasswick_arcane
+
+[alchemy]
+speaker=Arcanist Morrow
+text=The cauldron is always warm. Lay the ingredients on the bench.
+craft=alchemy

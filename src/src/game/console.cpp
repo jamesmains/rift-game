@@ -1,0 +1,91 @@
+// Developer console (~): the headless test commands, available in the running game.
+#include "game.h"
+#include "../core/audio.h"
+#include "tiles.h"
+#include "../core/crash.h"
+#include <algorithm>
+
+using namespace UI;
+
+void Game::runConsole(const std::string& line) {
+    std::string cmd = trim(line); if (cmd.empty()) return;
+    consoleHist.push_back(cmd); if (consoleHist.size() > 40) consoleHist.erase(consoleHist.begin()); consoleHistPos = -1;
+    consoleOut.push_back("> " + cmd);
+    auto out = [&](const std::string& s) { consoleOut.push_back(s); };
+    auto p = split(cmd, ' '); std::string c = toLower(p[0]);
+    auto arg = [&](size_t i, const std::string& d = "") { return i < p.size() ? p[i] : d; };
+    auto argi = [&](size_t i, int d = 0) { return i < p.size() ? atoi(p[i].c_str()) : d; };
+    if (c == "help") { out("teleport MAP [X Y] | give ITEM [N] | gold N | xp N | level N | flag NAME [V] | unflag NAME | god | heal | time HH:MM | day N | weather clear|rain|storm|fog|snow"); out("spawn CREATURE[,CREATURE] | kill | item? | spells | learn SPELL | join CLASS | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | reveal | worldmap MODE | bounties | bestiary CREATURE N | hurt N [poison] | achieve ID | reset_achievements | bounty | craft | shop ID | dialogue ID [NODE] | run SCRIPT | maps | stats | reload | clear"); }
+    else if (c == "teleport" || c == "tp") { if (p.size() < 2) { out("usage: teleport MAP [X Y]"); return; } modeStack.clear(); mode = GMode::EXPLORE; enterMap(arg(1), argi(2), argi(3), true); out("-> " + mapId + fmt(" %d,%d", px, py)); pushMode(GMode::CONSOLE); }
+    else if (c == "give") { std::string id = arg(1); if (!gd->item(id)) { out("unknown item '" + id + "' (ids: see assets/data/items.txt)"); return; } giveItem(id, argi(2, 1)); out("ok"); }
+    else if (c == "gold") { party.gold = std::max(0, party.gold + argi(1)); out(fmt("gold = %d", party.gold)); }
+    else if (c == "xp") { giveXP(argi(1)); out("ok"); }
+    else if (c == "level") { int target = argi(1, 1); for (auto& m : party.members) while (m.level < target && m.level < 30) { m.xp += m.xpToNext(); checkLevelUps(); } out("ok (level-up screens follow)"); }
+    else if (c == "flag") { setFlag(arg(1), argi(2, 1)); out("ok"); }
+    else if (c == "unflag") { flags.erase(arg(1)); out("ok"); }
+    else if (c == "flags") { std::string s; for (auto& f : flags) s += f.first + "=" + std::to_string(f.second) + " "; out(s.empty() ? "(none)" : s); }
+    else if (c == "god") { godMode = !godMode; out(godMode ? "god mode ON" : "god mode off"); }
+    else if (c == "auto") { autoCombat = !autoCombat; out(autoCombat ? "the party fights on its own" : "manual combat"); }
+    else if (c == "difficulty") { difficulty = clampi(argi(1, 1), 0, 2); out(fmt("difficulty %d", difficulty)); }
+    else if (c == "heal") { for (auto& m : party.members) m.fullHeal(*gd); out("party healed"); }
+    else if (c == "time") { auto t = split(arg(1, "8:00"), ':'); clockMin = clampi(atoi(t[0].c_str()), 0, 23) * 60 + (t.size() > 1 ? clampi(atoi(t[1].c_str()), 0, 59) : 0); out(clockText()); }
+    else if (c == "day") { day = std::max(1, argi(1, 1)); out(clockText()); }
+    else if (c == "weather") { weather = arg(1, "clear"); weatherSteps = 9999; precip.clear(); out("weather = " + weather); }
+    else if (c == "spawn") { if (!map) return; std::vector<std::string> cs; for (auto& s : split(arg(1), ',')) if (gd->creature(trim(s))) cs.push_back(trim(s)); if (cs.empty()) { out("unknown creature"); return; } popMode(); startCombat(cs, px + 2, py, argi(2, 0), {}, ""); out("fight!"); }
+    else if (c == "kill") { if (mode == GMode::COMBAT || (!modeStack.empty() && modeStack.back() == GMode::COMBAT)) { for (auto& u : cb.units) if (!u.friendly() && u.ch.alive) { u.ch.hp = 0; u.ch.alive = false; onKill(u.ch, nullptr); } out("enemies slain"); } else out("not in combat"); }
+    else if (c == "spells") { std::string s; for (auto& sp : gd->spells) s += sp.first + " "; out(s); }
+    else if (c == "learn") { if (!gd->spell(arg(1))) { out("unknown spell"); return; } int mi = clampi(argi(2, 0), 0, (int)party.members.size() - 1); party.members[mi].spells.push_back(arg(1)); out("ok"); }
+    else if (c == "join") { runAction("join", arg(1)); out("ok"); }
+    else if (c == "questfail") {   // questfail QUEST COND | TEXT  - add a fail condition for this session (testing branches)
+        std::string rest; for (size_t i = 2; i < p.size(); i++) rest += (rest.empty() ? "" : " ") + p[i]; auto fp = split(rest, '|'); bool ok = false;
+        for (auto& q : quests) if (q.id == arg(1) && !trim(fp[0]).empty()) { q.fails.push_back({trim(fp[0]), fp.size() > 1 ? trim(fp[1]) : "The chance has passed."}); ok = true; }
+        out(ok ? "fail condition added: " + questStatus(*std::find_if(quests.begin(), quests.end(), [&](const QuestDef& q) { return q.id == arg(1); })) : "usage: questfail QUEST COND | TEXT"); }
+    else if (c == "cast") {   // cast SPELL [DX DY]: in a fight, whoever's turn it is casts at a tile relative to itself
+        if (!inCombat() || cb.selectedUnit < 0) { out("only in combat"); return; } auto& u = cb.units[cb.selectedUnit]; if (!gd->spell(arg(1))) { out("unknown spell"); return; }
+        combatCast(cb.selectedUnit, arg(1), u.x + argi(2), u.y + argi(3)); out("cast " + arg(1)); }
+    else if (c == "hint") { int h = currentHint(); out(h >= 0 ? fmt("hint %d/%d: %s", h + 1, (int)hintDefs.size(), keyText(hintDefs[h].text).c_str()) : std::string("no hint showing")); }
+    else if (c == "rep") { if (arg(1).empty()) { for (auto& r : reputation) out(fmt("%s = %d (%s)", r.first.c_str(), r.second, repTier(r.second))); } else { changeRep(arg(1), argi(2, 10)); out(fmt("%s reputation = %d", arg(1).c_str(), reputation[arg(1)])); } }
+    else if (c == "approve") { approval[arg(1)] += argi(2, 1); out(fmt("%s approval = %d", arg(1).c_str(), approval[arg(1)])); }
+    else if (c == "hurt") { int n = atoi(arg(1).c_str()); for (auto& m : party.members) { m.hp = std::max(1, m.hp - n); if (arg(2) == "poison") m.addEffect("poison", 5, 2); } out("ouch"); }
+    else if (c == "doors") { if (map) { const auto& k = allTileKinds(); for (int y = 0; y < map->h; y++) for (int x = 0; x < map->w; x++) { const Cell& ce = map->at(x, y); if (ce.kind < k.size() && startsWith(k[ce.kind].name, "door")) { const auto& d = doorShop(x, y); std::string h; bool open = d.first.empty() || shopOpen(d.first, h); out(fmt("%d,%d %s %s (%d cells)", x, y, d.first.empty() ? "-" : d.first.c_str(), d.first.empty() ? "" : (open ? "open" : "LOCKED"), (int)d.second.size())); } } } }
+    else if (c == "bestiary") { if (gd->creature(arg(1))) { bestiary[arg(1)] = std::max(1, atoi(arg(2).c_str())); out("ok"); } else out("unknown creature"); }
+    else if (c == "bounties") { out(fmt("%d boards:", (int)boards.size())); for (auto& b : boards) out("  board " + b.id + " (map " + b.map + ")"); for (auto& b : bountyOffers) out("  offer " + b.town + " " + b.kind + " " + b.target + (b.title.empty() ? "" : " '" + b.title + "'")); for (auto& b : bounties) out("  taken " + b.town + " " + b.kind + " " + b.target); }
+    else if (c == "worldmap") { if (!arg(1).empty()) campaign.worldMap = arg(1); out("world map = " + campaign.worldMap + " (overworld | off | current | MAP_ID; campaign.txt worldmap=)"); }
+    else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }
+    else if (c == "achieve") { unlockAchievement(arg(1)); out("ok"); }
+    else if (c == "reset_achievements") { unlocked.clear(); saveAchievementState(); out("achievements reset"); }
+    else if (c == "bounty") { popMode(); openBoard(arg(1, lastTownMap.empty() ? "hollowmere" : lastTownMap)); }
+    else if (c == "craft") { popMode(); openCraft(arg(1, "all")); }
+    else if (c == "shop") { popMode(); runAction("shop", arg(1, "hollowmere_general")); }
+    else if (c == "dialogue") { popMode(); startDialogue(arg(1), nullptr, arg(2, "start")); }
+    else if (c == "run") { popMode(); runScript(cmd.substr(cmd.find(' ') + 1)); }
+    else if (c == "maps") { std::string s; for (auto& l : locations) s += l.mapId + " "; out(s); }
+    else if (c == "stats") { out(fmt("kills %d fights %d gold+ %d chests %d crits %d crafted %d bounties %d travels %d steps %d", stats.kills, stats.fightsWon, stats.goldEarned, stats.chests, stats.crits, stats.crafted, stats.bounties, stats.travels, stepCounter)); }
+    else if (c == "reload") { reloadContent(); out("content reloaded"); pushMode(GMode::CONSOLE); }
+    else if (c == "clear") consoleOut.clear();
+    else if (c == "demo") { demoMode = argi(1, 1) != 0; out(demoMode ? "demo mode: the base campaign is limited to demo.txt" : "full game"); }
+    else if (c == "crashtest") { std::string path = crashWriteReport("crash test from the dev console (the game is fine)"); emergencySave(); out("wrote " + path + " and crash_recovery.sav"); }
+    else if (c == "autosave") { lastAutosave = -1000; autosave(); out("autosaved"); }
+    else if (c == "pos") out(fmt("%s %d,%d", mapId.c_str(), px, py));
+    else out("unknown command (try: help)");
+    if (consoleOut.size() > 60) consoleOut.erase(consoleOut.begin(), consoleOut.begin() + (consoleOut.size() - 60));
+}
+
+void Game::updateConsole(InputState& in, float dt) {
+    (void)dt;
+    if (actP(in, A_CONSOLE) || in.pressed[K_ESCAPE]) { popMode(); in.eatKeys(); return; }
+    for (char ch : in.typed) if (ch >= 32 && ch < 127 && ch != '`' && ch != '~' && consoleBuf.size() < 120) consoleBuf += ch;
+    if (in.pressed[K_BACKSPACE] && !consoleBuf.empty()) consoleBuf.pop_back();
+    if (in.pressed[K_UP] && !consoleHist.empty()) { if (consoleHistPos < 0) consoleHistPos = (int)consoleHist.size() - 1; else consoleHistPos = std::max(0, consoleHistPos - 1); consoleBuf = consoleHist[consoleHistPos]; }
+    if (in.pressed[K_DOWN] && !consoleHist.empty()) { if (consoleHistPos >= 0 && consoleHistPos < (int)consoleHist.size() - 1) { consoleHistPos++; consoleBuf = consoleHist[consoleHistPos]; } else { consoleHistPos = -1; consoleBuf.clear(); } }
+    if (in.pressed[K_ENTER]) { std::string c = consoleBuf; consoleBuf.clear(); runConsole(c); }
+    in.eatKeys();
+}
+void Game::drawConsole(Canvas& cv, InputState& in) {
+    (void)in;
+    int h = 200; cv.fillRect(0, 0, SCREEN_W, h, RGB(10, 10, 14, 230)); cv.hline(0, h, SCREEN_W, C::Gold); uiRect(0, 0, SCREEN_W, h + 1);
+    int lines = (h - 24) / 12; int start = std::max(0, (int)consoleOut.size() - lines);
+    for (int i = start; i < (int)consoleOut.size(); i++) UI::text(ctx, 6, 4 + (i - start) * 12, consoleOut[i], startsWith(consoleOut[i], "> ") ? C::Yellow : C::LtGray);
+    UI::text(ctx, 6, h - 16, "> " + consoleBuf + (((ctx.frame / 20) % 2) ? "_" : ""), C::White);
+    textRight(ctx, SCREEN_W - 6, h - 16, "dev console - 'help' for commands, ~ or Esc to close", C::DkGray);
+}

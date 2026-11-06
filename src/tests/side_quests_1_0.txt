@@ -1,0 +1,137 @@
+# 1.0: the nine new side quests, played through by the bot (god mode; teleports between towns to save time).
+# Hollowmere: A Letter for Fenna | Ashfall: Rusty's Still, Signal in the Static | Murkwater: Lanterns on the Water,
+# Tam's Big One | Sunscar: Water Rights, Spin Spin Spin | Frosthold: The Pilgrim's Sister, Cold Hands
+strict 1
+god
+newgame Quill warrior 1
+con flag q_main 4
+con time 10:00
+gold 2000
+# --- A Letter for Fenna: read it, deliver it, buy back the ring, tell Doss ---
+teleport hollowmere 20 28
+talk innkeeper
+choose something on your mind
+choose I'll take it
+expect queststatus:letter contains unopened
+teleport brasswick 30 40
+talk innkeeper2
+choose letter from your brother
+choose Read it first
+choose Hand it over
+expect flag:q_letter == 2
+expect flag:letter_read == 1
+talk pell
+choose Let's trade
+buy mothers_ring 1
+settle
+talk innkeeper2
+choose something of your mother's
+expect item:amulet_life >= 1
+teleport hollowmere 20 28
+talk innkeeper
+choose kettle's on
+expect queststatus:letter contains ring is home
+# --- Rusty's Still ---
+teleport ashfall 30 40
+talk barkeep
+choose lost something
+choose get it back
+fight rusty_drones_dead
+bump 3 3
+expect item:copper_coil == 1
+talk scrap_vendor
+choose copper still coil
+choose goes back to Rusty
+expect item:copper_coil == 1
+talk barkeep
+choose found your coil
+expect flag:q_still == 2
+expect item:firewater == 3
+expect queststatus:still contains DONE
+# --- Signal in the Static ---
+talk scav2
+choose Heard anything
+choose look for it
+teleport lab 14 21
+bump 10 23
+expect item:signal_tape == 1
+teleport ashfall 30 40
+talk scav2
+choose tape from the Annex
+expect flag:q_signal == 2
+expect queststatus:signal contains Dr. Vey
+# buy a pump valve for Sunscar while here
+talk scrap_vendor
+choose Show me
+buy brass_valve 1
+settle
+# --- Lanterns on the Water + Tam's Big One ---
+teleport murkwater 20 27
+talk shrine_keeper
+choose help the shrine
+choose Three lanterns
+talk fisher
+choose Any work
+choose get your hook
+teleport marsh 11 4
+bump 4 11
+expect flag:marsh_lantern_1 == 1
+bump 28 4
+bump 6 28
+expect queststatus:lanterns contains All three
+fight old_gulp_dead
+expect item:lucky_hook == 1
+teleport murkwater 20 27
+talk shrine_keeper
+choose lanterns are lit
+expect item:lantern_charm == 1
+talk kid
+choose killed the giant toad
+choose It's yours
+expect flag:hook_to_boy == 1
+expect queststatus:gulp contains nine arms
+# --- Water Rights + Spin, Spin, Spin ---
+teleport sunscar 20 25
+talk raider_env
+choose water work
+choose find one
+talk raider_env
+choose valve for the pump
+choose Free water
+expect flag:well_free == 1
+expect rep:sunscar >= 15
+talk sun_kid
+choose Who taught you
+choose I'll find it
+con level 9
+settle
+teleport old_mine 11 21
+bump 6 25
+expect item:music_box == 1
+teleport sunscar 20 25
+talk sun_kid
+choose music box
+expect flag:q_dance == 2
+# --- The Pilgrim's Sister + Cold Hands ---
+teleport frosthold 16 25
+talk pilgrim
+choose Why come
+choose I'll look
+talk frost_trader
+choose need anything
+choose Four wolves
+expect quest:maud == 1
+teleport troll_cave 28 30
+bump 20 28
+expect item:prayer_beads == 1
+teleport frosthold 16 25
+talk pilgrim
+choose found something
+choose The truth
+expect flag:pilgrim_truth == 1
+con bestiary frost_wolf 4
+talk frost_trader
+choose thinned out
+expect item:wolfhide_mittens == 1
+expect queststatus:maud contains DONE
+checkall strict

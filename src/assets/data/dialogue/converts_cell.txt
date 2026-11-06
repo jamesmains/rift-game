@@ -1,0 +1,11 @@
+# 1.0: Vell's followers in the Brasswick keep, if the party chose the court
+[start]
+speaker=Ilse (prisoner)
+text=The Mayor's court gave us five years of road work. Five years of mending the roads Vell wanted to watch burn. There's a lesson in that somewhere. I'm told the food is better than in the cult.
+option=Was it fair?|fair
+option=Goodbye.|end
+
+[fair]
+speaker=Ilse (prisoner)
+text=It was a court. Somebody read the charges out loud and somebody listened. Vell never did that much. Yes. It was fair.
+option=Take care, Ilse.|end

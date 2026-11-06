@@ -1,0 +1,14 @@
+# The first-launch setup wizard can be finished with the keyboard alone: Enter presses Next / Finish.
+boot 4.6
+frames 5
+setupwizard
+frames 5
+expect window == setup
+key ENTER
+frames 5
+key ENTER
+frames 200
+expect savefile:installed.ini == 1
+key ENTER
+frames 5
+expect window == new

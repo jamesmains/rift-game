@@ -1,0 +1,178 @@
+[map]
+id=tut_hall
+name=Wardens' Training Hall
+kind=interior
+spawn=3,7
+bg=0,0,0
+music=town
+ambient=none
+
+[legend]
+# = wall_stone
+. = floor_stone
+, = floor_wood
+_ = floor_carpet
+* = marker
+D = door_wood
+b = barrel
+k = crate
+T = table
+S = shelf
+P = pillar
+R = banner_red
+U = banner_blue
+z = brazier
+h = hay
+x = bones
+o = rocks
+
+[rows]
+####R###R#################################################U##U##
+#...........#,SSS,SSS,#_______#...........#............x#______#
+#...........#,,,,,,,,,#_z___z_#.........x.#.............#______#
+#...........#,,T,,,T,,#_______#.....h.....#.........k...#P____P#
+#..P........#,,,,,,,,,#_______#...........#...k.........#______#
+#...........#,,,,,,,,,#_______#...........#...k.........#______#
+#...........#,,,,,,,,,#_______#...........#.......k.....#______#
+#...........D,,,,,,,,,D_______D...........D.............D______#
+#...........#,,,,,,,,,#_______#...........#.............#______#
+#...........#,,,,,,,,,#_______#...........#.....k.......#______#
+#..P.....**.#,,,,,,,,,#_______#...........#.....k..o....#______#
+#k.......**.#,,,,,,,,,#_______#.......h...#..k..........#P____P#
+#bb.........#,,,,,,,,,#_______#..x........#....o.....o..#______#
+#...........#kk,,,,,,b#b______#...........#.............#______#
+################################################################
+
+[npc]
+id=hale
+name=Warden Hale
+sprite=166,13
+x=6
+y=4
+dialogue=tut_hale
+
+[chest]
+x=2
+y=2
+flag=tut_chest
+items=warden_badge:1
+gold=30
+
+[trigger]
+x=9
+y=10
+w=2
+h=2
+script=log:That's the way. Now the chest in the north-west corner.
+flag=tut_moved
+require=tut_intro
+
+[door]
+x=12
+y=7
+openif=equipped:warden_badge
+locked=Warden Hale: "Badge on first, recruit. Party screen ({menu}), Items, Equip on..."
+
+[trigger]
+x=13
+y=1
+w=2
+h=13
+script=log:The quartermaster's store.
+flag=tut_r2
+
+[npc]
+id=ott
+name=Quartermaster Ott
+sprite=112,22
+x=17
+y=3
+shop=tut_store
+
+[sign]
+x=21
+y=11
+text=QUARTERMASTER OTT. Bandages, bread, potions. No credit, no refunds, no exceptions. Signs, notes and letters are read like this one: walk into them or face them and press {interact}.
+
+[door]
+x=22
+y=7
+openif=item:bandage
+locked=Ott calls after you: "Not without a bandage, you're not. Ten gold. Talk to me."
+
+[trigger]
+x=23
+y=1
+w=2
+h=13
+script=log:A save shrine glimmers by the north wall.
+flag=tut_r3
+
+[savepoint]
+x=26
+y=3
+
+[npc]
+id=brin
+name=Sergeant Brin
+sprite=105,0
+x=26
+y=10
+dialogue=tut_brin
+
+[door]
+x=30
+y=7
+openif=tut_brin
+locked=Sergeant Brin: "Oi! Talk to me before you go charging in there."
+
+[trigger]
+x=31
+y=1
+w=2
+h=13
+flag=tut_r4
+script=log:Something squeaks in the straw.
+
+[enemy]
+group=rat,rat
+x=37
+y=7
+aggro=4
+flag=tut_rats
+ondefeat=xp:90;notify:Sergeant Brin shouts: "Not bad! Have some experience."
+
+[door]
+x=42
+y=7
+openif=tut_rats&fav:any
+locked=Sergeant Brin: "Hotbar first. Party screen ({menu}), Items, highlight the Bandage and press 1."
+
+[trigger]
+x=43
+y=1
+w=2
+h=13
+flag=tut_r5
+script=heal;log:Sergeant Brin slaps a fresh dressing on you. "Good as new. Mind the one with the bow."
+
+[enemy]
+group=goblin,goblin_archer
+x=51
+y=7
+aggro=5
+flag=tut_goblins
+
+[door]
+x=56
+y=7
+openif=tut_goblins
+locked=The door is barred from the other side. The goblins first.
+
+[npc]
+id=hale_end
+name=Warden Hale
+sprite=166,13
+x=60
+y=7
+dialogue=tut_hale_end

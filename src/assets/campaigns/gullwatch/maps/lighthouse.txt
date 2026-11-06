@@ -1,0 +1,126 @@
+[map]
+id=lighthouse
+name=Gullwatch Light
+kind=dungeon
+spawn=16,26
+dark=1
+light=2
+bg=0,0,0
+music=dungeon
+
+[legend]
+# = wall_stone
+. = floor_stone
+< = stairs_up
+> = stairs_down
+A = table
+B = window
+C = bed
+D = shelf
+K = bookshelf
+T = torch_wall
+e = barrel
+k = crate
+
+[rows]
+##################################
+############.....BB.....##########
+############............##########
+############............##########
+############............##########
+############............##########
+######################.###########
+######################.###########
+######################.###########
+######################.###########
+####.C.A...................KD.####
+####..........................####
+####..........................####
+####..........................####
+####..........................####
+####e........................k####
+###########<######################
+###########.######################
+###########.######################
+###########.######################
+###########.######################
+##########T............T##########
+##########..k...........##########
+##########..............##########
+##########..............##########
+##########..............##########
+##########.e..........k.##########
+##########......>.......##########
+##################################
+##################################
+
+[exit]
+x=16
+y=27
+to=gullwatch
+tx=37
+ty=7
+
+[savepoint]
+x=13
+y=26
+
+[obstacle]
+x=17
+y=3
+name=The great lamp
+needs=burn
+kind=cauldron
+clear=brazier
+flag=gull_lamp_lit
+text=The great lamp of Gullwatch, cold and full of sea-salt. Its wick is dry. It would take a flame.
+onclear=set:gull_lamp=1;cutscene:The wick catches. Light pours out through the lens and sweeps across the black water.|Down on the rocks, the drowned turn their faces from it - and walk back into the sea.
+
+[enemy]
+group=drowned,drowned
+x=17
+y=23
+aggro=4
+flag=lh_g1
+
+[enemy]
+group=drowned,slime_big
+x=8
+y=12
+aggro=4
+flag=lh_g2
+
+[enemy]
+group=drowned
+x=25
+y=12
+aggro=4
+flag=lh_g3
+
+[enemy]
+group=tide_caller,drowned,drowned
+x=17
+y=4
+aggro=6
+flag=tide_caller_dead
+link=lamp
+ondefeat=notify:The Tide-Caller dissolves into brine. Light the lamp.
+
+[chest]
+x=6
+y=11
+items=gull_charm:1,potion_red2:1
+gold=45
+flag=lh_keeper_chest
+
+[chest]
+x=28
+y=14
+items=flare:2,oil_fire:1
+gold=20
+flag=lh_store_chest
+
+[sign]
+x=8
+y=10
+text=Keeper's log, last entry: 'The lamp is out. Something on the rocks is singing. I am going down to look.' The ink is smeared with salt.

@@ -1,0 +1,4 @@
+[start]
+speaker=Cat
+text=Mrow.
+option=Good cat.|end

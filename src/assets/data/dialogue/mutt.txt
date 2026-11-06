@@ -1,0 +1,4 @@
+[start]
+speaker=Mutt
+text=Woof.
+option=Good dog.|end

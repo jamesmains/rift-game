@@ -1,0 +1,12 @@
+[start]
+speaker=$hero
+text=Among the scorched robes lies a sigil of violet glass - an eye inside a broken circle - and a note in a careful hand: "Bring the bearer below. The Hierophant will open the sky with or without the shards. - V."
+give=cult_sigil
+set=q_cult=1
+quest=The Open Sky
+next=more
+
+[more]
+speaker=$hero
+text=Below. Below what? Someone in Ashfall must have seen where these people come and go.
+option=(Ask around.)|end

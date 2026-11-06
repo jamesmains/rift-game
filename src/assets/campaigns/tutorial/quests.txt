@@ -1,0 +1,10 @@
+# The tutorial's quest (the base game's quests are merged in too but never start here).
+[quest]
+id=tut_training
+name=Basic Training
+stage=tut_brin | Sergeant Brin's half of the hall: get past the rats in the next room, then the goblins. @tut_hall
+stage=tut_rats | The rats are dead. Next room: goblins - one of them has a bow. @tut_hall
+stage=tut_goblins | The goblins are beaten. Report to Warden Hale in the last room. @tut_hall
+stage=tut_done | DONE You walked the Wardens' training hall end to end.
+objective=1 | tut_rats | Clear the rat pit
+objective=1 | tut_goblins | Beat the goblins on the firing range

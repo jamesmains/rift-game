@@ -1,0 +1,8 @@
+[start]
+speaker=Quartermaster Unit
+text=QUARTERMASTER ONLINE. CREDIT ACCEPTED IN ANY FORM. PLEASE DO NOT LEAN ON THE DISPENSER.
+option=Show inventory.|shop
+option=Goodbye.|end
+
+[shop]
+shop=ship_vendor

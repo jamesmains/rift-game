@@ -1,0 +1,10 @@
+# 0.8.7: the Bounties tab
+frames 5
+editor
+frames 5
+tab 20
+frames 3
+shot eb_empty.png
+click 60 102
+frames 3
+shot eb_board.png

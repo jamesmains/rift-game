@@ -1,0 +1,6 @@
+triffall_headless
+build-h/
+*.o
+out/
+saves/
+out/

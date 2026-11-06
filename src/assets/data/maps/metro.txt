@@ -1,0 +1,276 @@
+[map]
+id=metro
+name=Ashfall Metro - Line 3
+kind=dungeon
+spawn=6,15
+dark=1
+light=3
+bg=0,0,0
+music=tech
+
+[legend]
+# = wall_concrete
+, = floor_road
+. = floor_concrete
+< = stairs_up
+A = table
+B = box
+C = wall_metal
+D = door_metal
+E = terminal
+F = reactor
+G = vending
+I = pillar
+O = brazier
+R = riftscar
+S = server
+T = torch_wall
+_ = floor_dirt
+a = altar
+b = bones
+e = terminal2
+k = crate
+l = streetlamp
+m = floor_metal
+r = road_line
+z = trash
+| = pipe_v
+~ = floor_water
+
+[rows]
+###########################################################
+###############################################RRRRRRRRRR##
+##############mmESmmemmmm######################RORRRaRRRO##
+##############mmmmmmmmmmm#########mEmFFmmmemm##RRRRRRRRRR##
+##############mBmmmmmmmmm#########mmmmmmmmmmm##RRRIRRRIRR##
+##############mmmmmmmmmmm#########mmmmmmmmmmm##RRRRRRRRRR##
+##############|mmmmmmmm|m#########mmmmmmmmmmm##RRRRRRRRRR##
+###################.##############mmmmmmmmmmm##RORRRRRRRO##
+###################.##############BmmmmmmmmmS##RRRRRRRRRR##
+###################.####################.###########..#####
+###################.####################.###########..#####
+##T.........T######.####################.###########..#####
+##..<........######.####################.#######I......I###
+##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
+##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
+##..........rrrrrrrrrrrr~~~~~~rrrrrrrrrrrrrrrrrD........###
+##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
+##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
+##.k......G..##.###############.l...........l.##I......I###
+##...z...z...##.###############...............#############
+###############.###############...............#############
+###############.###############..A..A..A..A...#############
+###############.###############...............#############
+#############______k###########...............#############
+#############_______###########B...G..z..k.B..#############
+#############_______#######################################
+#############b______#######################################
+###########################################################
+###########################################################
+###########################################################
+
+[exit]
+x=4
+y=12
+to=ashfall
+tx=52
+ty=40
+
+[savepoint]
+x=8
+y=17
+
+[sign]
+x=12
+y=19
+text=ASHFALL METRO - LINE 3. Under the old timetable someone has painted: THE SKY IS OPEN. COME AND SEE.
+
+[change]
+x=24
+y=13
+w=6
+h=5
+kind=floor_dirt
+if=metro_drained
+
+[lever]
+x=22
+y=3
+flag=metro_drained
+name=Pump control
+toggle=0
+text=The pumps cough, then roar. Somewhere below, water starts to drain out of the tunnel.
+
+[lever]
+x=43
+y=4
+flag=metro_power
+name=Emergency power
+toggle=0
+text=A deep hum. Red emergency lamps flicker on along the tunnel walls - and the blast door unlocks with a bang.
+
+[change]
+x=14
+y=12
+kind=torch_wall
+if=metro_power
+
+[change]
+x=22
+y=12
+kind=torch_wall
+if=metro_power
+
+[change]
+x=31
+y=12
+kind=torch_wall
+if=metro_power
+
+[change]
+x=38
+y=12
+kind=torch_wall
+if=metro_power
+
+[change]
+x=45
+y=12
+kind=torch_wall
+if=metro_power
+
+[door]
+x=47
+y=15
+metal=1
+openif=metro_power
+locked=A sealed blast door. Its lock panel is dead - the station has no power.
+
+[obstacle]
+x=15
+y=18
+name=Collapsed passage
+needs=rubble
+clear=floor_concrete
+flag=metro_cache_open
+text=Part of the ceiling has come down into a maintenance passage. Something glints behind the slabs.
+
+[enemy]
+group=drowned,drowned
+x=22
+y=15
+aggro=4
+flag=metro_g1
+
+[enemy]
+group=cultist,cult_acolyte
+x=18
+y=4
+aggro=5
+flag=metro_g2
+
+[enemy]
+group=cult_zealot,cultist
+x=36
+y=20
+aggro=5
+flag=metro_g3
+link=market
+
+[enemy]
+group=cult_acolyte,cult_zealot
+x=42
+y=22
+aggro=5
+flag=metro_g4
+link=market
+
+[enemy]
+group=rift_wisp,rift_wisp,drowned
+x=40
+y=5
+aggro=5
+flag=metro_g5
+
+[enemy]
+group=vigil,rift_wisp
+x=52
+y=15
+aggro=5
+flag=vigil_dead
+ondefeat=notify:The Vigil falls. The way to the chapel is open.
+
+[enemy]
+group=cult_leader,cult_zealot,cult_acolyte
+x=52
+y=4
+aggro=7
+flag=hierophant_dead
+link=chapel
+ondefeat=set:q_cult=2;notify:Hierophant Vell is dead. His key of violet glass is yours.;log:Vell's last followers throw down their staves and run for the stairs, back up into Ashfall.
+
+[chest]
+x=20
+y=4
+items=oil_shock:2,scrap:4,circuit:1
+gold=30
+flag=metro_chest_pump
+
+[chest]
+x=43
+y=7
+items=power_core:1,flare:3
+gold=45
+flag=metro_chest_power
+
+[chest]
+x=34
+y=24
+items=oil_blessed:2,steel_ingot:1,potion_red2:1
+gold=40
+flag=metro_chest_market
+
+[chest]
+x=16
+y=25
+items=draught_forgetting:1,power_core:1
+gold=80
+flag=metro_chest_cache
+
+[chest]
+x=54
+y=2
+items=cult_robe:1,rift_dust:2,potion_red2:2,elixir:1
+gold=120
+flag=metro_chest_chapel
+
+[gather]
+x=31
+y=24
+item=scrap
+count=2-4
+respawn=4
+
+[gather]
+x=34
+y=8
+item=scrap
+count=2-3
+respawn=4
+
+[npc]
+id=rook
+name=Rook
+sprite=105,24
+x=44
+y=23
+dialogue=rook
+hide=rook_freed
+
+[trigger]
+x=31
+y=14
+w=2
+h=3
+script=log:Voices echo from the station ahead. Chanting.
+flag=metro_chant

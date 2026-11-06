@@ -1,0 +1,14 @@
+[start]
+speaker=Trader Nabir
+text=Scrap from the Rift city, guns from the wreck. I trade with the scavengers twice a year. Want to look?
+option=Show me.|shop
+option=Can I use your tools?|bench
+option=No.|end
+
+[shop]
+shop=scrapyard
+
+[bench]
+speaker=Trader Nabir
+text=Tools, vise, soldering iron. Break it, you buy it.
+craft=workbench

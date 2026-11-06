@@ -1,0 +1,135 @@
+# Procedurally generated dungeons. exit=map,x,y is where the entrance stairs lead back to.
+[dungeon]
+id=goblin_cave
+name=Greywood Cave
+style=cave
+w=48
+h=36
+seed=11
+level=1
+exit=overworld,56,79
+monsters=goblin,goblin,goblin_archer,rat,spider,bat
+boss=goblin_chief
+bossflag=goblin_chief_dead
+bossdefeat=set:q_goblins_done;notify:The goblin chief is dead. Return to Elder Mara.
+loot=common
+
+[dungeon]
+id=bandit_camp
+name=Thornhollow Camp
+style=castle
+w=46
+h=36
+seed=23
+level=3
+exit=overworld,72,103
+monsters=bandit,bandit,bandit_archer,wolf
+boss=bandit_leader
+bossflag=bandit_leader_dead
+bossdefeat=flag:q_caravan_done;item:mayor_seal:1;notify:You found the merchant's stolen goods and a strange seal.
+loot=common
+
+[dungeon]
+id=crypt
+name=Dunmarrow Crypt
+style=crypt
+w=56
+h=44
+seed=37
+level=5
+exit=overworld,62,41
+monsters=skeleton,skeleton,skeleton_archer,zombie,ghoul,wraith,necromancer
+boss=lich
+bossflag=lich_dead
+bossdefeat=flag:rift_shard_found;item:rift_shard;notify:The Lich crumbles. A Rift Shard lies among the bones.
+loot=rare
+
+[dungeon]
+id=troll_cave
+name=Rimehollow
+style=cave
+w=44
+h=34
+seed=41
+level=6
+exit=overworld,36,31
+monsters=frost_wolf,frost_wolf,troll,skeleton
+boss=skull_golem
+bossflag=skull_golem_dead
+bossdefeat=flag:q_frost_done;notify:The Bone Colossus falls apart. Orin will want to hear of this.
+loot=rare
+
+[dungeon]
+id=lab
+name=Research Annex
+style=tech
+w=52
+h=40
+seed=53
+level=6
+exit=overworld,118,55
+monsters=scrap_drone,scrap_drone,security_bot,turret,cultist
+boss=golem
+bossflag=golem_dead
+bossdefeat=flag:rift_shard2_found;item:rift_shard2;notify:Inside the shattered golem: a second Rift Shard and a Crystal Core.
+loot=tech
+
+[dungeon]
+id=ship
+name=The Wreck - Lower Decks
+style=ship
+w=56
+h=42
+seed=67
+level=8
+exit=wreck,26,15
+monsters=scrap_drone,security_bot,android,alien,alien_warrior
+boss=mech
+bossflag=mech_dead
+bossdefeat=flag:rift_shard3_found;item:rift_shard3,ship_log;notify:The Hull Walker collapses. The third shard was wired into its core.
+loot=tech
+
+[dungeon]
+id=marsh
+name=The Drowning Marsh
+style=sewer
+w=50
+h=38
+seed=71
+level=7
+exit=overworld,128,119
+monsters=bog_zombie,giant_toad,slime_big,wraith
+boss=hydra
+bossflag=hydra_dead
+bossdefeat=flag:q_hydra_done;notify:The Hydra sinks beneath the mire. Murkwater is safe.
+loot=rare
+
+[dungeon]
+id=old_mine
+name=Ashwing's Mine
+style=mine
+w=52
+h=40
+seed=83
+level=9
+exit=overworld,22,105
+monsters=scorpion,sand_raider,imp,dragonling
+boss=dragon
+bossflag=dragon_dead
+bossdefeat=flag:q_dragon_done;notify:Ashwing is slain. Sunscar will sing of this for a hundred years.
+loot=rare
+
+[dungeon]
+id=rift_core
+name=The Scar
+style=cave
+w=54
+h=44
+seed=97
+level=11
+exit=overworld,134,19
+monsters=rift_wisp,rift_horror,demon,alien_warrior,cultist
+boss=rift_lord
+bossflag=rift_lord_dead
+bossdefeat=set:q_main=7;dialogue:shards_choice
+loot=rare

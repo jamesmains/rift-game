@@ -1,0 +1,30 @@
+# 0.9.0: the opening (New Game from the desktop, the intro) and the opening quest stage. (1.0.7: the one-time tips are
+# gone - the Tutorial campaign teaches instead, see tutorial.txt)
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 80
+keys ENTER ENTER ENTER
+frames 20
+expect mode == EXPLORE
+expect flag:hero_awake == 1
+expect queststatus:main contains Elder Mara sent
+shot opening.png
+key J
+frames 5
+shot journal_opening.png
+key ESC
+frames 5
+combat rat
+frames 300
+shot first_fight.png

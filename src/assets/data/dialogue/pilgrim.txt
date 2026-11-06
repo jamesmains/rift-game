@@ -1,0 +1,43 @@
+[start]
+speaker=Pilgrim
+text=I walked here from Murkwater. Three weeks. My feet have opinions about it.
+option=Why come so far?|sister|!q_pilgrim>=1
+option=I found something in Rimehollow.|beads|item:prayer_beads&q_pilgrim>=1&!q_pilgrim>=2
+option=Rest well.|end
+
+[sister]
+speaker=Pilgrim
+text=My sister came here a year ago to pray for our mother. She wrote that she was taking the shortcut through Rimehollow, west of the shrine. That's the last I heard. Everyone says the caves took her. I came to pray she's alive. ...If you go into Rimehollow, would you look?
+option=I'll look.|sister_yes
+option=I'm sorry. I can't.|end
+
+[sister_yes]
+speaker=Pilgrim
+text=She carries Murkwater prayer beads - green glass, knotted twice between each bead. Anyone from the swamp would know them. Thank you.
+set=q_pilgrim=1
+quest=The Pilgrim's Sister
+option=I'll bring news.|end
+
+[beads]
+speaker=Pilgrim
+text=Those are hers. Knotted twice. ...Tell me. Where were they?
+option=(The truth.) On a frozen body, not far inside the cave. She didn't suffer long, I think.|truth
+option=(A lie.) Dropped on the path - there were tracks leading on, out to the north.|lie
+
+[truth]
+speaker=Pilgrim
+text=(For a long time she says nothing.) Then I can stop walking. Thank you for telling me. I'd rather know. I'll pray for her here, and then I'll go home and tell Ma.
+take=prayer_beads
+set=q_pilgrim=2,pilgrim_truth
+xp=200
+rep=frosthold:10
+option=Safe journey.|end
+
+[lie]
+speaker=Pilgrim
+text=North! Then she might still - thank you, oh, thank you. I'll go north. I'll find her. Here - take what I have.
+take=prayer_beads
+gold=40
+set=q_pilgrim=2,pilgrim_lie
+xp=150
+option=...Good luck.|end

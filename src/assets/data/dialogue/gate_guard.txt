@@ -1,0 +1,4 @@
+[start]
+speaker=Gate Guard
+text=Welcome to Brasswick. No fighting inside the walls. The Mayor's hall is straight ahead, past the fountain.
+option=Thanks.|end

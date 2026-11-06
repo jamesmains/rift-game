@@ -1,0 +1,21 @@
+# Shops for The Gullwatch Light. This campaign stands alone: it started from a copy of the base game's library
+# (the Editor's New campaign does the same) and everything here can be changed without touching the main game.
+
+[shop]
+id=gullwatch_store
+hours=7-20
+item=bread
+item=cheese
+item=potion_red
+item=potion_blue
+item=antidote
+item=bandage
+item=torch_item
+item=flare
+item=oil_fire
+item=arrows
+item=iron_dagger
+item=club
+item=leather_cap
+item=sandals
+item=leather_boots

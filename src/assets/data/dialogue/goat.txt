@@ -1,0 +1,4 @@
+[start]
+speaker=Goat
+text=Baa.
+option=...|end

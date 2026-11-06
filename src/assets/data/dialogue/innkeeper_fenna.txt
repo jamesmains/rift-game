@@ -1,0 +1,74 @@
+[start]
+speaker=Innkeeper Fenna
+text=The Copper Kettle. Beds are fifteen gold and the kettle's always on.
+option=Rent a bed. (15 gold)|room|gold:15
+option=Rent a bed.|poor|!gold:15
+option=I carry a letter from your brother Doss.|letter|item:doss_letter&!q_letter>=2
+option=I found something of your mother's.|ring|q_letter>=2&item:mothers_ring&!letter_ring&!letter_burned
+option=Goodbye.|end
+
+[room]
+speaker=Innkeeper Fenna
+text=Sleep tight. Mind the bard - he snores in verse.
+gold=-15
+rest=1
+option=Thanks.|end
+
+[poor]
+speaker=Innkeeper Fenna
+text=Fifteen gold, love. The kettle's free, the bed's not.
+option=Right.|end
+
+[letter]
+speaker=$hero
+text=The letter is in your pack. The seal is only a thumbprint of wax - it would lift with a fingernail.
+option=(Hand it over, unopened.)|give_sealed
+option=(Read it first.)|read
+option=(Burn it in the hearth. Some things are better left unsaid.)|burn
+
+[read]
+speaker=$hero
+text="Fen - I sold Ma's ring. The Goat was going under and I was too proud to ask you. Pell has it at his counter. I've never been able to buy it back. I'm sorry. I should have said so six years ago, instead of nothing. - D."
+set=letter_read
+option=(Hand it over.)|give_read
+option=(Burn it.)|burn
+
+[give_sealed]
+speaker=Innkeeper Fenna
+text=That's Doss's thumb on the seal - he never could afford wax... (She reads it twice. She doesn't cry, quite.) The ring. Of course it was the ring. Six years I thought it was something I'd done.
+take=doss_letter
+set=q_letter=2
+xp=120
+rep=brasswick:5,hollowmere:5
+next=after
+
+[give_read]
+speaker=Innkeeper Fenna
+text=(She reads it twice.) The ring. Of course it was the ring. ...You read it, didn't you? It's on your face. Well. At least someone knew before me.
+take=doss_letter
+set=q_letter=2
+xp=100
+rep=hollowmere:5
+next=after
+
+[after]
+speaker=Innkeeper Fenna
+text=Tell him... tell him the kettle's on. He'll know what that means. And if that ring is still at Pell's counter, I'd give a great deal to see it again.
+option=I'll tell him.|end
+
+[burn]
+speaker=$hero
+text=The paper curls and goes. Fenna looks up from the bar at the smell. "Something burning?" Nothing. Nothing at all.
+take=doss_letter
+set=letter_burned,q_letter=3
+option=(Leave.)|end
+
+[ring]
+speaker=Innkeeper Fenna
+text=Ma's ring. Oh. Oh, you absolute - come here. (It is a very firm hug.) Take this. No, TAKE it. It was Ma's too, and she'd want it used, not kept in a drawer.
+take=mothers_ring
+give=amulet_life
+set=letter_ring
+xp=150
+rep=brasswick:10,hollowmere:10
+option=Tell Doss yourself. The kettle's on.|end

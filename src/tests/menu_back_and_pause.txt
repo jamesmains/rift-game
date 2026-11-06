@@ -1,0 +1,29 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+key TAB
+frames 2
+key RIGHT
+key ENTER
+frames 2
+key ESC
+frames 2
+shot equip_back.png
+key ESC
+key ESC
+frames 2
+dump
+key ESC
+frames 2
+shot pause.png

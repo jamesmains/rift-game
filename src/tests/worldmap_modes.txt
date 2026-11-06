@@ -1,0 +1,40 @@
+# 0.8.5: campaign world map modes (worldmap= in campaign.txt; console worldmap MODE switches it for testing)
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport hollowmere_home 0 0
+frames 10
+con worldmap off
+key M
+frames 3
+expect log contains There is no map of this place
+shot wm_off.png
+con worldmap current
+key M
+frames 5
+shot wm_current.png
+key ESC
+frames 3
+con worldmap hollowmere
+con run revealmap:hollowmere
+teleport hollowmere 0 0
+frames 5
+key M
+frames 5
+shot wm_hollowmere.png
+key ESC
+con worldmap overworld
+key M
+frames 5
+shot wm_overworld.png

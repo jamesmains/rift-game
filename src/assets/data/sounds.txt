@@ -1,0 +1,612 @@
+# Triffall sound map. [sound] = effect, [music] = track. file= is relative to assets/audio (several files, comma separated, pick at random).
+# volume= percent, pitchvar= +/- percent random pitch (sfx), loop=0/1 (music). Edit in the Editor > Sounds.
+#
+# Maps can set music=<track> in their [map] header; items/spells can set sound=<event>; creatures sound=<event> for their death.
+
+[sound]
+id=ui_move
+file=sfx/ui_move.wav
+desc=menu cursor moves
+volume=60
+
+[sound]
+id=ui_confirm
+file=sfx/ui_confirm.wav
+desc=menu confirm
+volume=80
+
+[sound]
+id=ui_click
+file=sfx/ui_click.wav
+volume=45
+pitchvar=4
+desc=mouse click in a menu (soft)
+
+[sound]
+id=ui_cancel
+file=sfx/ui_cancel.wav
+desc=menu back
+volume=80
+
+[sound]
+id=ui_open
+file=sfx/ui_open.wav
+desc=a game screen opens
+volume=80
+
+[sound]
+id=ui_close
+file=sfx/ui_close.wav
+desc=a game screen closes
+volume=80
+
+[sound]
+id=ui_error
+file=sfx/ui_error.wav
+desc=can't do that
+volume=80
+
+[sound]
+id=ui_page
+file=sfx/ui_page.wav
+desc=tab / page change
+volume=60
+
+[sound]
+id=text_blip
+file=sfx/text_blip.wav
+desc=dialogue line appears
+volume=50
+pitchvar=10
+
+[sound]
+id=boot
+file=sfx/boot.wav
+desc=desktop boot chime
+volume=80
+
+[sound]
+id=shutdown
+file=sfx/shutdown.wav
+desc=desktop shut down
+volume=80
+
+[sound]
+id=desktop_click
+file=sfx/desktop_click.wav
+desc=desktop icon / button click
+volume=70
+
+[sound]
+id=desktop_open
+file=sfx/desktop_open.wav
+desc=desktop window opens
+volume=80
+
+[sound]
+id=desktop_close
+file=sfx/desktop_close.wav
+desc=desktop window closes
+volume=80
+
+[sound]
+id=step
+file=sfx/step1.wav,sfx/step2.wav,sfx/step3.wav,sfx/step4.wav
+desc=party footstep
+volume=45
+pitchvar=8
+
+[sound]
+id=door_open
+file=sfx/door_open.wav
+desc=door opens
+volume=90
+pitchvar=5
+
+[sound]
+id=door_locked
+file=sfx/door_locked.wav
+desc=locked door / chest
+volume=80
+
+[sound]
+id=chest_open
+file=sfx/chest_open.wav
+desc=chest opened
+volume=90
+
+[sound]
+id=pickup
+file=sfx/pickup.wav
+desc=item received
+volume=80
+pitchvar=5
+
+[sound]
+id=gold
+file=sfx/gold.wav
+desc=gold received
+volume=80
+pitchvar=5
+
+[sound]
+id=equip
+file=sfx/equip.wav
+desc=equip / unequip
+volume=80
+pitchvar=5
+
+[sound]
+id=potion
+file=sfx/potion.wav
+desc=consumable used
+volume=80
+pitchvar=5
+
+[sound]
+id=save
+file=sfx/save.wav
+desc=game saved
+volume=90
+
+[sound]
+id=levelup
+file=sfx/levelup.wav
+desc=level up
+volume=90
+
+[sound]
+id=quest
+file=sfx/quest.wav
+desc=quest / flag update
+volume=80
+
+[sound]
+id=teleport
+file=sfx/teleport.wav
+desc=map transition / recall
+volume=70
+
+[sound]
+id=rest
+file=sfx/rest.wav
+desc=resting at an inn
+volume=80
+
+[sound]
+id=shop_buy
+file=sfx/shop_buy.wav
+desc=bought an item
+volume=80
+
+[sound]
+id=shop_sell
+file=sfx/shop_sell.wav
+desc=sold an item
+volume=80
+
+[sound]
+id=ambush
+file=sfx/ambush.wav
+desc=random encounter
+volume=90
+
+[sound]
+id=combat_start
+file=sfx/combat_start.wav
+desc=combat begins
+volume=90
+
+[sound]
+id=turn_player
+file=sfx/turn_player.wav
+desc=a party member's turn
+volume=60
+
+[sound]
+id=turn_enemy
+file=sfx/turn_enemy.wav
+desc=an enemy's turn
+volume=50
+
+[sound]
+id=attack_melee
+file=sfx/attack_melee.wav
+desc=melee swing
+volume=90
+pitchvar=10
+
+[sound]
+id=attack_bow
+file=sfx/attack_bow.wav
+desc=bow / thrown shot
+volume=90
+pitchvar=8
+
+[sound]
+id=attack_gun
+file=sfx/attack_gun.wav
+desc=gunshot
+volume=90
+pitchvar=6
+
+[sound]
+id=attack_laser
+file=sfx/attack_laser.wav
+desc=energy weapon
+volume=90
+pitchvar=6
+
+[sound]
+id=hit
+file=sfx/hit.wav
+desc=damage lands
+volume=90
+pitchvar=10
+
+[sound]
+id=crit
+file=sfx/crit.wav
+desc=critical hit
+pitchvar=5
+
+[sound]
+id=miss
+file=sfx/miss.wav
+desc=attack misses
+volume=70
+pitchvar=10
+
+[sound]
+id=block
+file=sfx/block.wav
+desc=defend / no damage
+volume=70
+pitchvar=5
+
+[sound]
+id=spell_cast
+file=sfx/spell_cast.wav
+desc=generic spell
+volume=90
+pitchvar=5
+
+[sound]
+id=spell_fire
+file=sfx/spell_fire.wav
+desc=fire spell
+volume=90
+pitchvar=5
+
+[sound]
+id=spell_ice
+file=sfx/spell_ice.wav
+desc=cold spell
+volume=90
+pitchvar=5
+
+[sound]
+id=spell_lightning
+file=sfx/spell_lightning.wav
+desc=shock spell
+volume=90
+pitchvar=5
+
+[sound]
+id=spell_poison
+file=sfx/spell_poison.wav
+desc=poison spell
+volume=90
+pitchvar=5
+
+[sound]
+id=spell_heal
+file=sfx/spell_heal.wav
+desc=healing
+volume=90
+
+[sound]
+id=spell_buff
+file=sfx/spell_buff.wav
+desc=buff / debuff
+volume=80
+pitchvar=5
+
+[sound]
+id=explosion
+file=sfx/explosion.wav
+desc=grenade / area blast
+pitchvar=5
+
+[sound]
+id=death_enemy
+file=sfx/death_enemy.wav
+desc=enemy slain
+volume=90
+pitchvar=10
+
+[sound]
+id=death_party
+file=sfx/death_party.wav
+desc=party member knocked out
+volume=90
+
+[sound]
+id=flee
+file=sfx/flee.wav
+desc=fled from combat
+volume=80
+
+[sound]
+id=victory
+file=sfx/victory.wav
+desc=combat won (jingle)
+volume=80
+
+[sound]
+id=defeat
+file=sfx/defeat.wav
+desc=party wiped
+volume=80
+
+[sound]
+id=grenade_throw
+file=sfx/grenade_throw.wav
+desc=thrown item
+volume=80
+pitchvar=5
+
+[sound]
+id=reload
+file=sfx/reload.wav
+desc=ammo / misc click
+volume=70
+
+[sound]
+id=unlock
+file=sfx/unlock.wav
+desc=unlock spell / key used
+volume=80
+
+[sound]
+id=light
+file=sfx/light.wav
+desc=light spell
+volume=80
+
+[sound]
+id=stealth
+file=sfx/stealth.wav
+desc=stealth spell
+volume=80
+
+[sound]
+id=detect
+file=sfx/detect.wav
+desc=detect spell
+volume=80
+
+[music]
+id=title
+file=music/title.ogg
+desc=desktop / main menu
+volume=70
+
+[music]
+id=overworld
+file=music/overworld.ogg
+desc=overworld travel
+volume=70
+
+[music]
+id=town
+file=music/town.ogg
+desc=towns and villages
+volume=70
+
+[music]
+id=forest
+file=music/forest.ogg
+desc=wilderness locations
+volume=70
+
+[music]
+id=dungeon
+file=music/dungeon.ogg
+desc=caves, crypts, castles
+volume=70
+
+[music]
+id=tech
+file=music/tech.ogg
+desc=tech ruins, the ship
+volume=70
+
+[music]
+id=combat
+file=music/combat.ogg
+desc=normal combat
+volume=75
+
+[music]
+id=boss
+file=music/boss.ogg
+desc=boss combat
+volume=80
+
+[music]
+id=fanfare
+file=music/victory.ogg
+desc=after a won fight (plays once)
+volume=70
+loop=0
+
+[music]
+id=gameover
+file=music/gameover.ogg
+desc=game over (plays once)
+volume=70
+loop=0
+
+[sound]
+id=thunder
+file=sfx/thunder.wav
+desc=storm thunder
+volume=80
+pitchvar=10
+
+[sound]
+id=craft
+file=sfx/craft.wav
+desc=item crafted
+volume=85
+
+[sound]
+id=achievement
+file=sfx/achievement.wav
+desc=achievement unlocked
+volume=80
+
+[sound]
+id=mine_click
+file=sfx/mine_click.wav
+desc=minesweeper / solitaire click
+volume=60
+pitchvar=5
+
+[sound]
+id=mine_boom
+file=sfx/mine_boom.wav
+desc=minesweeper mine
+volume=80
+
+[sound]
+id=card
+file=sfx/card.wav
+desc=solitaire card
+volume=60
+pitchvar=10
+
+[sound]
+id=banter
+file=sfx/banter.wav
+desc=companion banter
+volume=50
+
+[sound]
+id=travel
+file=sfx/travel.wav
+desc=fast travel
+volume=80
+
+# ---- 1.0: a theme per town and per kind of dungeon, the night overworld, the ending ----
+[music]
+id=brasswick
+file=music/brasswick.ogg
+desc=Brasswick
+volume=70
+
+[music]
+id=ashfall
+file=music/ashfall.ogg
+desc=Ashfall's ruins
+volume=70
+
+[music]
+id=murkwater
+file=music/murkwater.ogg
+desc=Murkwater
+volume=70
+
+[music]
+id=sunscar
+file=music/sunscar.ogg
+desc=Sunscar Outpost
+volume=70
+
+[music]
+id=frosthold
+file=music/frosthold.ogg
+desc=Frosthold Shrine
+volume=70
+
+[music]
+id=crypt
+file=music/crypt.ogg
+desc=crypts and barrows
+volume=70
+
+[music]
+id=swamp
+file=music/swamp.ogg
+desc=the Drowning Marsh
+volume=70
+
+[music]
+id=rift
+file=music/rift.ogg
+desc=the Scar
+volume=75
+
+[music]
+id=overworld_night
+file=music/overworld_night.ogg
+desc=overworld at night
+volume=65
+
+[music]
+id=ending
+file=music/ending.ogg
+desc=the epilogue and credits
+volume=75
+
+# ---- 1.0: ambient loops under the music (they follow Settings > Ambience volume). A map header can pick one with ambient=<id>
+# (or ambient=none); otherwise the game picks by place, weather and time of day.
+[ambient]
+id=amb_wind
+file=ambient/amb_wind.ogg
+desc=wind (overworld, snow)
+volume=30
+
+[ambient]
+id=amb_cave
+file=ambient/amb_cave.ogg
+desc=caves and crypts: drips
+volume=45
+
+[ambient]
+id=amb_swamp
+file=ambient/amb_swamp.ogg
+desc=the marsh: frogs
+volume=45
+
+[ambient]
+id=amb_rain
+file=ambient/amb_rain.ogg
+desc=rain and storms outdoors
+volume=30
+
+[ambient]
+id=amb_town
+file=ambient/amb_town.ogg
+desc=towns by day
+volume=35
+
+[ambient]
+id=amb_machine
+file=ambient/amb_machine.ogg
+desc=tech ruins: hum
+volume=35
+
+[ambient]
+id=amb_night
+file=ambient/amb_night.ogg
+desc=outdoors at night: crickets
+volume=45
+
+[ambient]
+id=amb_rift
+file=ambient/amb_rift.ogg
+desc=the Scar
+volume=35
+

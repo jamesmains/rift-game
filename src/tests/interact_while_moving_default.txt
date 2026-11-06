@@ -1,0 +1,22 @@
+# Enabling auto-interaction opens a chest reached during a held movement sequence.
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 354
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+interactmoving 1
+teleport hollowmere_home 8 4
+press UP
+frames 15
+cheststate 8 2
+release UP
+cheststate 8 2

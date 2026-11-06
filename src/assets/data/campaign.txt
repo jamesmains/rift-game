@@ -1,0 +1,26 @@
+# The base game's campaign description. Other campaigns live in assets/campaigns/<id>/campaign.txt with the same keys,
+# next to their own data files (items.txt, maps/, dialogue/ ...). Each campaign is a separate game.
+#   name / desc / author / version   shown on the desktop and in the New Game window
+#   icon=col,row                      desktop icon from icons.png
+#   start=map,x,y                     where a new game begins (0,0 = the map's spawn)
+#   intro=...                         cutscene lines before play ($hero = the hero's name), one per intro= line
+#   dialogue=id                       dialogue that opens after the intro
+#   gold / items=id:n,... / flags=a,b=2   starting gold, items and flags
+#   worldmap=overworld|off|current|<map>  what the M world map shows (default overworld; current = automap of the
+#                                     map you are on; a map id = always that map, e.g. a castle hall)
+#   inherit=1                         advanced: build on the base game (missing files come from assets/data). By default a
+#                                     campaign stands alone and uses only its own folder (tiles, sprites and sounds are shared).
+[campaign]
+name=Triffall
+desc=The Rift opened forty years ago, and now it stirs again. The main adventure across Aldmoor.
+author=Triffall team
+icon=0,7
+start=hollowmere_home,0,0
+gold=25
+flags=hero_awake
+intro=The Rift opened forty years ago.
+intro=For one night the sky over Aldmoor tore like cloth, and when it closed, pieces of other worlds lay scattered across the land:
+intro=a city of glass and asphalt, a ship that fell from beyond the stars, machines that still hum in the dark.
+intro=Now the Rift stirs again. Strange lights burn over the Scar, and the dead do not stay buried.
+intro=You are $hero of Hollowmere, and this morning your village elder sent for you.
+dialogue=intro

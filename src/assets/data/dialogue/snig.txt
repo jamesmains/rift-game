@@ -1,0 +1,16 @@
+# 1.0: the spared goblins come back - to trade. (Story choice #1, Greywood.)
+[start]
+speaker=Snig the Peddler
+text=Psst. Tall-folk. Yes, YOU. Grakk says you're the one who let us walk. Snig sells things now. Honest things. Mostly honest. Snig found them, so they are Snig's.
+option=Let's see what you've got.|shop
+option=How is the tribe?|tribe
+option=Goodbye, Snig.|end
+
+[shop]
+shop=snig_wares
+
+[tribe]
+speaker=Snig the Peddler
+text=Over the mountain, in the old quarry. Grakk is fat and happy and does not hear the singing any more. He says if the sky-thing ever comes back, goblins will be on your side. Grakk says lots of things. This one he means.
+set=goblins_allies
+option=Tell him I said hello.|end

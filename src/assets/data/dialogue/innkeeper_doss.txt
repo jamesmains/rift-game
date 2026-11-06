@@ -1,0 +1,53 @@
+[start]
+speaker=Innkeeper Doss
+text=Welcome to the Weary Goat! A room's ten gold and the stew's free with it. What'll it be?
+option=Rent a room. (10 gold)|room|gold:10
+option=Rent a room.|poor|!gold:10
+option=You look like you've something on your mind.|letter|q_main>=2&!q_letter>=1
+option=About that letter...|letter_ask|q_letter>=1&!q_letter>=2
+option=Fenna says the kettle's on.|letter_done|q_letter>=2&!letter_burned&!doss_thanked
+option=Any rumours?|rumour
+option=Nothing, thanks.|end
+
+[room]
+speaker=Innkeeper Doss
+text=Sleep well. Mind the goat.
+gold=-10
+rest=1
+option=Thanks.|end
+
+[poor]
+speaker=Innkeeper Doss
+text=Ten gold, friend. I'm not a charity, whatever the goat tells you.
+option=Right.|end
+
+[rumour]
+speaker=Innkeeper Doss
+text=Bram over there says he'd fight a dragon for a pint. Old Hesk says a dragon's nesting in the mines past Sunscar, so Bram's been quiet since. And they say the Brasswick guard pays coin for goblin ears.
+option=Thanks.|end
+
+[letter]
+speaker=Innkeeper Doss
+text=You're going to Brasswick? ...My sister Fenna runs the Copper Kettle there. We haven't spoken in six years. I wrote her this. Three times, actually - this is the one I didn't burn. Would you take it? Don't read it. Please.
+option=I'll take it to her.|letter_take
+option=Not my business.|end
+
+[letter_take]
+speaker=Innkeeper Doss
+text=Thank you. Here - and a free room, any night, for as long as I own the Goat.
+give=doss_letter
+set=q_letter=1
+quest=A Letter for Fenna
+option=I'll see she gets it.|end
+
+[letter_ask]
+speaker=Innkeeper Doss
+text=Did she... no. Don't tell me here. Tell me when it's done.
+option=Soon.|end
+
+[letter_done]
+speaker=Innkeeper Doss
+text=She said that? The kettle's... (He has to look at the ceiling for a while.) Six years. Here. This was meant for a rainy day, and it's raining.
+set=doss_thanked
+gold=80
+option=Go and see her, Doss.|end

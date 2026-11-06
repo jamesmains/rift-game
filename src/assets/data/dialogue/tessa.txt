@@ -1,0 +1,76 @@
+[start]
+speaker=Tessa
+text=Mayor Aldous sent you? Figures. He sends a letter every spring asking me to "secure the Annex", like I've got a key. I've got a crowbar and a bad attitude.
+option=I need the shard inside the Annex.|annex|q_main>=4&!q_main>=5
+option=Come with me.|join|q_main>=5
+option=Who are you?|who
+option=Can you build something from this scrap?|workbench
+option=Goodbye.|end
+
+[who]
+speaker=Tessa
+text=Tessa. Born in the ruins, raised by drones, more or less. I fix what the Rift broke and shoot what it made. Scavenger, if you need a word for it.
+option=Goodbye.|end
+
+[annex]
+speaker=Tessa
+text=The Annex is south of the city gate. The old security is still live - drones, a turret or two, and something in the reactor room that used to be a man before the shard got into him. I'll come. I've always wanted to see inside.
+set=q_main=5
+next=join
+
+[join]
+speaker=Tessa
+text=Grab your gun. Or your sword, if you're old-fashioned. Let's crack it open.
+join=scavenger:Tessa:116,15
+approve=scavenger:5
+option=Let's go.|end
+
+[workbench]
+speaker=Tessa
+text=Give me a flat surface and ten minutes.
+craft=workbench
+
+[camp]
+speaker=Tessa
+text=Yeah?
+option=Found anything good lately?|chat
+option=What do you actually want out of all this?|story|approval:scavenger:15
+option=I have three circuit boards.|circuit_turnin|tessa_quest&itemn:circuit:3&!q_tessa_done
+option=Nothing.|end
+
+[chat]
+speaker=Tessa
+text=A drone's optic. Still works if you squint. I'm keeping it.
+approve=scavenger:1
+option=Of course you are.|end
+
+[story]
+speaker=Tessa
+text=There's a terminal in the Annex that still talks. Not to me - it needs three working boards to boot the part that does. Whatever it knows about the Rift, it's known since before I was born. I want to ask it one question.
+option=Three boards. We'll strip them off the machines.|accept
+option=Machines that talk are how this started.|refuse
+
+[refuse]
+speaker=Tessa
+text=Machines that talk are how it ends, too. One way or another.
+approve=scavenger:-3
+option=...|end
+
+[accept]
+speaker=Tessa
+text=Drones and bots drop them, sometimes crates. Three clean ones.
+set=tessa_quest
+quest=Tessa: One Question
+approve=scavenger:5
+option=Let's go.|end
+
+[circuit_turnin]
+speaker=Tessa
+text=...It booted. I asked it. It said: "You already know." Then it shut down for good. I think it was laughing at me. Here - built this out of the spare parts while I was waiting.
+take=circuit:3
+give=cell:20
+set=q_tessa_done
+xp=120
+approve=scavenger:15
+quest=Tessa: One Question - done
+option=Machines.|end

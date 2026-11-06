@@ -1,0 +1,4 @@
+[start]
+speaker=Clerk Benning
+text=The archive is closed to the public. The archive has been closed to the public since 1,460 and will remain closed. Please stop asking.
+option=I wasn't going to.|end

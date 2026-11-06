@@ -1,0 +1,37 @@
+# Factions: the towns and groups the party has a reputation with (-100 to 100, starts at 0).
+# Dialogue/scripts change it with rep=FACTION:N (rep=hollowmere:5,brasswick:-3); conditions test it with rep:FACTION:N
+# (true when reputation is at least N; !rep:FACTION:N for "below N"). Achievements use rep:FACTION>=N.
+# A shop with faction=ID prices by it: up to 15% off when Honoured, up to 25% more when Hated.
+# Paying a bounty at a notice board adds the board's rep= (default 3) to the faction with the board's id.
+# Tiers: Hated <= -50, Disliked <= -10, Neutral, Liked >= 10, Friendly >= 30, Honoured >= 60.
+# A faction id without an entry here still works; it shows the board name or the id.
+
+[faction]
+id=hollowmere
+name=Hollowmere
+text=The lakeside village where it all starts. Healer Wren and the elders remember who helps.
+
+[faction]
+id=brasswick
+name=Brasswick
+text=The clockwork trade town. Merchants talk, and prices follow.
+
+[faction]
+id=frosthold
+name=Frosthold
+text=Mountain hold of the northern clans.
+
+[faction]
+id=murkwater
+name=Murkwater
+text=Stilt village in the swamps.
+
+[faction]
+id=sunscar
+name=Sunscar
+text=Desert outpost on the edge of the dunes.
+
+[faction]
+id=ashfall
+name=Ashfall
+text=The scavengers who live in the ruins of the fallen city. They trade in what the Rift left behind.

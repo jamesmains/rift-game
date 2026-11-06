@@ -1,0 +1,26 @@
+[start]
+speaker=Smith Gorran
+text=Iron's honest. Say what you need and I'll beat it into shape.
+option=Show me your wares.|shop
+option=Can you forge something from parts I bring?|forge
+option=Can I use your workbench?|bench
+option=How does smithing work?|howto
+option=Nothing today.|end
+
+[shop]
+shop=hollowmere_smith
+
+[forge]
+speaker=Smith Gorran
+text=Bring me scrap and I'll make it sing. Costs a little coin for the coal.
+craft=forge
+
+[bench]
+speaker=Smith Gorran
+text=Leather, straps, the odd tinker's job. Bench is yours. Mind the clamps.
+craft=workbench
+
+[howto]
+speaker=Smith Gorran
+text=Ore and scrap go in the forge and come out as ingots. Ingots become blades and mail - and they make good gear better: bring me a blade and an ingot and I'll reinforce it. Three times, if you've the steel. The more you work, the better your hands get; push past your skill and you'll ruin metal. And any junk you won't wear, break it down here for parts.
+option=Good to know.|start

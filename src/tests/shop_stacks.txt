@@ -1,0 +1,44 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport hollowmere 10 10
+con gold 300
+con shop hollowmere_general
+frames 3
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+key DOWN
+frames 2
+hold RIGHT 90
+frames 2
+shot shop_qty.png
+key ENTER
+frames 2
+shot shop_bought.png
+key ESC
+con shop hollowmere_smith
+frames 2
+key ENTER
+key ENTER
+key ENTER
+frames 2
+shot smith.png
+key PGDN
+frames 2
+shot sell.png

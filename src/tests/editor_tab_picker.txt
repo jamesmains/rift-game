@@ -1,0 +1,24 @@
+frames 5
+editor
+frames 5
+tab 4
+click 100 60
+frames 2
+type rat
+frames 2
+shot q1.png
+click 100 80
+frames 2
+click 505 105
+frames 3
+shot q2_picker.png
+click 300 200
+frames 3
+shot q3_picked.png
+click 600 84
+frames 2
+key TAB
+frames 2
+type 99
+frames 2
+shot q4_tab.png

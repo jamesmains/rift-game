@@ -1,0 +1,4 @@
+[start]
+speaker=Little Pip
+text=Did you know the sky can break? Elder Mara says it did, before I was born. I bet it was loud.
+option=Probably.|end

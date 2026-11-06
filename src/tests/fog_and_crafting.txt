@@ -1,0 +1,40 @@
+# 0.8: see tests/README.md
+frames 5
+dblclick 50 28
+frames 5
+type Arin
+click 390 380
+frames 50
+keys ENTER ENTER ENTER ENTER ENTER
+frames 40
+keys ENTER ENTER ENTER ENTER ENTER ENTER ENTER
+frames 10
+key ENTER
+frames 120
+key ENTER
+frames 5
+teleport overworld 60 60
+frames 5
+weather fog
+frames 30
+shot fog.png
+clock 1320
+frames 5
+shot night.png
+con give iron_ore 6
+con give wolf_pelt 4
+con give herb_moon 5
+con give iron_sword 1
+con gold 300
+con craft forge
+frames 3
+shot craftforge.png
+key ENTER
+key ENTER
+frames 2
+key PGDN
+frames 2
+shot reinforce.png
+key PGDN
+frames 2
+shot salvage.png

@@ -1,0 +1,156 @@
+[map]
+id=frosthold
+name=Frosthold Shrine
+kind=town
+spawn=16,26
+bg=60,70,90
+music=frosthold
+
+[legend]
+. = snow
+, = floor_dirt
+r = road
+T = snowpine
+t = rocks
+f = fence_wood
+F = flower|flower2|floor_grass
+# = wall_wood
+= = wall_stone
+h = floor_wood
+m = floor_tile
+D = door_wood
+W = window
+o = well
+w = floor_water
+b = barrel
+B = bed
+A = table
+C = chair
+S = shelf
+K = bookshelf
+n = anvil
+M = forge
+u = cauldron
+s = shop_sign
+i = inn_sign
+p = pillar
+x = void
+G = grave
+a = altar
+c = crop|crop2
+H = hay
+k = crate
+% = banner_red
+& = banner_blue
+$ = banner_gold
+Q = fountain
+L = torch
+Z = statue
+R = floor_marble
+e = fence
+~ = bridge
++ = floor_carpet
+O = brazier
+v = floor_water
+j = deadtree_t
+y = bush
+
+[rows]
+tttttttttttttttttttttttttttttttttt
+t................................t
+t........TT......................t
+t................................t
+t..........T...........T...T.....t
+t...........T...T....T...........t
+t..............rrrr............T.t
+t.T....T...============..........t
+t..........=LmmmZmmmmL=......T...t
+t..........=mmmmammmmm=..........t
+t..........=mmmmmmmmmm=..........t
+t.T....T...=mmmmmmmmmm=..........t
+t..........=mmmmmmmmmm=......T...t
+t...T......=OmmmmmmmmO=..........t
+t.T.....T..=W===D====W=..........t
+t........T.....rrrr..............t
+t..............rrrr..............t
+t...T......######rr######...T..T.t
+t.T.....T..#Bhhh#rr#Shhu#........t
+t..........#hhhh#rr#hhhh#........t
+t..........#hhhh#rr#hhhh#..TT....t
+t..........#WD#W#rr#WD#W#..T.....t
+t.......T......rrrr..............t
+t............T.rrrr.......T.T....t
+t..............rrrr..............t
+t.........T....rrrr..............t
+t..............rrrr..............t
+tttttttttttttttrrrrttttttttttttttt
+
+[exit]
+x=15
+y=27
+w=4
+h=1
+to=overworld
+tx=46
+ty=23
+
+[npc]
+id=orin
+name=Orin
+sprite=123,21
+x=16
+y=11
+dialogue=orin
+hide=joined_cleric
+
+[npc]
+id=abbot
+name=Abbot Tyr
+sprite=123,0
+x=14
+y=10
+dialogue=abbot_tyr
+
+[npc]
+id=pilgrim
+name=Pilgrim
+sprite=104,0
+x=18
+y=23
+dialogue=pilgrim
+wander=1
+
+[npc]
+id=frost_trader
+name=Sister Maud
+sprite=104,1
+x=22
+y=19
+dialogue=sister_maud
+
+[chest]
+x=15
+y=18
+flag=fh_chest
+items=charm_frost:1,potion_blue:1
+
+[savepoint]
+x=17
+y=16
+
+[npc]
+id=board
+name=Notice Board
+sprite=29,20
+x=10
+y=16
+board=frosthold
+
+[npc]
+id=coach
+name=Coachman
+sprite=104,0
+color=200,160,90
+x=12
+y=16
+travel=1

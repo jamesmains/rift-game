@@ -1,0 +1,42 @@
+# Notice boards and bounties. Edit them in the Editor's Bounties tab.
+# [board]  id = what board= on the NPC (or a dialogue's board=) says; name = shown on the board; map = the map it stands in
+#          (a courier letter counts as delivered when the party reads that board, and only boards whose map you have
+#          visited get letters); location = overworld location for distances and map pins (default: the one entering map)
+#          offers = random notices per day (0 = only hand-written ones); kinds = kill,fetch,deliver
+#          kill = dungeon ids it posts kill jobs for (default: the 4 nearest within reach); creatures = exact creature pool
+#          fetch = item pool (default: cheap crafting materials); deliver = board ids letters may go to (default: all others)
+#          reward = pay in percent (100 = normal); rep = reputation with the faction of the same id per paid notice (default 3)
+# [bounty] a hand-written notice: id, board, kind (kill|fetch|deliver), target (creature / item / board id), need,
+#          where (dungeon or location id, shown as a hint and map pin), reward, xp, title, text, require (condition),
+#          repeat=1 to post it again after it has been paid
+# Without this file, every board= in the maps gets the default settings.
+
+[board]
+id=hollowmere
+name=Hollowmere
+map=hollowmere
+
+[board]
+id=brasswick
+name=Brasswick
+map=brasswick
+
+[board]
+id=frosthold
+name=Frosthold
+map=frosthold
+
+[board]
+id=murkwater
+name=Murkwater
+map=murkwater
+
+[board]
+id=sunscar
+name=Sunscar
+map=sunscar
+
+[board]
+id=millbrook
+name=Millbrook Farm
+map=millbrook
