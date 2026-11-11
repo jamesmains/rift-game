@@ -1,0 +1,14 @@
+# 1.1.0: gather nodes take item, amount, tool and look from their resource type (resources.txt, node=).
+newgame Kai warrior 1
+god
+give pickaxe
+teleport goblin_cave 12 17
+frames 120
+shot res_cave_iron.png
+bump 13 17
+frames 20
+expect item:iron_ore >= 1
+log
+teleport overworld 21 91
+frames 120
+shot res_overworld_iron.png

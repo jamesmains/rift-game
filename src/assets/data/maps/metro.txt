@@ -250,14 +250,13 @@ flag=metro_chest_chapel
 [gather]
 x=31
 y=24
-item=scrap
-count=2-4
+node=scrap
 respawn=4
 
 [gather]
 x=34
 y=8
-item=scrap
+node=scrap
 count=2-3
 respawn=4
 

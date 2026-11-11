@@ -1,0 +1,120 @@
+# Resource node types: the things the party can harvest (ore veins, herb patches, scrap heaps).
+# Edit them in the Editor's Resources tab. A [gather] object on a map names its type with node=<id> and takes every
+# key it doesn't set itself from here, so a change here changes every node of that type on every map.
+#   item = what one harvest gives        count = how many (lo-hi)        tool = item needed to work it (empty = bare hands)
+#   respawn = days until it can be harvested again                       name = what the log calls it ("Iron vein: picked clean")
+#   sprite = its own picture (empty = the map tile under it, recoloured)  color = its colour while it can be harvested
+#   spentsprite = picture once picked clean (empty = the same picture)    spent = its colour once picked clean
+#   kind = the tile kind generated dungeons put under it
+#   styles = generated dungeon styles that scatter it: style[:weight[:count]], e.g. mine:2:2-4,cave
+#     (weight = lots in the draw, count = overrides count= in that style). The order of this file matters for the draw.
+
+[resource]
+id=iron_ore
+name=Iron vein
+item=iron_ore
+count=1-3
+tool=pickaxe
+respawn=5
+sprite=
+color=235,140,60
+spent=85,85,85
+kind=rocks
+styles=mine:2:2-4,cave
+
+[resource]
+id=ember_cap
+name=Ember caps
+item=ember_cap
+count=1-2
+respawn=3
+sprite=
+color=120,235,120
+spent=85,85,85
+kind=mushroom2
+styles=mine:1:1-3,cave:2
+
+[resource]
+id=gem_rough
+name=Gem vein
+item=gem_rough
+count=1-1
+tool=pickaxe
+respawn=5
+sprite=
+color=90,220,255
+spent=85,85,85
+kind=crystal
+styles=mine
+
+[resource]
+id=scrap
+name=Scrap heap
+item=scrap
+count=2-4
+respawn=3
+sprite=
+color=255,215,90
+spent=85,85,85
+kind=box
+styles=tech,ship
+
+[resource]
+id=circuit
+name=Salvageable terminal
+item=circuit
+count=1-1
+respawn=3
+sprite=
+color=90,220,255
+spent=85,85,85
+kind=terminal2
+styles=tech,ship
+
+[resource]
+id=herb_moon
+name=Moonleaf
+item=herb_moon
+count=1-2
+respawn=3
+sprite=
+color=120,235,120
+spent=85,85,85
+kind=mushroom
+styles=sewer
+
+[resource]
+id=slime_gel
+name=Slime pool
+item=slime_gel
+count=1-2
+respawn=3
+sprite=
+color=255,215,90
+spent=85,85,85
+kind=mire
+styles=sewer
+
+[resource]
+id=bone_dust
+name=Bone pile
+item=bone_dust
+count=1-2
+respawn=3
+sprite=
+color=255,215,90
+spent=85,85,85
+kind=bones
+styles=crypt
+
+[resource]
+id=frost_lichen
+name=Frost lichen
+item=frost_lichen
+count=1-2
+respawn=2
+sprite=
+color=120,235,120
+spent=85,85,85
+kind=snow
+styles=

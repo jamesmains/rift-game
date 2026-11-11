@@ -171,37 +171,27 @@ y=22
 [gather]
 x=13
 y=11
-item=scrap
-count=2-4
-respawn=3
+node=scrap
 
 [gather]
 x=14
 y=4
-item=scrap
-count=2-4
-respawn=3
+node=scrap
 
 [gather]
 x=21
 y=27
-item=circuit
-count=1-1
-respawn=3
+node=circuit
 
 [gather]
 x=5
 y=29
-item=scrap
-count=2-4
-respawn=3
+node=scrap
 
 [gather]
 x=10
 y=20
-item=scrap
-count=2-4
-respawn=3
+node=scrap
 
 # 1.0 side quest "Signal in the Static": the tape room by the entrance
 [chest]

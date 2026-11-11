@@ -46,7 +46,12 @@ struct EdObj { std::string type; std::vector<std::pair<std::string, std::string>
     int geti(const std::string& k, int d = 0) const { for (auto& p : kv) if (p.first == k) return atoi(p.second.c_str()); return d; }
     std::string get(const std::string& k) const { for (auto& p : kv) if (p.first == k) return p.second; return ""; }
     void set(const std::string& k, const std::string& v) { for (auto& p : kv) if (p.first == k) { p.second = v; return; } kv.push_back({k, v}); }
+    bool has(const std::string& k) const { for (auto& p : kv) if (p.first == k) return true; return false; }
+    void erase(const std::string& k) { for (size_t i = 0; i < kv.size(); i++) if (kv[i].first == k) { kv.erase(kv.begin() + i); i--; } }
 };
+// the 12 kinds of map object and the keys each one reads (editor.cpp)
+const std::vector<std::string>& edObjTypes();
+std::vector<std::string> edObjKeys(const std::string& type);
 struct EdMap {
     std::string path, id;
     std::vector<std::pair<std::string, std::string>> header; // [map] keys
@@ -125,7 +130,7 @@ private:
     void drawGuide(InputState& in, bool& close);
     // ---- where things are used (editor_flags.cpp) ----
     struct FlagUse { bool set = false; std::string where, detail; int tab = -1; std::string file; int line = -1, obj = -1, gen = -1, sec = -1; };
-    struct MapScan { std::string id, name, table; int encounter = 0; std::vector<std::pair<std::string, std::string>> header; std::vector<EdObj> objs; std::set<std::string> kinds; };
+    struct MapScan { std::string id, name, table; int encounter = 0; std::vector<std::pair<std::string, std::string>> header; std::vector<EdObj> objs, raw; std::set<std::string> kinds; };   // objs = with template / resource keys filled in, raw = as written
     std::vector<MapScan> mapScan;                                  // every map's header, objects and tile kinds (for the indexes)
     std::map<std::string, std::vector<FlagUse>> flagIndex; bool flagIndexDirty = true, indexBuilt = false;
     std::map<std::string, std::string> flagDocs; bool flagDocsDirty = false;   // flags.txt notes
@@ -213,6 +218,21 @@ private:
     void dlgGraphAddNode();
     void dlgGraphRetarget(int node, int opt, const std::string& target);
     // ---- end dialogue node graph ----
+    // ---- object templates and resource nodes (editor_objects.cpp): gens[15] = objects.txt, gens[16] = resources.txt ----
+    const EdSection* templateSec(const std::string& id) const;
+    const EdSection* resourceSec(const std::string& node, const std::string& item) const;   // node= id, else the first one giving the item
+    EdObj resolvedObj(const EdObj& o) const;   // the object as the game sees it: template type + keys, resource keys
+    std::vector<std::pair<std::string, std::string>> inheritedKeys(const EdObj& o, std::string& from) const;   // keys it gets from its template / resource
+    int poType = 0, poScroll = 0, poSel = -1; std::string poFilter, poKey, poVal; bool poThisTmpl = false, poNeedScan = true;
+    struct PlacedRef { std::string map; int obj = -1; };
+    std::vector<PlacedRef> placedMatches();    // the placed objects the Objects tab's filter picks (from mapScan)
+    bool placedMatch(const std::string& mapId, const EdObj& raw) const;
+    int bulkObjects(const std::function<bool(EdObj&)>& fn, int& mapsChanged);   // runs fn on every matching placed object, saves the maps it changed
+    void drawObjectsTab(InputState& in); void drawPlacedObjects(int x, int y, int w, int h, InputState& in);
+    void drawResourcesTab(InputState& in); void drawResourceInfo(int x, int y, int w, int h, InputState& in);
+    void drawGatherNode(const EdObj& resolved, int sx, int sy, int scale, const std::string& cellSpec, bool spent = false);
+    void templateFromObject(const EdObj& o, const std::string& mapId, int objIndex);
+    std::string placeTmpl; int objPanelScroll = 0;   // Maps tab: the template the Objects tool places; the object panel's scroll
     // ---- tileset ----
     int tsScroll = 0; Tile tsHover, tsPick;
     void drawTileset(InputState& in);

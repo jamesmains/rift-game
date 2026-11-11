@@ -72,8 +72,9 @@ void Editor::scanMaps() {
     mapScan.clear();
     for (auto& f : mapFiles) {
         MapScan ms; ms.id = f;
-        if (mapLoaded && em.id == f) { ms.header = em.header; ms.objs = em.objs; for (auto& c : em.cells) ms.kinds.insert(trim(split(c, '|')[0])); }
-        else { EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue; ms.header = m.header; ms.objs = m.objs; for (auto& c : m.cells) ms.kinds.insert(trim(split(c, '|')[0])); }
+        if (mapLoaded && em.id == f) { ms.header = em.header; ms.raw = em.objs; for (auto& c : em.cells) ms.kinds.insert(trim(split(c, '|')[0])); }
+        else { EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue; ms.header = m.header; ms.raw = m.objs; for (auto& c : m.cells) ms.kinds.insert(trim(split(c, '|')[0])); }
+        for (auto& o : ms.raw) ms.objs.push_back(resolvedObj(o));   // 1.1.0: the indexes see template and resource keys too
         for (auto& kv : ms.header) { if (kv.first == "encounter") ms.encounter = atoi(kv.second.c_str()); else if (kv.first == "table") ms.table = kv.second; else if (kv.first == "name") ms.name = kv.second; }
         mapScan.push_back(ms);
     }

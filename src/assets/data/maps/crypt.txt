@@ -184,23 +184,17 @@ y=21
 [gather]
 x=30
 y=14
-item=bone_dust
-count=1-2
-respawn=3
+node=bone_dust
 
 [gather]
 x=8
 y=12
-item=bone_dust
-count=1-2
-respawn=3
+node=bone_dust
 
 [gather]
 x=29
 y=22
-item=bone_dust
-count=1-2
-respawn=3
+node=bone_dust
 
 [chest]
 x=41

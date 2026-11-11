@@ -250,7 +250,8 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
     auto gets = [](const std::vector<std::pair<std::string, std::string>>& kv, const std::string& k, const std::string& def = "") -> std::string { for (auto& p : kv) if (p.first == k) return p.second; return def; };
     for (auto& ob : objects) {
         auto& kv = ob.second;
-        const std::string& type = ob.first;
+        std::string type = ob.first;
+        applyObjectTemplate(type, kv);
         if (type == "npc") {
             NPC n; n.id = gets(kv, "id"); n.name = gets(kv, "name", n.id); n.dialogue = gets(kv, "dialogue"); n.shop = gets(kv, "shop");
             n.x = n.homeX = geti(kv, "x", 0); n.y = n.homeY = geti(kv, "y", 0);
@@ -301,13 +302,79 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             for (int yy = c.y; yy < c.y + c.h; yy++) for (int xx = c.x; xx < c.x + c.w; xx++) c.orig.push_back(m.inBounds(xx, yy) ? m.at(xx, yy).kind : 0);
             m.changes.push_back(c);
         } else if (type == "gather") {
-            GatherNode g; g.x = geti(kv, "x", 0); g.y = geti(kv, "y", 0); g.item = gets(kv, "item"); g.tool = gets(kv, "tool"); g.name = gets(kv, "name");
-            auto cnt = split(gets(kv, "count", "1"), '-'); g.lo = atoi(cnt[0].c_str()); g.hi = cnt.size() > 1 ? atoi(cnt[1].c_str()) : g.lo; g.respawn = geti(kv, "respawn", 3);
+            // keys the node doesn't set come from its resource type (resources.txt): node=, else the type giving its item
+            auto has = [&](const char* k) { for (auto& p : kv) if (p.first == k) return true; return false; };
+            const ResourceDef* r = resourceFor(gets(kv, "node"), gets(kv, "item"));
+            GatherNode g; g.x = geti(kv, "x", 0); g.y = geti(kv, "y", 0); g.node = r ? r->id : gets(kv, "node");
+            g.item = has("item") ? gets(kv, "item") : r ? r->item : ""; g.tool = has("tool") ? gets(kv, "tool") : r ? r->tool : ""; g.name = has("name") ? gets(kv, "name") : r ? r->name : "";
+            if (r) { g.lo = r->lo; g.hi = r->hi; g.respawn = r->respawn; applyResource(g, *r); }
+            if (has("count")) { auto cnt = split(gets(kv, "count", "1"), '-'); g.lo = atoi(cnt[0].c_str()); g.hi = cnt.size() > 1 ? atoi(cnt[1].c_str()) : g.lo; }
+            if (has("respawn")) g.respawn = geti(kv, "respawn", 3);
             if (!gets(kv, "color").empty()) { g.hasColor = true; g.color = parseColor(gets(kv, "color")); }
+            if (!gets(kv, "spent").empty()) { g.hasSpent = true; g.spent = parseColor(gets(kv, "spent")); }
+            if (has("sprite")) g.sprite = parseTile(gets(kv, "sprite"));
+            if (has("spentsprite")) g.spentSprite = parseTile(gets(kv, "spentsprite"));
             m.gathers.push_back(g);
         }
     }
     return true;
+}
+
+// ---------------- resource node types and object templates (1.1.0) ----------------
+static std::vector<ResourceDef> gResources;
+static std::vector<ObjTemplate> gObjTemplates;
+void setResourceDefs(const std::vector<ConfigSection>& secs) {
+    gResources.clear();
+    for (auto& sec : secs) {
+        if (sec.name != "resource" || sec.get("id").empty()) continue;
+        ResourceDef r; r.id = sec.get("id"); r.item = sec.get("item"); r.name = sec.get("name"); r.tool = sec.get("tool"); r.kind = sec.get("kind");
+        parseRange(sec.get("count", "1"), r.lo, r.hi); if (r.hi < r.lo) r.hi = r.lo; r.respawn = sec.geti("respawn", 3);
+        r.sprite = parseTile(sec.get("sprite")); r.spentSprite = parseTile(sec.get("spentsprite"));
+        if (!sec.get("color").empty()) { r.hasColor = true; r.color = parseColor(sec.get("color")); }
+        if (!sec.get("spent").empty()) { r.hasSpent = true; r.spent = parseColor(sec.get("spent")); }
+        for (auto& part : split(sec.get("styles"), ',')) {
+            auto p = split(trim(part), ':'); if (p.empty() || trim(p[0]).empty()) continue;
+            ResourceStyle st; st.style = trim(p[0]); if (p.size() > 1) st.weight = std::max(1, atoi(p[1].c_str()));
+            if (p.size() > 2 && !trim(p[2]).empty()) { parseRange(trim(p[2]), st.lo, st.hi); if (st.hi < st.lo) st.hi = st.lo; }
+            r.styles.push_back(st);
+        }
+        bool dup = false; for (auto& o : gResources) if (o.id == r.id) { o = r; dup = true; } if (!dup) gResources.push_back(r);
+    }
+}
+const std::vector<ResourceDef>& resourceDefs() { return gResources; }
+const ResourceDef* resourceFor(const std::string& node, const std::string& item) {
+    if (!node.empty()) { for (auto& r : gResources) if (r.id == node) return &r; return nullptr; }
+    if (!item.empty()) for (auto& r : gResources) if (r.item == item) return &r;
+    return nullptr;
+}
+void applyResource(GatherNode& g, const ResourceDef& r) {
+    g.node = r.id; g.sprite = r.sprite; g.spentSprite = r.spentSprite;
+    if (r.hasColor) { g.hasColor = true; g.color = r.color; }
+    if (r.hasSpent) { g.hasSpent = true; g.spent = r.spent; }
+}
+Color8 gatherGuessColor(const std::string& item) {
+    std::string id = toLower(item);
+    if (id.find("ore") != std::string::npos || id.find("iron") != std::string::npos || id.find("ingot") != std::string::npos) return RGB(235, 140, 60);
+    if (id.find("herb") != std::string::npos || id.find("leaf") != std::string::npos || id.find("moon") != std::string::npos || id.find("lichen") != std::string::npos || id.find("cap") != std::string::npos) return RGB(120, 235, 120);
+    if (id.find("crystal") != std::string::npos || id.find("gem") != std::string::npos || id.find("circuit") != std::string::npos || id.find("core") != std::string::npos || id.find("rift") != std::string::npos) return RGB(90, 220, 255);
+    return RGB(255, 215, 90);
+}
+void setObjectTemplates(const std::vector<ConfigSection>& secs) {
+    gObjTemplates.clear();
+    for (auto& sec : secs) {
+        if (sec.name != "template" || sec.get("id").empty()) continue;
+        ObjTemplate t; t.id = sec.get("id"); t.type = sec.get("type");
+        for (auto& kv : sec.kv) if (kv.first != "id" && kv.first != "type" && kv.first != "x" && kv.first != "y") t.kv.push_back(kv);
+        bool dup = false; for (auto& o : gObjTemplates) if (o.id == t.id) { o = t; dup = true; } if (!dup) gObjTemplates.push_back(t);
+    }
+}
+const ObjTemplate* objectTemplate(const std::string& id) { for (auto& t : gObjTemplates) if (t.id == id) return &t; return nullptr; }
+void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv) {
+    std::string id; for (auto& p : kv) if (p.first == "template") id = p.second;
+    if (id.empty()) return;
+    const ObjTemplate* t = objectTemplate(id); if (!t) return;
+    if (!t->type.empty()) type = t->type;
+    for (auto& tk : t->kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { have = true; break; } if (!have) kv.push_back(tk); }
 }
 
 // ---------------- LOS & pathfinding ----------------

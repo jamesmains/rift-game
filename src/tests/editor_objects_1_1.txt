@@ -1,0 +1,27 @@
+# 1.1.0: the object panel takes clicks (they used to reach the map under it), the Objects and Resources tabs.
+frames 5
+editor
+frames 5
+tab 0
+frames 2
+# Objects tool, place an npc in an empty spot: its panel opens on the right
+click 30 258
+frames 2
+click 470 400
+frames 2
+shot objects_panel_open.png
+# click into the panel's name field and type: before 1.1.0 this placed a second npc under the panel
+click 780 150
+frames 2
+type Bob
+frames 2
+shot objects_panel_typed.png
+# Objects tab and Resources tab
+tab 22
+frames 4
+shot objects_tab.png
+tab 23
+frames 4
+click 60 100
+frames 4
+shot resources_tab.png

@@ -11,6 +11,7 @@ using namespace UI;
 // ---------------- data loading ----------------
 void Game::loadSystems() {
     loadBoards(); loadHints();
+    setResourceDefs(mergedConfig("resources.txt")); setObjectTemplates(mergedConfig("objects.txt"));   // 1.1.0: read by map loading
     banters.clear(); achievements.clear(); recipes.clear(); affixes.clear(); factions.clear();
     for (auto& sec : mergedConfig("factions.txt")) { if (sec.name != "faction" || sec.get("id").empty()) continue; FactionDef f{sec.get("id"), sec.get("name", sec.get("id")), sec.get("text")}; bool dup = false; for (auto& o : factions) if (o.id == f.id) { o = f; dup = true; } if (!dup) factions.push_back(f); }
     for (auto& sec : mergedConfig("banter.txt")) {

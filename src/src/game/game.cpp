@@ -1204,6 +1204,8 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     struct Later { const TileKind* k; Tile g; int sx, sy, mask, corners; Color8 tint; bool recolor, opaque, spill; };
     struct Prop { Tile p; int sx, sy; Color8 t; };
     std::vector<Later> trails; std::vector<Prop> props;
+    // 1.1.0: a resource node with its own picture (resources.txt sprite=) replaces its cell's picture while it is in view
+    std::set<int> nodeCells; for (auto& gn : map->gathers) if (gn.sprite.valid() && map->inBounds(gn.x, gn.y) && visible(gn.x, gn.y)) nodeCells.insert(gn.y * map->w + gn.x);
     for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++) {
         const Cell& c = map->at(x, y);
         if (map->dark && !c.explored) continue;
@@ -1214,6 +1216,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if (map->dark && !vis) { tint = RGB(tint.r / 3, tint.g / 3, tint.b / 3); bg = RGB(bg.r / 3, bg.g / 3, bg.b / 3); }
         else if (map->dark && !lit(x, y)) { tint = RGB(tint.r * 3 / 5, tint.g * 3 / 5, tint.b * 3 / 5); bg = RGB(bg.r / 2, bg.g / 2, bg.b / 2); }  // seen, but standing in shadow
         cv.fillRect(sx, sy, TILE, TILE, bg);
+        if (!nodeCells.empty() && nodeCells.count(y * map->w + x)) continue;
         const TileKind* k = c.kind < kinds.size() ? &kinds[c.kind] : nullptr;
         if (k && k->shift > 0) trails.push_back({k, g, sx, sy, mask, corners, tint, c.recolor, c.opaque, y + 1 >= map->h || !map->at(x, y + 1).opaque});
         else drawGroundPiece(cv, *ctx.ts, k, g, sx, sy, 2, tint, c.recolor, c.opaque, mask, corners);
@@ -1247,15 +1250,13 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         // the node's own tile drawn again in a colour that says what it is (ore copper, herbs green, tech cyan...)
         // while it can be harvested, and in dull grey once it has been picked clean
         bool ready = gatherReady(g);
-        Color8 col = g.color;
-        if (!g.hasColor) { std::string id = toLower(g.item);
-            if (id.find("ore") != std::string::npos || id.find("iron") != std::string::npos || id.find("ingot") != std::string::npos) col = RGB(235, 140, 60);
-            else if (id.find("herb") != std::string::npos || id.find("leaf") != std::string::npos || id.find("moon") != std::string::npos || id.find("lichen") != std::string::npos || id.find("cap") != std::string::npos) col = RGB(120, 235, 120);
-            else if (id.find("crystal") != std::string::npos || id.find("gem") != std::string::npos || id.find("circuit") != std::string::npos || id.find("core") != std::string::npos || id.find("rift") != std::string::npos) col = RGB(90, 220, 255);
-            else col = RGB(255, 215, 90); }
-        if (!ready) col = RGB(85, 85, 85);
+        // 1.1.0: colours and picture come from the node's resource type (resources.txt), else guessed from the item
+        Color8 col = g.hasColor ? g.color : gatherGuessColor(g.item);
+        if (!ready) col = g.spent;
         const Cell& cell = map->at(g.x, g.y);
-        if (cell.prop.valid()) ctx.ts->drawRecolor(cv, cell.prop, sx, sy, 2, col); else if (cell.ground.valid()) ctx.ts->drawRecolor(cv, cell.ground, sx, sy, 2, col);
+        Tile pic = g.sprite; if (!ready && g.spentSprite.valid()) pic = g.spentSprite;
+        if (pic.valid()) { ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, col); }
+        else if (cell.prop.valid()) ctx.ts->drawRecolor(cv, cell.prop, sx, sy, 2, col); else if (cell.ground.valid()) ctx.ts->drawRecolor(cv, cell.ground, sx, sy, 2, col);
         if (ready && (ctx.frame / 15) % 3 == 0) ctx.ts->draw(cv, TL::SPARKLE, sx, sy - 6, 2, C::Yellow);
     }
     if (fuseT > 0 && fuseMap == mapId) {

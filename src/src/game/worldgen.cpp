@@ -317,9 +317,13 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
     }
     // things to harvest: ore veins and ember caps in caves and mines, scrap heaps in tech ruins, moonleaf and gel in sewers
     {
-        struct G { std::string item, tool, kind; int lo, hi; };
+        struct G { std::string item, tool, kind; int lo, hi; const ResourceDef* r = nullptr; };
         std::vector<G> opts;
-        if (style == "mine") opts = {{"iron_ore", "pickaxe", "rocks", 2, 4}, {"iron_ore", "pickaxe", "rocks", 2, 4}, {"ember_cap", "", "mushroom2", 1, 3}, {"gem_rough", "pickaxe", "crystal", 1, 1}};
+        // 1.1.0: the resource types in resources.txt whose styles= name this style (weight = how many lots in the draw);
+        // the built-in table below is only used when no resource type is set up for dungeons at all
+        bool fromData = false; for (auto& r : resourceDefs()) if (!r.styles.empty()) fromData = true;
+        if (fromData) { for (auto& r : resourceDefs()) for (auto& st : r.styles) if (st.style == style) for (int k = 0; k < st.weight; k++) opts.push_back({r.item, r.tool, r.kind, st.lo >= 0 ? st.lo : r.lo, st.lo >= 0 ? st.hi : r.hi, &r}); }
+        else if (style == "mine") opts = {{"iron_ore", "pickaxe", "rocks", 2, 4}, {"iron_ore", "pickaxe", "rocks", 2, 4}, {"ember_cap", "", "mushroom2", 1, 3}, {"gem_rough", "pickaxe", "crystal", 1, 1}};
         else if (style == "cave") opts = {{"iron_ore", "pickaxe", "rocks", 1, 3}, {"ember_cap", "", "mushroom2", 1, 2}, {"ember_cap", "", "mushroom2", 1, 2}};
         else if (style == "tech" || style == "ship") opts = {{"scrap", "", "box", 2, 4}, {"circuit", "", "terminal2", 1, 1}};
         else if (style == "sewer") opts = {{"herb_moon", "", "mushroom", 1, 2}, {"slime_gel", "", "mire", 1, 2}};
@@ -331,7 +335,8 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
             bool near = false; for (auto& g : m.gathers) if (chebyshev(g.x, g.y, x, y) < 6) near = true; if (near) continue;
             const G& g = rng.pick(opts);
             GatherNode n; n.x = x; n.y = y; n.item = g.item; n.tool = g.tool; n.lo = g.lo; n.hi = g.hi; n.respawn = g.tool.empty() ? 3 : 5;
-            m.set(x, y, g.kind, rng); m.gathers.push_back(n); i++;
+            if (g.r) { n.respawn = g.r->respawn; n.name = g.r->name; applyResource(n, *g.r); } else if (const ResourceDef* r = resourceFor("", g.item)) applyResource(n, *r);
+            if (!g.kind.empty()) m.set(x, y, g.kind, rng); m.gathers.push_back(n); i++;
         }
     }
     // ensure spawn free of monsters

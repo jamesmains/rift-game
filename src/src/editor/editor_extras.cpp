@@ -212,8 +212,10 @@ void Editor::runCampaignCheck() {
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue;
         auto walk = [&](int cx, int cy) { if (cx < 0 || cy < 0 || cx >= m.w || cy >= m.h) return false; const TileKind* k = tileKind(trim(split(m.at(cx, cy), '|')[0])); return k && k->walkable; };
-        for (size_t oi = 0; oi < m.objs.size(); oi++) { auto& o = m.objs[oi]; FlagUse u; u.tab = 0; u.file = f; u.obj = (int)oi; int ox = o.geti("x"), oy = o.geti("y");
+        for (size_t oi = 0; oi < m.objs.size(); oi++) { const EdObj& raw = m.objs[oi]; EdObj o = resolvedObj(raw); FlagUse u; u.tab = 0; u.file = f; u.obj = (int)oi; int ox = o.geti("x"), oy = o.geti("y");
             std::string at = fmt("map %s: %s at %d,%d", f.c_str(), o.type.c_str(), ox, oy);
+            if (!raw.get("template").empty() && !templateSec(raw.get("template"))) addF(true, at + " uses unknown template '" + raw.get("template") + "' (Objects tab)", u);
+            if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) addF(true, at + " uses unknown resource node type '" + o.get("node") + "' (Resources tab)", u);
             if (ox < 0 || oy < 0 || ox >= m.w || oy >= m.h) addF(true, at + " is outside the map", u);
             else if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !walk(ox, oy)) addF(false, at + " stands on a blocked tile", u);
             if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) addF(true, at + " uses missing dialogue '" + o.get("dialogue") + "'", u);
@@ -221,7 +223,8 @@ void Editor::runCampaignCheck() {
             if (o.type == "exit" && !isMap(o.get("to"))) addF(true, at + " leads to unknown map '" + o.get("to") + "'", u);
             if (o.type == "enemy") for (auto& c : ids(o.get("group"))) if (!crea(c)) addF(true, at + " has unknown creature '" + c + "'", u);
             if (o.type == "chest") for (auto& c : ids(o.get("items"))) if (!item(c)) addF(true, at + " holds unknown item '" + c + "'", u);
-            if (o.type == "gather" && !item(o.get("item"))) addF(true, at + " gathers unknown item '" + o.get("item") + "'", u);
+            if (o.type == "gather" && (o.get("item").empty() || !item(o.get("item")))) addF(true, at + " gathers unknown item '" + o.get("item") + "'", u);
+            if (o.type == "gather" && !item(o.get("tool"))) addF(true, at + " needs unknown tool '" + o.get("tool") + "'", u);
             if (o.type == "door" && !item(o.get("key"))) addF(true, at + " needs unknown key '" + o.get("key") + "'", u);
         }
         FlagUse u; u.tab = 0; u.file = f;
@@ -236,6 +239,11 @@ void Editor::runCampaignCheck() {
     // ---- flags ----
     for (auto& kv : flagIndex) { int s = 0, c = 0; for (auto& u : kv.second) (u.set ? s : c)++; if (s == 0 && c > 0) { FlagUse u; u.tab = 19; u.file = kv.first; addF(true, "flag '" + kv.first + "' is checked but nothing ever sets it", u); } }
     // ---- data files ----
+    for (size_t i = 0; i < gens[15].secs.size(); i++) { auto& s = gens[15].secs[i]; auto& ty = edObjTypes(); if (std::find(ty.begin(), ty.end(), s.get("type")) == ty.end()) addF(true, "object template " + s.get("id") + ": type '" + s.get("type") + "' is not an object type", gu(15, (int)i, 22)); }
+    for (size_t i = 0; i < gens[16].secs.size(); i++) { auto& s = gens[16].secs[i]; std::string w = "resource node " + s.get("id");
+        if (s.get("item").empty() || !item(s.get("item"))) addF(true, w + ": unknown item '" + s.get("item") + "'", gu(16, (int)i, 23));
+        if (!item(s.get("tool"))) addF(true, w + ": unknown tool '" + s.get("tool") + "'", gu(16, (int)i, 23));
+        if (!s.get("kind").empty() && !tileKind(s.get("kind"))) addF(true, w + ": unknown tile kind '" + s.get("kind") + "'", gu(16, (int)i, 23)); }
     for (size_t i = 0; i < gens[4].secs.size(); i++) for (auto& kv : gens[4].secs[i].kv) if (kv.first == "item" && !item(split(kv.second, ':')[0])) addF(true, "shop " + gens[4].secs[i].get("id") + " sells unknown item '" + kv.second + "'", gu(4, (int)i, 7));
     for (size_t i = 0; i < gens[3].secs.size(); i++) { auto& s = gens[3].secs[i]; for (auto& c : {s.get("weapon"), s.get("armor")}) if (!item(c)) addF(true, "class " + s.get("id") + ": unknown item '" + c + "'", gu(3, (int)i, 6)); for (auto& c : ids(s.get("items"))) if (!item(c)) addF(true, "class " + s.get("id") + ": unknown item '" + c + "'", gu(3, (int)i, 6)); for (auto& c : ids(s.get("spells"))) if (!gd->spell(c)) addF(true, "class " + s.get("id") + ": unknown spell '" + c + "'", gu(3, (int)i, 6)); }
     for (size_t i = 0; i < gens[2].secs.size(); i++) { auto& s = gens[2].secs[i]; std::string sm = s.get("summon"); if (sm.empty() || sm == "0") continue; if (sm == "1") addF(false, "spell " + s.get("id") + ": summon=1 is the old placeholder; name a creature (summon=wolf or wolf:2)", gu(2, (int)i, 5)); else { if (!gd->creature(trim(split(sm, ':')[0]))) addF(true, "spell " + s.get("id") + " summons unknown creature '" + sm + "'", gu(2, (int)i, 5)); if (s.get("target") != "ground") addF(false, "spell " + s.get("id") + " summons: target=ground lets the caster pick the tile", gu(2, (int)i, 5)); } }

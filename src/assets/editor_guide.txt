@@ -17,7 +17,8 @@ map cell type looks like and does), World (overworld locations), Items,
 Creatures, Spells, Classes, Shops, Encounters (random fight tables), Quests,
 Dungeons (generated dungeons), Dialogue, Sounds, Tileset (browse the art),
 Recipes, Affixes, Banter, Achiev. (achievements), Campaign, Flags, Bounties
-(notice boards) and Factions (town reputation). A tab with unsaved changes
+(notice boards), Factions (town reputation), Objects (object templates and every
+placed object) and Resources (gather node types). A tab with unsaved changes
 shows a * after its name.
 
 The Campaign button in the header picks which campaign you are editing, or
@@ -902,7 +903,7 @@ arrow keys. The hint line at the bottom of the view lists the keys for the
 active tool.
 
 == maps.objects | Placing map objects
-see: tab.maps, obj.npc, obj.enemy, obj.chest, obj.exit, obj.trigger, obj.door, obj.obstacle
+see: tab.maps, tab.objects, tab.resources, obj.npc, obj.enemy, obj.chest, obj.exit, obj.trigger, obj.door, obj.obstacle
 
 Everything that is not plain terrain is an object listed below the map rows:
 npc, enemy, chest, exit, trigger, sign, door, savepoint, obstacle, lever,
@@ -913,6 +914,11 @@ change and gather.
 - 3. The object panel opens at the right of the view. Edit the values; x removes a key; type a key name and press Add for extra keys; Delete removes the object.
 - 4. Helper buttons: "pick dialogue" (npc), "pick map" (exit), "add creature" (enemy), "add item" (chest). Sprite fields have a "..." tile picker.
 - 5. Drag an object to move it. Click another to select it. With the Objects tool active, the Delete key removes the selected object.
+- 6. Templates: pick one under "template:" (below the type buttons) and every click places a copy of it. A copy only writes what belongs to its spot (x, y, an npc's id, a chest's flag) and takes the rest from the template, so editing the template in the Objects tab changes every copy on every map.
+- 7. "make template" in the panel turns the selected object into a template and links it. A copy shows its template's values dimmed under "from template ..."; "own" gives just that copy its own value. "detach" copies the template's values in and unlinks it.
+
+The panel takes the mouse wheel when it is taller than the view. Clicks on it
+never reach the map underneath.
 
 Areas: exits, triggers, obstacles and changes cover w x h cells starting at
 x,y (top-left). The view draws them as coloured rectangles.
@@ -2385,7 +2391,7 @@ Works with any flag, not just levers: if=q_main>=5 can rebuild a burnt
 village later in the story.
 
 == obj.gather | Gather node object
-see: obj.gather.item, obj.gather.count, obj.gather.tool, obj.gather.respawn, obj.gather.name, tab.recipes
+see: obj.gather.node, tab.resources, obj.gather.item, obj.gather.count, obj.gather.tool, obj.gather.respawn, obj.gather.name, tab.recipes
 
 A spot the party can harvest: an ore vein, a herb patch, a scrap heap.
 Pressing E on (or bumping into) it gives the item, takes 10 game minutes, and
@@ -2395,14 +2401,17 @@ them.
   [gather]
   x=33
   y=16
-  item=iron_ore
-  count=1-3
-  tool=pickaxe
-  respawn=5
+  node=iron_ore
 
-The node does not draw a tile of its own: paint something fitting under it
-(rocks, mushroom, crystal, box). On a walkable tile the party stands on it and
-presses E.
+node= names its resource type (Resources tab). Everything the node does not
+set itself comes from that type: item, count, tool, respawn, name, picture and
+colours. Set a key on the node only when this one spot should differ
+(count=2-4 for a rich vein). The panel lists the values it takes from its type,
+dimmed; "pick node type" changes the type.
+
+A type with no sprite= draws the map tile under the node in the node's colour,
+so paint something fitting there (rocks, mushroom, crystal, box). A type with
+a sprite draws that picture instead of the tile.
 
 == obj.gather.item | Gather item
 see: obj.gather, item.id
@@ -2416,7 +2425,7 @@ Format: an item id. Default: empty (the node does nothing).
 Usually a material used by recipes: iron_ore, ember_cap, herb_moon, scrap,
 bone_dust.
 
-The item's icon is drawn on the map view in the editor so you can see what each node gives. Check that the item exists: an unknown id makes the node do nothing.
+Usually left to the node's type (node=). A node with an item but no node= uses the first resource type that gives that item. Check that the item exists: an unknown id makes the node do nothing.
 
 == obj.gather.count | Gather amount
 see: obj.gather
@@ -2469,6 +2478,36 @@ Format: any text. Default: empty (the item's name).
   name=Herb patch
 
 Use it when the item name alone sounds odd as a place: "Iron vein" reads better than "Iron Ore".
+
+== obj.gather.node | Gather node type
+see: obj.gather, tab.resources
+
+The resource type this node is (an id from the Resources tab, resources.txt).
+The node takes every key it does not set itself from the type.
+
+  node=iron_ore
+
+Empty: the node uses the first type whose item= matches its own item=, or the
+old behaviour (colour guessed from the item, the map tile under it) if there is
+none.
+
+== obj.gather.sprite | Gather node picture
+see: obj.gather, resource.sprite
+Usually left to the node's type. A tile (col,row) drawn for this node instead of the map tile under it, in the node's colour.
+  sprite=6,46
+
+== obj.gather.color | Gather node colour
+see: obj.gather, resource.color
+Usually left to the node's type. The colour the node is drawn in while it can be harvested (r,g,b).
+  color=235,140,60
+
+== obj.gather.spent | Picked-clean colour
+see: obj.gather, resource.spent
+Usually left to the node's type. The colour once picked clean (r,g,b). Default 85,85,85 (grey).
+
+== obj.gather.spentsprite | Picked-clean picture
+see: obj.gather, resource.spentsprite
+Usually left to the node's type. A different picture once picked clean (empty = the same picture).
 
 == tilekind.name | Tile kind name
 see: tab.tiles, concepts.ids
@@ -5772,3 +5811,136 @@ lesson's condition is met.
 - finish=CAMPAIGN|line|line in dialogue ends a tutorial-style campaign: closing lines, then the desktop with New Game open for CAMPAIGN.
 
 The base game has no hints (the old one-time tips were replaced by the Tutorial).
+
+== tab.objects | Objects tab (templates and every placed object)
+see: maps.objects, objects.placed, template, tab.resources
+
+Left and middle: object templates (objects.txt). A template is a reusable map
+object: an id, a type (npc, enemy, chest, exit, trigger, sign, door, savepoint,
+obstacle, lever, change, gather) and the keys that type reads. The buttons
+under the add-key box offer the keys the chosen type understands.
+
+A placed object with template=<id> takes the template's type and every key it
+does not set itself. So a "town_guard" template with its sprite, dialogue and
+wander set can be placed many times, and changing its dialogue here changes
+every guard on every map. Keys set on a placed copy win over the template:
+that is how one guard can stand somewhere special or say something else.
+
+  [npc]
+  template=town_guard
+  id=town_guard_3
+  x=14
+  y=9
+
+Placing copies: Maps tab, Objects tool, "template:" under the type buttons.
+Making one from an existing object: select it on a map and press "make
+template", or select it in the list on the right and press "Template from
+selected". Save the tab (Ctrl+S) after editing: the game reads objects.txt
+when you leave the Editor.
+
+Right: every object placed on every map, see objects.placed.
+
+== template | Object template
+see: tab.objects
+A reusable map object: id, type and the keys every copy shares. Copies are [type] objects on a map with template=<id>.
+
+== objects.placed | Placed objects on every map
+see: tab.objects, maps.objects
+
+The right side of the Objects tab lists every object on every map of the
+campaign. Narrow it down with the type, "only copies of" the template selected
+on the left, and "find": words that must all appear in the map id, the type or
+any key=value (for example: iron_ore, or goblin_cave chest, or dialogue=guard).
+
+Click a line to see its keys (dimmed ones come from its template or resource
+type); double-click or "Open on map" shows it in the Maps tab.
+
+Changing everything listed at once (each changed map is saved; a confirmation
+says how many objects on how many maps first):
+- Set key: give every listed object key=value (on a template copy it becomes that copy's own value).
+- Remove key: take the key off them (template copies then use the template's value again).
+- Link to template: the listed objects of the template's type become copies of the template selected on the left. Keys that already match the template are dropped; different values stay as each copy's own.
+- Unlink: copy the template's values into each listed copy and remove template=.
+- Template from selected: a new template from the selected object, linked to it.
+
+If the map open in the Maps tab has unsaved changes, it is changed but left
+unsaved: save it there. Rescan re-reads the maps.
+
+== tab.resources | Resources tab (gather node types)
+see: obj.gather, obj.gather.node, resource, tab.recipes
+
+Resource node types (resources.txt): what an ore vein, herb patch or scrap heap
+gives and how it looks. A gather node on a map names its type with node=<id>
+and takes every key it does not set itself from here, so changing a type here
+changes every node of that type on every map (and in generated dungeons).
+
+The panel on the right shows the node at 4x on its tile, ready and picked
+clean, what it gives, and every node placed on the maps (with the keys a node
+sets itself, which win over the type). Click one to open it. Nodes that only
+match by item (no node=) can be linked with the button at the bottom.
+
+Fixing a node's look: set sprite= (pick... opens the tile sheet) to give it its
+own picture, and color= / spent= for its colours.
+
+== resource | Resource node type
+see: tab.resources
+One kind of gather node: what it gives, the tool it needs, how long it takes to grow back, and how it looks.
+
+== resource.id | Resource type id
+see: tab.resources, obj.gather.node
+The id gather nodes use in node= (lowercase, no spaces).
+  id=iron_ore
+
+== resource.name | Resource type name
+see: tab.resources
+What the log calls the node ("Iron vein: picked clean. Give it 2 more days."). Empty: the item's name.
+  name=Iron vein
+
+== resource.item | Resource item
+see: tab.resources, item.id
+The item one harvest gives.
+  item=iron_ore
+
+== resource.count | Resource amount
+see: tab.resources
+How many items one harvest gives (lo-hi).
+  count=1-3
+
+== resource.tool | Resource tool
+see: tab.resources
+An item the party must carry or wear to harvest (not used up). Empty: bare hands.
+  tool=pickaxe
+
+== resource.respawn | Resource respawn days
+see: tab.resources
+In-game days until the node can be harvested again. Default 3.
+  respawn=5
+
+== resource.sprite | Resource picture
+see: tab.resources
+The node's own picture (a tile, col,row), drawn in color= instead of the map tile under it. Empty: the map tile under the node (its prop, else its ground) is drawn again in the node's colour, the way older versions drew every node.
+  sprite=6,46
+
+== resource.color | Resource colour
+see: tab.resources
+The colour (r,g,b) the node is drawn in while it can be harvested. Empty: guessed from the item (ore copper, herbs green, crystals and tech cyan, the rest gold).
+  color=235,140,60
+
+== resource.spent | Picked-clean colour
+see: tab.resources
+The colour once the node has been picked clean. Default 85,85,85.
+  spent=85,85,85
+
+== resource.spentsprite | Picked-clean picture
+see: tab.resources
+A different picture once picked clean (a stump, an empty vein). Empty: the same picture.
+
+== resource.kind | Tile under generated nodes
+see: tab.resources, tab.dungeons
+The tile kind a generated dungeon paints under the node (rocks, mushroom2, crystal, box, terminal2...). Hand-made maps use whatever is painted there.
+  kind=rocks
+
+== resource.styles | Where generated dungeons put it
+see: tab.resources, tab.dungeons
+The generated dungeon styles that scatter this node: style[:weight[:count]], comma separated. weight = how many lots it gets in the draw (default 1), count overrides count= in that style. The order of the types in the list matters for the draw. Empty: never generated.
+  styles=mine:2:2-4,cave

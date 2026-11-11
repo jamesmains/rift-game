@@ -136,6 +136,5 @@ flag=barrow_wing_chest
 [gather]
 x=8
 y=11
-item=bone_dust
-count=1-2
+node=bone_dust
 respawn=4

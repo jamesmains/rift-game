@@ -197,24 +197,17 @@ y=32
 [gather]
 x=29
 y=3
-item=ember_cap
-count=1-2
-respawn=3
+node=ember_cap
 
 [gather]
 x=30
 y=25
-item=ember_cap
-count=1-2
-respawn=3
+node=ember_cap
 
 [gather]
 x=21
 y=15
-item=iron_ore
-count=1-3
-tool=pickaxe
-respawn=5
+node=iron_ore
 
 [obstacle]
 x=5

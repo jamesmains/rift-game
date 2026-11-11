@@ -31,7 +31,9 @@ static void mapToEd(const Map& m, EdMap& e, const std::string& id, bool skipExit
     for (auto& s : m.signs) { EdObj o; o.type = "sign"; xy(o, s.x, s.y); o.set("text", s.text); e.objs.push_back(o); }
     for (auto& d : m.doors) { EdObj o; o.type = "door"; xy(o, d.x, d.y); if (!d.key.empty()) o.set("key", d.key); if (!d.flag.empty()) o.set("flag", d.flag); if (d.openTile.c == TL::DOOR_METAL.c && d.openTile.r == TL::DOOR_METAL.r) o.set("metal", "1"); e.objs.push_back(o); }
     for (auto& s : m.savepoints) { EdObj o; o.type = "savepoint"; xy(o, s.x, s.y); e.objs.push_back(o); }
-    for (auto& g : m.gathers) { EdObj o; o.type = "gather"; xy(o, g.x, g.y); o.set("item", g.item); o.set("count", fmt("%d-%d", g.lo, g.hi)); if (!g.tool.empty()) o.set("tool", g.tool); o.set("respawn", std::to_string(g.respawn)); e.objs.push_back(o); }
+    for (auto& g : m.gathers) { EdObj o; o.type = "gather"; xy(o, g.x, g.y); const ResourceDef* r = g.node.empty() ? nullptr : resourceFor(g.node, "");
+        if (r) { o.set("node", r->id); if (r->lo != g.lo || r->hi != g.hi) o.set("count", fmt("%d-%d", g.lo, g.hi)); e.objs.push_back(o); continue; }   // 1.1.0: linked to its resource type
+        o.set("item", g.item); o.set("count", fmt("%d-%d", g.lo, g.hi)); if (!g.tool.empty()) o.set("tool", g.tool); o.set("respawn", std::to_string(g.respawn)); e.objs.push_back(o); }
 }
 bool Editor::bakeDungeon(const EdSection& sec, std::string& err) {
     std::string id = sec.get("id"); if (id.empty()) { err = "dungeon has no id"; return false; }

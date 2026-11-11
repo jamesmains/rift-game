@@ -38,8 +38,10 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At 1.0.13 boot_and_setup, tutorial, sprites_1010,
-  side_quests_1_0, story_choices, fight_to_victory and main_quest (to the ending) pass; `desktop_persist` expects
+  (outdir must exist; see `src\tests\README.md`). At 1.1.0 boot_and_setup, tutorial, sprites_1010,
+  side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min) and the editor_* tests pass.
+  Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
+  headless exe reads `assets\` from its working folder). `desktop_persist` expects
   an `editor` icon at 0,0 (already so in the 1.0.10 source).
 - Don't pipe build.ps1 into `Select-Object -First N`: it stops reading and the build hangs. Redirect to a file.
 
@@ -81,6 +83,23 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   committed, so keep each file's line endings when editing with scripts.
 - Known data warnings (Editor Check all, older than 1.0.13): ashfall trigger at 40,25 and marsh chest at 32,34 stand
   on blocked tiles.
+
+## Object templates and resource nodes (1.1.0)
+- `objects.txt` ([template] id, type, keys) and `resources.txt` ([resource] id, item, count, tool, respawn, name,
+  sprite, color, spent, spentsprite, kind, styles) are read by `Game::loadSystems` into globals in world.cpp
+  (`setObjectTemplates`, `setResourceDefs`); `loadMapText` applies them: a map object with `template=` gets the
+  template's type + keys it lacks; a `[gather]` gets keys it lacks from `node=` (else the first type with its item).
+  Generated dungeons scatter resource types by `styles=style[:weight[:count]]` (file order = the old built-in draw, so
+  generated dungeons came out the same); the built-in table is only a fallback when no type has styles.
+- A node with `sprite=` replaces its cell's picture in `Game::drawWorld` (skips ground + prop); without one the cell's
+  prop/ground is recoloured as before. All base-game `[gather]` objects were migrated to `node=` at 1.1.0 (only keys
+  equal to the type's were dropped). Gullwatch is standalone (no resources.txt) and keeps the old behaviour.
+- Editor: `editor_objects.cpp` (Objects tab 22 = gens[15], Resources tab 23 = gens[16]); `Editor::resolvedObj` mirrors
+  the game's resolution; `mapScan` holds `objs` (resolved, used by the indexes/checks) and `raw` (as written).
+  Bulk edits (`bulkObjects`) save every changed map; the open map is only saved if it had no unsaved changes.
+- 1.1.0 fix: the map object panel's rect is computed before the map handles the mouse (`overPanel`), so clicks in it
+  no longer reach the map. The tab bar now wraps into as many rows as needed (`gEdTop` = 28/50/72; 24 tabs fit in two).
+- Tests: `tests/editor_objects_1_1.txt` (panel click, both tabs), `tests/resource_nodes_1_1.txt` (harvest a linked node).
 
 ## Where things live
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,

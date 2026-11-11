@@ -177,40 +177,27 @@ y=11
 [gather]
 x=33
 y=16
-item=iron_ore
-count=1-3
-tool=pickaxe
-respawn=5
+node=iron_ore
 
 [gather]
 x=13
 y=17
-item=iron_ore
-count=1-3
-tool=pickaxe
-respawn=5
+node=iron_ore
 
 [gather]
 x=21
 y=5
-item=iron_ore
-count=1-3
-tool=pickaxe
-respawn=5
+node=iron_ore
 
 [gather]
 x=29
 y=6
-item=ember_cap
-count=1-2
-respawn=3
+node=ember_cap
 
 [gather]
 x=7
 y=24
-item=ember_cap
-count=1-2
-respawn=3
+node=ember_cap
 
 [obstacle]
 x=37

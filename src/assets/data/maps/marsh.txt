@@ -177,30 +177,22 @@ y=3
 [gather]
 x=36
 y=22
-item=herb_moon
-count=1-2
-respawn=3
+node=herb_moon
 
 [gather]
 x=32
 y=7
-item=herb_moon
-count=1-2
-respawn=3
+node=herb_moon
 
 [gather]
 x=39
 y=15
-item=slime_gel
-count=1-2
-respawn=3
+node=slime_gel
 
 [gather]
 x=21
 y=31
-item=slime_gel
-count=1-2
-respawn=3
+node=slime_gel
 
 [change]
 x=30

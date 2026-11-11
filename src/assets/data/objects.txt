@@ -1,0 +1,9 @@
+# Object templates: reusable map objects. Edit them in the Editor's Objects tab.
+# A placed object with template=<id> gets the template's type and every key it doesn't set itself, so changing a
+# template changes every copy on every map. Keys set on the placed object (x, y, an npc's id, a chest's flag...) win.
+#   [template]
+#   id=town_guard
+#   type=npc
+#   name=Town guard
+#   sprite=105,2
+#   dialogue=guard

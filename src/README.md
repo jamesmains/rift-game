@@ -28,6 +28,20 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.0 object templates and resource nodes
+
+* **Editor fix**: clicking in a map object's panel (the box on the right of the map view) now edits the panel. It used
+  to act on the map underneath, placing or selecting objects there instead.
+* **Objects tab**: object templates (`objects.txt`). A placed object with `template=<id>` takes the template's type and
+  every key it doesn't set itself, so changing the template changes every copy on every map; keys on a copy are its
+  own. Place copies from the Maps tab ("template:" under the object types), or turn any object into a template
+  ("make template"). The tab also lists every object on every map (filter by type, template or words) and changes
+  them all at once: set or remove a key, link them to a template, unlink them.
+* **Resources tab**: resource node types (`resources.txt`): what a gather node gives, the tool, days to grow back, its
+  name, its own picture (`sprite=`) and colours, and where generated dungeons scatter it (`styles=`). Gather nodes name
+  their type with `node=` and take the rest from it; the base game's nodes were linked to their types. A preview shows
+  the node ready and picked clean, and every node placed on the maps.
+
 ## 1.0.16 bridges under your feet
 
 * **Standing on the bridge**: bridges are drawn a little lower like the trails, so on an east-west bridge your feet

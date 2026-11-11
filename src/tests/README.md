@@ -87,3 +87,7 @@ New expect keys: `music`, `ambient`. Pacing and frame-time tools: `tools/pacing.
 Tutorial campaign played through). New: `campaign ID` (the next newgame plays it); expect keys `weather`, `hint` (the Training
 panel's text), `fav:N` (the hero's favorite slot N); op `lacks` (the opposite of `contains`).
 `setting font 0/1` and `setting ambient N` set the new options.
+
+1.1.0: `editor_objects_1_1` (clicks in the map object panel stay in the panel; the Objects tab 22 and Resources tab 23),
+`resource_nodes_1_1` (harvesting a gather node that takes item, tool and amount from its resource type). Editor tabs
+18-21 are Campaign, Flags, Bounties, Factions; 22 Objects, 23 Resources.

@@ -8,8 +8,8 @@
 namespace fs = std::filesystem;
 using namespace ED;
 
-static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions"};
-static const int NTABS = 22;
+static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources"};
+static const int NTABS = 24;
 int gEdTop = 28;                      // tab bar height: 28 for one row of tabs, 50 when they need two rows
 #define TOP gEdTop
 static const int BOTTOM = 18;
@@ -170,6 +170,8 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("achievements.txt", "Achievements", "achievement", "id", {"id", "name", "desc", "cond", "tile", "hidden"});                   // gens[12]
     mk("bounties.txt", "Notice boards & bounties", "board", "id", {"id", "name", "map", "location", "offers", "kinds", "kill", "creatures", "fetch", "deliver", "reward"});   // gens[13]
     mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text"});                                          // gens[14]
+    mk("objects.txt", "Object templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
+    mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles"});   // gens[16] (1.1.0)
     gens[13].altSection = "bounty"; gens[13].altTemplateKeys = {"id", "board", "kind", "target", "need", "where", "reward", "xp", "title", "text", "require", "repeat"};
     loadGuide();
     return true;
@@ -321,13 +323,13 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     if (toastT > 0) toastT -= dt;
     // tabs
     // tabs flow into a second row when they do not fit beside the Exit button
-    { int total = 4; for (int i = 0; i < NTABS; i++) total += font->width(TABS[i]) + 16; gEdTop = total > W - 250 ? 50 : 28; }
+    { int rows = 1, fx = 4; for (int i = 0; i < NTABS; i++) { int tw = font->width(TABS[i]) + 8; if (fx + tw > W - 250) { rows++; fx = 4; } fx += tw + 2; } gEdTop = 6 + 22 * rows; }   // 28 / 50 / 72
     cv.fillRect(0, 0, W, TOP, PANEL);
     int tx = 4, trow = 0;
     for (int i = 0; i < NTABS; i++) {
-        int tw = font->width(TABS[i]) + 14;
-        if (tx + tw > W - 250 && trow == 0) { trow = 1; tx = 4; }
-        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty);
+        int tw = font->width(TABS[i]) + 8;
+        if (tx + tw > W - 250) { trow++; tx = 4; }
+        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty);
         if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (dirty ? "*" : ""), true, tab == i)) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; }
         tx += tw + 2;
     }
@@ -347,17 +349,17 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         }
         if (ui.hover(W - 240, 4, 164, 20)) ui.tip("Each campaign is a separate game in assets/campaigns/<id>/ with its own maps, items, monsters... and its own desktop icon. The Campaign tab sets its name and where new games start.");
     }
-    if (ui.button(W - 240, TOP == 50 ? 26 : 4, TOP == 50 ? 164 : 60, 20, TOP == 50 ? "? Guide  (F1)" : "? Guide", true, false, ACCENT)) openGuide(tabTopic());
-    if (ui.hover(W - 240, TOP == 50 ? 26 : 4, 164, 20)) ui.tip("How everything in the Editor works. The small ? buttons open it on the matching page.");
+    if (ui.button(W - 240, TOP >= 50 ? 26 : 4, TOP >= 50 ? 164 : 60, 20, TOP >= 50 ? "? Guide  (F1)" : "? Guide", true, false, ACCENT)) openGuide(tabTopic());
+    if (ui.hover(W - 240, TOP >= 50 ? 26 : 4, 164, 20)) ui.tip("How everything in the Editor works. The small ? buttons open it on the matching page.");
     if (in.pressed[K_F1] && pop == P_NONE) openGuide(tabTopic());
-    if (ui.button(W - 70, TOP == 50 ? 26 : 4, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
-    if (ui.hover(W - 70, TOP == 50 ? 26 : 4, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables...");
+    if (ui.button(W - 70, TOP >= 50 ? 26 : 4, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
+    if (ui.hover(W - 70, TOP >= 50 ? 26 : 4, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables...");
     if (ui.button(W - 70, 4, 64, 20, "Exit", true, false, DANGER) || (!ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE] && !mapPanning)) {
         bool any = mapDirty || kindsDirty || te.dirty || sndDirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
         if (any) openConfirm("There are unsaved changes. Exit anyway? (Save each tab with its Save button.)", [this]() { wantsClose = true; });
         else wantsClose = true;
     }
-    if (tab != lastTab) { if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20) flagIndexDirty = true; lastTab = tab; }
+    if (tab != lastTab) { if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23) flagIndexDirty = true; if (tab == 22 || tab == 23) poNeedScan = true; lastTab = tab; }
     switch (tab) {
         case 0: drawMaps(in); break;
         case 8: { int uw = 330; drawGeneric(gens[5], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawEncounterUsage(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
@@ -370,6 +372,8 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         case 19: drawFlags(in); break;
         case 21: { int uw = 330; drawGeneric(gens[14], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawFactionInfo(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
         case 20: { int uw = 330; drawGeneric(gens[13], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawBoardInfo(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
+        case 22: drawObjectsTab(in); break;
+        case 23: drawResourcesTab(in); break;
         case 14: case 15: case 16: case 17: drawGeneric(gens[tab - 5], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
         default: drawGeneric(gens[tab - 3], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
     }
@@ -383,8 +387,8 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 }
 
 // ---------------- generic key/value editor ----------------
-static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite"; }
-static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg"; }
+static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite"; }
+static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent"; }
 
 void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputState& in) {
     genUndo(g, in);
@@ -437,7 +441,8 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
         int ry = fy + row * rowH; row++;
         if (ry + 16 > fieldsBottom || ry < y + 18) { ui.idCounter += 3; continue; }
         ui.label(fx + 8, ry + 2, kv.first);
-        helpBtn(fx + keyW - 17, ry + 1, s.name + "." + kv.first, s.name);
+        if (s.name == "template") helpBtn(fx + keyW - 17, ry + 1, "obj." + s.get("type") + "." + kv.first, kv.first == "type" || kv.first == "id" ? "tab.objects" : "obj." + s.get("type"));
+        else helpBtn(fx + keyW - 17, ry + 1, s.name + "." + kv.first, s.name);
         fieldWidgets(g, s, kv, fx + keyW, ry, fw - keyW - 30);
         if (ui.button(fx + fw - 24, ry, 18, 16, "x", true, false, DANGER)) { s.kv.erase(s.kv.begin() + i); g.dirty = true; ui.blur(); break; }
     }
@@ -452,7 +457,9 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     if (ui.button(fx + 214, ay, 40, 16, "Add", !g.newKey.empty())) { s.kv.push_back({trim(g.newKey), ""}); g.newKey.clear(); g.dirty = true; }
     // template keys quick-add
     int qx = fx + 262;
-    for (auto& k : g.templateKeys) { if (s.has(k)) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
+    std::vector<std::string> quick = g.templateKeys;   // templates: the keys their object type reads
+    if (s.name == "template") for (auto& k : edObjKeys(s.get("type"))) if (std::find(quick.begin(), quick.end(), k) == quick.end()) quick.push_back(k);
+    for (auto& k : quick) { if (s.has(k)) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
 }
 
 
@@ -495,17 +502,18 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         return;
     }
     // --- lo-hi ranges ---
-    if (k == "dmg" || k == "gold") {
+    if (k == "dmg" || k == "gold" || (k == "count" && (s.name == "resource" || s.name == "template"))) {
         int lo = 0, hi = 0; parseRange(v, lo, hi); bool ch = false;
         if (ui.intField(x, y, 70, lo, 0, 9999)) ch = true; ui.text(x + 76, y + 2, "to", DIM); if (ui.intField(x + 94, y, 70, hi, 0, 9999)) ch = true;
-        if (ch) { if (hi < lo) hi = lo; v = fmt("%d-%d", lo, hi); g.dirty = true; }
+        if (ch) { if (hi < lo) hi = lo; v = (k == "gold" && s.name == "template") ? std::to_string(lo) : fmt("%d-%d", lo, hi); g.dirty = true; }
         return;
     }
     // --- colours ---
     if (isColorKey(k)) {
         Color8 c = v.empty() ? C::White : parseColor(v); int r = c.r, gg = c.g, b = c.b; bool ch = false;
-        if (ui.intField(x, y, 70, r, 0, 255)) ch = true; if (ui.intField(x + 76, y, 70, gg, 0, 255)) ch = true; if (ui.intField(x + 152, y, 70, b, 0, 255)) ch = true;
-        ui.cv->fillRect(x + 230, y, 40, 16, RGB((uint8_t)r, (uint8_t)gg, (uint8_t)b)); ui.cv->rect(x + 230, y, 40, 16, BORDER);
+        int cw = clampi((w - 34) / 3 - 6, 46, 70), sw = clampi(w - 3 * (cw + 6) - 4, 20, 40);   // narrower in the side-by-side tabs
+        if (ui.intField(x, y, cw, r, 0, 255)) ch = true; if (ui.intField(x + cw + 6, y, cw, gg, 0, 255)) ch = true; if (ui.intField(x + 2 * (cw + 6), y, cw, b, 0, 255)) ch = true;
+        ui.cv->fillRect(x + 3 * (cw + 6) + 2, y, sw, 16, RGB((uint8_t)r, (uint8_t)gg, (uint8_t)b)); ui.cv->rect(x + 3 * (cw + 6) + 2, y, sw, 16, BORDER);
         if (ch) { v = fmt("%d,%d,%d", r, gg, b); g.dirty = true; }
         return;
     }
@@ -541,6 +549,28 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     auto creatureIds = [&]() { std::vector<std::string> o; for (auto& it : gd->creatures) o.push_back(it.first); return o; };
     auto spellIds = [&]() { std::vector<std::string> o; o.push_back(""); for (auto& it : gd->spells) o.push_back(it.first); return o; };
     auto mapIds = [&]() { std::vector<std::string> o{"overworld"}; for (auto& m : mapFiles) o.push_back(m); for (auto& d : gens[7].secs) o.push_back(d.get("id")); return o; };
+    // --- object templates (objects.txt) and resource nodes (resources.txt), 1.1.0 ---
+    if (s.name == "template" || s.name == "resource") {
+        if (k == "type" && s.name == "template") { if (ui.choice(x, y, 140, v.empty() ? "(pick a type)" : v)) { auto opts = edObjTypes(); int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("object type", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } return; }
+        if (k == "item" || k == "tool" || k == "key") { singlePick("item", itemIds()); return; }
+        if (k == "dialogue") { std::vector<std::string> o{""}; for (auto& d : dlgFiles) o.push_back(d); singlePick("dialogue", o); return; }
+        if (k == "shop") { std::vector<std::string> o{""}; for (auto& sh : gens[4].secs) o.push_back(sh.get("id")); singlePick("shop", o); return; }
+        if (k == "node") { std::vector<std::string> o; for (auto& rs : gens[16].secs) o.push_back(rs.get("id")); singlePick("resource node type", o); return; }
+        if (k == "kind" || k == "clear") { std::vector<std::string> o{""}; for (auto& kk : allTileKinds()) o.push_back(kk.name); singlePick("tile kind", o); return; }
+        if (k == "styles") {
+            if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true;
+            if (ui.hover(x, y, w - 60, 16)) ui.tip("style[:weight[:count]], e.g. mine:2:2-4,cave - weight = lots in the draw, count overrides count= there");
+            if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> opts{"mine", "cave", "crypt", "castle", "tech", "ship", "sewer"}; openListPicker("generated dungeon style that scatters this node", opts, 0, [&kvr, opts, &g](int i) { kvr.second = trim(kvr.second).empty() ? opts[i] : trim(kvr.second) + "," + opts[i]; g.dirty = true; }); }
+            return;
+        }
+        if (k == "flag") { if (ui.textField(x, y, w - 60, v, 80)) g.dirty = true; flagPicker(x + w - 56, y, 52, false, [&kvr, &g](const std::string& f) { kvr.second = f; g.dirty = true; }); return; }
+        if (k == "show" || k == "hide" || k == "require" || k == "openif" || k == "moveif" || k == "if") {
+            if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true;
+            if (ui.hover(x, y, w - 60, 16) && !v.empty()) ui.tip("Reads: " + condEnglish(v));
+            flagPicker(x + w - 56, y, 52, true, [&kvr, &g](const std::string& f) { kvr.second = trim(kvr.second).empty() ? f : trim(kvr.second) + "&" + f; g.dirty = true; });
+            return;
+        }
+    }
     if (k == "weapon" || k == "armor" || k == "ammo" || (k == "item" && s.name == "shop") || k == "locked" || k == "key") { singlePick("item", itemIds()); return; }
     if (k == "boss") { singlePick("creature", creatureIds()); return; }
     if (k == "summon" && s.name == "spell") { std::vector<std::string> o2{""}; for (auto& c : creatureIds()) o2.push_back(c); singlePick("creature", o2); return; }
@@ -768,6 +798,21 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
     else if (t == "gather") { kv.push_back({"item", "herb_moon"}); kv.push_back({"count", "1-2"}); kv.push_back({"tool", ""}); kv.push_back({"respawn", "3"}); }
     return kv;
 }
+const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
+std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
+    if (t == "npc") return {"name", "sprite", "color", "dialogue", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
+    if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link"};
+    if (t == "chest") return {"items", "gold", "locked", "flag"};
+    if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
+    if (t == "trigger") return {"w", "h", "script", "flag", "once", "require"};
+    if (t == "sign") return {"text"};
+    if (t == "door") return {"key", "flag", "openif", "require", "locked", "metal"};
+    if (t == "obstacle") return {"w", "h", "name", "kind", "clear", "needs", "flag", "text", "onclear"};
+    if (t == "lever") return {"name", "flag", "toggle", "text"};
+    if (t == "change") return {"w", "h", "kind", "if"};
+    if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent"};
+    return {};
+}
 
 void Editor::drawMaps(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;
@@ -785,7 +830,11 @@ void Editor::drawMaps(InputState& in) {
     if (ui.button(x + 152, by, 44, 18, "Check", mapLoaded)) {
         std::vector<std::string> problems;
         auto walk = [&](int cx, int cy) { if (cx < 0 || cy < 0 || cx >= em.w || cy >= em.h) return false; const TileKind* k = tileKind(trim(split(em.at(cx, cy), '|')[0])); return k && k->walkable; };
-        for (auto& o : em.objs) { int ox = o.geti("x"), oy = o.geti("y"); if (o.type != "door" && !walk(ox, oy)) problems.push_back(o.type + " " + o.get("id") + o.get("name") + fmt(" at %d,%d is on a blocked tile", ox, oy)); if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) problems.push_back("npc " + o.get("id") + " references missing dialogue '" + o.get("dialogue") + "'"); if (o.type == "exit") { std::string to = o.get("to"); bool ok = to == "overworld" || std::find(mapFiles.begin(), mapFiles.end(), to) != mapFiles.end(); for (auto& g : gens[7].secs) if (g.get("id") == to) ok = true; if (!ok) problems.push_back(fmt("exit at %d,%d leads to unknown map '%s'", ox, oy, to.c_str())); } if (o.type == "enemy") for (auto& c : split(o.get("group"), ',')) if (!trim(c).empty() && !gd->creature(trim(c))) problems.push_back("enemy group uses unknown creature '" + trim(c) + "'"); if (o.type == "chest") for (auto& it : split(o.get("items"), ',')) { std::string id = trim(split(it, ':')[0]); if (!id.empty() && !gd->item(id)) problems.push_back("chest has unknown item '" + id + "'"); } }
+        for (auto& oRaw : em.objs) { EdObj o = resolvedObj(oRaw); int ox = o.geti("x"), oy = o.geti("y");   // as the game sees it (template and resource keys filled in)
+            if (!oRaw.get("template").empty() && !templateSec(oRaw.get("template"))) problems.push_back(fmt("object at %d,%d uses unknown template '%s'", ox, oy, oRaw.get("template").c_str()));
+            if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) problems.push_back(fmt("gather node at %d,%d uses unknown resource type '%s'", ox, oy, o.get("node").c_str()));
+            if (o.type == "gather" && !gd->item(o.get("item"))) problems.push_back(fmt("gather node at %d,%d gives unknown item '%s'", ox, oy, o.get("item").c_str()));
+            if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !walk(ox, oy)) problems.push_back(o.type + " " + o.get("id") + o.get("name") + fmt(" at %d,%d is on a blocked tile", ox, oy)); if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) problems.push_back("npc " + o.get("id") + " references missing dialogue '" + o.get("dialogue") + "'"); if (o.type == "exit") { std::string to = o.get("to"); bool ok = to == "overworld" || std::find(mapFiles.begin(), mapFiles.end(), to) != mapFiles.end(); for (auto& g : gens[7].secs) if (g.get("id") == to) ok = true; if (!ok) problems.push_back(fmt("exit at %d,%d leads to unknown map '%s'", ox, oy, to.c_str())); } if (o.type == "enemy") for (auto& c : split(o.get("group"), ',')) if (!trim(c).empty() && !gd->creature(trim(c))) problems.push_back("enemy group uses unknown creature '" + trim(c) + "'"); if (o.type == "chest") for (auto& it : split(o.get("items"), ',')) { std::string id = trim(split(it, ':')[0]); if (!id.empty() && !gd->item(id)) problems.push_back("chest has unknown item '" + id + "'"); } }
         auto sp = split(em.hget("spawn"), ','); if (sp.size() == 2 && !walk(atoi(sp[0].c_str()), atoi(sp[1].c_str()))) problems.push_back("spawn point is on a blocked tile");
         for (auto& c : em.cells) if (!tileKind(trim(split(c, '|')[0]))) { problems.push_back("map uses unknown tile kind '" + c + "'"); break; }
         { int stx, sty; if (campaignStart(em.id, stx, sty) && !walk(stx, sty)) problems.insert(problems.begin(), fmt("the new-game START (%d,%d) is on a blocked tile - press B over a floor tile", stx, sty)); }
@@ -814,8 +863,20 @@ void Editor::drawMaps(InputState& in) {
     if (ui.button(x + 148, ty, 48, 18, "Clear", selX0 >= 0)) { in.press(K_DELETE); }
     ty += 24;
     if (mapTool == 3) {
-        ui.label(x + 4, ty, "place:"); helpBtn(x + 44, ty - 1, "obj." + std::string(OBJ_TYPES[objType]), "maps.objects"); for (int i = 0; i < NOBJ; i++) { int bw = 46, bx = x + 4 + (i % 4) * 48, byy = ty + 14 + (i / 4) * 20; if (ui.button(bx, byy, bw, 18, OBJ_TYPES[i], true, objType == i)) objType = i; }
+        ui.label(x + 4, ty, "place:"); helpBtn(x + 44, ty - 1, "obj." + std::string(OBJ_TYPES[objType]), "maps.objects"); for (int i = 0; i < NOBJ; i++) { int bw = 46, bx = x + 4 + (i % 4) * 48, byy = ty + 14 + (i / 4) * 20; if (ui.button(bx, byy, bw, 18, OBJ_TYPES[i], true, objType == i && placeTmpl.empty())) { objType = i; placeTmpl.clear(); } }
         ty += 76;
+        {   // 1.1.0: place copies of a template from the Objects tab
+            const EdSection* pt = placeTmpl.empty() ? nullptr : templateSec(placeTmpl); if (!pt) placeTmpl.clear();
+            ui.label(x + 4, ty + 2, "template:");
+            if (ui.choice(x + 62, ty, lw - 66, !pt ? (gens[15].secs.empty() ? "(none - Objects tab)" : "(none)") : placeTmpl + " (" + pt->get("type") + ")")) {
+                std::vector<std::string> ids{""}, labels{"(none) - place the plain type above"};
+                for (auto& s : gens[15].secs) { ids.push_back(s.get("id")); labels.push_back(s.get("id") + "  (" + s.get("type") + ")" + (s.get("name").empty() ? "" : "  " + s.get("name"))); }
+                int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == placeTmpl) cur = (int)i;
+                openListPicker("Place copies of a template (make them in the Objects tab)", labels, cur, [this, ids](int i) { placeTmpl = ids[i]; });
+            }
+            if (ui.hover(x + 62, ty, lw - 66, 16)) ui.tip("Copies follow their template (Objects tab); a key set on one copy is that copy's own");
+            ty += 20;
+        }
     } else {
         ui.label(x + 4, ty, "brush:"); ui.text(x + 44, ty, brush, ACCENT2); if (ui.button(x + lw - 50, ty - 2, 44, 14, "edit")) jumpToKind(brush); ty += 14;
         ui.textField(x + 4, ty, lw - 8, paletteFilter, 30); ty += 20;
@@ -856,7 +917,12 @@ void Editor::drawMaps(InputState& in) {
     int ax = vx + 2, ay = vy + 44, aw = vw - 4, ah = vh - 46;
     int cell = 12 * zoom;
     ui.cv->fillRect(ax, ay, aw, ah, RGB(14, 14, 18));
-    bool overView = ui.hover(ax, ay, aw, ah);
+    // 1.1.0 fix: the object panel (drawn last, over the view) owns the mouse in its area - clicks there used to reach the map
+    bool panelOn = objSel >= 0 && objSel < (int)em.objs.size() && showObjs;
+    int pw = 300, px = vx + vw - pw - 4, py = ay + 4, ph = 0;
+    if (panelOn) { std::string from; int ni = (int)inheritedKeys(em.objs[objSel], from).size(); ph = std::min(ah - 8, 22 + ((int)em.objs[objSel].kv.size() + ni) * 20 + (ni ? 16 : 0) + 44); }   // same sum as the panel below
+    bool overPanel = panelOn && ui.hover(px, py, pw, ph);
+    bool overView = ui.hover(ax, ay, aw, ah) && !overPanel;
     bool typing = ui.typing();
     // scrolling: middle drag, wheel, keys
     if (overView && in.mousePressed[1]) { mapPanning = true; }
@@ -874,7 +940,7 @@ void Editor::drawMaps(InputState& in) {
     // objects
     int hoverObj = -1;
     if (showObjs) for (size_t i = 0; i < em.objs.size(); i++) {
-        auto& o = em.objs[i]; int ox = o.geti("x"), oy = o.geti("y"), ow = std::max(1, o.geti("w", 1)), oh = std::max(1, o.geti("h", 1));
+        EdObj o = resolvedObj(em.objs[i]); int ox = o.geti("x"), oy = o.geti("y"), ow = std::max(1, o.geti("w", 1)), oh = std::max(1, o.geti("h", 1));
         int sx = ax + ox * cell - viewX, sy = ay + oy * cell - viewY;
         Color8 col = C::White;
         if (o.type == "npc") { Tile t = parseTile(o.get("sprite")); if (!t.valid()) t = T(104, 0); if (!o.get("color").empty()) ts->drawRecolor(*ui.cv, t, sx, sy, zoom, parseColor(o.get("color"))); else ts->draw(*ui.cv, t, sx, sy, zoom); col = C::Cyan; }
@@ -891,7 +957,7 @@ void Editor::drawMaps(InputState& in) {
         else if (o.type == "obstacle") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(150, 110, 60, 110)); ts->draw(*ui.cv, TL::ROCKS, sx, sy, zoom); col = C::Orange; }
         else if (o.type == "lever") { ts->draw(*ui.cv, TL::LEVER, sx, sy, zoom); col = C::Yellow; }
         else if (o.type == "change") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(180, 80, 255, 70)); col = C::Purple; }
-        else if (o.type == "gather") { if (auto* it = gd->item(o.get("item"))) ts->draw(*ui.cv, it->tile, sx, sy, zoom); col = C::Green; }
+        else if (o.type == "gather") { if (ox >= 0 && oy >= 0 && ox < em.w && oy < em.h) drawGatherNode(o, sx, sy, zoom, em.at(ox, oy)); col = C::Green; }   // as the game draws it
         ui.cv->rect(sx, sy, ow * cell, oh * cell, (int)i == objSel ? C::White : Color8{col.r, col.g, col.b, 160});
         if (overView && in.mouseX >= sx && in.mouseY >= sy && in.mouseX < sx + ow * cell && in.mouseY < sy + oh * cell) hoverObj = (int)i;
     }
@@ -947,7 +1013,14 @@ void Editor::drawMaps(InputState& in) {
             if (in.mousePressed[0] && !ui.mouseUsed) {
                 ui.mouseUsed = true;
                 if (hoverObj >= 0) { mapPushUndo(); objSel = hoverObj; dragObj = true; ui.blur(); }
-                else { mapPushUndo(); EdObj o; o.type = OBJ_TYPES[objType]; o.kv = objTemplate(o.type, mtx, mty); em.objs.push_back(o); objSel = (int)em.objs.size() - 1; mapDirty = true; dragObj = true; ui.blur(); }
+                else { mapPushUndo(); EdObj o; const EdSection* pt = placeTmpl.empty() ? nullptr : templateSec(placeTmpl);
+                    if (pt) {   // a copy of a template: only what belongs to this spot is written on the map
+                        o.type = pt->get("type", "npc"); o.kv = {{"template", placeTmpl}, {"x", std::to_string(mtx)}, {"y", std::to_string(mty)}};
+                        if (o.type == "npc") { int n = 1; for (auto& eo : em.objs) if (eo.get("template") == placeTmpl) n++; o.kv.insert(o.kv.begin() + 1, {"id", placeTmpl + "_" + std::to_string(n)}); }
+                        if ((o.type == "chest" || o.type == "lever" || o.type == "obstacle") && !pt->has("flag")) o.set("flag", o.type + "_" + std::to_string(mtx) + "_" + std::to_string(mty));
+                    } else { o.type = OBJ_TYPES[objType]; o.kv = objTemplate(o.type, mtx, mty);
+                        if (o.type == "gather" && !gens[16].secs.empty()) o.kv = {{"x", std::to_string(mtx)}, {"y", std::to_string(mty)}, {"node", gens[16].secs[0].get("id")}}; }   // takes the rest from its resource type
+                    em.objs.push_back(o); objSel = (int)em.objs.size() - 1; mapDirty = true; dragObj = true; ui.blur(); }
             }
             if (dragObj && objSel >= 0) { if (!in.mouseDown[0]) dragObj = false; else { auto& o = em.objs[objSel]; if (o.geti("x") != mtx || o.geti("y") != mty) { o.set("x", std::to_string(mtx)); o.set("y", std::to_string(mty)); mapDirty = true; } } }
         } else if (mapTool == 4 && !ui.modal) {
@@ -1006,18 +1079,38 @@ void Editor::drawMaps(InputState& in) {
     else if (mapTool == 5) ui.text(ax + 4, ay + ah - 14, pasting ? "click to stamp (shift-click: keep stamping)  RMB/Esc: cancel" : "click object: edit properties  drag empty space: select  ^C copy  ^X cut  ^V paste  Del: clear  ^A all", Color8{255, 255, 255, 150});
     else ui.text(ax + 4, ay + ah - 14, "click empty: place  click object: select/drag  Delete key: remove selected  ctrl+Z undo", Color8{255, 255, 255, 150});
     if (objSel >= 0 && objSel < (int)em.objs.size() && !typing && in.pressed[K_DELETE] && pop == P_NONE && mapTool == 3) { mapPushUndo(); em.objs.erase(em.objs.begin() + objSel); objSel = -1; mapDirty = true; }
-    // object property panel
+    // object property panel (its area is kept free of map clicks above)
     if (objSel >= 0 && objSel < (int)em.objs.size() && showObjs) {
         EdObj& o = em.objs[objSel];
-        int pw = 300, px = vx + vw - pw - 4, py = ay + 4, ph = std::min(ah - 8, 40 + (int)o.kv.size() * 20 + 60);
-        ui.panel(px, py, pw, ph, RGB(38, 41, 50, 240)); ui.header(px, py, pw, "object: " + o.type); helpBtn(px + pw - 16, py + 1, "obj." + o.type, "maps.objects");
-        int ry = py + 22;
+        EdObj ro = resolvedObj(o);   // type and keys as the game sees them
+        std::string from; auto inh = inheritedKeys(o, from);
+        std::string tmplId = o.get("template"); const EdSection* tsec = tmplId.empty() ? nullptr : templateSec(tmplId);
+        int rows = (int)o.kv.size() + (int)inh.size();
+        int contentH = 22 + rows * 20 + (inh.empty() ? 0 : 16) + 22 + 22;
+        ph = std::min(ah - 8, contentH);
+        ui.panel(px, py, pw, ph, RGB(38, 41, 50, 240)); ui.header(px, py, pw, "object: " + ro.type + (tmplId.empty() ? "" : "  - copy of " + tmplId)); helpBtn(px + pw - 16, py + 1, "obj." + ro.type, "maps.objects");
+        int viewTop = py + 18, viewBot = py + ph - 1;
+        if (overPanel && in.wheel) objPanelScroll -= in.wheel * 20;
+        objPanelScroll = clampi(objPanelScroll, 0, std::max(0, contentH - ph));
+        auto shown = [&](int yy) { return yy >= viewTop && yy + 16 <= viewBot; };
+        ui.cv->setClip({px + 1, viewTop, pw - 2, viewBot - viewTop});
+        int ry = py + 22 - objPanelScroll;
+        bool gone = false;
         for (size_t i = 0; i < o.kv.size(); i++) {
-            const std::string& key = o.kv[i].first;
-            helpBtn(px + 5, ry + 1, "obj." + o.type + "." + key, "obj." + o.type);
+            const std::string key = o.kv[i].first;
+            if (!shown(ry)) { ui.idCounter += 1; ry += 20; continue; }
+            if (key == "template") {   // the link to an Objects tab template
+                ui.label(px + 22, ry + 2, "template"); ui.text(px + 88, ry + 2, o.kv[i].second, tsec ? ACCENT2 : DANGER);
+                if (!tsec && ui.hover(px + 88, ry, 90, 16)) ui.tip("objects.txt has no template with this id");
+                if (ui.button(px + pw - 122, ry, 46, 16, "edit", tsec != nullptr)) { for (size_t t = 0; t < gens[15].secs.size(); t++) if (&gens[15].secs[t] == tsec) gens[15].sel = (int)t; gens[15].filter.clear(); gens[15].fieldScroll = 0; tab = 22; ui.blur(); }
+                if (ui.hover(px + pw - 122, ry, 46, 16)) ui.tip("Edit the template in the Objects tab: every copy on every map follows it");
+                if (ui.button(px + pw - 72, ry, 66, 16, "detach", tsec != nullptr)) { mapPushUndo(); o.type = tsec->get("type", o.type); for (auto& kv : tsec->kv) if (kv.first != "id" && kv.first != "type" && !o.has(kv.first)) o.kv.push_back(kv); o.erase("template"); mapDirty = true; ui.blur(); ui.idCounter += 1; break; }
+                if (ui.hover(px + pw - 72, ry, 66, 16)) ui.tip("Copy the template's values into this object and unlink it from the template");
+                ui.idCounter += 1; ry += 20; continue;
+            }
+            helpBtn(px + 5, ry + 1, "obj." + ro.type + "." + key, "obj." + ro.type);
             ui.label(px + 22, ry + 2, key);
             bool flagKey = key == "flag", condKey = key == "require" || key == "openif" || key == "show" || key == "hide" || key == "moveif" || key == "if";
-            if (key == "require" && o.type == "exit") condKey = true;
             int vw2 = pw - 116 - (isTileKey(key) ? 30 : 0) - (flagKey || condKey ? 30 : 0);
             if (ui.textField(px + 88, ry, vw2, o.kv[i].second, 300)) mapDirty = true;
             if (condKey && ui.hover(px + 88, ry, vw2, 16) && !o.kv[i].second.empty()) ui.tip("Reads: " + condEnglish(o.kv[i].second));
@@ -1026,16 +1119,43 @@ void Editor::drawMaps(InputState& in) {
             if (flagKey || condKey) { auto* kvp = &o.kv[i]; bool app = condKey;
                 flagPicker(px + 88 + vw2 + 4, ry, 26, app, [kvp, app, this](const std::string& f) { kvp->second = app && !trim(kvp->second).empty() ? trim(kvp->second) + "&" + f : f; mapDirty = true; }, "f"); }
             if (ui.button(px + pw - 22, ry, 16, 16, "x", true, false, DANGER)) { o.kv.erase(o.kv.begin() + i); mapDirty = true; ui.blur(); break; }
+            if (ui.hover(px + pw - 22, ry, 16, 16) && (tsec || ro.type == "gather")) ui.tip("Remove this key (a copy then takes it from its template / resource type again)");
             ry += 20;
         }
-        static std::string newk; ui.textField(px + 6, ry, 110, newk, 30);
-        if (ui.button(px + 120, ry, 40, 16, "Add", !newk.empty())) { o.set(trim(newk), ""); newk.clear(); mapDirty = true; }
-        if (ui.button(px + 166, ry, 60, 16, "Delete", true, false, DANGER)) { mapPushUndo(); em.objs.erase(em.objs.begin() + objSel); objSel = -1; mapDirty = true; }
+        if (!inh.empty()) {   // keys it takes from its template / resource type
+            if (shown(ry)) ui.text(px + 6, ry + 2, "from " + from + ":", DIM);
+            ry += 16;
+            for (auto& kv : inh) {
+                if (shown(ry)) {
+                    ui.label(px + 22, ry + 2, kv.first);
+                    std::string v = kv.second.empty() ? "(empty)" : kv.second; while (!v.empty() && font->width(v) > pw - 150) v.pop_back();
+                    ui.text(px + 88, ry + 2, v, DIM);
+                    if (ui.button(px + pw - 50, ry, 44, 16, "own")) { mapPushUndo(); o.set(kv.first, kv.second); mapDirty = true; }
+                    if (ui.hover(px + pw - 50, ry, 44, 16)) ui.tip("Give only this object its own " + kv.first + " (then edit it above)");
+                }
+                ry += 20;
+            }
+        }
+        static std::string newk;
+        if (shown(ry)) {
+            ui.textField(px + 6, ry, 110, newk, 30);
+            if (ui.button(px + 120, ry, 40, 16, "Add", !newk.empty())) { o.set(trim(newk), ""); newk.clear(); mapDirty = true; }
+            if (ui.button(px + 166, ry, 60, 16, "Delete", true, false, DANGER)) { mapPushUndo(); em.objs.erase(em.objs.begin() + objSel); objSel = -1; mapDirty = true; gone = true; }
+        } else ui.idCounter += 1;
         ry += 22;
-        if (o.type == "npc") { if (ui.button(px + 6, ry, 110, 16, "pick dialogue")) { openListPicker("Dialogue", dlgFiles, 0, [&o, this](int i) { o.set("dialogue", dlgFiles[i]); mapDirty = true; }); } }
-        if (o.type == "exit") { if (ui.button(px + 6, ry, 110, 16, "pick map")) { std::vector<std::string> ms = mapFiles; ms.insert(ms.begin(), "overworld"); for (auto& g : gens[7].secs) ms.push_back(g.get("id")); openListPicker("Target map", ms, 0, [&o, ms, this](int i) { o.set("to", ms[i]); mapDirty = true; }); } }
-        if (o.type == "enemy") { if (ui.button(px + 6, ry, 110, 16, "add creature")) { std::vector<std::string> cs; for (auto& c : gd->creatures) cs.push_back(c.first); openListPicker("Creature", cs, 0, [&o, cs, this](int i) { std::string g = o.get("group"); o.set("group", g.empty() ? cs[i] : g + "," + cs[i]); mapDirty = true; }); } }
-        if (o.type == "chest") { if (ui.button(px + 6, ry, 110, 16, "add item")) { std::vector<std::string> is; for (auto& c : gd->items) is.push_back(c.first); openListPicker("Item", is, 0, [&o, is, this](int i) { std::string g = o.get("items"); o.set("items", g.empty() ? is[i] + ":1" : g + "," + is[i] + ":1"); mapDirty = true; }); } }
+        if (!gone && shown(ry)) {
+            if (ro.type == "npc") { if (ui.button(px + 6, ry, 110, 16, "pick dialogue")) { openListPicker("Dialogue", dlgFiles, 0, [&o, this](int i) { o.set("dialogue", dlgFiles[i]); mapDirty = true; }); } }
+            if (ro.type == "exit") { if (ui.button(px + 6, ry, 110, 16, "pick map")) { std::vector<std::string> ms = mapFiles; ms.insert(ms.begin(), "overworld"); for (auto& g : gens[7].secs) ms.push_back(g.get("id")); openListPicker("Target map", ms, 0, [&o, ms, this](int i) { o.set("to", ms[i]); mapDirty = true; }); } }
+            if (ro.type == "enemy") { if (ui.button(px + 6, ry, 110, 16, "add creature")) { std::vector<std::string> cs; for (auto& c : gd->creatures) cs.push_back(c.first); openListPicker("Creature", cs, 0, [&o, cs, this](int i) { std::string g = o.get("group"); o.set("group", g.empty() ? cs[i] : g + "," + cs[i]); mapDirty = true; }); } }
+            if (ro.type == "chest") { if (ui.button(px + 6, ry, 110, 16, "add item")) { std::vector<std::string> is; for (auto& c : gd->items) is.push_back(c.first); openListPicker("Item", is, 0, [&o, is, this](int i) { std::string g = o.get("items"); o.set("items", g.empty() ? is[i] + ":1" : g + "," + is[i] + ":1"); mapDirty = true; }); } }
+            if (ro.type == "gather") { if (ui.button(px + 6, ry, 110, 16, "pick node type")) { std::vector<std::string> ids; int cur = 0; for (auto& s : gens[16].secs) { if (s.get("id") == ro.get("node")) cur = (int)ids.size(); ids.push_back(s.get("id")); }
+                if (ids.empty()) say("No resource node types yet - make them in the Resources tab.");
+                else openListPicker("Resource node type (Resources tab)", ids, cur, [&o, ids, this](int i) { mapPushUndo(); o.set("node", ids[i]); o.erase("item"); mapDirty = true; }); }
+                if (ui.hover(px + 6, ry, 110, 16)) ui.tip("What kind of node this is: it takes item, amount, tool, look... from the Resources tab"); }
+            if (tmplId.empty()) { if (ui.button(px + pw - 110, ry, 104, 16, "make template")) templateFromObject(o, em.id, objSel);
+                if (ui.hover(px + pw - 110, ry, 104, 16)) ui.tip("Turn this object into a template (Objects tab) and link it, so copies can share its values"); }
+        }
+        ui.cv->resetClip();
     }
 }
 
