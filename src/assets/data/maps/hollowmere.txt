@@ -8,11 +8,10 @@ bg=20,40,20
 [legend]
 . = floor_grass
 , = floor_dirt
-r = road
-T = tree|tree|tree2
+T = tree|tree|tree2|tree3
 t = tree2
 f = fence_wood
-F = flower|flower2|floor_grass
+F = flower|flower2|flower3|floor_grass
 # = wall_wood
 h = floor_wood
 D = door_wood
@@ -39,41 +38,51 @@ G = grave
 g = grave2
 a = altar
 e = fence
-Q = loc_house
+Y = path
+P = pine_t
+y = bush_t
+k = crate
+r = reeds
+R = boulder
+z = scarecrow
+v = sprouts|sprouts2|cabbage
+O = stump
++ = grave3
+L = lantern
 
 [rows]
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-TTT.........TTT........TTTT.........TTT.TTTT
-TT.....F.......T.......T..............TTT.TT
-T...#######....T.......T...#########....T..T
-T...#hhhhh#............T...#hhhhhhh#.......T
-T...#hKhhh#.......F....T...#hAAhhhh#.......T
-T...#hhhAC#............TT..#hhhhhBh#.......T
-T...#hhhhh#.F...........TT.#hhBhhhh#...F...T
-T...##WDW##..............T.#ii#DW###.......T
-T......r.......F.F.......T....r....FF......T
-T......r............Q.wwwwww..r............T
-T.F....rrrrrrrrrrrrrrr=======rrrrrrrr......T
-T......r...r..........wwwwww......r........T
-T......r...r..F....ww...........F.r........T
-T..####D###r.....ww....o..........r..###...T
-T..#hhhhhh#r....ww...........######r.#B#...T
-T..#hhbbhh#r....w...........#hhhhhh#r#h#...T
-T..#hShhhh#r...ww...F.......#hhmhnh#r#h#...T
-T..#hhhhhh#r...w............#hhhhhh#r#h#...T
-T..##sW#D##r...ww...........##sWD###r#D#...T
-T.......rrrrrrrrr....F.......rrrr...rrr....T
-T.......r.............................r....T
-T.......r..............ccccc...........r...T
-T..ff...r..............ccccc.........GgG...T
-T..fc...r..............ccccc.........gGg...T
-T..fc...r........H.....ccccc.........GgG...T
-T..ff...r..................................T
-T.......r.................................TT
-TT......r......................T.........TTT
-TTT....rrr.....................TT......TTTTT
-TTTT...rrr....TTTT.....TTTT.....TTT..TTTTTTT
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TPTPTTPTPTPPTTPTTTTTTPTTPPTTTTTTTPPTTTTTTTTT
+TTT.........TPTy.......TTTT...y.....TTT.PTPP
+PT.....F.......T.......T..............TTT.PT
+T...#######....Ty......T...#########....T..P
+T...#hhhhh#............T...#hhhhhhh#.......P
+P...#hKhhh#.......F....P...#hAAhhhh#......yP
+P...#hhhAC#............TP..#hhhhhBh#.......P
+T...#hhhhh#.F...........PT.#hhBhhhh#...F...T
+P...##WDW##........###...T.#ii#DW###.......P
+P......Y.......F.F.#W#...T....Y.L..FF....R.P
+T......Y...........#D#wwwwwwr.Y............T
+T.FR...YYYYYYYYYYYYYYY=======YYYYYYYY......T
+T......Y...Y.........wwwwwww......Y........T
+T......Y...Y..F....wwwr.........F.Y........T
+T..####D###Y....rwww...o..........Y..###...T
+Ty.#hhhhhh#Y....ww...........######Y.#B#..yT
+T..#hhbbhh#Y....w...........#hhhhhh#Y#h#...T
+T..#hShhhh#Y...ww...F.......#hhmhnh#Y#h#...T
+T..#hhhhhh#Y..rw...........k#hhhhhh#Y#h#...T
+T..##sW#D##Y...w...........b##sWD###Y#D#...T
+T.......YYYYYYY=Y....F.......YYYY...YYY....T
+T.......Y......w...................eeeYeee.T
+P.......Y......w.......ccccc.......e..Y.+e.T
+T..ff...Y....rww.......czccc.......e.GgG.e.T
+T..fv...Y....www.......ccccc.......e.gGg.e.P
+P..fv...Y.....w.rH.....ccccc.......e.GgG.e.T
+P..ff...Y....................R.....e....+e.T
+T.......Y...O......R...............eeeeeeePT
+TT......Y......................T.O.......TTT
+TTP....,,,.....................PT.y....TTTTT
+TTPT...,,,....TTTT.....TTTT.....TPTy.TTPTTPT
+TTTTTTTPTTTTTTPTTPTTTPTTTPTPTTPTTTTPTTTPPTTP
 
 # ---- exits ----
 [exit]

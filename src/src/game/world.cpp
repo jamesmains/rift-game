@@ -1,5 +1,6 @@
 #include "world.h"
 #include "tiles.h"
+#include "tilekinds_builtin.h"
 #include <queue>
 #include <cmath>
 #include <cstring>
@@ -10,229 +11,18 @@ std::string gAssetDir = "assets";
 static std::vector<TileKind> gKinds;
 static std::map<std::string, int> gKindIndex;
 
-static Color8 gBgOverride = C::Trans;
-static void builtinLights();
+static void parseKindsText(const std::string& text, std::vector<TileKind>& kinds);
 static int defaultLight(const std::string& n);
-static void K(const std::string& name, std::vector<Tile> ground, Tile prop = Tile{}, bool walk = true, bool sight = false,
-              bool water = false, Color8 tint = C::White, int encounter = 0, const std::string& biome = "", int cost = 1) {
-    TileKind k; k.name = name; k.ground = ground; k.prop = prop; k.walkable = walk; k.blocksSight = sight; k.water = water;
-    k.tint = tint; k.encounter = encounter; k.biome = biome; k.moveCost = cost;
-    // walls (non-walkable, sight-blocking, no prop) are drawn opaque; everything else gets a dark background color
-    k.opaque = (!walk && sight && !prop.valid());
-    k.bg = gBgOverride.a ? gBgOverride : RGB((uint8_t)(tint.r * 0.30f), (uint8_t)(tint.g * 0.30f), (uint8_t)(tint.b * 0.30f));
-    gBgOverride = C::Trans;
-    gKindIndex[name] = (int)gKinds.size(); gKinds.push_back(k);
-}
 
+// The built-in kinds are assets/data/tilekinds.txt as shipped, compiled in (src/tools/mktilekinds.py writes
+// tilekinds_builtin.h from it). The data file replaces them; kinds it doesn't name yet are kept from here.
 static void buildKinds() {
     if (!gKinds.empty()) return;
-    const Color8 grassTint = RGB(110, 170, 90), forestTint = RGB(60, 120, 60), sandTint = RGB(210, 190, 120);
-    const Color8 stoneTint = RGB(130, 130, 140), dirtTint = RGB(150, 110, 70), waterTint = RGB(40, 90, 200), metalTint = RGB(130, 150, 170);
-    const Color8 caveTint = RGB(110, 95, 85), woodTint = RGB(170, 120, 70), snowTint = RGB(220, 230, 240), ashTint = RGB(90, 80, 80);
-    // ---- overworld ----
-    gBgOverride = RGB(58, 112, 52);
-    K("grass", {GRASS, GRASS, GRASS, GRASS2, GRASS_TUFT}, Tile{}, true, false, false, grassTint, 2, "plains");
-    gBgOverride = RGB(62, 118, 54);
-    K("meadow", {GRASS, GRASS2}, FLOWER, true, false, false, grassTint, 1, "plains");
-    K("forest", {GRASS, GRASS2}, TREE, true, true, false, forestTint, 4, "forest", 2);
-    K("forest2", {GRASS, GRASS2}, TREE2, true, true, false, forestTint, 4, "forest", 2);
-    K("pine", {GRASS, GRASS2}, PINE, true, true, false, forestTint, 4, "forest", 2);
-    K("deepforest", {GRASS2}, PINE2, false, true, false, forestTint, 0, "forest");
-    K("bush", {GRASS, GRASS2}, BUSH, true, false, false, grassTint, 3, "plains");
-    K("tallgrass", {GRASS, GRASS2}, TALLGRASS, true, false, false, grassTint, 3, "plains");
-    gBgOverride = RGB(150, 130, 80);
-    K("sand", {SAND, SAND, DESERT}, Tile{}, true, false, false, sandTint, 2, "desert");
-    gBgOverride = RGB(150, 130, 80);
-    K("dune", {SAND}, DUNE, true, false, false, sandTint, 2, "desert", 2);
-    gBgOverride = RGB(150, 130, 80);
-    K("cactus", {SAND}, CACTUS, false, false, false, sandTint, 0, "desert");
-    gBgOverride = RGB(28, 60, 150);
-    K("water", {WATER, WATER, WATER2}, Tile{}, false, false, true, waterTint, 0, "water");
-    K("deepwater", {LAKE}, Tile{}, false, false, true, RGB(20, 50, 160), 0, "water");
-    gBgOverride = RGB(50, 100, 190);
-    K("shallows", {WATER2}, Tile{}, true, false, true, RGB(90, 150, 230), 1, "water", 2);
-    K("hill", {GRASS2}, HILL, true, false, false, grassTint, 3, "hills", 2);
-    K("hill2", {GRASS2}, HILL2, true, false, false, grassTint, 3, "hills", 2);
-    K("mountain", {SCORCHED}, MOUNTAIN, false, true, false, stoneTint, 0, "mountain");
-    K("snowpeak", {SCORCHED}, SNOWPEAK, false, true, false, snowTint, 0, "mountain");
-    K("volcano", {SCORCHED}, VOLCANO, false, true, false, RGB(200, 80, 60), 0, "mountain");
-    gBgOverride = RGB(40, 62, 46);
-    K("swamp", {SWAMP, SWAMP, WATER2}, Tile{}, true, false, false, RGB(70, 110, 80), 5, "swamp", 2);
-    K("deadtree", {SCORCHED}, DEADTREE, true, true, false, ashTint, 5, "wasteland", 2);
-    K("deadtree2", {SCORCHED}, DEADTREE2, true, true, false, ashTint, 5, "wasteland", 2);
-    K("wasteland", {SCORCHED, SCORCHED, CRATER, RUBBLE}, Tile{}, true, false, false, ashTint, 4, "wasteland");
-    K("rubble", {RUBBLE}, Tile{}, true, false, false, stoneTint, 3, "wasteland");
-    gBgOverride = RGB(105, 92, 70);
-    K("road", {ROAD}, Tile{}, true, false, false, RGB(190, 170, 130), 1, "plains");
-    K("dirt", {DIRT, DIRT2}, Tile{}, true, false, false, dirtTint, 1, "plains");
-    gBgOverride = RGB(28, 60, 150);
-    K("river", {RIVER}, Tile{}, false, false, true, waterTint, 0, "water");
-    gBgOverride = RGB(105, 72, 40);
-    K("bridge", {FLOOR_WOOD}, Tile{}, true, false, false, woodTint, 0, "plains");
-    gBgOverride = RGB(150, 165, 180);
-    K("snow", {SAND}, Tile{}, true, false, false, snowTint, 2, "snow");
-    gBgOverride = RGB(150, 165, 180);
-    K("snowpine", {SAND}, PINE, true, true, false, RGB(180, 210, 200), 3, "snow", 2);
-    gBgOverride = RGB(70, 30, 90);
-    K("riftscar", {CRATER}, Tile{}, true, false, false, RGB(170, 80, 220), 6, "rift");
-    gBgOverride = RGB(70, 30, 90);
-    K("riftcrystal", {CRATER}, IT_CRYSTAL, false, true, false, RGB(170, 80, 220), 0, "rift");
-    // overworld locations (props drawn full color; walkable so you can step on them)
-    K("loc_village", {GRASS}, LOC_VILLAGE, true, false, false, grassTint, 0, "loc");
-    K("loc_town", {GRASS}, LOC_TOWN, true, false, false, grassTint, 0, "loc");
-    K("loc_city", {GRASS}, LOC_CITY, true, false, false, grassTint, 0, "loc");
-    K("loc_house", {GRASS}, LOC_HOUSE, true, false, false, grassTint, 0, "loc");
-    K("loc_farm", {GRASS}, LOC_FARM, true, false, false, grassTint, 0, "loc");
-    K("loc_tent", {GRASS}, LOC_TENT, true, false, false, grassTint, 0, "loc");
-    K("loc_cave", {SCORCHED}, LOC_CAVE, true, false, false, stoneTint, 0, "loc");
-    K("loc_tower", {GRASS}, LOC_TOWER, true, false, false, grassTint, 0, "loc");
-    K("loc_castle", {GRASS}, LOC_CASTLE, true, false, false, grassTint, 0, "loc");
-    K("loc_ruin", {SCORCHED}, LOC_RUIN, true, false, false, stoneTint, 0, "loc");
-    K("loc_temple", {GRASS}, LOC_TEMPLE, true, false, false, grassTint, 0, "loc");
-    K("loc_crypt", {SCORCHED}, LOC_CRYPT, true, false, false, stoneTint, 0, "loc");
-    K("loc_ship", {SCORCHED}, LOC_SHIP, true, false, false, ashTint, 0, "loc");
-    K("loc_citymod", {RUBBLE}, LOC_CITYMOD, true, false, false, stoneTint, 0, "loc");
-    K("loc_lab", {RUBBLE}, LOC_LAB, true, false, false, stoneTint, 0, "loc");
-    K("loc_shrine", {GRASS}, LOC_SHRINE, true, false, false, grassTint, 0, "loc");
-    K("loc_mine", {SCORCHED}, LOC_CAVE, true, false, false, dirtTint, 0, "loc");
-    // ---- interiors / dungeons ----
-    K("wall_stone", {WALL_STONE, WALL_STONE, WALL_STONE2}, Tile{}, false, true, false, stoneTint);
-    K("wall_gray", {WALL_GRAY, WALL_GRAY, WALL_GRAY2}, Tile{}, false, true, false, stoneTint);
-    K("wall_brick", {WALL_BRICK, WALL_BRICK, WALL_BRICK2}, Tile{}, false, true, false, RGB(200, 90, 70));
-    K("wall_wood", {WALL_WOOD, WALL_WOOD, WALL_WOOD2}, Tile{}, false, true, false, woodTint);
-    K("wall_cave", {WALL_CAVE, WALL_CAVE2}, Tile{}, false, true, false, caveTint);
-    K("wall_metal", {WALL_METAL, WALL_METAL, WALL_METAL2}, Tile{}, false, true, false, metalTint);
-    K("wall_tech", {WALL_TECH}, Tile{}, false, true, false, metalTint);
-    K("wall_concrete", {WALL_CONCRETE, WALL_CONCRETE2}, Tile{}, false, true, false, stoneTint);
-    K("wall_hull", {SHIP_HULL, SHIP_HULL2}, Tile{}, false, true, false, metalTint);
-    K("window", {WALL_WOOD}, WINDOW, false, false, false, woodTint);
-    gBgOverride = RGB(58, 58, 66);
-    K("floor_stone", {FLOOR_STONE, FLOOR_STONE, FLOOR_STONE2}, Tile{}, true, false, false, stoneTint);
-    gBgOverride = RGB(70, 48, 26);
-    K("floor_wood", {FLOOR_WOOD, FLOOR_WOOD2}, Tile{}, true, false, false, woodTint);
-    K("floor_tile", {FLOOR_TILE, FLOOR_TILE2}, Tile{}, true, false, false, RGB(160, 150, 170));
-    gBgOverride = RGB(62, 52, 46);
-    K("floor_cave", {FLOOR_CAVE, FLOOR_CAVE2, FLOOR_CAVE}, Tile{}, true, false, false, caveTint);
-    gBgOverride = RGB(50, 58, 68);
-    K("floor_metal", {FLOOR_METAL, FLOOR_METAL2}, Tile{}, true, false, false, metalTint);
-    K("floor_grid", {FLOOR_GRID}, Tile{}, true, false, false, metalTint);
-    K("floor_dirt", {DIRT, DIRT2}, Tile{}, true, false, false, dirtTint);
-    K("floor_grass", {GRASS, GRASS2, GRASS_TUFT}, Tile{}, true, false, false, grassTint);
-    K("floor_sand", {SAND}, Tile{}, true, false, false, sandTint);
-    gBgOverride = RGB(45, 45, 52);
-    K("floor_road", {FLOOR_ASPHALT}, Tile{}, true, false, false, RGB(90, 90, 100));
-    gBgOverride = RGB(70, 70, 70);
-    K("floor_concrete", {FLOOR_CONCRETE}, Tile{}, true, false, false, RGB(150, 150, 150));
-    K("floor_carpet", {FLOOR_TILE}, Tile{}, true, false, false, RGB(180, 60, 60));
-    gBgOverride = RGB(120, 120, 130);
-    K("floor_marble", {FLOOR_TILE2}, Tile{}, true, false, false, RGB(220, 220, 230));
-    gBgOverride = RGB(28, 60, 150);
-    K("floor_water", {WATER, WATER2}, Tile{}, false, false, true, waterTint);
-    K("mire", {WATER2, WATER2, WATER}, Tile{}, true, false, true, RGB(60, 110, 90), 0, "", 2);   // knee-deep dungeon water: slow but passable
-    gBgOverride = RGB(120, 30, 10);
-    K("floor_lava", {WATER, WATER2}, Tile{}, false, false, true, RGB(240, 100, 30));
-    K("door_wood", {FLOOR_WOOD}, DOOR_WOOD, true, true, false, woodTint);
-    K("door_metal", {FLOOR_METAL}, DOOR_METAL, true, true, false, metalTint);
-    K("door_arch", {FLOOR_STONE}, DOOR_ARCH, true, false, false, stoneTint);
-    K("stairs_down", {FLOOR_STONE}, STAIRS_DOWN, true, false, false, stoneTint);
-    K("stairs_up", {FLOOR_STONE}, STAIRS_UP, true, false, false, stoneTint);
-    K("pillar", {FLOOR_STONE}, PILLAR, false, false, false, stoneTint);
-    K("torch", {FLOOR_STONE}, TORCH, false, false, false, stoneTint);
-    K("torch_wall", {WALL_STONE}, TORCH, false, true, false, stoneTint);
-    K("campfire", {DIRT}, CAMPFIRE, false, false, false, dirtTint);
-    K("fire", {FLOOR_STONE}, FIRE, false, false, false, stoneTint);
-    K("brazier", {FLOOR_STONE}, BRAZIER, false, false, false, stoneTint);
-    K("bones", {FLOOR_CAVE}, BONES, true, false, false, caveTint);
-    K("skull", {FLOOR_CAVE}, SKULL, true, false, false, caveTint);
-    K("grave", {GRASS2}, GRAVE, false, false, false, forestTint);
-    K("grave2", {GRASS2}, GRAVE2, false, false, false, forestTint);
-    K("tomb", {FLOOR_STONE}, TOMB, false, false, false, stoneTint);
-    K("coffin", {FLOOR_STONE}, COFFIN, false, false, false, stoneTint);
-    K("bed", {FLOOR_WOOD}, BED, false, false, false, woodTint);
-    K("table", {FLOOR_WOOD}, TABLE, false, false, false, woodTint);
-    K("table2", {FLOOR_WOOD}, TABLE2, false, false, false, woodTint);
-    K("chair", {FLOOR_WOOD}, CHAIR, true, false, false, woodTint);
-    K("shelf", {FLOOR_WOOD}, SHELF, false, true, false, woodTint);
-    K("bookshelf", {FLOOR_WOOD}, BOOKSHELF, false, true, false, woodTint);
-    K("barrel", {FLOOR_WOOD}, BARREL, false, false, false, woodTint);
-    K("crate", {FLOOR_WOOD}, CRATE, false, false, false, woodTint);
-    K("anvil", {FLOOR_STONE}, ANVIL, false, false, false, stoneTint);
-    K("forge", {FLOOR_STONE}, FORGE, false, false, false, stoneTint);
-    K("cauldron", {FLOOR_WOOD}, CAULDRON, false, false, false, woodTint);
-    K("altar", {FLOOR_TILE}, ALTAR, false, false, false, RGB(160, 150, 170));
-    K("statue", {FLOOR_TILE}, STATUE, false, true, false, RGB(160, 150, 170));
-    K("fence", {GRASS}, FENCE, false, false, false, grassTint);
-    K("fence_wood", {GRASS}, FENCE_WOOD, false, false, false, grassTint);
-    K("well", {ROAD}, WELL, false, false, false, RGB(190, 170, 130));
-    K("fountain", {ROAD}, FOUNTAIN, false, false, false, RGB(190, 170, 130));
-    K("sign", {ROAD}, SIGN, false, false, false, RGB(190, 170, 130));
-    K("shop_sign", {WALL_WOOD}, SHOP_SIGN, false, true, false, woodTint);
-    K("inn_sign", {WALL_WOOD}, INN_SIGN, false, true, false, woodTint);
-    K("crop", {DIRT}, CROP, true, false, false, dirtTint);
-    K("crop2", {DIRT}, CROP2, true, false, false, dirtTint);
-    K("hay", {DIRT}, HAYSTACK, false, false, false, dirtTint);
-    K("flower", {GRASS}, FLOWER, true, false, false, grassTint);
-    K("flower2", {GRASS}, FLOWER2, true, false, false, grassTint);
-    K("mushroom", {FLOOR_CAVE}, MUSHROOM, true, false, false, caveTint);
-    K("mushroom2", {FLOOR_CAVE}, MUSHROOM2, true, false, false, caveTint);
-    K("web", {FLOOR_CAVE}, WEB, true, false, false, caveTint);
-    K("rocks", {FLOOR_CAVE}, ROCKS, false, false, false, caveTint);
-    K("tree", {GRASS}, TREE, false, true, false, grassTint);
-    K("tree2", {GRASS}, TREE2, false, true, false, grassTint);
-    K("pine_t", {GRASS}, PINE, false, true, false, grassTint);
-    K("deadtree_t", {SCORCHED}, DEADTREE, false, true, false, ashTint);
-    K("banner_red", {WALL_STONE}, BANNER_RED, false, true, false, stoneTint);
-    K("banner_blue", {WALL_STONE}, BANNER_BLUE, false, true, false, stoneTint);
-    K("banner_gold", {WALL_STONE}, BANNER_GOLD, false, true, false, stoneTint);
-    K("portal_tl", {FLOOR_STONE}, PORTAL_TL, false, false, false, stoneTint);
-    K("portal_tr", {FLOOR_STONE}, PORTAL_TR, false, false, false, stoneTint);
-    K("portal_bl", {FLOOR_STONE}, PORTAL_BL, true, false, false, stoneTint);
-    K("portal_br", {FLOOR_STONE}, PORTAL_BR, true, false, false, stoneTint);
-    K("sparkle", {FLOOR_STONE}, SPARKLE, true, false, false, stoneTint);
-    K("lever", {FLOOR_STONE}, LEVER, false, false, false, stoneTint);
-    K("crystal", {FLOOR_CAVE}, IT_CRYSTAL, false, false, false, RGB(170, 120, 230));
-    K("gem_blue", {FLOOR_CAVE}, IT_GEM_BLUE, true, false, false, caveTint);
-    // modern / sci-fi props
-    K("computer", {FLOOR_METAL}, COMPUTER, false, false, false, metalTint);
-    K("terminal", {FLOOR_METAL}, TERMINAL, false, false, false, metalTint);
-    K("terminal2", {FLOOR_METAL}, TERMINAL2, false, false, false, metalTint);
-    K("server", {FLOOR_METAL}, SERVER, false, true, false, metalTint);
-    K("car", {FLOOR_ASPHALT}, CAR, false, false, false, RGB(90, 90, 100));
-    K("car2", {FLOOR_ASPHALT}, CAR2, false, false, false, RGB(90, 90, 100));
-    K("car_red", {FLOOR_ASPHALT}, CAR_RED, false, false, false, RGB(90, 90, 100));
-    K("truck", {FLOOR_ASPHALT}, TRUCK, false, false, false, RGB(90, 90, 100));
-    K("tank", {FLOOR_ASPHALT}, TANK, false, true, false, RGB(90, 90, 100));
-    K("building", {FLOOR_CONCRETE}, BUILDING, false, true, false, RGB(150, 150, 150));
-    K("building2", {FLOOR_CONCRETE}, BUILDING2, false, true, false, RGB(150, 150, 150));
-    K("building3", {FLOOR_CONCRETE}, BUILDING3, false, true, false, RGB(150, 150, 150));
-    K("building4", {FLOOR_CONCRETE}, BUILDING4, false, true, false, RGB(150, 150, 150));
-    K("building_red", {FLOOR_CONCRETE}, BUILDING_RED, false, true, false, RGB(150, 150, 150));
-    K("streetlamp", {FLOOR_CONCRETE}, STREETLAMP, false, false, false, RGB(150, 150, 150));
-    K("trafficlight", {FLOOR_CONCRETE}, TRAFFICLIGHT, false, false, false, RGB(150, 150, 150));
-    K("sign_stop", {FLOOR_CONCRETE}, SIGN_STOP, false, false, false, RGB(150, 150, 150));
-    K("sign_warn", {FLOOR_CONCRETE}, SIGN_WARN, false, false, false, RGB(150, 150, 150));
-    K("pipe_h", {FLOOR_METAL}, PIPE_H, false, false, false, metalTint);
-    K("pipe_v", {FLOOR_METAL}, PIPE_V, false, false, false, metalTint);
-    K("vending", {FLOOR_CONCRETE}, VENDING, false, false, false, RGB(150, 150, 150));
-    K("fridge", {FLOOR_TILE}, FRIDGE, false, false, false, RGB(160, 150, 170));
-    K("tv", {FLOOR_WOOD}, TV, false, false, false, woodTint);
-    K("cryopod", {FLOOR_METAL}, CRYOPOD, false, false, false, metalTint);
-    K("reactor", {FLOOR_METAL}, REACTOR, false, true, false, metalTint);
-    K("ship_window", {SHIP_HULL}, SHIP_WINDOW, false, false, false, metalTint);
-    K("trash", {FLOOR_CONCRETE}, TRASH, false, false, false, RGB(150, 150, 150));
-    K("box", {FLOOR_CONCRETE}, BOX, false, false, false, RGB(150, 150, 150));
-    K("road_line", {FLOOR_ASPHALT}, ROAD_LINE, true, false, false, RGB(90, 90, 100));
-    K("satellite", {RUBBLE}, SATELLITE, false, true, false, stoneTint);
-    K("rocket_wreck", {RUBBLE}, ROCKET, false, true, false, stoneTint);
-    K("ufo", {RUBBLE}, UFO, false, true, false, stoneTint);
-    gBgOverride = C::Black;
-    K("void", {Tile{}}, Tile{}, false, true, false, C::Black);
-    // obstacles that world triggers can clear (see Map::obstacles): rubble needs a blast or a shovel, vines burn, ice melts
-    K("rubble_pile", {FLOOR_CAVE}, ROCKS, false, true, false, RGB(150, 140, 120));
-    K("vines", {FLOOR_CAVE}, BUSH, false, true, false, RGB(80, 150, 70));
-    K("ice_wall", {FLOOR_STONE}, IT_CRYSTAL, false, true, false, RGB(170, 220, 255));
-    K("lever_off", {FLOOR_STONE}, LEVER, false, false, false, stoneTint);
-    builtinLights();
+    std::string text; for (const char* const* p = kBuiltinTileKinds; *p; ++p) text += *p;
+    parseKindsText(text, gKinds);
+    bool haveVoid = false; for (auto& k : gKinds) if (k.name == "void") haveVoid = true;
+    if (!haveVoid) { TileKind v; v.name = "void"; v.ground.push_back(Tile{}); v.walkable = false; v.blocksSight = true; v.opaque = true; v.bg = C::Black; gKinds.push_back(v); }
+    rebuildTileKindIndex();
 }
 // default light radii for the built-in kinds (tilekinds.txt can override with light=N)
 static int defaultLight(const std::string& n) {
@@ -241,15 +31,35 @@ static int defaultLight(const std::string& n) {
         {"portal_bl", 3}, {"portal_br", 3}, {"altar", 2}, {"gem_blue", 1}, {"ice_wall", 1}, {"cryopod", 1}, {"vending", 2}, {"tv", 1}};
     auto it = L.find(n); return it == L.end() ? 0 : it->second;
 }
-static void builtinLights() { for (auto& k : gKinds) k.light = defaultLight(k.name); }
 
 const TileKind* tileKind(const std::string& name) { buildKinds(); auto it = gKindIndex.find(name); return it == gKindIndex.end() ? nullptr : &gKinds[it->second]; }
 const std::vector<TileKind>& allTileKinds() { buildKinds(); return gKinds; }
 std::vector<TileKind>& editableTileKinds() { buildKinds(); return gKinds; }
 int tileKindIndex(const std::string& name) { buildKinds(); auto it = gKindIndex.find(name); return it == gKindIndex.end() ? -1 : it->second; }
-void rebuildTileKindIndex() { gKindIndex.clear(); for (size_t i = 0; i < gKinds.size(); i++) gKindIndex[gKinds[i].name] = (int)i; }
+void rebuildTileKindIndex() { gKindIndex.clear(); for (size_t i = 0; i < gKinds.size(); i++) gKindIndex[gKinds[i].name] = (int)i; resolveTileKindGroups(); }
 
 static std::string tileStr(Tile t) { return t.valid() ? fmt("%d,%d", t.c, t.r) : ""; }
+static std::string joinList(const std::vector<std::string>& v) { std::string o; for (size_t i = 0; i < v.size(); i++) o += (i ? "," : "") + v[i]; return o; }
+static void readJoinFields(const ConfigSection& sec, TileKind& k) {
+    k.recolor = sec.geti("recolor", 0) != 0; k.under = sec.geti("under", 0) != 0;
+    k.join.clear(); k.link.clear(); k.edges.clear();
+    for (auto& g : split(sec.get("join"), ',')) if (!trim(g).empty()) k.join.push_back(trim(g));
+    for (auto& g : split(sec.get("link"), ',')) if (!trim(g).empty()) k.link.push_back(trim(g));
+    if (sec.has("edges")) { for (auto& g : split(sec.get("edges"), '|')) { std::string t = trim(g); k.edges.push_back(t.empty() ? Tile{} : parseTile(t)); } k.edges.resize(16); }
+}
+void resolveTileKindGroups() {
+    std::map<std::string, int> ids;
+    auto bit = [&](const std::string& g) -> uint32_t { auto it = ids.find(g); if (it == ids.end()) { if (ids.size() >= 32) return 0; it = ids.emplace(g, (int)ids.size()).first; } return 1u << it->second; };
+    for (auto& k : gKinds) { k.joinBits = 0; for (auto& g : k.join) k.joinBits |= bit(g); }
+    for (auto& k : gKinds) { k.linkBits = 0; for (auto& g : (k.link.empty() ? k.join : k.link)) k.linkBits |= bit(g); }
+}
+void Map::look(int x, int y, Tile& ground, Color8& bg) const {
+    const Cell& c = at(x, y); ground = c.ground; bg = c.bg;
+    if (c.kind >= gKinds.size()) return;
+    const TileKind& k = gKinds[c.kind];
+    if (k.edges.size() < 16 && !k.under) return;
+    tileKindLook(k, [&](int dx, int dy) -> const TileKind* { int nx = x + dx, ny = y + dy; if (!inBounds(nx, ny)) return nullptr; uint16_t kk = at(nx, ny).kind; return kk < gKinds.size() ? &gKinds[kk] : nullptr; }, ground, bg);
+}
 static std::string colStr(Color8 c) { return fmt("%d,%d,%d", c.r, c.g, c.b); }
 std::string tileKindsText(const std::vector<TileKind>& kinds) {
     std::string o = "# Tile kinds: what each map cell type looks like and how it behaves.\n# ground = one or more tiles (col,row) separated by | - one is picked at random per cell.\n# opaque=1 draws the ground tile with its black background (walls); otherwise the bg color shows through.\n\n";
@@ -258,14 +68,18 @@ std::string tileKindsText(const std::vector<TileKind>& kinds) {
         for (size_t i = 0; i < k.ground.size(); i++) o += (i ? "|" : "") + tileStr(k.ground[i]);
         o += "\nprop=" + tileStr(k.prop) + fmt("\nwalk=%d\nsight=%d\nwater=%d\nopaque=%d\n", k.walkable, k.blocksSight, k.water, k.opaque);
         o += "tint=" + colStr(k.tint) + "\nbg=" + colStr(k.bg) + fmt("\nencounter=%d\nbiome=%s\ncost=%d\n", k.encounter, k.biome.c_str(), k.moveCost);
-        o += k.light ? fmt("light=%d\n\n", k.light) : "\n";
+        if (k.light) o += fmt("light=%d\n", k.light);
+        if (k.recolor) o += "recolor=1\n";
+        if (!k.join.empty()) o += "join=" + joinList(k.join) + "\n";
+        if (!k.link.empty()) o += "link=" + joinList(k.link) + "\n";
+        if (!k.edges.empty()) { o += "edges="; for (size_t i = 0; i < k.edges.size(); i++) o += (i ? "|" : "") + tileStr(k.edges[i]); o += "\n"; }
+        if (k.under) o += "under=1\n";
+        o += "\n";
     }
     return o;
 }
 bool saveTileKinds(const std::string& path) { buildKinds(); return writeFile(path, tileKindsText(gKinds)); }
-bool loadTileKinds(const std::string& path) {
-    std::string text; if (!readFile(path, text)) return false;
-    std::vector<TileKind> kinds;
+static void parseKindsText(const std::string& text, std::vector<TileKind>& kinds) {
     for (auto& sec : parseConfig(text)) {
         if (sec.name != "kind") continue;
         TileKind k; k.name = sec.get("name"); if (k.name.empty()) continue;
@@ -276,31 +90,32 @@ bool loadTileKinds(const std::string& path) {
         k.tint = sec.has("tint") ? parseColor(sec.get("tint")) : C::White; k.bg = sec.has("bg") ? parseColor(sec.get("bg")) : C::Black;
         k.encounter = sec.geti("encounter", 0); k.biome = sec.get("biome"); k.moveCost = sec.geti("cost", 1);
         k.light = sec.has("light") ? sec.geti("light", 0) : defaultLight(k.name);
+        readJoinFields(sec, k);
         kinds.push_back(k);
     }
+}
+bool loadTileKinds(const std::string& path) {
+    std::string text; if (!readFile(path, text)) return false;
+    std::vector<TileKind> kinds;
+    parseKindsText(text, kinds);
     if (kinds.empty()) return false;
     buildKinds();
     // built-in kinds that an older tilekinds.txt doesn't know about yet are appended, so new content keeps working
     for (auto& b : gKinds) { bool have = false; for (auto& k : kinds) if (k.name == b.name) { have = true; break; } if (!have) kinds.push_back(b); }
     gKinds = kinds; rebuildTileKindIndex();
     if (gKindIndex.find("void") == gKindIndex.end()) { TileKind v; v.name = "void"; v.ground.push_back(Tile{}); v.walkable = false; v.blocksSight = true; v.opaque = true; gKinds.push_back(v); rebuildTileKindIndex(); }
+    resolveTileKindGroups();
     return true;
 }
 bool loadTileKindsOverlay(const std::string& path) {
     std::string text; if (!readFile(path, text)) return false;
     buildKinds();
-    for (auto& sec : parseConfig(text)) {
-        if (sec.name != "kind") continue;
-        TileKind k; k.name = sec.get("name"); if (k.name.empty()) continue;
-        for (auto& g : split(sec.get("ground"), '|')) { std::string t = trim(g); k.ground.push_back(t.empty() ? Tile{} : parseTile(t)); }
-        if (k.ground.empty()) k.ground.push_back(Tile{});
-        std::string pr = trim(sec.get("prop")); k.prop = pr.empty() ? Tile{} : parseTile(pr);
-        k.walkable = sec.geti("walk", 1) != 0; k.blocksSight = sec.geti("sight", 0) != 0; k.water = sec.geti("water", 0) != 0; k.opaque = sec.geti("opaque", 0) != 0;
-        k.tint = sec.has("tint") ? parseColor(sec.get("tint")) : C::White; k.bg = sec.has("bg") ? parseColor(sec.get("bg")) : C::Black;
-        k.encounter = sec.geti("encounter", 0); k.biome = sec.get("biome"); k.moveCost = sec.geti("cost", 1); k.light = sec.geti("light", defaultLight(k.name));
+    std::vector<TileKind> kinds; parseKindsText(text, kinds);
+    for (auto& k : kinds) {
         auto it = gKindIndex.find(k.name);
         if (it != gKindIndex.end()) gKinds[it->second] = k; else { gKindIndex[k.name] = (int)gKinds.size(); gKinds.push_back(k); }
     }
+    resolveTileKindGroups();
     return true;
 }
 void ensureTileKindsFile(const std::string& path) { if (!fileExists(path)) saveTileKinds(path); }
@@ -316,7 +131,7 @@ void Map::set(int x, int y, const std::string& kindName, Rng& rng) {
     Cell& c = at(x, y);
     c.kind = (uint16_t)(k - &gKinds[0]);
     c.ground = k->ground.empty() ? Tile{} : rng.pick(k->ground);
-    c.prop = k->prop; c.walkable = k->walkable; c.blocksSight = k->blocksSight; c.water = k->water; c.tint = k->tint; c.bg = k->bg; c.opaque = k->opaque;
+    c.prop = k->prop; c.walkable = k->walkable; c.blocksSight = k->blocksSight; c.water = k->water; c.tint = k->tint; c.bg = k->bg; c.opaque = k->opaque; c.recolor = k->recolor;
 }
 void Map::fill(int x, int y, int fw, int fh, const std::string& kindName, Rng& rng) { for (int yy = y; yy < y + fh; yy++) for (int xx = x; xx < x + fw; xx++) set(xx, yy, kindName, rng); }
 void Map::rect(int x, int y, int fw, int fh, const std::string& kindName, Rng& rng) {

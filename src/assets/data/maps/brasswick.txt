@@ -9,11 +9,10 @@ music=brasswick
 [legend]
 . = floor_grass
 , = floor_dirt
-r = road
-T = tree|tree|tree2
+T = tree|tree|tree2|tree3
 t = pine_t
 f = fence_wood
-F = flower|flower2|floor_grass
+F = flower|flower2|flower3|floor_grass
 # = wall_wood
 = = wall_stone
 h = floor_wood
@@ -53,53 +52,60 @@ e = fence
 O = brazier
 v = floor_water
 j = deadtree_t
-y = bush
+y = bush_t
+X = street
+Y = path
+J = window_stone
+1 = wall_brick
+2 = window_brick
+3 = lantern
+4 = cart
 
 [rows]
-TTTTTTTTTTTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTTTTTTTTTTTTT
-TTTT...T..TT.......TT......rrrrrr..T...T.T.TT...T...T...T..T
-T..............TTT........TrrrrrrT....TT......T.........T.TT
-T.TT..T..T....T....T.T...T.rrrrrr...TT...T...T....T..T.TT.TT
-TT..TT...T.F.T..........TTTrrrrrr..T........T.T.......TTT.TT
-T....======================rrrrrr======================....T
-T....=..================...rrrrrr.......============..=T...T
-TF...=..=mKKKKKKKKKKKKm=...rrrrrr..y....=LRRRZRRRRR=..=...TT
-T.TTT=..=mmmmmmmmmmmmmm=...rrrrrr.......=RRRRRRRRRR=..=..TTT
-T....=..=mmmmmmmmmmmmmm=...rrrrrr.......=RRRRRRRRRR=..=T...T
-T....=..=mmmmmmmmmmmmmm=...rrrrrr...y...=RRRRRRRRRR=.F=....T
-TT...=..=%======D=====%=...rrrrrr.......=RRRRRRRRRR=..=....T
-T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr=RRRRRRRRRR=..=....T
-T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr=RRRRRRRRRR=..=..T.T
-T....=======...............rrrrrr.......=RRRRRRRRRR=..=.T..T
-T..T.==BmmB=.#########.....rrrrrr...y...=W==$D$===W=..=....T
-T..T.==mmmm=.#nMhhhhS#..prrrrrrrrrrp............rr....=....T
-T.T..==kmmm=.#hhhhhhh#..rrrrrrrrrrrr..#########.rr....=....T
-T.T..==mmmm=.#hhhhhhh#..rrrrrrrrrrrr..#KhhuhhK#.rr...F=....T
-T....==WD=W=.#hhhhhhh#..rrrrrrrrrrrr.F#hhhhhhh#.rry...=....T
-r....=....rr.#W#sD##W#..rrrrrQQrrrrr..#hhhhhhh#.rr....=....r
-rrrrrrrrrrrrrrrrrrrrrrrrrrrrrQQrrrrrrr#W#sD##W#rrrrrrrrrrrrr
-rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-r....=....rr...F....y...rrrrrrrrrrrr............rr....=.FT.r
-T....=....rr.#########..prrrrrrrrrrp..###########r....=T...T
-T....=######.#ShhhhhS#.....rrrrrr.....#BhhhAAhhB#r....=....T
-T....=#hhhh#.#hhhhhhh#.....rrrrrr.....#hhhhhhhhh#r....=...TT
-T.T..=#hhhh#.#bhhhhhh#.....rrrrrr.....#bhhhhhhhh#r....=TTT.T
-T....=#WD#W#.#W#sD##W#.....rrrrrr.....#hhhhhhhhh#r....=....T
-T....=....rrrrrrrrrrrrrrrrrrrrrrrrrrrr#W#iD####W#r....=..T.T
-TT...=....rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr....=....T
-T....=.......===========F..rrrrrr...............y.....=....T
-TTT..=######.=LmmmammmL=...rrrrrr.....######.######...=....T
-TT...=#hhhh#.=mmmmmmmmm=...rrrrrr...F.#hhhh#.#hhhh#...=....T
-T..F.=#hhhh#.=mmmmmmmmm=...rrrrrr.....#hhhh#.#hhhh#...=....T
-T.F..=#WD#W#.=W===D===W=..Frrrrrr.....#WD#W#.#WD#W#..T=....T
-T....=F.....T..............rrrrrr...............F.....=T...T
-TT...======================rrrrrr======================..TTT
-T.T....T..............T....rrrrrr.........T.T......T.......T
-T..T......T.......T.TTT....rrrrrr...TTT.T.......T......T...T
-T...T.TT....T...TT..T...T..rrrrrr.T.T.TTT.T.T....T..T.TTTTTT
-TTTT..F.....T......TT......rrrrrr....T...T......T.....T.TTTT
-TTTTTTTTTTTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTTTttTTTTTTTTTTTTTTtTTTtTXXXXXXTTTTTTTTTTttTTTTTTTTTTTTTTT
+TTTT...T..TT.......TT......XXXXXX..T...T.t.TT...t...T...T..T
+T..............TTt........TXXXXXXt....TT......T.........T.TT
+T.tT..t..T....T....T.T...t.XXXXXX...TT...T...T....T..T.TT.TT
+TT..TT...T.F.T..........TTTXXXXXX..T........t.T.......TtT.Tt
+T....======================XXXXXX======================....T
+T....=..1111111111111111...XXXXXX.......============..=T...T
+TF...=..1mKKKKKKKKKKKKm1...XXXXXX..y....=LRRRZRRRRR=..=...tt
+T.TTT=..1mmmmmmmmmmmmmm1...XXXXXX.......=RRRRRRRRRR=..=..TTT
+T....=..1mmmmmmmmmmmmmm1...XXXXXX.......=RRRRRRRRRR=..=T...T
+T....=..1mmmmmmmmmmmmmm1...XXXXXX...y...=RRRRRRRRRR=.F=....T
+Tt...=..1%111111D11111%1...XXXXXX.......=RRRRRRRRRR=..=....T
+T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=RRRRRRRRRR=..=....T
+T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=RRRRRRRRRR=..=..T.T
+T....=======...............XXXXXX.......=RRRRRRRRRR=..=.T..T
+t..T.==BmmB=.#########....3XXXXXX3..y...=J==$D$===J=..=....T
+T..T.==mmmm=k#nMhhhhS#..pXXXXXXXXXXp............XX....=....T
+T.T..==kmmm=b#hhhhhhh#..XXXXXXXXXXXX..#########.XX....=....T
+T.T..==mmmm=.#hhhhhhh#..XXXXXXXXXXXX..#KhhuhhK#.XX...F=....T
+t....==JD=J=.#hhhhhhh#..XXXXXXXXXXXX.F#hhhhhhh#.XXy...=....T
+Y....=3...XX.#W#sD##W#..XXXXXQQXXXXX..#hhhhhhh#.XX...3=....Y
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXQQXXXXXXX#W#sD##W#XXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Y....=....XX...F....y...XXXXXXXXXXXX.4..........XX....=.FT.Y
+T....=....XX.#########..pXXXXXXXXXXp..###########Y....=T...T
+T....=######.#ShhhhhS#....3XXXXXX3....#BhhhAAhhB#Y....=....T
+T....=#hhhh#.#hhhhhhh#.....XXXXXX.....#hhhhhhhhh#Y....=...TT
+t.T..=#hhhh#.#bhhhhhh#.....XXXXXX.....#bhhhhhhhh#Y....=TTT.T
+T....=#WD#W#.#W#sD##W#.....XXXXXX.....#hhhhhhhhh#Y....=....T
+T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXX#W#iD####W#Y....=..T.t
+TT...=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYY....=....T
+T....=.......11111111111F..XXXXXX...............y.....=....T
+TTT..=######.1LmmmammmL1...XXXXXX.....######.######...=....T
+TT...=#hhhh#.1mmmmmmmmm1...XXXXXX...F.#hhhh#.#hhhh#...=....T
+T..F.=#hhhh#.1mmmmmmmmm1...XXXXXX.....#hhhh#.#hhhh#...=....T
+t.F..=#WD#W#.12111D11121..FXXXXXX.....#WD#W#.#WD#W#..T=....T
+T....=F.....t..............XXXXXX...............F.....=T...T
+TT...======================XXXXXX======================..TTt
+T.T....T..............T....XXXXXX.........T.T......T.......T
+T..T......T.......T.TTT....XXXXXX...TTT.T.......T......T...T
+t...T.Tt....T...TT..T...T..XXXXXX.T.t.ttt.t.T....T..t.TTTTTT
+TTTt..F.....T......TT......XXXXXX....t...T......T.....T.TTTT
+TTTTTTTTTTtTTTTTTTTTtTTTTTTXXXXXXTtTttTtttTTtTtTTTTTTtTTTtTT
 
 [exit]
 x=27

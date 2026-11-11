@@ -8,11 +8,10 @@ bg=20,40,20
 [legend]
 . = floor_grass
 , = floor_dirt
-r = road
-T = tree|tree|tree2
+T = tree|tree|tree2|tree3
 t = pine_t
 f = fence_wood
-F = flower|flower2|floor_grass
+F = flower|flower2|flower3|floor_grass
 # = wall_wood
 = = wall_stone
 h = floor_wood
@@ -53,34 +52,42 @@ O = brazier
 v = floor_water
 j = deadtree_t
 y = bush
+Y = path
+J = bush_t
+z = scarecrow
+r = reeds
+l = wall_log
+V = boulder
+q = cart
+g = stump
 
 [rows]
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-TT..TT...T.T..T.TTT.TTT..T...TTT..TT
-T.......T..T.TT.....T.T.T..........T
-TT.....T....F....T..##########.....T
-T.....########......#HhhhhhhH#.....T
-T.....#BhhhhA#......#hhhhhhhh#.....T
-T.....#hhhhhh#......#hhhhhhhh#.....T
-T.....#hhhhhh#......#Hhhhhhhh#.....T
-T.....#W#D##W#......#W##D###W#.....T
-T......................F...........T
-T.................o................T
-T.........................F........T
-TrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrT
-TrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrT
+TTTTTTtTTTtTtTTtTTTTttTttTtTTTTTTTTT
+TT..TT...T.T..T.tTT.TTT..T...tTT..TT
+T.......t..T.Tg.....t.T.T........V.T
+tT.....t....F....t..llllllllll.....T
+t.....########......lHhhhhhhHl.....T
+T.....#BhhhhA#......lhhhhhhhhl.....t
+T.....#hhhhhh#......lhhhhhhhhl.....t
+T.....#hhhhhh#.....klHhhhhhhhl.....t
+T.....#W#D##W#.....blWllDlllWl.....T
+T........Y.............FY.....q....T
+T...V....Y........o.....Y..........T
+T........Y..............Y.F........T
+TYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYT
+T..................................t
 T..fffffff.ffffff..................T
 T..fccccccccccccf..F.fffff.ffff....T
+T..fccccccccccccf....f.......Hf....T
+tF.fccccccccccccf....f........f....t
+T..fccccczccccccf....f........f....T
 T..fccccccccccccf....f........f....T
-TF.fccccccccccccf....f........f....T
-T..fccccccccccccf....f........f....T
-T..fccccccccccccf....f........f....T
-T..fccccccccccccf....f........f....T
-T..fccccccccccccf....ffffffffff....T
-T.Fffffffffffffff..................T
-T..................................T
+T..fccccccccccccf....f.......Hf....T
+T..fccccccccccccf....ffffffffff.wr.T
+T.Fffffffffffffff..............wwwrt
+t.V...........................rwww.T
 T...............F..................T
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+tTTtTTTTttTTTTTTTtTtTTTTTTTtTTttTTtT
 
 [exit]
 x=1

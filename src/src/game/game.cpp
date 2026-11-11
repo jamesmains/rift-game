@@ -1200,18 +1200,17 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         bool vis = visible(x, y);
         int sx = x * TILE - cx, sy = y * TILE - cy;
         Color8 tint = c.tint;
-        Color8 bg = c.bg;
+        Color8 bg; Tile g; map->look(x, y, g, bg);   // joined pieces (paths, shores, rivers...) pick their piece here
         if (map->dark && !vis) { tint = RGB(tint.r / 3, tint.g / 3, tint.b / 3); bg = RGB(bg.r / 3, bg.g / 3, bg.b / 3); }
         else if (map->dark && !lit(x, y)) { tint = RGB(tint.r * 3 / 5, tint.g * 3 / 5, tint.b * 3 / 5); bg = RGB(bg.r / 2, bg.g / 2, bg.b / 2); }  // seen, but standing in shadow
         cv.fillRect(sx, sy, TILE, TILE, bg);
-        if (c.ground.valid()) {
-            Tile g = c.ground;
-            if (c.water && anim) { if (g.c == TL::WATER.c && g.r == TL::WATER.r) g = TL::WATER2; else if (g.c == TL::WATER2.c) g = TL::WATER; }
-            if (c.opaque) ctx.ts->drawOpaque(cv, g, sx, sy, 2, tint); else ctx.ts->draw(cv, g, sx, sy, 2, tint);
+        if (g.valid()) {
+            if (c.recolor) ctx.ts->drawRecolor(cv, g, sx, sy, 2, tint);
+            else if (c.opaque) ctx.ts->drawOpaque(cv, g, sx, sy, 2, tint); else ctx.ts->draw(cv, g, sx, sy, 2, tint);
         }
         if (c.prop.valid()) {
             Tile p = c.prop;
-            if (anim) { if (p.c == TL::FIRE.c && p.r == TL::FIRE.r) p = TL::BRAZIER; else if (p.c == TL::TORCH.c && p.r == TL::TORCH.r) p = TL::CANDLE; }
+            if (anim && p.c == TL::BRAZIER.c && p.r == TL::BRAZIER.r) p = TL::BRAZIER2;   // the lit brazier flickers
             Color8 pt = (map->dark && !vis) ? RGB(80, 80, 80) : C::White;
             ctx.ts->draw(cv, p, sx, sy, 2, pt);
         }

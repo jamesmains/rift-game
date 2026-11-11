@@ -18,7 +18,41 @@ struct TileKind {
     std::string biome;           // overworld biome name
     int moveCost = 1;
     int light = 0;               // light radius this tile gives off in dark maps (torches, braziers, crystals...)
+    // 1.0.13 joined pieces (paths, rivers, shores, bridges, streets): the sheet draws these as sets of pieces that meet
+    // their neighbours. edges= lists 16 ground tiles picked by which neighbours connect (mask N=1 E=2 S=4 W=8; an empty
+    // entry keeps the random ground). join= names the groups this kind belongs to, link= the groups its own pieces
+    // connect to (default: its join groups). under=1 fills the cell with the neighbouring ground's background, so a
+    // shore or a trail sits on the grass or sand next to it. recolor=1 draws the ground flat in the tint colour.
+    bool recolor = false, under = false;
+    std::vector<std::string> join, link;
+    std::vector<Tile> edges;
+    uint32_t joinBits = 0, linkBits = 0;   // resolved from join/link (see resolveTileKindGroups)
 };
+// Picks a cell's ground piece and background from its neighbours (edges=/join=/under=). nb(dx, dy) returns the
+// neighbouring kind, or nullptr off the map (counts as joined, so water and roads run off the edge).
+template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Color8& bg) {
+    if (k.edges.size() >= 16 && k.linkBits) {
+        auto joins = [&](int dx, int dy) { const TileKind* o = nb(dx, dy); return !o || (o->joinBits & k.linkBits) != 0; };
+        int m = (joins(0, -1) ? 1 : 0) | (joins(1, 0) ? 2 : 0) | (joins(0, 1) ? 4 : 0) | (joins(-1, 0) ? 8 : 0);
+        if (k.edges[m].valid()) ground = k.edges[m];
+    }
+    if (!k.under) return;   // props with under=1 and no edges just stand on the floor around them
+    // the ground most of the open neighbours stand on (sides count double; walls, doors and void don't count)
+    static const int D[8][3] = {{0, -1, 2}, {1, 0, 2}, {0, 1, 2}, {-1, 0, 2}, {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}};
+    Color8 cand[8]; int score[8], n = 0;
+    for (auto& d : D) {
+        const TileKind* o = nb(d[0], d[1]);
+        if (!o || (o->joinBits & k.linkBits) || o->opaque || o->blocksSight || o->name == "void") continue;
+        if (o->under && o->edges.empty()) continue;   // another prop: only real ground counts
+        if (o->water && !k.water && k.edges.empty()) continue;   // a prop by the water stands on the land side
+        int i = 0; while (i < n && !(cand[i].r == o->bg.r && cand[i].g == o->bg.g && cand[i].b == o->bg.b)) i++;
+        if (i == n) { cand[n] = o->bg; score[n++] = 0; }
+        score[i] += d[2];
+    }
+    int best = -1; for (int i = 0; i < n; i++) if (best < 0 || score[i] > score[best]) best = i;
+    if (best >= 0) bg = cand[best];
+}
+void resolveTileKindGroups();                     // after loading or editing kinds: join=/link= names to bits
 const TileKind* tileKind(const std::string& name);
 const std::vector<TileKind>& allTileKinds();
 std::vector<TileKind>& editableTileKinds();      // editor access
@@ -39,6 +73,7 @@ struct Cell {
     Color8 tint = C::White;
     Color8 bg = C::Black;
     bool opaque = false;
+    bool recolor = false;   // ground drawn flat in the tint colour (TileKind::recolor)
 };
 
 struct NPC {
@@ -123,6 +158,7 @@ struct Map {
     Cell& at(int x, int y) { return cells[(size_t)y * w + x]; }
     const Cell& at(int x, int y) const { return cells[(size_t)y * w + x]; }
     bool inBounds(int x, int y) const { return x >= 0 && y >= 0 && x < w && y < h; }
+    void look(int x, int y, Tile& ground, Color8& bg) const;   // the ground piece and background a cell draws with (joined pieces)
     bool walkable(int x, int y) const;
     bool blocksSight(int x, int y) const;
     void set(int x, int y, const std::string& kindName, Rng& rng);

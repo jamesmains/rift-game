@@ -21,32 +21,35 @@ U = tomb
 b = bones
 s = skull
 t = floor_tile
+X = rock
+1 = web_nw
+3 = web_ne
 
 [rows]
-##################################
-##################################
-##################################
-##################################
-##T....####################OtUtO##
-##.....#T..C.C......C.C..T#ttttt##
-##.....#..I...I....I...I..#ttttt##
-##........................#ttttt##
-##..........b.............Dttttt##
-##...C.#.............b....#ttttt##
-##.b...#..I...I....I...I..#ttttt##
-########s...............b.#ttttt##
-################.##########tbttt##
-################.#################
-################.#################
-################.#################
-################.#################
-#############T.....T##############
-#############.......##############
-#############.......##############
-#############...<...##############
-#############.......##############
-##################################
-##################################
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#######XXXXXXXXXXXXXXXXXX#######X
+X#T...3####################OtUtO#X
+X#.....#T..C.C......C.C..T#ttttt#X
+X#.....#..I...I....I...I..#ttttt#X
+X#........................#ttttt#X
+X#..........b.............Dttttt#X
+X#...C.#.............b....#ttttt#X
+X#.b...#..I...I....I...I..#ttttt#X
+X#######s...............b.#ttttt#X
+XXXXXXX#########.##########tbttt#X
+XXXXXXXXXXXXXXX#.#XXXXXXXX#######X
+XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
+XXXXXXXXXXXX####.####XXXXXXXXXXXXX
+XXXXXXXXXXXX#T.....T#XXXXXXXXXXXXX
+XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
+XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
+XXXXXXXXXXXX#...<...#XXXXXXXXXXXXX
+XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
+XXXXXXXXXXXX#########XXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 [exit]
 x=16

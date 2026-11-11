@@ -652,7 +652,7 @@ void Editor::drawKinds(InputState& in) {
         bool hv = ui.hover(lx, ry, lw - 8, rowH);
         if (i == kindSel) ui.cv->fillRect(lx + 1, ry, lw - 10, rowH, SEL); else if (hv) ui.cv->fillRect(lx + 1, ry, lw - 10, rowH, HOVER);
         ui.cv->fillRect(lx + 3, ry + 1, 16, 16, k.bg);
-        if (!k.ground.empty() && k.ground[0].valid()) { if (k.opaque) ts->drawOpaque(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); else ts->draw(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); }
+        if (!k.ground.empty() && k.ground[0].valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); else if (k.opaque) ts->drawOpaque(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); else ts->draw(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); }
         if (k.prop.valid()) ts->draw(*ui.cv, k.prop, lx + 5, ry + 3, 1);
         font->draw(*ui.cv, *ts, lx + 24, ry + 3, k.name, k.walkable ? TEXT : RGB(255, 150, 150));
         if (hv && in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; kindSel = i; ui.blur(); }
@@ -710,7 +710,7 @@ void Editor::drawKinds(InputState& in) {
     ui.label(fx + 22, cy + 2, "move cost"); kh("movecost", cy); if (ui.intField(fx + keyW, cy, 80, k.moveCost, 1, 9)) kindsDirty = true; cy += 30;
     // big preview
     ui.label(fx + 22, cy, "preview (as in game, 2x):"); cy += 14;
-    for (int i = 0; i < 6; i++) { int px = fx + 10 + i * 26; ui.cv->fillRect(px, cy, 24, 24, k.bg); Tile g = k.ground[i % k.ground.size()]; if (g.valid()) { if (k.opaque) ts->drawOpaque(*ui.cv, g, px, cy, 2, k.tint); else ts->draw(*ui.cv, g, px, cy, 2, k.tint); } if (k.prop.valid()) ts->draw(*ui.cv, k.prop, px, cy, 2); }
+    for (int i = 0; i < 6; i++) { int px = fx + 10 + i * 26; ui.cv->fillRect(px, cy, 24, 24, k.bg); Tile g = k.ground[i % k.ground.size()]; if (g.valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, g, px, cy, 2, k.tint); else if (k.opaque) ts->drawOpaque(*ui.cv, g, px, cy, 2, k.tint); else ts->draw(*ui.cv, g, px, cy, 2, k.tint); } if (k.prop.valid()) ts->draw(*ui.cv, k.prop, px, cy, 2); }
     cy += 34;
     // usage
     int used = 0; if (mapLoaded) for (auto& c : em.cells) if (split(c, '|')[0] == k.name) used++;
@@ -737,13 +737,17 @@ void Editor::floodFill(int x, int y, const std::string& spec) {
     while (!st.empty()) { auto [cx, cy] = st.back(); st.pop_back(); if (cx < 0 || cy < 0 || cx >= em.w || cy >= em.h || em.at(cx, cy) != from) continue; em.at(cx, cy) = spec; st.push_back({cx + 1, cy}); st.push_back({cx - 1, cy}); st.push_back({cx, cy + 1}); st.push_back({cx, cy - 1}); }
     mapDirty = true;
 }
-void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale) {
+void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int mx, int my) {
     std::string first = trim(split(spec, '|')[0]);
     const TileKind* k = tileKind(first);
     int sz = 12 * scale;
     if (!k) { ui.cv->fillRect(sx, sy, sz, sz, RGB(255, 0, 255)); return; }
-    ui.cv->fillRect(sx, sy, sz, sz, k->bg);
-    if (!k->ground.empty() && k->ground[0].valid()) { if (k->opaque) ts->drawOpaque(*ui.cv, k->ground[0], sx, sy, scale, k->tint); else ts->draw(*ui.cv, k->ground[0], sx, sy, scale, k->tint); }
+    Tile g = k->ground.empty() ? Tile{} : k->ground[0]; Color8 bg = k->bg;
+    for (auto& t : k->ground) if (t.valid()) { g = t; break; }
+    if (mx >= 0 && (!k->edges.empty() || k->under))   // joined pieces (paths, shores, rivers...) as the game draws them
+        tileKindLook(*k, [&](int dx, int dy) -> const TileKind* { int nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= em.w || ny >= em.h) return nullptr; return tileKind(trim(split(em.at(nx, ny), '|')[0])); }, g, bg);
+    ui.cv->fillRect(sx, sy, sz, sz, bg);
+    if (g.valid()) { if (k->recolor) ts->drawRecolor(*ui.cv, g, sx, sy, scale, k->tint); else if (k->opaque) ts->drawOpaque(*ui.cv, g, sx, sy, scale, k->tint); else ts->draw(*ui.cv, g, sx, sy, scale, k->tint); }
     if (k->prop.valid()) ts->draw(*ui.cv, k->prop, sx, sy, scale);
 }
 static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather"};
@@ -823,7 +827,7 @@ void Editor::drawMaps(InputState& in) {
             int i = paletteScroll + r; int ry = ty + 1 + r * rowH; const TileKind* k = tileKind(pal[i]);
             bool hv = ui.hover(x + 5, ry, lw - 10, rowH);
             if (i == psel) ui.cv->fillRect(x + 5, ry, lw - 10, rowH, SEL); else if (hv) ui.cv->fillRect(x + 5, ry, lw - 10, rowH, HOVER);
-            if (k) { ui.cv->fillRect(x + 7, ry + 1, 14, 14, k->bg); if (k->ground[0].valid()) { if (k->opaque) ts->drawOpaque(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); else ts->draw(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); } if (k->prop.valid()) ts->draw(*ui.cv, k->prop, x + 8, ry + 2, 1); }
+            if (k) { ui.cv->fillRect(x + 7, ry + 1, 14, 14, k->bg); if (k->ground[0].valid()) { if (k->recolor) ts->drawRecolor(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); else if (k->opaque) ts->drawOpaque(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); else ts->draw(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); } if (k->prop.valid()) ts->draw(*ui.cv, k->prop, x + 8, ry + 2, 1); }
             font->draw(*ui.cv, *ts, x + 26, ry + 2, pal[i], k && !k->walkable ? RGB(255, 150, 150) : TEXT);
             if (hv && in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; brush = pal[i]; }
         }
@@ -863,7 +867,7 @@ void Editor::drawMaps(InputState& in) {
     int c0 = viewX / cell, r0 = viewY / cell;
     for (int r = r0; r <= r0 + ah / cell + 1 && r < em.h; r++) for (int c = c0; c <= c0 + aw / cell + 1 && c < em.w; c++) {
         int sx = ax + c * cell - viewX, sy = ay + r * cell - viewY;
-        drawMapCell(sx, sy, em.at(c, r), zoom);
+        drawMapCell(sx, sy, em.at(c, r), zoom, c, r);
         if (showGrid && zoom == 2) { ui.cv->put(sx, sy, RGB(255, 255, 255, 40)); }
     }
     // objects

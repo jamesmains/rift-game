@@ -38,13 +38,32 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At import, boot_and_setup, tutorial, sprites_1010,
-  side_quests_1_0, story_choices and fight_to_victory pass; `main_quest` stops at "exit to crypt did not work" and
-  `desktop_persist` expects an `editor` icon at 0,0 - both already in the 1.0.10 source, not caused by the move.
+  (outdir must exist; see `src\tests\README.md`). At 1.0.13 boot_and_setup, tutorial, sprites_1010,
+  side_quests_1_0, story_choices, fight_to_victory and main_quest (to the ending) pass; `desktop_persist` expects
+  an `editor` icon at 0,0 (already so in the 1.0.10 source).
+- Don't pipe build.ps1 into `Select-Object -First N`: it stops reading and the build hangs. Redirect to a file.
 
 ## Version source
 `TRIFFALL_VERSION` in `src\src\core\version.h` (build.ps1 reads it). `TRIFFALL_SAVE_FORMAT` next to it: bump it when
 the save layout changes and add the step to `Game::migrateSave` (`src\src\game\saves.cpp`). Imported at 1.0.10.
+
+## Tiles (1.0.13)
+- Every map cell is a tile kind. `src\assets\data\tilekinds.txt` is the source of truth (sectioned, commented);
+  `src\tools\mktilekinds.py` (run by build.ps1) compiles it into `src\src\game\tilekinds_builtin.h`, the built-ins.
+  `tiles.h` keeps only pictures the code draws itself (chest, sign, altar, doors, brazier...).
+- 1.0.13 redefined every kind from the Tilebook description of the sheet plus a cell-by-cell look at it (no `tiles\`
+  folder exists for this project). Sheet facts: rows 5-7 are dark floor patterns (drawn over the kind's bg colour);
+  row 11 = trail pieces, row 12 = river pieces, row 41 = a 3x3 lake/shore set + fill (9,41), row 3 cols 52-68 = a full
+  asphalt road set, 10,40/11,40 = N-S/E-W bridge; rows 33-34 = overworld pictures; row 0 cols 0-10 are decorative
+  blocks that tile badly (walls use rows 2-4 instead).
+- Joined pieces: `edges=` (16 tiles by neighbour mask N1 E2 S4 W8), `join=`/`link=` groups, `under=1` (bg taken from
+  the neighbouring ground; also on every furniture/prop kind so it stands on whatever floor is around it),
+  `recolor=1`. Resolved at draw time in `tileKindLook` (world.h) via `Map::look`, and in the Editor's drawMapCell.
+- Map remakes kept every map's size and every NPC/chest/exit/trigger position (quests and tests use coordinates).
+  Dungeon walls not touching open floor are `rock`. Use `path` for 1-wide trails, `street`/`boardwalk` for wide ones
+  (a 2-wide `path` draws as a lattice), `floor_water` for ponds.
+- Known data warnings (Editor Check all, older than 1.0.13): ashfall trigger at 40,25 and marsh chest at 32,34 stand
+  on blocked tiles.
 
 ## Where things live
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,

@@ -9,7 +9,7 @@ bg=10,25,10
 . = floor_grass
 , = floor_dirt
 r = road
-T = tree|tree|tree2
+T = tree|tree|tree2|tree3
 t = pine_t
 f = fence_wood
 F = flower|flower2|floor_grass
@@ -53,28 +53,32 @@ O = brazier
 v = floor_water
 j = deadtree_t
 y = bush
+Y = path
+l = wall_log
+X = stump
+J = mushroom
 
 [rows]
-TTTTTTTTTTTTTTTTTTTTTTTT
-T......................T
-Tj......T....TT....T...T
-T.T.....T.T.......T....T
-T...........T.....TT...T
-T..........T..T........T
-T.................T....T
-T...T....######..T..T..T
-T.TT.....#Bhhu#........T
-T........#hhhK#........T
-T....T...#hhhh.....T...T
-T........#WD#W#.......jT
-T...T......,...........T
-T..........,.......T...T
-T..........,..T.T.j....T
-T..........,...T...j...T
-T..........,.....T.....T
-T...T.....,,,,.........T
-T.TT......,r,,..Tj.....T
-TTTTTTTTTTrrrrTTTTTTTTTT
+TTtTtTTtTTtTTTTtttTTTTTT
+t......................T
+Tj......T....Tt....T...t
+T.T.....t.T.......T....t
+T...........T...J.tT...T
+t..........T..t........T
+T.................t....t
+t...T....llllll..t..t..T
+T.TT.....lBhhul.....X..T
+t........lhhhKl........T
+t....T...lhhhh.....T...t
+T........lWDlWl.......jT
+t...T......Y...........T
+T.....X....Y.......t...T
+T..........Y..t.T.j....t
+T..J.......Y...T...j...T
+T..........Y.....t.....T
+T...T......Y...........T
+T.TT.......Y....tj.....T
+TTtTTtTtTt.Y..TTTTtTTtTT
 
 [exit]
 x=10

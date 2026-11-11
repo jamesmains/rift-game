@@ -9,8 +9,7 @@ music=murkwater
 [legend]
 . = floor_grass
 , = floor_dirt
-r = road
-T = tree|tree|tree2
+T = willow|tree|tree3|deadtree_t
 t = pine_t
 f = fence_wood
 F = flower|flower2|floor_grass
@@ -54,38 +53,43 @@ O = brazier
 v = floor_water
 j = deadtree_t
 y = bush
+X = boardwalk
+Y = path
+J = mire
+V = reeds
+q = floor_water
 
 [rows]
-TTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTT
-T.w............T..rrrrrr..w.........w..T
-T......ww..T..#######rr#######.......wwT
-T..w....j.w...#hhhhh#rr#hhhhh#.........T
-T....w........#hhhhh#rr#hhhhh#.w.w...wwT
-T....w..w.....#hhhhh#rr#hhhhh#.........T
-T.w..T.w......#WiD#W#rr#WsD#W#.......w.T
-Tw................rrrrrr...............T
-T..w..#####.......rrrrrr......#####....T
-T.....#hhh#.......rrrrrr......#hhh#....T
-T...T.#hhh#.w.....rrrrrr......#hhh#...wT
-T.....#hhh#.......rrrrrr......#hhh#..w.T
-Tw..w.#WDW#..w....rrrrrr......#WDW#....T
-T...~.......~~....rrrrrr....~..........T
-T..w~~~~~~~~~~....rrrrrr....~~~~~~~~...T
-T..j~~~~~~~~~~....rrorrr....~~~~~~~~..wT
-Tw......w.........rrrrrr...............T
-T..........j......rrrrrr......Tw.j.jj..T
-Tj...w............rrrrrr.....jj..w.....T
-T.T...............rrrrrr............T..T
-T...j.#####.w.....rrrrrr......#####....T
-T..j..#hhh#.......rrrrrr......#hhh#....T
-TT....#hhh#...................#hhh#....T
-T.w...#hhh#...w.....a......ww.#hhh#.w..T
-T.....#WDW....................#WDW#.w..T
-T..w.........w.........................T
-T.................rrrrrr...............T
-T....w.w......w...rrrrrrw.............wT
-T...j.............rrrrrr.ww....T.....jwT
-TTTTTTTTTTTTTTTTTTrrrrrrTTTTTTTTTTTTTTTT
+TTTTTTTTTTTTTTTTTTXXXXXXTTTTTTTTTTTTTTTT
+T.J............T..XXXXXX..J........VJ..T
+T.....VJJ.VT..#######XX#######.......JJT
+T..JVV.Vj.J...#hhhhh#XX#hhhhh#.V.....V.T
+T..VVJ..V.V...#hhhhh#XX#hhhhh#.J.JV..JJT
+T....JV.J.....#hhhhh#XX#hhhhh#.......V.T
+TVJV.TVJ......#WiD#W#XX#WsD#W#.......JVT
+TJ................XXXXXX...............T
+T..J..#####.......XXXXXX......#####....T
+T.....#hhh#.V.....XXXXXX......#hhh#....T
+T...T.#hhh#VJ.....XXXXXX......#hhh#...JT
+TV....#hhh#.......XXXXXX......#hhh#.VJVT
+TJV.JV#WDW#..J....XXXXXX......#WDW#....T
+T...~.......~~....XXXXXX....~.......V..T
+T..q~~~~~~~~~~q...XXXXXX...q~~~~~~~~qV.T
+TV.q~~~~~~~~~~q...XXoXXX...q~~~~~~~~q.JT
+TJ.qqqqqqqqqqqq...XXXXXX...qqqqqqqqqq.VT
+TV.V..VV...jV.....XXXXXX.....VTJ.jVjj..T
+Tj...J............XXXXXX.....jjV.J.....T
+T.T...............XXXXXX.........V..T..T
+T...j.#####.JV....XXXXXX......#####....T
+T..j..#hhh#.......XXXXXX......#hhh#....T
+TTV...#hhh#...................#hhh#....T
+T.J...#hhh#...J.....a.....VJJ.#hhh#VJ..T
+T.....#WDW..................V.#WDW#VJ..T
+T..J.........J.........................T
+T.............V...XXXXXX...............T
+T....JVJ......J...XXXXXXJV...........VJT
+T...j.............XXXXXX.JJ....T.....jJT
+TTTTTTTTTTTTTTTTTTXXXXXXTTTTTTTTTTTTTTTT
 
 [exit]
 x=19

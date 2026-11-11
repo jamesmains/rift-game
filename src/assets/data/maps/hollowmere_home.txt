@@ -16,14 +16,17 @@ b = barrel
 D = door_wood
 W = window
 f = fire
+r = floor_carpet
+w = wardrobe
+K = bookshelf
 
 [rows]
 ##########
-#B....S.f#
+#BwK..S.f#
 #......S.#
 #..TC....#
-#..CT....#
-#........#
+#..CTrrr.#
+#....rrr.#
 #b.......#
 #b.......#
 ####WD####

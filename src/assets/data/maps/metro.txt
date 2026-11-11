@@ -15,7 +15,7 @@ music=tech
 < = stairs_up
 A = table
 B = box
-C = wall_metal
+C = wall_concrete
 D = door_metal
 E = terminal
 F = reactor
@@ -24,7 +24,7 @@ I = pillar
 O = brazier
 R = riftscar
 S = server
-T = torch_wall
+T = torch_concrete
 _ = floor_dirt
 a = altar
 b = bones
@@ -36,38 +36,41 @@ r = road_line
 z = trash
 | = pipe_v
 ~ = floor_water
+X = rock
+1 = web_nw
+3 = web_ne
 
 [rows]
-###########################################################
-###############################################RRRRRRRRRR##
-##############mmESmmemmmm######################RORRRaRRRO##
-##############mmmmmmmmmmm#########mEmFFmmmemm##RRRRRRRRRR##
-##############mBmmmmmmmmm#########mmmmmmmmmmm##RRRIRRRIRR##
-##############mmmmmmmmmmm#########mmmmmmmmmmm##RRRRRRRRRR##
-##############|mmmmmmmm|m#########mmmmmmmmmmm##RRRRRRRRRR##
-###################.##############mmmmmmmmmmm##RORRRRRRRO##
-###################.##############BmmmmmmmmmS##RRRRRRRRRR##
-###################.####################.###########..#####
-###################.####################.###########..#####
-##T.........T######.####################.###########..#####
-##..<........######.####################.#######I......I###
-##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
-##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
-##..........rrrrrrrrrrrr~~~~~~rrrrrrrrrrrrrrrrrD........###
-##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
-##..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........###
-##.k......G..##.###############.l...........l.##I......I###
-##...z...z...##.###############...............#############
-###############.###############...............#############
-###############.###############..A..A..A..A...#############
-###############.###############...............#############
-#############______k###########...............#############
-#############_______###########B...G..z..k.B..#############
-#############_______#######################################
-#############b______#######################################
-###########################################################
-###########################################################
-###########################################################
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX############X
+XXXXXXXXXXXXX#############XXXXXXXXXXXXXXXXXXXX#RRRRRRRRRR#X
+XXXXXXXXXXXXX#mmESmmemmmm#XXXXXXX##############RORRRaRRRO#X
+XXXXXXXXXXXXX#mmmmmmmmmmm#XXXXXXX#mEmFFmmmemm##RRRRRRRRRR#X
+XXXXXXXXXXXXX#mBmmmmmmmmm#XXXXXXX#mmmmmmmmmmm##RRRIRRRIRR#X
+XXXXXXXXXXXXX#mmmmmmmmmmm#XXXXXXX#mmmmmmmmmmm##RRRRRRRRRR#X
+XXXXXXXXXXXXX#|mmmmmmmm|m#XXXXXXX#mmmmmmmmmmm##RRRRRRRRRR#X
+XXXXXXXXXXXXX######.######XXXXXXX#mmmmmmmmmmm##RORRRRRRRO#X
+XXXXXXXXXXXXXXXXXX#.#XXXXXXXXXXXX#BmmmmmmmmmS##RRRRRRRRRR#X
+XXXXXXXXXXXXXXXXXX#.#XXXXXXXXXXXX#######.###########..####X
+X#############XXXX#.#XXXXXXXXXXXXXXXXXX#.#XXXXXXXXX#..#XXXX
+X#T.........T#XXXX#.#XXXXXXXXXXXXXXXXXX#.#XXXXX#####..###XX
+X#..<........######.####################.#######I......I#XX
+X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
+X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
+X#..........rrrrrrrrrrrr~~~~~~rrrrrrrrrrrrrrrrrD........#XX
+X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
+X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
+X#.k......G..##.###############.l...........l.##I......I#XX
+X#...z...z...##.#XXXXXXXXXXXXX#...............###########XX
+X##############.#XXXXXXXXXXXXX#...............#XXXXXXXXXXXX
+XXXXXXXXXXXXXX#.#XXXXXXXXXXXXX#..A..A..A..A...#XXXXXXXXXXXX
+XXXXXXXXXXXX###.#####XXXXXXXXX#...............#XXXXXXXXXXXX
+XXXXXXXXXXXX#______k#XXXXXXXXX#...............#XXXXXXXXXXXX
+XXXXXXXXXXXX#_______#XXXXXXXXX#B...G..z..k.B..#XXXXXXXXXXXX
+XXXXXXXXXXXX#_______#XXXXXXXXX#################XXXXXXXXXXXX
+XXXXXXXXXXXX#b______#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXX#########XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 [exit]
 x=4

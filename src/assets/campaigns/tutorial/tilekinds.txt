@@ -1,14 +1,15 @@
 # Tile kinds the tutorial adds to the shared set.
 [kind]
 name=marker
-ground=6,5
+ground=
 prop=82,39
 walk=1
 sight=0
 water=0
 opaque=0
-tint=130,130,140
-bg=60,52,24
+tint=255,255,255
+bg=66,62,58
 encounter=0
 biome=
 cost=1
+under=1

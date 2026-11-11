@@ -24,6 +24,9 @@ if ($NoEditor) { $editor = "OFF"; $cmakeDir = "build\cmake-noeditor"; $kind = "n
 if ($Demo)     { $editor = "OFF"; $demoFlag = "ON"; $cmakeDir = "build\cmake-demo"; $kind = "demo"; $out = "build\game-demo"; $dist = "build\dist\demo" }
 Write-Host "Building Triffall v$version ($kind)..."
 
+# the built-in tile kinds are compiled from assets\data\tilekinds.txt (src\src\game\tilekinds_builtin.h is committed too)
+if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mktilekinds.py }
+
 cmake -S src -B $cmakeDir -A x64 "-DTRIFFALL_EDITOR=$editor" "-DTRIFFALL_DEMO=$demoFlag"   # quoted: PowerShell leaves $vars unexpanded in a bare -arg
 if ($LASTEXITCODE -ne 0) { Write-Host "CMake configure failed. Is Visual Studio with the C++ workload installed?" -ForegroundColor Red; exit 1 }
 cmake --build $cmakeDir --config Release --target Triffall triffall_headless

@@ -184,7 +184,7 @@ private:
     void loadMapFile(const std::string& f);
     void paintCell(int x, int y, const std::string& spec);
     void floodFill(int x, int y, const std::string& spec);
-    void drawMapCell(int sx, int sy, const std::string& spec, int scale);
+    void drawMapCell(int sx, int sy, const std::string& spec, int scale, int mx = -1, int my = -1);
     std::vector<std::string> paletteList() const;
     // ---- world ----
     Map* worldPreview = nullptr; int worldSeed = 1337; bool worldNeedsGen = true; int worldSel = -1; size_t worldSig = 0;

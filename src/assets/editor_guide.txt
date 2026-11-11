@@ -516,6 +516,18 @@ Save writes tilekinds.txt. Light: kinds such as torch, brazier, campfire,
 crystal and streetlamp light up dark maps around them. The radius comes from
 light=N in tilekinds.txt (the built-in kinds have sensible defaults).
 
+Joined pieces (paths, rivers, shores, bridges, streets): some kinds pick their
+picture from their neighbours. In tilekinds.txt, edges= lists 16 ground tiles
+chosen by which of the four neighbours connect (N=1 E=2 S=4 W=8, add them up;
+the first entry is for none, the last for all four), join= names the groups a
+kind belongs to and link= the groups its pieces connect to. under=1 puts the
+ground colour of the neighbours under the cell, so a trail or a shore sits on
+whatever grass, sand or snow is next to it, and a chair or a rock stands on
+the floor around it. recolor=1 paints the ground flat in the tint colour.
+These fields are kept when the Tiles tab saves, but are edited in the file.
+For example paint "path" for a one-cell trail, "street" for a paved square,
+"floor_water" for a pond (its shore draws itself) and "bridge" across it.
+
 Gotchas: deleting a kind turns every cell that used it into void. Renaming a
 kind breaks maps that use the old name - make a new kind instead.
 

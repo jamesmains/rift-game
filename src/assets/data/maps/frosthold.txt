@@ -7,11 +7,10 @@ bg=60,70,90
 music=frosthold
 
 [legend]
-. = snow
+. = floor_snow
 , = floor_dirt
-r = road
-T = snowpine
-t = rocks
+T = pine_t
+t = boulder
 f = fence_wood
 F = flower|flower2|floor_grass
 # = wall_wood
@@ -54,6 +53,10 @@ O = brazier
 v = floor_water
 j = deadtree_t
 y = bush
+X = street
+Y = path
+J = window_stone
+l = wall_log
 
 [rows]
 tttttttttttttttttttttttttttttttttt
@@ -62,7 +65,7 @@ t........TT......................t
 t................................t
 t..........T...........T...T.....t
 t...........T...T....T...........t
-t..............rrrr............T.t
+t..............YYYY............T.t
 t.T....T...============..........t
 t..........=LmmmZmmmmL=......T...t
 t..........=mmmmammmmm=..........t
@@ -70,20 +73,20 @@ t..........=mmmmmmmmmm=..........t
 t.T....T...=mmmmmmmmmm=..........t
 t..........=mmmmmmmmmm=......T...t
 t...T......=OmmmmmmmmO=..........t
-t.T.....T..=W===D====W=..........t
-t........T.....rrrr..............t
-t..............rrrr..............t
-t...T......######rr######...T..T.t
-t.T.....T..#Bhhh#rr#Shhu#........t
-t..........#hhhh#rr#hhhh#........t
-t..........#hhhh#rr#hhhh#..TT....t
-t..........#WD#W#rr#WD#W#..T.....t
-t.......T......rrrr..............t
-t............T.rrrr.......T.T....t
-t..............rrrr..............t
-t.........T....rrrr..............t
-t..............rrrr..............t
-tttttttttttttttrrrrttttttttttttttt
+t.T.....T..=J===D====J=..........t
+t........T.....XXXX..............t
+t..............XXXX..............t
+t...T......llllllXXllllll...T..T.t
+t.T.....T..lBhhhlXXlShhul........t
+t..........lhhhhlXXlhhhhl........t
+t..........lhhhhlXXlhhhhl..TT....t
+t..........lWDlWlXXlWDlWl..T.....t
+t.......T......XXXX..............t
+t............T.XXXX.......T.T....t
+t..............XXXX..............t
+t.........T....XXXX..............t
+t..............XXXX..............t
+tttttttttttttttXXXXttttttttttttttt
 
 [exit]
 x=15

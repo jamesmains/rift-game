@@ -55,6 +55,7 @@ A = table
 q = chair
 f = fence
 G = grave
+X = ship_window
 
 [rows]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,7 +66,7 @@ G = grave
 ~...~..................~..................T.U....~
 ~~..............R~...~~.............~~...........~
 ~T.......T.R................~~~..~...............~
-~T~.........yyyyWyyyyWyyyyWyyyyWyyyyWyyyyy.......~
+~T~.........yyyyXyyyyXyyyyXyyyyXyyyyXyyyyy.......~
 ~...........yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy.......~
 ~.R.....~.~RyyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.....~.~
 ~.....T.....yyFFFFFFFFFFFFFFFFFFFFFFFFFFyy.......~

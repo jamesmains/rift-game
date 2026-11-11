@@ -18,48 +18,53 @@ c = crystal
 m = mushroom
 r = rocks
 w = web
+X = rock
+1 = web_nw
+3 = web_ne
+C = cart
+L = lantern
 
 [rows]
-####################################################
-####################################################
-######..############################################
-####.....w##########################################
-###........#########################################
-##r..m......########################################
-##w....m.....#######################################
-##....b..b...#######################################
-##mMr.###....#######################################
-##....###....#######################################
-##....###....#######################################
-##....##..r...######################################
-###..##..........###################################
-#######.m.........##################################
-#######........w..##################################
-########b....w.....#################################
-########...b.......############..###################
-########.....br....###########..b.##################
-########...........###..######....#....#############
-########............#....####..........#############
-#########..............wM.##.....##....#############
-#########.<.........m..........b####################
-#########...####m...w....w....b.####################
-########...#####..m.......m.....####################
-######..m.####.................#####################
-#####.....###r................######################
-#####......#.M.....w....###..#######################
-#####.................##############################
-######..........m....###############################
-######.....##.......m###############################
-#####.....####........##############################
-####w....######.......##############################
-###m...b#######.....w..#############################
-###...#########..w..c..#############################
-################......##############################
-################.....###############################
-####################################################
-####################################################
-####################################################
-####################################################
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXX####XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXX###.3###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX##.....w##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X##1......3##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#r..m.....3##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#w....m.....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#....b..b...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#mMr.###....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#....#X#L...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#....###....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#....##..r...####XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X##..##.........3##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#####.m........3#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXX#........w..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXX##b....w.....#XXXXXXXXXX####XXXXXXXXXXXXXXXXXX
+XXXXXXX#...b.......#XXXXXXXXX##..##XXXXXXXXXXXXXXXXX
+XXXXXXX#.....br....#X####XXXX#1.b.######XXXXXXXXXXXX
+XXXXXXX#..........C###..##XX##....#...3#XXXXXXXXXXXX
+XXXXXXX#............#...3####..........#XXXXXXXXXXXX
+XXXXXXX##..............wM.##.....##....#XXXXXXXXXXXX
+XXXXXXXX#.<.........m.....C....b########XXXXXXXXXXXX
+XXXXXXX##...####m...w....w....b.#XXXXXXXXXXXXXXXXXXX
+XXXXX###1..#####..m.......m.....#XXXXXXXXXXXXXXXXXXX
+XXXX##..m.####.................##XXXXXXXXXXXXXXXXXXX
+XXXX#1....###r................##XXXXXXXXXXXXXXXXXXXX
+XXXX#......#.M.....w....###..##XXXXXXXXXXXXXXXXXXXXX
+XXXX#.................###X####XXXXXXXXXXXXXXXXXXXXXX
+XXXX##..........m....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXX##.....##.......m##XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXX##.....####........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX##w....##XX##.......##XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#m...b##XXXX#.....w.3#XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#...###XXXXX#..w..c..#XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#####XXXXXXX##......##XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXX#.....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXX#######XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 [enemy]
 group=imp,scorpion,dragonling

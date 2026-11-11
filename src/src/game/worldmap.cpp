@@ -154,8 +154,8 @@ void Game::drawWorldMap(Canvas& cv, InputState& in) {
         Color8 col;
         if (k.water) col = RGB(70, 110, 190);
         else if (startsWith(k.name, "loc_")) col = RGB(230, 60, 60);
-        else if (k.name == "road") col = RGB(150, 110, 60);
-        else { Color8 t = c.tint; float m = k.walkable ? 0.75f : 0.45f; col = RGB((uint8_t)(t.r * m), (uint8_t)(t.g * m), (uint8_t)(t.b * m)); if (k.biome == "snow") col = RGB(220, 225, 235); }
+        else if (k.name == "road" || k.name == "path" || k.name == "bridge") col = RGB(150, 110, 60);
+        else { Color8 t = c.bg; float m = k.walkable ? 1.0f : 0.7f; col = RGB((uint8_t)(t.r * m), (uint8_t)(t.g * m), (uint8_t)(t.b * m)); if (k.biome == "snow") col = RGB(220, 225, 235); }
         cv.fillRect(MX + x * S, MY + y * S, S, S, col);
     }
     // locations
@@ -256,7 +256,7 @@ void Game::drawLocalMap(Canvas& cv, InputState& in) {
         if (k.water || c.water) col = RGB(70, 110, 190);
         else if (!c.walkable && k.name != "void") col = RGB(84, 64, 40);
         else if (k.name == "void") col = RGB(40, 32, 22);
-        else { Color8 t = c.tint; col = RGB((uint8_t)(t.r * 0.35f + 120), (uint8_t)(t.g * 0.35f + 104), (uint8_t)(t.b * 0.35f + 76)); }
+        else { Color8 t = c.bg; col = RGB((uint8_t)(t.r * 0.35f + 120), (uint8_t)(t.g * 0.35f + 104), (uint8_t)(t.b * 0.35f + 76)); }
         cv.fillRect(x0, y0, x1 - x0, y1 - y0, col);
     }
     for (auto& d : m->doors) if (m->inBounds(d.x, d.y) && m->at(d.x, d.y).explored) cv.fillRect(f.ox + (int)(d.x * f.sc), f.oy + (int)(d.y * f.sc), std::max(1, (int)f.sc), std::max(1, (int)f.sc), d.open ? RGB(200, 150, 80) : RGB(150, 90, 40));

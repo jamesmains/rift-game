@@ -18,44 +18,48 @@ c = crystal
 m = mushroom
 r = rocks
 w = web
+X = rock
+1 = web_nw
+3 = web_ne
+B = rocks
 
 [rows]
-################################################
-#########################....###################
-#######################..m....##################
-#################......b...wr.##################
-################....m....##.b.##################
-################.....r..####...#################
-###############........#####.M..################
-###############......#######...wm..#############
-###...#########.....#######.c...cb...###########
-##m....########.w....######.........b.##########
-##.....#######......w#####.b..........##########
-###....######........#####..m....b....##########
-###...######.........######cm.....m..###########
-##..<.#####.b.........#####..........###########
-##.....###.m....c.m...#####..........#...#######
-###........r..........#####........b.....#######
-###.....m....b..b......#########mr...#...#######
-###......m...r..b.....c##########...############
-###....r...br....m......########################
-####cw......m...........########################
-####.r...r.##..........#########################
-####...b..##########.m##########################
-###b......######################################
-###.....m#######################################
-###b...M.#######################################
-###.....########################################
-###.cc.#########################################
-###..b##########################################
-##b..###########################################
-##...###########################################
-##...###########################################
-###.############################################
-################################################
-################################################
-################################################
-################################################
+XXXXXXXXXXXXXXXXXXXXXXXX######XXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXX###....##XXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXX#######1.m....#XXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXX##.....Bb...wr.#XXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXX#....m....##.b.##XXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXX##.....r..####...##XXXXXXXXXXXXXXX
+XXXXXXXXXXXXXX#........##XX#.M..####XXXXXXXXXXXX
+XX#####XXXXXXX#......###XX##...wm.3###XXXXXXXXXX
+X##1..##XXXXXX#.....##XXXX#.c...cb...##XXXXXXXXX
+X#m....#XXXXX##.w....#XXX##.........b3#XXXXXXXXX
+X#.....#XXXX##......w#XXX#1b..........#XXXXXXXXX
+X##....#XXX##........#XXX#..m....b....#XXXXXXXXX
+X##...##XX##.........##XX##cm.....m.B##XXXXXXXXX
+X#..<.##X##.b........3#XXX#..........#####XXXXXX
+X#.....###.m....c.m...#XXX#..........#...#XXXXXX
+X##......B.r..........##XX#........b.....#XXXXXX
+XX#.....m....b..b......#XX######mr...#...#XXXXXX
+XX#......m...r..b.....c##XXXXXX##...######XXXXXX
+XX#....r...br....m.....3#XXXXXXX#####XXXXXXXXXXX
+XX##cw......m...........#XXXXXXXXXXXXXXXXXXXXXXX
+XXX#Br...r.##..........##XXXXXXXXXXXXXXXXXXXXXXX
+XX##...b..##########.m##XXXXXXXXXXXXXXXXXXXXXXXX
+XX#b......#XXXXXXXX####XXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.....m##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#b...M.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.cc.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X##..b##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#b..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X##.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 [enemy]
 group=goblin,goblin,bat

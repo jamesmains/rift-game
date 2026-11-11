@@ -28,6 +28,28 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.0.13 every tile redrawn
+
+* **Every tile kind redefined** from the Tilebook description of the Urizen sheet: overworld pictures (forests, hills,
+  mountains, sand, snow, swamp, places) use the sheet's overworld row; towns and dungeons use its walls, floors, doors,
+  furniture and plants. Before, water was half snow clouds, sand was a flower field, roads were a dungeon floor, hills
+  were grass tufts and the cave entrance was a hill; town "stone" walls are now masonry instead of a bracket pattern.
+* **Joined pieces**: trails, rivers, pond and sea shores, bridges and modern roads pick the right piece for their
+  neighbours (`edges=`, `join=`, `link=` and `under=` in `tilekinds.txt`, see the Editor guide). The Editor's map view
+  draws them the same way.
+* **Every map remade** with the new tiles. Dungeons: solid rock behind their walls, each with its own stone (icy
+  Rimehollow, purple Rift Core, the bandits' palisade camp), cobwebs in crypt corners. Towns: trails and cobbled
+  streets, ponds with shores, windows that match their walls, Hollowmere's cottage as a little house, its stream
+  flowing under the road into a pond, a fenced graveyard and garden; Millbrook's log lodge and duck pond;
+  Murkwater's boardwalk and piers over real water; Frosthold's log houses in the snow; palms round Sunscar's well;
+  Gullwatch's pier and boats. Every NPC, chest, exit and trigger stayed where it was.
+* New tile kinds: `path`, `street`, `boardwalk`, `ford`, `asphalt`, `rock`, `floor_flag`, `floor_plank`, `floor_ice`,
+  `floor_rift`, `floor_snow`, `wall_fieldstone`, `wall_log`, `palisade`, `wall_ice`, `wall_rift`, `wall_green`,
+  `window_stone`/`_brick`/`_gray`/`_metal`, `torch_<wall>`, `door_stone`, `ladder`, `candle`, `lantern`, beds, tables,
+  chairs, wardrobe, couch, bar, graves, cobweb corners, fences, cart, wagon, boat, anchor, crops, scarecrow, flowers,
+  trees (oak, willow, pine, palm), stump, reeds, lily pad, boulder.
+* The built-in tile kinds are compiled from `assets/data/tilekinds.txt` (`tools/mktilekinds.py`, run by the build).
+
 ## 1.0.10 the right sprites
 
 * **Every sprite checked against the Tilebook** description of the Urizen sheet (its names, row/race and column/pose tags,

@@ -9,9 +9,8 @@ music=sunscar
 [legend]
 . = floor_sand
 , = floor_dirt
-r = road
-T = cactus
-t = rocks
+T = cactus_t
+t = boulder
 f = fence_wood
 F = flower|flower2|floor_grass
 # = wall_wood
@@ -54,36 +53,40 @@ O = brazier
 v = floor_water
 j = deadtree_t
 y = dune
+X = street
+Y = path
+J = window_stone
+V = palm
 
 [rows]
 tttttttttttttttttttttttttttttttttttttttt
 t..T.........y.........................t
-t...y....T.......................T.....t
+t...y....T.......................T.V...t
 t..........T............y...........y..t
 t.y....y...............................t
 t..............................y.......t
-ty...y............rrrr.............y.T.t
-t.................rrrr.................t
-t.......========..rrrr..########.......t
-t....y..=mmmmmm=..rrrr..#hhhhhh#.....y.t
-t.......=mmmmmm=..rrrr..#hhhhhh#.......t
-t.......=mmmmmm=..rrrr..#hhhhhh#.......t
-t.......=W=D==W=..rrrr..#WsD##W#.......t
-t.................rrrr.................t
-t..y.y............rror.................t
-t.................rrrr.................t
-t.......########..rrrr..========.......t
-t.......#hhhhhh#..rrrr..=mmmmmm=.......t
-t...y...#hhhhhh#..rrrr..=mmmmmm=.......t
-t.T.....#hhhhhh#..rrrr..=mmmmmm=.......t
-t.......#WiD##W#..rrrr..=W=D==W=.....yyt
-t.................rrrr.................t
-t....y.........y..rrrr.................t
-t...........y.....rOrrO................t
-t...........y.....rrrr....y............t
-t..........T......rrrr............T....t
-t.................rrrr.............y...t
-ttttttttttttttttttrrrrtttttttttttttttttt
+ty...y............XXXX.............y.T.t
+t.................XXXX.................t
+t.......========..XXXX..########.......t
+t....y..=mmmmmm=..XXXX..#hhhhhh#.....y.t
+t.......=mmmmmm=..XXXX..#hhhhhh#.......t
+t.......=mmmmmm=..XXXX..#hhhhhh#.......t
+t.......=J=D==J=..XXXX..#WsD##W#.......t
+t................VXXXXV................t
+t..y.y............XXoY.................t
+t................VXXXXV................t
+t.......########..XXXX..========.......t
+t.......#hhhhhh#..XXXX..=mmmmmm=.......t
+t...y...#hhhhhh#..XXXX..=mmmmmm=.......t
+t.T.....#hhhhhh#..XXXX..=mmmmmm=.......t
+t.......#WiD##W#..XXXX..=J=D==J=.....yyt
+t.................XXXX.................t
+t....y.........y..XXXX.................t
+t...........y.....YOXXO................t
+t...........y.....XXXX....y............t
+t....V.....T......XXXX............T....t
+t.................XXXX.............y...t
+ttttttttttttttttttXXXXtttttttttttttttttt
 
 [exit]
 x=18
