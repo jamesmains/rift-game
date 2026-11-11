@@ -26,6 +26,8 @@ struct TileKind {
     bool recolor = false, under = false;
     // 1.0.14 shift=N: the joined piece is drawn N sheet pixels lower (trails: the sheet draws them across the middle of
     // the cell, but people stand at the bottom of it, so without this they look like they hover over the path).
+    // 1.0.16: bridges use shift=3 too (the E-W bridge then ends where the trail does, under the feet; 3 keeps the N-S
+    // bridge's 3-pixel plank pattern seamless).
     int shift = 0;
     std::vector<std::string> join, link;
     std::vector<Tile> edges;
@@ -35,6 +37,7 @@ struct TileKind {
 // neighbouring kind, or nullptr off the map (counts as joined, so water and roads run off the edge).
 // mask (optional) gets the joined sides (N1 E2 S4 W8); corners (optional) the corners where the piece is part of a
 // 2x2 block of its own kind (NE1 SE2 SW4 NW8, off the map doesn't count), so 2-wide roads draw solid, not as a lattice.
+constexpr int MASK_RUNS_NORTH = 16;   // extra bit tileKindLook adds to mask (see below)
 template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Color8& bg, int* mask = nullptr, int* corners = nullptr) {
     if (mask) *mask = 0;
     if (corners) *corners = 0;
@@ -42,7 +45,13 @@ template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Colo
         auto joins = [&](int dx, int dy) { const TileKind* o = nb(dx, dy); return !o || (o->joinBits & k.linkBits) != 0; };
         int m = (joins(0, -1) ? 1 : 0) | (joins(1, 0) ? 2 : 0) | (joins(0, 1) ? 4 : 0) | (joins(-1, 0) ? 8 : 0);
         if (k.edges[m].valid()) ground = k.edges[m];
-        if (mask) *mask = m;
+        if (mask) {
+            *mask = m;
+            // 1.0.16: MASK_RUNS_NORTH - the piece carries on into the cell above (a trail or bridge of its own groups, not
+            // the water a bridge links to), so a shifted piece fills the top of its cell instead of leaving a gap
+            const TileKind* o = nb(0, -1);
+            if (!o || (!o->water && (o->joinBits & (k.joinBits | k.linkBits)))) *mask |= MASK_RUNS_NORTH;
+        }
         if (corners && k.joinBits) {
             auto same = [&](int dx, int dy) { const TileKind* o = nb(dx, dy); return o && (o->joinBits & k.joinBits) != 0; };
             bool n = same(0, -1), e = same(1, 0), s = same(0, 1), w = same(-1, 0);

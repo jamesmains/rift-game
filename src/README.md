@@ -28,6 +28,12 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.0.16 bridges under your feet
+
+* **Standing on the bridge**: bridges are drawn a little lower like the trails, so on an east-west bridge your feet
+  land on the planks instead of over the water, and the bridge lines up with the path at both ends.
+* Saving tile kinds from the Editor no longer drops their `shift=` setting.
+
 ## 1.0.15 back to black
 
 * **Black ground, as the tileset was drawn**: every land tile is drawn on black again with its pattern in a dim shade

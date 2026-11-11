@@ -71,8 +71,11 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   enemies, chests, signs, drops. `drawLit` still lifts very dark sprites (the grey warrior).
 - Trails: `shift=4` on `path`/`road`. In the game (`Game::drawWorld`) shifted pieces are drawn after all ground and
   before props, spilling `shift` px into the cell below (not into an opaque cell), so feet land inside the trail. The
-  Editor keeps them clipped to their cell (`drawGroundPiece(..., spill=false)`). Bridges are not shifted. 2x2 blocks
-  of recoloured trails fill solid.
+  Editor keeps them clipped to their cell (`drawGroundPiece(..., spill=false)`). 2x2 blocks of recoloured trails fill
+  solid. 1.0.16: `bridge` has `shift=3` (the E-W piece then ends where the shifted path does, under the feet; 3 keeps
+  the N-S piece's 3-px plank pattern seamless). The top-of-cell fill for shifted pieces uses `MASK_RUNS_NORTH` (bit 16
+  that `tileKindLook` adds to mask: the north neighbour shares the kind's join/link groups and isn't water), not
+  mask bit 1, because a bridge's link= is water. `tileKindsText` (Editor save) now writes `shift=`.
 - Headless screenshots: wait ~120 frames after `teleport` before `shot`, or the fade-in darkens the picture.
 - Source files are mixed: some .cpp/.h are CRLF (game.cpp, editor.cpp, world.*), the rest LF. `* -text` keeps them as
   committed, so keep each file's line endings when editing with scripts.

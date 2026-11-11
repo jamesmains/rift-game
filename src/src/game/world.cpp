@@ -77,7 +77,7 @@ void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, i
             cv.clip = {x0, y0, std::max(0, x1 - x0), std::max(0, y1 - y0)};
         };
         clipTo(sx, sy, S, spill ? S + shift : S); piece(sy + shift);
-        if (mask & 1) { clipTo(sx, sy, S, shift); piece(sy); }   // the path comes in from the north: no gap at the top
+        if (mask & MASK_RUNS_NORTH) { clipTo(sx, sy, S, shift); piece(sy); }   // the path comes in from the north: no gap at the top
         cv.clip = keep;
     }
     if (recolor && corners) {
@@ -101,6 +101,7 @@ std::string tileKindsText(const std::vector<TileKind>& kinds) {
         if (!k.link.empty()) o += "link=" + joinList(k.link) + "\n";
         if (!k.edges.empty()) { o += "edges="; for (size_t i = 0; i < k.edges.size(); i++) o += (i ? "|" : "") + tileStr(k.edges[i]); o += "\n"; }
         if (k.under) o += "under=1\n";
+        if (k.shift) o += fmt("shift=%d\n", k.shift);   // 1.0.16: the Editor's save used to drop shift=
         o += "\n";
     }
     return o;
