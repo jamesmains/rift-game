@@ -11,3 +11,4 @@ src/build*/
 src/out/
 src/saves/
 tools/__pycache__/
+.ideajotter-release-notes.json

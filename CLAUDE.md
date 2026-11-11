@@ -17,10 +17,17 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 ## Build and run
 - `.\build.ps1` -> `build\game\Triffall.exe` + `assets\` (without `assets\new-art`) + `README.txt`. Builds the
   full game with the Editor, plus `triffall_headless.exe` in `build\cmake\Release\`. `build\game\saves\` is kept.
-- `.\build.ps1 -NoEditor` (player build, `build\cmake-noeditor`) and `.\build.ps1 -Demo` (`build\cmake-demo`).
+- `.\build.ps1 -NoEditor` (player build: `build\cmake-noeditor` -> `build\game-noeditor`) and `.\build.ps1 -Demo`
+  (`build\cmake-demo` -> `build\game-demo`). Each variant has its own output folder and `saves\`.
+- `-Package` (with any variant) also writes a clean hand-out copy without `saves\` to `build\dist\<full|noeditor|demo>`.
 - `.\build.ps1 -Release -Notes "..."` -> `releases\<version>\`, `releases\triffall-v<version>-windows.zip`, and
   `releases\latest.json` (only the full build writes latest.json; -NoEditor/-Demo releases get a suffix).
-- `.\run.ps1` builds if sources are newer than the exe, then starts the game.
+- `.\run.ps1 [-NoEditor|-Demo]` builds that variant if sources are newer than its exe, then starts it. No Read-Host
+  (Idea Jotter runs it headless).
+- `builds.json` lists the three variants (Full game, No Editor, Demo) for Idea Jotter's Project tab: run with
+  `run.ps1 [-NoEditor|-Demo]`, package with `build.ps1 [...] -Package`, zip `build\dist\<variant>`. A Steam build
+  (`TRIFFALL_STEAM`) isn't listed: no Steamworks SDK here. Add it to builds.json once it can be built.
+- A first CMake configure once failed for -NoEditor/-Demo and worked on rerun (likely the raylib download); just rerun.
 - `.\install.ps1` copies the latest release to `%LOCALAPPDATA%\Programs\Triffall` (keeping its `saves\`) with a
   Start Menu shortcut. No in-game self-update yet (follow-up): re-run install.ps1 to update.
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder).
@@ -59,7 +66,8 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - 1.0.7 (playtest fixes, Spleen font), 1.0.8 (Tutorial campaign), 1.0.9 (desktop icons/wallpaper saved) - 10-24.
 - 1.0.10 (10-30): every sprite checked against the Tilebook description of the Urizen sheet (~120 fixes).
 - A "1.0.11 every area rebuilt" (Mini Medieval art, animation, roofs) exists only as `triffall_src_1.0.11 DO NOT
-  USE.zip` (dated before 1.0.10); the owner marked it not to use. Not imported.
+  USE.zip` (dated before 1.0.10); the owner marked it not to use. Not imported. The real 1.0.11 (2026-11-11) is
+  unrelated: it only added the build variants and builds.json.
 
 Unfinished (from RELEASE_CHECKLIST / STEAM.md): human playtests, a clean-PC Windows test, Steam Deck test, the Steam
 store page and Steamworks setup, listening to the generated music by ear.
