@@ -28,6 +28,17 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.0.14 easier to see
+
+* **People and things stand out**: party members, townsfolk, monsters, chests, signs and dropped items get a thin dark
+  outline (the sheet draws them for a black background), and very dark sprites such as the warrior are drawn lighter.
+* **Calmer ground**: grass, meadows, tall grass, swamp, wasteland and the town and dungeon floors (wood, tile, stone,
+  flagstone, plank, marble, carpet, cave, street, rift) draw their pattern as a soft texture in a shade of their own
+  colour (`recolor=1`) instead of mixed bright or dark pictures. Patterned floors no longer look like a patchwork.
+* **Trails sit under your feet**: `path` and `road` pieces are drawn lower in the cell (new `shift=` in
+  `tilekinds.txt`, in sheet pixels), so people walk on the trail instead of floating over it.
+* **Wide roads are solid**: a trail two or more cells wide fills in instead of drawing as a lattice with holes.
+
 ## 1.0.13 every tile redrawn
 
 * **Every tile kind redefined** from the Tilebook description of the Urizen sheet: overworld pictures (forests, hills,

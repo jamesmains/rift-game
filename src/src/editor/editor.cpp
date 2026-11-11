@@ -744,10 +744,11 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     if (!k) { ui.cv->fillRect(sx, sy, sz, sz, RGB(255, 0, 255)); return; }
     Tile g = k->ground.empty() ? Tile{} : k->ground[0]; Color8 bg = k->bg;
     for (auto& t : k->ground) if (t.valid()) { g = t; break; }
+    int mask = 0, corners = 0;
     if (mx >= 0 && (!k->edges.empty() || k->under))   // joined pieces (paths, shores, rivers...) as the game draws them
-        tileKindLook(*k, [&](int dx, int dy) -> const TileKind* { int nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= em.w || ny >= em.h) return nullptr; return tileKind(trim(split(em.at(nx, ny), '|')[0])); }, g, bg);
+        tileKindLook(*k, [&](int dx, int dy) -> const TileKind* { int nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= em.w || ny >= em.h) return nullptr; return tileKind(trim(split(em.at(nx, ny), '|')[0])); }, g, bg, &mask, &corners);
     ui.cv->fillRect(sx, sy, sz, sz, bg);
-    if (g.valid()) { if (k->recolor) ts->drawRecolor(*ui.cv, g, sx, sy, scale, k->tint); else if (k->opaque) ts->drawOpaque(*ui.cv, g, sx, sy, scale, k->tint); else ts->draw(*ui.cv, g, sx, sy, scale, k->tint); }
+    drawGroundPiece(*ui.cv, *ts, k, g, sx, sy, scale, k->tint, k->recolor, k->opaque, mask, corners);
     if (k->prop.valid()) ts->draw(*ui.cv, k->prop, sx, sy, scale);
 }
 static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather"};

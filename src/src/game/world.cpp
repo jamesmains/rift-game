@@ -41,7 +41,7 @@ void rebuildTileKindIndex() { gKindIndex.clear(); for (size_t i = 0; i < gKinds.
 static std::string tileStr(Tile t) { return t.valid() ? fmt("%d,%d", t.c, t.r) : ""; }
 static std::string joinList(const std::vector<std::string>& v) { std::string o; for (size_t i = 0; i < v.size(); i++) o += (i ? "," : "") + v[i]; return o; }
 static void readJoinFields(const ConfigSection& sec, TileKind& k) {
-    k.recolor = sec.geti("recolor", 0) != 0; k.under = sec.geti("under", 0) != 0;
+    k.recolor = sec.geti("recolor", 0) != 0; k.under = sec.geti("under", 0) != 0; k.shift = sec.geti("shift", 0);
     k.join.clear(); k.link.clear(); k.edges.clear();
     for (auto& g : split(sec.get("join"), ',')) if (!trim(g).empty()) k.join.push_back(trim(g));
     for (auto& g : split(sec.get("link"), ',')) if (!trim(g).empty()) k.link.push_back(trim(g));
@@ -53,12 +53,39 @@ void resolveTileKindGroups() {
     for (auto& k : gKinds) { k.joinBits = 0; for (auto& g : k.join) k.joinBits |= bit(g); }
     for (auto& k : gKinds) { k.linkBits = 0; for (auto& g : (k.link.empty() ? k.join : k.link)) k.linkBits |= bit(g); }
 }
-void Map::look(int x, int y, Tile& ground, Color8& bg) const {
+void Map::look(int x, int y, Tile& ground, Color8& bg, int* mask, int* corners) const {
     const Cell& c = at(x, y); ground = c.ground; bg = c.bg;
+    if (mask) *mask = 0;
+    if (corners) *corners = 0;
     if (c.kind >= gKinds.size()) return;
     const TileKind& k = gKinds[c.kind];
     if (k.edges.size() < 16 && !k.under) return;
-    tileKindLook(k, [&](int dx, int dy) -> const TileKind* { int nx = x + dx, ny = y + dy; if (!inBounds(nx, ny)) return nullptr; uint16_t kk = at(nx, ny).kind; return kk < gKinds.size() ? &gKinds[kk] : nullptr; }, ground, bg);
+    tileKindLook(k, [&](int dx, int dy) -> const TileKind* { int nx = x + dx, ny = y + dy; if (!inBounds(nx, ny)) return nullptr; uint16_t kk = at(nx, ny).kind; return kk < gKinds.size() ? &gKinds[kk] : nullptr; }, ground, bg, mask, corners);
+}
+void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners) {
+    auto piece = [&](int y) {
+        if (!g.valid()) return;
+        if (recolor) ts.drawRecolor(cv, g, sx, y, scale, tint);
+        else if (opaque) ts.drawOpaque(cv, g, sx, y, scale, tint); else ts.draw(cv, g, sx, y, scale, tint);
+    };
+    int shift = k ? k->shift * scale : 0, S = Tileset::TS * scale, H = S / 2;
+    if (shift <= 0 || shift >= S) piece(sy);
+    else {
+        Rect keep = cv.clip;
+        auto clipTo = [&](int x, int y, int w, int h) {
+            int x0 = std::max(x, keep.x), y0 = std::max(y, keep.y), x1 = std::min(x + w, keep.x + keep.w), y1 = std::min(y + h, keep.y + keep.h);
+            cv.clip = {x0, y0, std::max(0, x1 - x0), std::max(0, y1 - y0)};
+        };
+        clipTo(sx, sy, S, S); piece(sy + shift);
+        if (mask & 1) { clipTo(sx, sy, S, shift); piece(sy); }   // the path comes in from the north: no gap at the top
+        cv.clip = keep;
+    }
+    if (recolor && corners) {
+        if (corners & 1) cv.fillRect(sx + H, sy, H, H, tint);
+        if (corners & 2) cv.fillRect(sx + H, sy + H, H, H, tint);
+        if (corners & 4) cv.fillRect(sx, sy + H, H, H, tint);
+        if (corners & 8) cv.fillRect(sx, sy, H, H, tint);
+    }
 }
 static std::string colStr(Color8 c) { return fmt("%d,%d,%d", c.r, c.g, c.b); }
 std::string tileKindsText(const std::vector<TileKind>& kinds) {

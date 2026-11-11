@@ -24,17 +24,30 @@ struct TileKind {
     // connect to (default: its join groups). under=1 fills the cell with the neighbouring ground's background, so a
     // shore or a trail sits on the grass or sand next to it. recolor=1 draws the ground flat in the tint colour.
     bool recolor = false, under = false;
+    // 1.0.14 shift=N: the joined piece is drawn N sheet pixels lower (trails: the sheet draws them across the middle of
+    // the cell, but people stand at the bottom of it, so without this they look like they hover over the path).
+    int shift = 0;
     std::vector<std::string> join, link;
     std::vector<Tile> edges;
     uint32_t joinBits = 0, linkBits = 0;   // resolved from join/link (see resolveTileKindGroups)
 };
 // Picks a cell's ground piece and background from its neighbours (edges=/join=/under=). nb(dx, dy) returns the
 // neighbouring kind, or nullptr off the map (counts as joined, so water and roads run off the edge).
-template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Color8& bg) {
+// mask (optional) gets the joined sides (N1 E2 S4 W8); corners (optional) the corners where the piece is part of a
+// 2x2 block of its own kind (NE1 SE2 SW4 NW8, off the map doesn't count), so 2-wide roads draw solid, not as a lattice.
+template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Color8& bg, int* mask = nullptr, int* corners = nullptr) {
+    if (mask) *mask = 0;
+    if (corners) *corners = 0;
     if (k.edges.size() >= 16 && k.linkBits) {
         auto joins = [&](int dx, int dy) { const TileKind* o = nb(dx, dy); return !o || (o->joinBits & k.linkBits) != 0; };
         int m = (joins(0, -1) ? 1 : 0) | (joins(1, 0) ? 2 : 0) | (joins(0, 1) ? 4 : 0) | (joins(-1, 0) ? 8 : 0);
         if (k.edges[m].valid()) ground = k.edges[m];
+        if (mask) *mask = m;
+        if (corners && k.joinBits) {
+            auto same = [&](int dx, int dy) { const TileKind* o = nb(dx, dy); return o && (o->joinBits & k.joinBits) != 0; };
+            bool n = same(0, -1), e = same(1, 0), s = same(0, 1), w = same(-1, 0);
+            *corners = (n && e && same(1, -1) ? 1 : 0) | (s && e && same(1, 1) ? 2 : 0) | (s && w && same(-1, 1) ? 4 : 0) | (n && w && same(-1, -1) ? 8 : 0);
+        }
     }
     if (!k.under) return;   // props with under=1 and no edges just stand on the floor around them
     // the ground most of the open neighbours stand on (sides count double; walls, doors and void don't count)
@@ -52,6 +65,10 @@ template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Colo
     int best = -1; for (int i = 0; i < n; i++) if (best < 0 || score[i] > score[best]) best = i;
     if (best >= 0) bg = cand[best];
 }
+// Draws a cell's ground piece (after its bg): plain, recoloured or opaque, and for joined pieces the 1.0.14 extras -
+// shift= (moved down, with the top filled from the unshifted piece when the cell joins northwards, all kept inside
+// the cell) and solid corners where a recoloured trail is 2+ wide. mask/corners as tileKindLook gives them.
+void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners);
 void resolveTileKindGroups();                     // after loading or editing kinds: join=/link= names to bits
 const TileKind* tileKind(const std::string& name);
 const std::vector<TileKind>& allTileKinds();
@@ -158,7 +175,7 @@ struct Map {
     Cell& at(int x, int y) { return cells[(size_t)y * w + x]; }
     const Cell& at(int x, int y) const { return cells[(size_t)y * w + x]; }
     bool inBounds(int x, int y) const { return x >= 0 && y >= 0 && x < w && y < h; }
-    void look(int x, int y, Tile& ground, Color8& bg) const;   // the ground piece and background a cell draws with (joined pieces)
+    void look(int x, int y, Tile& ground, Color8& bg, int* mask = nullptr, int* corners = nullptr) const;   // the ground piece and background a cell draws with (joined pieces)
     bool walkable(int x, int y) const;
     bool blocksSight(int x, int y) const;
     void set(int x, int y, const std::string& kindName, Rng& rng);

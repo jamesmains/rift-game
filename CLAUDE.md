@@ -62,6 +62,15 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Map remakes kept every map's size and every NPC/chest/exit/trigger position (quests and tests use coordinates).
   Dungeon walls not touching open floor are `rock`. Use `path` for 1-wide trails, `street`/`boardwalk` for wide ones
   (a 2-wide `path` draws as a lattice), `floor_water` for ponds.
+- 1.0.14 readability (owner: scenes were unreadable): characters/chests/signs/drops are drawn with
+  `Tileset::drawOutline` (dark 1px ring) and characters with `drawLit` (lifts very dark sprites); busy ground kinds
+  use `recolor=1` with a tint close to their bg, so ground reads as texture and objects stand out. Keep new ground
+  kinds low-contrast the same way. `shift=3` on `path`/`road` draws trail pieces lower so feet are on them;
+  `drawGroundPiece` (world.cpp, used by the game and the Editor) keeps the shifted piece inside its cell and fills
+  2x2 blocks of recoloured trails solid. Bridges are not shifted (their N-S piece would leave a gap).
+- Headless screenshots: wait ~120 frames after `teleport` before `shot`, or the fade-in darkens the picture.
+- Source files are mixed: some .cpp/.h are CRLF (game.cpp, editor.cpp, world.*), the rest LF. `* -text` keeps them as
+  committed, so keep each file's line endings when editing with scripts.
 - Known data warnings (Editor Check all, older than 1.0.13): ashfall trigger at 40,25 and marsh chest at 32,34 stand
   on blocked tiles.
 

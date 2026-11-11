@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <algorithm>
+#include <vector>
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -112,6 +113,46 @@ void Tileset::drawRecolor(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 
 void Tileset::drawOpaque(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 tint) const {
     if (!t.valid()) return;
     cv.blit(img, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, false);
+}
+void Tileset::drawOutline(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color, bool flipX) const {
+    if (!t.valid() || scale < 1) return;
+    const int S = TS * scale, W = S + 2;
+    std::vector<uint8_t> m((size_t)W * W, 0);   // the picture's mask at screen size, with a 1px margin
+    int bx = 1 + t.c * PITCH, by = 1 + t.r * PITCH;
+    for (int y = 0; y < S; y++) for (int x = 0; x < S; x++) {
+        int sx = bx + (flipX ? TS - 1 - x / scale : x / scale), sy = by + y / scale;
+        if (sx < 0 || sy < 0 || sx >= tilesTransparent.w || sy >= tilesTransparent.h) continue;
+        if (tilesTransparent.px[(size_t)sy * tilesTransparent.w + sx].a) m[(size_t)(y + 1) * W + x + 1] = 1;
+    }
+    for (int y = 0; y < W; y++) for (int x = 0; x < W; x++) {
+        if (m[(size_t)y * W + x]) continue;
+        bool near = false;
+        for (int oy = -1; oy <= 1 && !near; oy++) for (int ox = -1; ox <= 1; ox++) {
+            int nx = x + ox, ny = y + oy;
+            if (nx >= 0 && ny >= 0 && nx < W && ny < W && m[(size_t)ny * W + nx]) { near = true; break; }
+        }
+        if (near) cv.put(dx - 1 + x, dy - 1 + y, color);
+    }
+}
+void Tileset::drawLit(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX) const {
+    if (!t.valid()) return;
+    int bx = 1 + t.c * PITCH, by = 1 + t.r * PITCH;
+    long sum = 0; int n = 0;   // brightness of the picture's coloured pixels (near-black detail pixels left out)
+    for (int y = 0; y < TS; y++) for (int x = 0; x < TS; x++) {
+        int sx = bx + x, sy = by + y; if (sx >= img.w || sy >= img.h) continue;
+        Color8 c = img.px[(size_t)sy * img.w + sx]; int l = (c.r * 3 + c.g * 6 + c.b) / 10;
+        if (l > 24) { sum += l; n++; }
+    }
+    int lum = n ? (int)(sum / n) : 255;
+    if (lum >= 130) { draw(cv, t, dx, dy, scale, C::White, flipX); return; }
+    int k = (165 - lum) * 256 / std::max(1, 255 - lum);   // blend the coloured pixels towards white so they land near 165
+    for (int y = 0; y < TS; y++) for (int x = 0; x < TS; x++) {
+        int sx = bx + (flipX ? TS - 1 - x : x), sy = by + y; if (sx >= img.w || sy >= img.h) continue;
+        Color8 c = tilesTransparent.px[(size_t)sy * tilesTransparent.w + sx];
+        if (c.a == 0) continue;
+        if ((c.r * 3 + c.g * 6 + c.b) / 10 > 24) { c.r = (uint8_t)(c.r + (255 - c.r) * k / 256); c.g = (uint8_t)(c.g + (255 - c.g) * k / 256); c.b = (uint8_t)(c.b + (255 - c.b) * k / 256); }
+        cv.fillRect(dx + x * scale, dy + y * scale, scale, scale, c);
+    }
 }
 
 // ---------------- Font ----------------

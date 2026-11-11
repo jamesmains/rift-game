@@ -6,7 +6,8 @@
 # Joined pieces: edges = 16 ground tiles picked by which of the four neighbours connect (bit N=1 E=2 S=4 W=8, so the
 # 6th entry is for neighbours N+S, the 16th for all four; empty = the random ground). join = groups this kind is part
 # of, link = groups its pieces connect to (default: its join). under=1 puts the neighbouring ground colour under the
-# piece, so a shore or trail sits on whatever grass, sand or snow is next to it.
+# piece, so a shore or trail sits on whatever grass, sand or snow is next to it. shift=N draws the joined piece N
+# sheet pixels lower, so people (who stand at the bottom of a cell) walk on the trail instead of over it.
 
 # ---- Overworld terrain (rows 33-34 are the sheet's overworld pictures) ----
 [kind]
@@ -17,11 +18,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=150,200,150
+tint=72,132,62
 bg=58,112,52
 encounter=2
 biome=plains
 cost=1
+recolor=1
 
 [kind]
 name=meadow
@@ -31,11 +33,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=120,130,60
 bg=66,120,56
 encounter=1
 biome=plains
 cost=1
+recolor=1
 
 [kind]
 name=forest
@@ -116,11 +119,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=220,230,160
+tint=106,132,60
 bg=70,112,52
 encounter=3
 biome=plains
 cost=1
+recolor=1
 
 [kind]
 name=sand
@@ -300,11 +304,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=200,230,210
+tint=40,110,90
 bg=40,64,46
 encounter=5
 biome=swamp
 cost=2
+recolor=1
 
 [kind]
 name=deadtree
@@ -344,11 +349,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=86,80,76
 bg=70,64,62
 encounter=4
 biome=wasteland
 cost=1
+recolor=1
 
 [kind]
 name=rubble
@@ -382,6 +388,7 @@ join=path
 link=path,bridge,loc,street
 edges=0,11|0,11|2,11|7,11|0,11|0,11|6,11|10,11|2,11|5,11|2,11|11,11|4,11|8,11|9,11|12,11
 under=1
+shift=3
 
 [kind]
 name=dirt
@@ -753,11 +760,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=46,92,42
 bg=58,112,52
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_dirt
@@ -809,11 +817,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=102,90,80
 bg=122,108,96
 encounter=0
 biome=
 cost=1
+recolor=1
 join=street
 
 [kind]
@@ -849,6 +858,7 @@ join=path
 link=path,bridge,street,loc
 edges=0,11|0,11|2,11|7,11|0,11|0,11|6,11|10,11|2,11|5,11|2,11|11,11|4,11|8,11|9,11|12,11
 under=1
+shift=3
 
 [kind]
 name=floor_water
@@ -920,11 +930,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=54,50,47
 bg=66,62,58
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_flag
@@ -934,11 +945,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=67,62,54
 bg=82,76,66
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_cave
@@ -948,11 +960,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=63,54,46
 bg=50,42,36
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_wood
@@ -962,11 +975,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=80,52,27
 bg=98,64,34
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_plank
@@ -976,11 +990,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=75,52,31
 bg=92,64,38
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_tile
@@ -990,11 +1005,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=76,72,88
 bg=92,88,104
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_carpet
@@ -1004,11 +1020,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=112,25,37
 bg=132,30,44
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_marble
@@ -1018,11 +1035,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=134,130,142
 bg=150,146,156
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_ice
@@ -1046,11 +1064,12 @@ walk=1
 sight=0
 water=0
 opaque=0
-tint=255,255,255
+tint=78,46,96
 bg=62,34,78
 encounter=0
 biome=
 cost=1
+recolor=1
 
 [kind]
 name=floor_metal
