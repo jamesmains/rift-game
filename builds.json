@@ -1,7 +1,7 @@
 {
   "builds": [
-    { "name": "Full game", "about": "The whole game with the built-in Editor (what the Update button installs)", "run": ".\\run.ps1", "package": ".\\build.ps1 -Package", "zip": "build\\dist\\full" },
-    { "name": "No Editor", "about": "Player build without the Editor (what Steam would ship)", "run": ".\\run.ps1 -NoEditor", "package": ".\\build.ps1 -NoEditor -Package", "zip": "build\\dist\\noeditor" },
+    { "name": "Full game", "about": "The whole game with the built-in Editor", "run": ".\\run.ps1", "package": ".\\build.ps1 -Package", "zip": "build\\dist\\full" },
+    { "name": "No Editor", "about": "The whole game without the Editor", "run": ".\\run.ps1 -NoEditor", "package": ".\\build.ps1 -NoEditor -Package", "zip": "build\\dist\\noeditor" },
     { "name": "Demo", "about": "Free demo: no Editor, first chapter only", "run": ".\\run.ps1 -Demo", "package": ".\\build.ps1 -Demo -Package", "zip": "build\\dist\\demo" }
   ]
 }

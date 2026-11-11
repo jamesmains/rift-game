@@ -23,11 +23,12 @@ struct RlAudio : AudioBackend {
 };
 
 int main(int argc, char** argv) {
-    (void)argc; (void)argv;
     std::string base = rl_app_dir();
     std::string assets = base + "assets";
     std::string saves = base + "saves";
     if (!std::filesystem::exists(assets)) { assets = "assets"; saves = "saves"; } // running from the source tree
+    for (int i = 1; i + 1 < argc; i++)   // --saves <folder>: keep saves, settings and desktop layout there instead (fresh test runs)
+        if (std::strcmp(argv[i], "--saves") == 0) saves = argv[i + 1];
     std::error_code ec; std::filesystem::create_directories(saves, ec);
 
     if (!gPlatform->init()) return 0;          // Steam asked us to relaunch through the client

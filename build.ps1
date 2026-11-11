@@ -1,6 +1,6 @@
 # Triffall - build into build\game (Triffall.exe + assets\ + README.txt).
 #   .\build.ps1                          build for testing (full game, with the Editor)
-#   .\build.ps1 -NoEditor                player build without the Editor (what Steam would ship)
+#   .\build.ps1 -NoEditor                the game without the Editor
 #   .\build.ps1 -Demo                    the demo (no Editor, first chapter only)
 #   .\build.ps1 -Release -Notes "..."    also publish to releases\ (zip + latest.json)
 #   .\build.ps1 -Package                 also make a clean copy to hand out (no saves\) in build\dist\<full|noeditor|demo>
@@ -24,7 +24,7 @@ if ($NoEditor) { $editor = "OFF"; $cmakeDir = "build\cmake-noeditor"; $kind = "n
 if ($Demo)     { $editor = "OFF"; $demoFlag = "ON"; $cmakeDir = "build\cmake-demo"; $kind = "demo"; $out = "build\game-demo"; $dist = "build\dist\demo" }
 Write-Host "Building Triffall v$version ($kind)..."
 
-cmake -S src -B $cmakeDir -A x64 -DTRIFFALL_EDITOR=$editor -DTRIFFALL_DEMO=$demoFlag
+cmake -S src -B $cmakeDir -A x64 "-DTRIFFALL_EDITOR=$editor" "-DTRIFFALL_DEMO=$demoFlag"   # quoted: PowerShell leaves $vars unexpanded in a bare -arg
 if ($LASTEXITCODE -ne 0) { Write-Host "CMake configure failed. Is Visual Studio with the C++ workload installed?" -ForegroundColor Red; exit 1 }
 cmake --build $cmakeDir --config Release --target Triffall triffall_headless
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed." -ForegroundColor Red; exit 1 }
