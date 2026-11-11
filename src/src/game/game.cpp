@@ -1172,19 +1172,18 @@ void Game::reloadContent() {
 }
 
 // ---------------- drawing ----------------
-// 1.0.14: people, monsters and things you can use get a dark outline - the sheet draws them for a black background,
-// and on grass or floors they used to melt into the ground.
-static const Color8 kOutline = RGB(14, 12, 18);
+// 1.0.15: no outlines. The ground is black again (as the sheet is drawn) and sprites get their own black inside their
+// outline (Tileset::drawBacking), so a character on a trail or floor reads as it does on the sheet.
 void Game::drawUnitSprite(Canvas& cv, const Character& ch, int sx, int sy, bool flip) {
     if (ch.size == 2) {
-        for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->drawOutline(cv, T(ch.tile.c + xx, ch.tile.r + yy), sx + xx * TILE, sy + yy * TILE, 2, kOutline);
         for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) {
             Tile t = T(ch.tile.c + xx, ch.tile.r + yy);
+            ctx.ts->drawBacking(cv, t, sx + xx * TILE, sy + yy * TILE, 2);
             if (ch.recolor) ctx.ts->drawRecolor(cv, t, sx + xx * TILE, sy + yy * TILE, 2, ch.color); else ctx.ts->draw(cv, t, sx + xx * TILE, sy + yy * TILE, 2);
         }
         return;
     }
-    ctx.ts->drawOutline(cv, ch.tile, sx, sy, 2, kOutline, flip && !ch.recolor);
+    ctx.ts->drawBacking(cv, ch.tile, sx, sy, 2, flip && !ch.recolor);
     if (ch.recolor) ctx.ts->drawRecolor(cv, ch.tile, sx, sy, 2, ch.color); else ctx.ts->drawLit(cv, ch.tile, sx, sy, 2, flip);
 }
 
@@ -1200,6 +1199,11 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     int x1 = std::min(map->w - 1, (cx + SCREEN_W) / TILE + 1), y1 = std::min(map->h - 1, (cy + viewH) / TILE + 1);
     bool anim = (ctx.frame / 20) % 2 == 0;
     const auto& kinds = allTileKinds();
+    // 1.0.15: three layers - ground, then the shifted trail pieces (moved down a few pixels as one layer, running into
+    // the cell below unless that is a wall), then props - so the trail lies under people's feet and trees still overlap it.
+    struct Later { const TileKind* k; Tile g; int sx, sy, mask, corners; Color8 tint; bool recolor, opaque, spill; };
+    struct Prop { Tile p; int sx, sy; Color8 t; };
+    std::vector<Later> trails; std::vector<Prop> props;
     for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++) {
         const Cell& c = map->at(x, y);
         if (map->dark && !c.explored) continue;
@@ -1210,23 +1214,27 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if (map->dark && !vis) { tint = RGB(tint.r / 3, tint.g / 3, tint.b / 3); bg = RGB(bg.r / 3, bg.g / 3, bg.b / 3); }
         else if (map->dark && !lit(x, y)) { tint = RGB(tint.r * 3 / 5, tint.g * 3 / 5, tint.b * 3 / 5); bg = RGB(bg.r / 2, bg.g / 2, bg.b / 2); }  // seen, but standing in shadow
         cv.fillRect(sx, sy, TILE, TILE, bg);
-        drawGroundPiece(cv, *ctx.ts, c.kind < kinds.size() ? &kinds[c.kind] : nullptr, g, sx, sy, 2, tint, c.recolor, c.opaque, mask, corners);
+        const TileKind* k = c.kind < kinds.size() ? &kinds[c.kind] : nullptr;
+        if (k && k->shift > 0) trails.push_back({k, g, sx, sy, mask, corners, tint, c.recolor, c.opaque, y + 1 >= map->h || !map->at(x, y + 1).opaque});
+        else drawGroundPiece(cv, *ctx.ts, k, g, sx, sy, 2, tint, c.recolor, c.opaque, mask, corners);
         if (c.prop.valid()) {
             Tile p = c.prop;
             if (anim && p.c == TL::BRAZIER.c && p.r == TL::BRAZIER.r) p = TL::BRAZIER2;   // the lit brazier flickers
             Color8 pt = (map->dark && !vis) ? RGB(80, 80, 80) : C::White;
-            ctx.ts->draw(cv, p, sx, sy, 2, pt);
+            props.push_back({p, sx, sy, pt});
         }
     }
+    for (auto& t : trails) drawGroundPiece(cv, *ctx.ts, t.k, t.g, t.sx, t.sy, 2, t.tint, t.recolor, t.opaque, t.mask, t.corners, t.spill);
+    for (auto& p : props) ctx.ts->draw(cv, p.p, p.sx, p.sy, 2, p.t);
     // objects
     for (auto& ch : map->chests) {
         bool detect = detectSteps > 0 && !ch.opened;
         if (!detect && !visible(ch.x, ch.y) && !(map->dark && map->at(ch.x, ch.y).explored)) continue;
         if (detect && (ctx.frame / 10) % 2) cv.rect(ch.x * TILE - cx - 1, ch.y * TILE - cy - 1, TILE + 2, TILE + 2, C::Yellow);
-        ctx.ts->drawOutline(cv, ch.opened ? TL::CHEST_OPEN : TL::CHEST, ch.x * TILE - cx, ch.y * TILE - cy, 2, kOutline);
+        ctx.ts->drawBacking(cv, ch.opened ? TL::CHEST_OPEN : TL::CHEST, ch.x * TILE - cx, ch.y * TILE - cy, 2);
         ctx.ts->draw(cv, ch.opened ? TL::CHEST_OPEN : TL::CHEST, ch.x * TILE - cx, ch.y * TILE - cy, 2);
     }
-    for (auto& s : map->signs) if (visible(s.x, s.y)) { ctx.ts->drawOutline(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2, kOutline); ctx.ts->draw(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2); }
+    for (auto& s : map->signs) if (visible(s.x, s.y)) { ctx.ts->drawBacking(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2); ctx.ts->draw(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2); }
     for (auto& s : map->savepoints) {
         if (!visible(s.x, s.y)) continue;
         int sx = s.x * TILE - cx, sy = s.y * TILE - cy;
@@ -1255,12 +1263,12 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if ((ctx.frame / 4) % 2) cv.rect(sx - 2 * TILE, sy - 2 * TILE, 5 * TILE, 5 * TILE, C::Red);
         ctx.font->drawShadow(cv, *ctx.ts, sx, sy - 14, fmt("%.1f", fuseT), C::Orange, C::Black);
     }
-    for (auto& d : map->drops) if (visible(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawOutline(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2, kOutline); ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
+    for (auto& d : map->drops) if (visible(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawBacking(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
     if (!combat) {
         for (auto& n : map->npcs) {
             if (n.hidden || !visible(n.x, n.y)) continue;
             int sx = n.x * TILE - cx, sy = n.y * TILE - cy;
-            ctx.ts->drawOutline(cv, n.tile, sx, sy, 2, kOutline);
+            ctx.ts->drawBacking(cv, n.tile, sx, sy, 2);
             if (n.recolor) ctx.ts->drawRecolor(cv, n.tile, sx, sy, 2, n.color); else ctx.ts->drawLit(cv, n.tile, sx, sy, 2);
             if (!n.dialogue.empty() && chebyshev(n.x, n.y, px, py) <= 1) ctx.ts->draw(cv, TL::UI_QUESTION, sx + 8, sy - 16, 1);
         }
@@ -1271,8 +1279,8 @@ void Game::drawWorld(Canvas& cv, bool combat) {
             const CreatureDef* cd = e.creatures.empty() ? nullptr : gd->creature(e.creatures[0]);
             int sx = e.x * TILE - cx, sy = e.y * TILE - cy;
             cv.fillRect(sx + 1, sy + 1, TILE - 2, TILE - 2, RGB(60, 0, 0, 150)); cv.rect(sx, sy, TILE, TILE, RGB(220, 40, 40));
-            if (cd) { if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->draw(cv, T(cd->tile.c + xx, cd->tile.r + yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); }
-                      else if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, sx, sy, 2, cd->color); else ctx.ts->draw(cv, cd->tile, sx, sy, 2); }
+            if (cd) { if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) { ctx.ts->drawBacking(cv, T(cd->tile.c + xx, cd->tile.r + yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); ctx.ts->draw(cv, T(cd->tile.c + xx, cd->tile.r + yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); } }
+                      else { ctx.ts->drawBacking(cv, cd->tile, sx, sy, 2); if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, sx, sy, 2, cd->color); else ctx.ts->draw(cv, cd->tile, sx, sy, 2); } }
             if (e.creatures.size() > 1) { ctx.font->draw(cv, *ctx.ts, sx + 16, sy - 4, "x" + std::to_string(e.creatures.size()), C::Red); }
         }
         // party trail

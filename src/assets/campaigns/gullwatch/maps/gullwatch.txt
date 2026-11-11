@@ -3,7 +3,7 @@ id=gullwatch
 name=Gullwatch
 kind=town
 spawn=20,22
-bg=40,70,40
+bg=0,0,0
 music=town
 
 [legend]

@@ -93,13 +93,15 @@ public:
     void drawRecolor(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color) const;
     // Draw tile keeping black background opaque (for floor/wall tiles that are meant to be opaque)
     void drawOpaque(Canvas& cv, Tile t, int dx, int dy, int scale = 1, Color8 tint = C::White) const;
-    // 1.0.14: a 1px ring (and the small holes inside the picture) in one colour, drawn before the sprite itself, so a
-    // character drawn for a black background stays readable on grass, sand or floors.
-    void drawOutline(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color, bool flipX = false) const;
     // 1.0.14: draws a character so it reads against the ground: a very dark picture (the grey warrior) is drawn lighter,
     // keeping its near-black details. Same as draw() for everything bright enough already.
     void drawLit(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX = false) const;
+    // 1.0.15: the picture's own black pixels inside its outline (eyes, gaps between arms and body...), drawn black
+    // before the sprite, so a character on a trail or a floor looks as it does on the sheet's black instead of the
+    // ground showing through it. Black connected to the cell's edge stays see-through (no box around the sprite).
+    void drawBacking(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX = false) const;
     Image8 tilesTransparent; // copy of img with pure-black made transparent
+    Image8 tilesInside;      // 1.0.15: only the black pixels not reachable from their cell's edge (drawBacking)
 };
 
 // Bitmap font. Two faces, chosen in Settings > Access > Font (GameSettings::fontStyle):

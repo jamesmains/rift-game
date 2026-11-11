@@ -28,6 +28,17 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.0.15 back to black
+
+* **Black ground, as the tileset was drawn**: every land tile is drawn on black again with its pattern in a dim shade
+  (grass, floors, streets, sand, snow...), so people, monsters and objects stand out on their own. Water, lava and the
+  like keep their colour. Sand, snow, concrete and metro floors got fuller patterns so walkable ground never looks
+  like empty void.
+* **No more outlines**: the 1.0.14 dark ring around sprites is gone. Instead a sprite's own black details (eyes, the
+  gaps between arms and body) are drawn black, so the ground or a trail no longer shows through a character.
+* **Standing on the path**: trails are drawn as one layer moved 4 pixels lower, running into the cell below, so
+  feet land inside the trail instead of on its bottom edge. Trails are a darker brown so the hero shows on them.
+
 ## 1.0.14 easier to see
 
 * **People and things stand out**: party members, townsfolk, monsters, chests, signs and dropped items get a thin dark

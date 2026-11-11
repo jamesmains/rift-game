@@ -100,7 +100,27 @@ bool Tileset::load(const std::string& path) {
     if (!img.load(path)) return false;
     tilesTransparent = img;
     for (auto& p : tilesTransparent.px) if (p.r == 0 && p.g == 0 && p.b == 0) p.a = 0;
+    // each cell's black pixels that a flood from the cell's edge (4-way, through black) can't reach are part of the picture
+    tilesInside = img;
+    for (auto& p : tilesInside.px) p = Color8{0, 0, 0, 0};
+    for (int cy = 0; 1 + cy * PITCH + TS <= img.h; cy++) for (int cx = 0; 1 + cx * PITCH + TS <= img.w; cx++) {
+        int bx = 1 + cx * PITCH, by = 1 + cy * PITCH;
+        auto black = [&](int x, int y) { Color8 c = img.px[(size_t)(by + y) * img.w + bx + x]; return c.r == 0 && c.g == 0 && c.b == 0; };
+        bool any = false; for (int y = 0; y < TS && !any; y++) for (int x = 0; x < TS; x++) if (!black(x, y)) { any = true; break; }
+        if (!any) continue;
+        uint8_t seen[TS][TS] = {}; int stack[TS * TS], n = 0;
+        for (int i = 0; i < TS; i++) { int e[4][2] = {{i, 0}, {i, TS - 1}, {0, i}, {TS - 1, i}};
+            for (auto& q : e) if (!seen[q[1]][q[0]] && black(q[0], q[1])) { seen[q[1]][q[0]] = 1; stack[n++] = q[1] * TS + q[0]; } }
+        while (n > 0) { int v = stack[--n], x = v % TS, y = v / TS; int d[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            for (auto& q : d) { int nx = x + q[0], ny = y + q[1];
+                if (nx >= 0 && ny >= 0 && nx < TS && ny < TS && !seen[ny][nx] && black(nx, ny)) { seen[ny][nx] = 1; stack[n++] = ny * TS + nx; } } }
+        for (int y = 0; y < TS; y++) for (int x = 0; x < TS; x++) if (black(x, y) && !seen[y][x]) tilesInside.px[(size_t)(by + y) * img.w + bx + x] = Color8{0, 0, 0, 255};
+    }
     return true;
+}
+void Tileset::drawBacking(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX) const {
+    if (!t.valid()) return;
+    cv.blit(tilesInside, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, C::White, flipX);
 }
 void Tileset::draw(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 tint, bool flipX) const {
     if (!t.valid()) return;
@@ -113,26 +133,6 @@ void Tileset::drawRecolor(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 
 void Tileset::drawOpaque(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 tint) const {
     if (!t.valid()) return;
     cv.blit(img, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, false);
-}
-void Tileset::drawOutline(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color, bool flipX) const {
-    if (!t.valid() || scale < 1) return;
-    const int S = TS * scale, W = S + 2;
-    std::vector<uint8_t> m((size_t)W * W, 0);   // the picture's mask at screen size, with a 1px margin
-    int bx = 1 + t.c * PITCH, by = 1 + t.r * PITCH;
-    for (int y = 0; y < S; y++) for (int x = 0; x < S; x++) {
-        int sx = bx + (flipX ? TS - 1 - x / scale : x / scale), sy = by + y / scale;
-        if (sx < 0 || sy < 0 || sx >= tilesTransparent.w || sy >= tilesTransparent.h) continue;
-        if (tilesTransparent.px[(size_t)sy * tilesTransparent.w + sx].a) m[(size_t)(y + 1) * W + x + 1] = 1;
-    }
-    for (int y = 0; y < W; y++) for (int x = 0; x < W; x++) {
-        if (m[(size_t)y * W + x]) continue;
-        bool near = false;
-        for (int oy = -1; oy <= 1 && !near; oy++) for (int ox = -1; ox <= 1; ox++) {
-            int nx = x + ox, ny = y + oy;
-            if (nx >= 0 && ny >= 0 && nx < W && ny < W && m[(size_t)ny * W + nx]) { near = true; break; }
-        }
-        if (near) cv.put(dx - 1 + x, dy - 1 + y, color);
-    }
 }
 void Tileset::drawLit(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX) const {
     if (!t.valid()) return;

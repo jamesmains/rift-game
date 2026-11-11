@@ -3,7 +3,7 @@ id=hollowmere
 name=Hollowmere
 kind=town
 spawn=20,29
-bg=20,40,20
+bg=0,0,0
 
 [legend]
 . = floor_grass

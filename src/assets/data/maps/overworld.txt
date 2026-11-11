@@ -5,7 +5,7 @@ kind=overworld
 spawn=44,93
 encounter=4
 table=plains
-bg=58,112,52
+bg=0,0,0
 
 [legend]
 ! = loc_ruin

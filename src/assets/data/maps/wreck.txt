@@ -3,7 +3,7 @@ id=wreck
 name=The Wreck - Upper Hull
 kind=ruins
 spawn=27,34
-bg=25,22,30
+bg=0,0,0
 
 [legend]
 . = wasteland

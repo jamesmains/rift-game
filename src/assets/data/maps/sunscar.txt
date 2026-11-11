@@ -3,7 +3,7 @@ id=sunscar
 name=Sunscar Outpost
 kind=town
 spawn=20,26
-bg=90,70,40
+bg=0,0,0
 music=sunscar
 
 [legend]

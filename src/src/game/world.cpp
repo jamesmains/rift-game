@@ -62,7 +62,7 @@ void Map::look(int x, int y, Tile& ground, Color8& bg, int* mask, int* corners) 
     if (k.edges.size() < 16 && !k.under) return;
     tileKindLook(k, [&](int dx, int dy) -> const TileKind* { int nx = x + dx, ny = y + dy; if (!inBounds(nx, ny)) return nullptr; uint16_t kk = at(nx, ny).kind; return kk < gKinds.size() ? &gKinds[kk] : nullptr; }, ground, bg, mask, corners);
 }
-void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners) {
+void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners, bool spill) {
     auto piece = [&](int y) {
         if (!g.valid()) return;
         if (recolor) ts.drawRecolor(cv, g, sx, y, scale, tint);
@@ -76,7 +76,7 @@ void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, i
             int x0 = std::max(x, keep.x), y0 = std::max(y, keep.y), x1 = std::min(x + w, keep.x + keep.w), y1 = std::min(y + h, keep.y + keep.h);
             cv.clip = {x0, y0, std::max(0, x1 - x0), std::max(0, y1 - y0)};
         };
-        clipTo(sx, sy, S, S); piece(sy + shift);
+        clipTo(sx, sy, S, spill ? S + shift : S); piece(sy + shift);
         if (mask & 1) { clipTo(sx, sy, S, shift); piece(sy); }   // the path comes in from the north: no gap at the top
         cv.clip = keep;
     }

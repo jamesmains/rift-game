@@ -62,12 +62,17 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Map remakes kept every map's size and every NPC/chest/exit/trigger position (quests and tests use coordinates).
   Dungeon walls not touching open floor are `rock`. Use `path` for 1-wide trails, `street`/`boardwalk` for wide ones
   (a 2-wide `path` draws as a lattice), `floor_water` for ponds.
-- 1.0.14 readability (owner: scenes were unreadable): characters/chests/signs/drops are drawn with
-  `Tileset::drawOutline` (dark 1px ring) and characters with `drawLit` (lifts very dark sprites); busy ground kinds
-  use `recolor=1` with a tint close to their bg, so ground reads as texture and objects stand out. Keep new ground
-  kinds low-contrast the same way. `shift=3` on `path`/`road` draws trail pieces lower so feet are on them;
-  `drawGroundPiece` (world.cpp, used by the game and the Editor) keeps the shifted piece inside its cell and fills
-  2x2 blocks of recoloured trails solid. Bridges are not shifted (their N-S piece would leave a gap).
+- 1.0.15 look (owner: outlines aren't the answer, use the black background the sheet was drawn for): every land kind
+  has `bg=0,0,0`; only water/lava-type kinds (water, deepwater, shallows, floor_water, ford, mire, floor_lava, bridge,
+  boat, lilypad) keep a coloured bg. Ground patterns use `recolor=1` with a dim tint (luminance ~50-110) so characters
+  stand out but floors still show; a mostly-empty ground list looks like void on black, so give walkable kinds a
+  pattern on most cells. Map `bg=` (off-map fill) is black too. No outlines: `Tileset::drawBacking` draws a sprite's
+  interior black pixels (not flood-reachable from its cell edge) before the sprite; used for party, NPCs, map
+  enemies, chests, signs, drops. `drawLit` still lifts very dark sprites (the grey warrior).
+- Trails: `shift=4` on `path`/`road`. In the game (`Game::drawWorld`) shifted pieces are drawn after all ground and
+  before props, spilling `shift` px into the cell below (not into an opaque cell), so feet land inside the trail. The
+  Editor keeps them clipped to their cell (`drawGroundPiece(..., spill=false)`). Bridges are not shifted. 2x2 blocks
+  of recoloured trails fill solid.
 - Headless screenshots: wait ~120 frames after `teleport` before `shot`, or the fade-in darkens the picture.
 - Source files are mixed: some .cpp/.h are CRLF (game.cpp, editor.cpp, world.*), the rest LF. `* -text` keeps them as
   committed, so keep each file's line endings when editing with scripts.

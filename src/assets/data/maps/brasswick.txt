@@ -3,7 +3,7 @@ id=brasswick
 name=Brasswick
 kind=town
 spawn=30,41
-bg=20,40,20
+bg=0,0,0
 music=brasswick
 
 [legend]

@@ -3,7 +3,7 @@ id=murkwater
 name=Murkwater
 kind=town
 spawn=20,28
-bg=15,30,25
+bg=0,0,0
 music=murkwater
 
 [legend]

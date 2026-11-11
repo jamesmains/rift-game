@@ -66,9 +66,11 @@ template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Colo
     if (best >= 0) bg = cand[best];
 }
 // Draws a cell's ground piece (after its bg): plain, recoloured or opaque, and for joined pieces the 1.0.14 extras -
-// shift= (moved down, with the top filled from the unshifted piece when the cell joins northwards, all kept inside
-// the cell) and solid corners where a recoloured trail is 2+ wide. mask/corners as tileKindLook gives them.
-void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners);
+// shift= (moved down, with the top filled from the unshifted piece when the cell joins northwards) and solid corners
+// where a recoloured trail is 2+ wide. mask/corners as tileKindLook gives them. spill=false keeps a shifted piece
+// inside its cell (the Editor); spill=true (1.0.15, the game) lets it run shift pixels into the cell below, so the
+// game draws shifted pieces after all the ground and before the props.
+void drawGroundPiece(Canvas& cv, const Tileset& ts, const TileKind* k, Tile g, int sx, int sy, int scale, Color8 tint, bool recolor, bool opaque, int mask, int corners, bool spill = false);
 void resolveTileKindGroups();                     // after loading or editing kinds: join=/link= names to bits
 const TileKind* tileKind(const std::string& name);
 const std::vector<TileKind>& allTileKinds();

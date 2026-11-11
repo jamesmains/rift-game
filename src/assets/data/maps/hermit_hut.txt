@@ -3,7 +3,7 @@ id=hermit_hut
 name=Hermit's Hut
 kind=town
 spawn=11,18
-bg=10,25,10
+bg=0,0,0
 
 [legend]
 . = floor_grass
