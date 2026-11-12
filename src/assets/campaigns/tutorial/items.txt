@@ -1,9 +1,34 @@
-# Items only the tutorial has (the base game's items are all here too: the tutorial builds on it with inherit=1).
+# Items only the Tutorial has (the base game's items are all here too: the Tutorial builds on it with inherit=1).
 [item]
-id=warden_badge
-name=Warden's Badge
+id=warden_token
+name=Warden's Token
 type=accessory
 tile=0,43
 bonus=con:1
 value=5
-desc=A tin badge stamped with a lantern. Every recruit gets one; most lose it in a week.
+unique=1
+desc=A tin token stamped with a lantern: the mark of the Wardens of Hollowmere, who kept the roads long before the sky tore. Wick's grandmother wore it. He says it's lucky.
+
+[item]
+id=violet_splinter
+name=Violet Splinter
+type=material
+tile=30,13
+value=40
+desc=A sliver of violet glass that grew out of a rat's back like a second spine. Warm to the touch. Pedlars buy it and don't ask where it came from.
+
+[item]
+id=quarry_key
+name=Quarry Gate Key
+type=key
+tile=28,23
+value=50
+desc=A big iron key on a loop of wire. It opens the gate of the old Greywood quarry, which the council closed years ago.
+
+[item]
+id=fallen_shard
+name=Fallen Shard
+type=key
+tile=4,22
+value=0
+desc=A shard of violet glass the size of your hand, warm as a hearthstone. It fell out of the sky last night. Rift-glass, Wick says.

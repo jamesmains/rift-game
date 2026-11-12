@@ -1,0 +1,137 @@
+[map]
+id=tut_quarry
+name=Greywood Quarry
+kind=dungeon
+spawn=1,11
+dark=1
+light=2
+bg=0,0,0
+music=dungeon
+ambient=amb_cave
+worldmap=self
+
+[legend]
+X = rock
+# = wall_cave
+. = floor_cave
+, = floor_dirt
+~ = floor_water
+k = crate
+b = barrel
+c = cart
+r = boulder
+: = floor_rift
+* = riftcrystal
+N = satellite
+E = floor_dirt
+g = floor_stone
+
+[rows]
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXX~~XXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXX#######XXX~~XXXXXXXXXXX########XXXX
+XXXXXX##.....##XX~~XX######XXX#::::::#XXXX
+XXXXX##..c....#XX~~X##....##X##:*:::*##XXX
+XXXXX#..g...k.#XX~~##..r...####::::::::#XX
+XXXXX#.....,..##X~~#....k.......:*:N::*#XX
+XXXXX#..b..,,..#X~~#..r.....r...::::::::#X
+XXXXX#....,,#####~~#...................*#X
+XXXXX##..,,.###.~~~#..k..r...k..::::::::#X
+X######..,......~~~......................#
+E,,,,,,,,,,.....~~~................::::::#
+X######..,......~~~......................#
+XXXXX##...,.....~~~#..k..r...k..::::::::#X
+XXXXX#...,,..b..##~#...................*#X
+XXXXX#..,,......#X~#..r.....r...::::::::#X
+XXXXX#.,,..k....#X~~#....k.......:*:::*#XX
+XXXXX##.....,..##X~~##.....r...###:::::#XX
+XXXXXX##......##XX~~X##.....##XX##*:::##XX
+XXXXXXX########XXX~~XX#######XXXX######XXX
+XXXXXXXXXXXXXXXXXX~~XXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+[exit]
+x=0
+y=11
+to=tut_wood
+tx=44
+ty=12
+
+[trigger]
+x=1
+y=10
+w=3
+h=3
+flag=tut_inquarry
+script=log:The old quarry workings. Black as the inside of a boot - and from somewhere deep ahead, a faint violet glow.
+
+[trigger]
+x=0
+y=0
+w=42
+h=22
+flag=tut_lit
+require=lit
+
+[savepoint]
+x=8
+y=5
+text=A quarrymen's shrine, scratched into the rock.
+
+[npc]
+id=wick_quarry
+name=Old Wick
+sprite=156,24
+x=13
+y=10
+dialogue=tut_wick_quarry
+
+[lever]
+x=13
+y=9
+name=Bridge winch
+flag=tut_winch
+toggle=0
+text=The winch shrieks, the chain runs out, and an old plank bridge slaps down across the flooded cut.
+
+[change]
+x=16
+y=11
+w=3
+h=1
+kind=bridge
+if=tut_winch
+
+[enemy]
+group=goblin,goblin_archer
+x=24
+y=11
+aggro=5
+flag=tut_goblins
+ondefeat=xp:80
+
+[enemy]
+group=scrap_drone
+x=35
+y=11
+aggro=3
+flag=tut_drone
+ondefeat=xp:60;notify:The machine drops into the glass with a dying whine.
+
+[chest]
+x=38
+y=11
+flag=tut_shard
+items=fallen_shard:1
+sprite=5,22
+opensprite=0,6
+onuse=dialogue:tut_end
+
+[trigger]
+x=31
+y=2
+w=10
+h=18
+once=0
+require=tut_shard&!tut_done
+script=dialogue:tut_end

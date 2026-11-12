@@ -1,0 +1,20 @@
+# Taking the shard in the crater (chest onuse=) opens this: Wick's last words and the finish back to the desktop.
+[start]
+speaker=Old Wick
+text=Careful - ah. You've picked it up. Warm, is it? Like a hearthstone. That's Rift-glass: the same violet I saw the night the sky tore. And that machine was guarding it. Or it fell out of the sky with it.
+option=What does it mean?|mean
+
+[mean]
+speaker=Old Wick
+text=It means the Rift is stirring again. Rats growing glass, goblins sniffing round the crater, machines waking up - it's started. Elder Mara needs to see this, and she'll want to hear it from you, not from a mad old lamplighter. Go home. Sleep if you can. In the morning, go to Mara.
+option=I will.|last
+
+[last]
+speaker=Old Wick
+text=And $hero? You did well today. The Wardens would have had you.
+set=tut_done
+quest=The Fallen Light
+option=Goodnight, Wick.|done
+
+[done]
+finish=triffall|That night $hero hardly sleeps. The shard glows on the table like an ember that will not go out.|Before dawn there is a knock at the door. Elder Mara has sent for you.|That's the Tutorial done. Now begin the real thing: a new game of Triffall.

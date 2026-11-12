@@ -1,9 +1,0 @@
-[shop]
-id=the_lost_lighthouse_store
-item=bread
-item=potion_red
-item=antidote
-item=torch_item
-item=arrows
-item=iron_dagger
-item=leather_armor

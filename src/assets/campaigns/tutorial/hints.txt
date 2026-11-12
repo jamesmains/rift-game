@@ -1,82 +1,165 @@
-# The Training panel. The LAST [hint] whose if= holds is shown (like quest stages), so later lessons sit lower down.
+# The Training panel. The LAST [hint] whose if= holds is shown, so the lessons are listed in order and each one holds
+# while every lesson before it is done: the panel always names the first thing still to do, even if the player does
+# things out of order. Hints for a mode (a fight, the shop, the party screen...) come after all of them, so they win
+# while that mode is open.
 # {action} names the key (or pad button) for that action on the device in use; {move} = how to walk; {click} = " (or click)".
-# Extra conditions: mode:explore|combat|shop|menu|journal|levelup|worldmap, equipped:item, fav:item|spell|any, map:id.
+# Extra conditions: mode:explore|combat|shop|menu|journal|levelup|worldmap|craft, equipped:item, fav:item|spell|any,
+# map:id, lit. Lessons that can be undone (wearing the token, carrying bandages, a hotbar slot, a lit torch) are turned
+# into flags by whole-map triggers (tut_equipped, tut_crafted, tut_fav, tut_lit) on the player's next step; the "b"
+# hints below cover the moment in between.
 
+# ---------------- Wick's Watch ----------------
 [hint]
-if=!tut_intro
-text=Talk to Warden Hale: walk up to him and press {interact}.
+text=Talk to Old Wick by the well: walk up to him with {move}{click} and press {interact}.
 
 [hint]
 if=tut_intro
-text=Walk with {move}{click}. Go and stand on the glowing marker in the south-east corner of the hall.
+text=Light the watch beacon on the rocks north of the yard: walk up to it and press {interact}.
 
 [hint]
-if=tut_moved
-text=Open the supply chest in the north-west corner: walk into it, or stand next to it and press {interact}.
+if=tut_intro&tut_beacon
+text=Open Wick's footlocker in the watch-house, by the bed: walk into it, or stand next to it and press {interact}.
 
 [hint]
-if=tut_chest
-text=You found a Warden's Badge. Wear it: open the party screen with {menu} and go to the Items tab ({pagedown}).
+if=tut_intro&tut_beacon&tut_chest
+text=Wear the Warden's Token: open the party screen with {menu} and go to the Items tab ({pagedown}).
 
 [hint]
-if=tut_chest&mode:menu&!equipped:warden_badge
-text=On the Items tab highlight the Warden's Badge and press {confirm}, choose Equip on..., then pick your hero. {pageup}/{pagedown} change tabs, {cancel} goes back.
+if=tut_intro&tut_beacon&tut_chest&equipped:warden_token
+text=Pick moonleaf in Wick's herb bed, south of the house: stand on a sparkling clump and press {interact}.
 
 [hint]
-if=equipped:warden_badge
-text=Badge on - the east door is open. Go through and meet the quartermaster.
+if=tut_intro&tut_beacon&tut_chest&tut_equipped
+text=Pick moonleaf in Wick's herb bed, south of the house: stand on a sparkling clump and press {interact}.
 
 [hint]
-if=tut_r2
-text=Talk to Quartermaster Ott ({interact} next to him) and buy a Bandage. The sign by the east door is read the same way.
+if=tut_intro&tut_beacon&tut_chest&tut_equipped&item:herb_moon
+text=Make bandages from the moonleaf: party screen ({menu}), Items tab, then press {craft} for field crafting.
 
 [hint]
-if=tut_r2&mode:shop
-text=Shopping: {up}/{down} choose, {confirm} buys, {left}/{right} change how many. {pageup}/{pagedown} switch to Sell. {cancel} leaves the shop.
+if=tut_intro&tut_beacon&tut_chest&tut_equipped&item:bandage
+text=Save your game at the wayshrine east of the herb bed: stand on it and press {interact} (or {quicksave}).
 
 [hint]
-if=tut_r2&item:bandage
-text=Bandage bought. Leave the shop ({cancel}) and go through the east door.
+if=tut_intro&tut_beacon&tut_chest&tut_equipped&tut_crafted
+text=Save your game at the wayshrine east of the herb bed: stand on it and press {interact} (or {quicksave}).
 
 [hint]
-if=tut_r3
-text=The glowing altar is a save shrine: stand on it and press {interact} (or {quicksave}) to save. Then talk to Sergeant Brin.
+if=tut_intro&tut_beacon&tut_chest&tut_equipped&tut_crafted&tut_saved
+text=The yard's done and the gate is open: follow the road east into Greywood. {journal} shows your quests, {worldmap} the map.
+
+# ---------------- Greywood Edge ----------------
+[hint]
+if=tut_road
+text=Something moves on the trail ahead. Walk towards it - a fight starts when enemies see you.
 
 [hint]
-if=tut_brin
-text=Your journal ({journal}) lists your quests; {worldmap} shows the map. When you're ready, go through the east door.
+if=tut_road&tut_rats
+text=Well fought. Now put a Bandage on your hotbar: party screen ({menu}), Items tab, pick the Bandage and press 1.
 
 [hint]
-if=tut_r4
-text=Two giant rats. Walk towards them - the fight starts when they see you.
+if=tut_road&tut_rats&fav:any
+text=That's your hotbar, bottom right: 1 uses it, here or in a fight. Now find Dace the pedlar, camped north of the trail.
 
 [hint]
-if=tut_r4&mode:combat
+if=tut_road&tut_rats&tut_fav
+text=Dace the pedlar is camped north of the trail. Talk to him: sell your violet splinters and buy the Quarry Gate Key.
+
+[hint]
+if=tut_road&tut_rats&tut_fav&item:quarry_key
+text=Thornwrack has grown across the trail east. Walk into it (or face it and press {interact}) and burn it with a torch.
+
+[hint]
+if=tut_road&tut_rats&tut_fav&item:quarry_key&tut_brambles
+text=The quarry gate is just ahead: walk into it and the key opens it. Then go in.
+
+# ---------------- the quarry ----------------
+[hint]
+if=tut_inquarry
+text=It's dark in here. Light a torch: party screen ({menu}), Items tab, pick a Torch, Use on... (or put it on the hotbar and press its number).
+
+[hint]
+if=tut_inquarry&lit
+text=Light! Wick is waiting by the flooded cut ahead. Talk to him.
+
+[hint]
+if=tut_inquarry&tut_lit
+text=Wick is waiting by the flooded cut ahead. Talk to him.
+
+[hint]
+if=tut_inquarry&tut_lit&joined_ranger
+text=Wick travels with you now. Pull the winch on the wall by the water ({interact}) to drop the bridge.
+
+[hint]
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch
+text=Goblins across the bridge - one with a bow. Crates and boulders give cover. Cross when you're ready.
+
+[hint]
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_goblins
+text=Something whirs in the glowing crater ahead. Go and see what fell.
+
+[hint]
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_goblins&tut_drone
+text=Take what fell: the violet shard at the heart of the crater.
+
+# ---------------- while a screen or a fight is open (these win) ----------------
+[hint]
+if=mode:journal
+title=Journal
+text=Your quests: what to do next, and a checklist. {pageup}/{pagedown} change tabs (bestiary, notes and more). {cancel} closes it.
+
+[hint]
+if=mode:worldmap
+title=Map
+text=A map of where you are, filled in as you explore. {cancel} closes it.
+
+[hint]
+if=mode:menu&tut_chest&!tut_equipped&!equipped:warden_token
+text=On the Items tab pick the Warden's Token, press {confirm}, choose Equip on..., then pick your hero. {pageup}/{pagedown} change tabs, {cancel} goes back.
+
+[hint]
+if=mode:menu&tut_equipped&item:herb_moon&!tut_crafted&!item:bandage
+text=On the Items tab, press {craft} for field crafting.
+
+[hint]
+if=mode:craft&item:herb_moon&!tut_crafted
+title=Crafting
+text=Pick the Bandage that needs Moonleaf (lit up: you have what it needs) and press {confirm}.
+
+[hint]
+if=mode:menu&tut_rats&!tut_fav&!fav:any
+text=On the Items tab, pick a Bandage (or any potion) and press 1: it goes on hotbar slot 1.
+
+[hint]
+if=mode:shop&!item:quarry_key
+title=Shop
+text={up}/{down} choose, {confirm} buys or sells, {left}/{right} change how many. {pageup}/{pagedown} switch Buy and Sell: sell the splinters, then buy the key.
+
+[hint]
+if=mode:shop&item:quarry_key
+title=Shop
+text=Got the key. Anything else you buy is up to you. {cancel} leaves the shop.
+
+[hint]
+if=mode:menu&tut_inquarry&!tut_lit&!lit
+text=On the Items tab pick a Torch, press {confirm}, choose Use on..., then your hero.
+
+[hint]
+if=mode:combat&!tut_rats
 title=Combat
-text=Fights take turns. On yours: walk by clicking a lit tile (or move the cursor with the arrows and press {confirm}). Attack with {attackmode}, then pick a rat. Moving and attacking use AP; {endturn} ends your turn. The buttons along the top show every key.
+text=Fights take turns. On yours, click a lit tile to walk (or move the cursor with the arrows and press {confirm}). Attack: {attackmode}, then pick a rat. Moving and attacking use AP; {endturn} ends your turn.
 
 [hint]
-if=tut_rats
-text=Well fought. Now put your Bandage on the hotbar: party screen ({menu}), Items, highlight the Bandage and press 1.
+if=mode:combat&tut_rats&!tut_goblins
+title=Combat
+text=Wick takes his own turn after yours. Keep a crate or boulder between you and the archer: cover makes you harder to hit. {defend} braces, {overwatch} shoots the next thing that moves, {items} items, {spells} spells, 1-8 the hotbar.
 
 [hint]
-if=tut_rats&fav:any
-text=That's your hotbar, bottom right: press 1 to use whatever is on slot 1, in a fight or out of one. On to the east door.
+if=mode:combat&tut_goblins&!tut_drone
+title=Combat
+text=A machine from another world: it shoots lightning from afar. Close in, or shoot back from cover. Aimed shots ({attackmode} twice) cost more AP and hit harder. If it goes badly, {flee}.
 
 [hint]
-if=tut_rats&mode:levelup
+if=mode:levelup
 title=Level up
-text=Pick the class that gets your new rank - your own, or another one (that's multiclassing) - then spend 3 stat points. The preview shows what changes.
-
-[hint]
-if=tut_r5
-text=Goblins, and one has a bow. Crates and rocks give cover. Walk in when you're ready.
-
-[hint]
-if=tut_r5&mode:combat
-title=Combat
-text=Keep a crate between you and the archer: cover makes you harder to hit. {spells} spells, {items} items - in those lists, press 1-8 to put the highlighted one on the hotbar. {defend} braces, {overwatch} shoots the next thing that moves, {flee} runs.
-
-[hint]
-if=tut_goblins
-text=That's the training done. Warden Hale is waiting in the last room.
+text=Pick the class for your new rank - your own, or another one (that's multiclassing) - then spend your stat points. The preview shows what changes.

@@ -29,8 +29,8 @@ expect edcount:0 == 2
 # files: a map from the base game, a dialogue from the tutorial
 edimport maps 0 triffall hollowmere_home
 expect asset:campaigns/test_isle/maps/hollowmere_home.txt == 1
-edimport dlg 0 tutorial tut_intro
-expect asset:campaigns/test_isle/dialogue/tut_intro.txt == 1
+edimport dlg 0 tutorial tut_arrive
+expect asset:campaigns/test_isle/dialogue/tut_arrive.txt == 1
 edimport camp 0 triffall start,gold
 # search and filter over every item
 edimport gen 0 triffall all

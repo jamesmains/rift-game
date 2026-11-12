@@ -12,7 +12,7 @@ shot ed_campaign_right.png
 click 700 458
 frames 5
 shot ed_exported.png
-expect savefile:exports/tutorial_1.0.zip == 1
+expect savefile:exports/tutorial_2.0.zip == 1
 click 800 360
 frames 30
 shot play_from_state.png

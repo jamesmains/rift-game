@@ -66,7 +66,7 @@ CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, co
         c.intro.clear(); for (auto& kv : sec.kv) if (kv.first == "intro") c.intro.push_back(kv.second);
         c.startDialogue = sec.get("dialogue", ""); c.gold = sec.geti("gold", 25); c.inherit = sec.geti("inherit", 0) != 0;   // campaigns stand alone unless they ask to build on the base game
         c.startItems = sec.get("items"); c.startFlags = sec.get("flags"); c.worldMap = trim(sec.get("worldmap", "overworld"));
-        c.order = sec.geti("order", 100); c.achievements = sec.geti("achievements", 1) != 0;
+        c.order = sec.geti("order", 100); c.achievements = sec.geti("achievements", 1) != 0; c.defeat = trim(sec.get("defeat"));
     }
     return c;
 }
@@ -769,6 +769,7 @@ bool Game::evalCond(const std::string& cond) const {
         else if (startsWith(c, "equipped:")) { std::string id = c.substr(9); for (auto& m : party.members) for (int s = 0; s < SL_COUNT; s++) if (m.equip[s] == id) val = true; }
         else if (startsWith(c, "fav:")) { std::string id = c.substr(4); for (auto& m : party.members) for (auto& f : m.favs) if (!f.empty() && (id == "any" || f == "spell:" + id || f == "item:" + id)) val = true; }
         else if (startsWith(c, "map:")) val = mapId == c.substr(4);
+        else if (c == "lit") { val = lightSteps > 0; for (auto& m : party.members) for (int s = 0; s < SL_COUNT; s++) if (const ItemDef* d = m.equip[s].empty() ? nullptr : gd->item(m.equip[s])) if (d->light > 0) val = true; }   // 1.1.7: a torch, light spell or light-giving gear is on
         else if (startsWith(c, "kills:")) { auto p = split(c.substr(6), ':'); auto it = bestiary.find(p[0]); val = it != bestiary.end() && it->second >= (p.size() > 1 ? atoi(p[1].c_str()) : 1); }
         else if (c.find(">=") != std::string::npos) { auto p = split(c, '>'); auto it = flags.find(trim(p[0])); int v = it == flags.end() ? 0 : it->second; val = v >= atoi(p[1].c_str() + 1); }
         else val = hasFlag(c);
@@ -1443,7 +1444,7 @@ void Game::draw(Canvas& cv, InputState& in) {
     bool fullScreenUI = mode == GMode::MENU || mode == GMode::SHOP || mode == GMode::CRAFT || mode == GMode::JOURNAL || mode == GMode::BOUNTY || mode == GMode::LEVELUP || mode == GMode::WORLDMAP;
     int ny = (mode == GMode::COMBAT) ? 30 : fullScreenUI ? SCREEN_H - 120 : 8;
     if (mode == GMode::COMBAT) { drawHint(cv, -(SCREEN_H - 72 - 34)); }   // in a fight: just above the hotbar and the log, clear of the action bar
-    else if (fullScreenUI) { int hh = drawHint(cv, -(SCREEN_H - 58)); if (hh) ny = SCREEN_H - 58 - hh - 18 * std::min<int>(3, (int)notifications.size()); }   // over menus: near the bottom, notifications above it
+    else if (fullScreenUI) { int hh = drawHint(cv, -(SCREEN_H - (mode == GMode::CRAFT ? 92 : 58))); if (hh) ny = SCREEN_H - 58 - hh - 18 * std::min<int>(3, (int)notifications.size()); }   // over menus: near the bottom (1.1.7: above the crafting screen's quantity line and button), notifications above it
     else ny += drawHint(cv, ny);
     for (size_t i = 0; i < notifications.size() && i < 3; i++) {
         float a = std::min(1.0f, notifTime[i]);

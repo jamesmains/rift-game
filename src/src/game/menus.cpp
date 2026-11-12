@@ -138,7 +138,7 @@ void Game::updateMenu(InputState& in, float dt) {
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_T] || actP(in, A_ITEMS)) && menuMember > 0 && menuMember < nMembers) { std::string cls = party.members[menuMember].classId; auto it = extra.find("dlg_" + cls); std::string did = it != extra.end() ? it->second : "";
         if (did.empty()) for (auto& d : dialogues) { for (auto& n : d.second.nodes) for (auto& a : n.second.actions) if (a.first == "join" && startsWith(a.second, cls)) did = d.first; if (!did.empty()) { extra["dlg_" + cls] = did; break; } }
         if (!did.empty() && dialogues.count(did) && dialogues[did].nodes.count("camp")) { popMode(); startDialogue(did, nullptr, "camp"); return; } else notify(party.members[menuMember].name + " has nothing to say right now."); }
-    if (menuTab == 1 && menuPrompt.empty() && !menuSubFocus && in.pressed[K_C]) { popMode(); openCraft("any"); return; }
+    if (menuTab == 1 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_C] || (gKeys.pad[A_INTERACT] && in.pressed[gKeys.pad[A_INTERACT]]))) { popMode(); openCraft("any"); return; }   // 1.1.7: pad X too (free on this tab)
     if (menuTab == 0) {
         if (!menuSubFocus) {
             // the member list runs top to bottom: up/down picks a member, right (or confirm) steps into their equipment
@@ -336,7 +336,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
         }
         keyHint(ctx, 20, SCREEN_H - 30, "Enter", "actions"); keyHint(ctx, 130, SCREEN_H - 30, "1-8", "set favorite"); keyHint(ctx, 250, SCREEN_H - 30, "Esc", "back");
         { int hx = keyHint(ctx, 20, SCREEN_H - 44, gKeys.label(A_CATPREV) + "/" + gKeys.label(A_CATNEXT), "category"); keyHint(ctx, hx, SCREEN_H - 44, gKeys.label(A_SORT), "sort"); }
-        keyHint(ctx, 330, SCREEN_H - 30, "C", "field crafting");
+        keyHint(ctx, 330, SCREEN_H - 30, gPadGlyphs && gKeys.pad[A_INTERACT] ? keyName(gKeys.pad[A_INTERACT]) : "C", "field crafting");
     } else if (menuTab == 2) {
         auto& m = party.members[menuMember];
         UI::text(ctx, 170, 38, fmt("%s's spells  (MP %d/%d)", m.name.c_str(), m.mp, m.maxMP(*gd)), C::Gray);

@@ -239,7 +239,7 @@ void Editor::setCampaign(const std::string& id) {
     if (onSwitchCampaign && !onSwitchCampaign(id)) { say("Could not load campaign " + id); return; }
     auto all = listCampaigns(assetDir); const CampaignInfo* c = nullptr; for (auto& x : all) if (x.id == id) c = &x;
     if (!c) return;
-    campaignId = c->id; campaignInherit = c->inherit; dataRoot = c->dir.empty() ? baseRoot : c->dir;
+    campaignId = c->id; campaignInherit = c->inherit; dataRoot = c->dir.empty() ? baseRoot : c->dir; baseResLoaded = false;
     for (auto& g : gens) {
         std::string file = fs::path(g.path).filename().string();
         g.path = dataRoot + "/" + file;

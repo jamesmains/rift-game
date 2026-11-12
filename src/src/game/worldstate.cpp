@@ -28,8 +28,8 @@ void Game::applyWorldState(Map& m) {
         }
         c.applied = want;
     }
-    // doors that open on a condition (a lever, a quest step)
-    for (auto& d : m.doors) if (!d.open && !d.openIf.empty() && evalCond(d.openIf)) { d.open = true; m.at(d.x, d.y).walkable = true; m.at(d.x, d.y).blocksSight = false; m.at(d.x, d.y).prop = d.openTile; }
+    // doors that open on a condition (a lever, a quest step); 1.1.7: they set their flag= like a door the party opens
+    for (auto& d : m.doors) if (!d.open && !d.openIf.empty() && evalCond(d.openIf)) { d.open = true; if (!d.flag.empty()) setFlag(d.flag);   /* 1.1.7: its flag too, as when the party opens it */ m.at(d.x, d.y).walkable = true; m.at(d.x, d.y).blocksSight = false; m.at(d.x, d.y).prop = d.openTile; }
     // NPCs who moved
     for (auto& n : m.npcs) {
         auto it = extra.find("npcpos_" + m.id + "_" + n.id);

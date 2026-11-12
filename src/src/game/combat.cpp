@@ -602,6 +602,15 @@ void Game::combatFinish() {
         flags["_fleegrace"] = 8; stats.fightsFled++;
         popMode(); trail.clear(); for (int i = 0; i < 8; i++) trail.push_back({px, py}); updateCamera();
         log("You escaped.");
+    } else if (!campaign.defeat.empty()) {
+        // 1.1.7 campaign defeat=: a lost fight isn't the end (the tutorial). The party gets back up healed, the groups
+        // in the fight are whole again and stay put a moment (like after fleeing), and the campaign's script runs.
+        for (auto& m : party.members) m.fullHeal(*gd);
+        for (auto& u : cb.units) if (!u.friendly() && u.groupIndex >= 0 && u.groupIndex < (int)map->enemies.size()) { map->enemies[u.groupIndex].defeated = false; map->enemies[u.groupIndex].wanderTimer = 4000; }
+        flags["_fleegrace"] = 8;
+        popMode(); trail.clear(); for (int i = 0; i < 8; i++) trail.push_back({px, py}); updateCamera();
+        log("The party is beaten - but gets back up.");
+        std::string s = campaign.defeat; runScript(s);
     } else {
         gameOver = true; running = false;
         modeStack.clear(); mode = GMode::GAMEOVER;

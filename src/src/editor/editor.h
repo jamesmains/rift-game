@@ -23,7 +23,7 @@ struct EdSection { std::string name; std::vector<std::pair<std::string, std::str
     bool has(const std::string& k) const { for (auto& p : kv) if (p.first == k) return true; return false; }
 };
 struct CampaignForm {
-    std::string path, headerComments, name, desc, author, version, icon, startMap, items, flags, dialogue, worldMap;
+    std::string path, headerComments, name, desc, author, version, icon, startMap, items, flags, dialogue, worldMap, defeat;
     int startX = 0, startY = 0, gold = 25; std::vector<std::string> intro; std::vector<std::pair<std::string, std::string>> extra; bool dirty = false;
 };
 struct PlayState { bool on = false, dirty = false; int level = 1, gold = 500; std::string cls, flags, items, party; };   // Campaign tab > Play from a state (playtest.txt)
@@ -231,7 +231,8 @@ private:
     void drawObjectTypeInfo(int x, int y, int w, int h, InputState& in);   // Objects tab: preview of the selected [type] / template
     const EdSection* resourceSec(const std::string& node, const std::string& item) const;   // node= id, else the first one giving the item
     EdObj resolvedObj(const EdObj& o) const;   // the object as the game sees it: template type + keys, resource keys
-    std::vector<std::pair<std::string, std::string>> inheritedKeys(const EdObj& o, std::string& from) const;   // keys it gets from its template / resource
+    std::vector<std::pair<std::string, std::string>> inheritedKeys(const EdObj& o, std::string& from) const;
+    mutable std::vector<EdSection> baseRes; mutable bool baseResLoaded = false;   // 1.1.7: the base game's resource types, for campaigns with inherit=1   // keys it gets from its template / resource
     int poType = 0, poScroll = 0, poSel = -1; std::string poFilter, poKey, poVal; bool poThisTmpl = false, poNeedScan = true;
     struct PlacedRef { std::string map; int obj = -1; };
     std::vector<PlacedRef> placedMatches();    // the placed objects the Objects tab's filter picks (from mapScan)

@@ -1,0 +1,36 @@
+# Old Wick by the flooded cut in the quarry: he joins the party here. [camp] is his talk from the party screen (T).
+[start]
+speaker=Old Wick
+text=There you are. Short cut, I said - didn't say short. Listen: hear that, deeper in? Something whirring. And goblins: I smelled their fire on the way. I'm coming with you the rest of the way.
+option=How do I see in here?|dark|!tut_lit
+option=I've no torches left.|torch|!item:torch_item&!tut_lit
+option=Glad to have you.|join
+
+[dark]
+speaker=Old Wick
+text=Light a torch. Party screen ({menu}), Items tab, pick a Torch and choose Use on... - or put it on the hotbar and press its number. Goblins see in the dark. We don't.
+option=I've no torches left.|torch|!item:torch_item
+option=Glad to have you.|join
+
+[torch]
+speaker=Old Wick
+text=None? What did you do, eat them? Here - a lamplighter always has a spare. Light it before you walk into a wall.
+give=torch_item:2
+option=Glad to have you.|join
+
+[join]
+speaker=Old Wick
+text=Right. You lead. In a fight I take my own turn after yours - you'll be telling me where to stand. The winch on the wall there drops the old bridge across the water. Pull it, and let's see what's on the other side.
+join=ranger:Old Wick:156,24
+option=Let's go.|end
+
+[camp]
+speaker=Old Wick
+text=Still breathing? Good. I'm right behind you. Anyone who travels with you will talk like this: party screen, pick them, press T.
+option=How are your legs?|legs
+option=Carry on.|end
+
+[legs]
+speaker=Old Wick
+text=One good, one bad, both complaining. Don't wait for me in a fight - I'll keep up with the bow.
+option=Carry on.|end

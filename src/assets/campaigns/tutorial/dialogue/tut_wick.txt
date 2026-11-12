@@ -1,0 +1,60 @@
+# Old Wick in his yard after the first talk: help for each yard lesson (only the ones still to do are offered).
+[start]
+speaker=Old Wick
+text=Well? The Training box says what's next. Or ask me - I've been explaining things to young idiots for forty years.
+option=How do I light the beacon?|beacon|!tut_beacon
+option=Where's this footlocker?|chest|!tut_chest
+option=How do I wear the token?|equip|tut_chest&!tut_equipped
+option=Where's the moonleaf?|herbs|!tut_crafted&!item:herb_moon
+option=How do I make bandages?|craft|!tut_crafted
+option=What's the shrine for?|shrine|!tut_saved
+option=How do I keep track of all this?|journal
+option=Everything's done. Coming?|go|tut_gate
+option=Right.|end
+
+[beacon]
+speaker=Old Wick
+text=The iron basket up on the rocks, north of here. Walk with {move}{click}, stand next to it and press {interact}. Most things you can use work that way - doors, levers, chests, people.
+option=Something else.|start
+option=Right.|end
+
+[chest]
+speaker=Old Wick
+text=In the house, in the corner by my bed. Walk into it, or stand next to it and press {interact}. Whatever's in it is yours.
+option=Something else.|start
+option=Right.|end
+
+[equip]
+speaker=Old Wick
+text={menu} opens the party screen. {pagedown} goes to the Items tab. Pick the token, press {confirm}, choose Equip on..., then pick yourself. {cancel} backs out of anything.
+option=Something else.|start
+option=Right.|end
+
+[herbs]
+speaker=Old Wick
+text=My herb bed, south of the house. The two silvery clumps that sparkle are moonleaf. Stand on one and press {interact} to pick it.
+option=Something else.|start
+option=Right.|end
+
+[craft]
+speaker=Old Wick
+text=No bench needed for bandages. Party screen ({menu}), Items tab, then press {craft} for field crafting. Pick the Bandage that wants moonleaf - it's lit up when you have what it needs - and press {confirm}.
+option=Something else.|start
+option=Right.|end
+
+[shrine]
+speaker=Old Wick
+text=The wayshrine, east of the herb bed between the four stones. Stand on it and press {interact} (or {quicksave}) to save your game. If things go badly out there, your last save is where you start again. Every town in Aldmoor has one.
+option=Something else.|start
+option=Right.|end
+
+[journal]
+speaker=Old Wick
+text={journal} opens your journal: every quest, where it sends you and a list of what's done and what isn't. {worldmap} shows a map of wherever you are, filled in as you walk it.
+option=Something else.|start
+option=Right.|end
+
+[go]
+speaker=Old Wick
+text=Go on ahead, through the gate and east into Greywood. I'll catch you up - I know a short cut, and I walk slow.
+option=Right.|end

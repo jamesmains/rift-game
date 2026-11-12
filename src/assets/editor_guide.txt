@@ -249,6 +249,7 @@ Put ! in front of a test to reverse it. An empty condition is always true.
 - rep:faction:n: the party's reputation with that town or group is at least n (it can be negative: rep:brasswick:-20). !rep:faction:n means "below n".
 - night / day: night is roughly 19:30 to 06:00.
 - weather:rain (also clear, storm, fog, snow).
+- lit: the party has a light going - a torch, a light spell or flare, or worn gear that gives light (1.1.7).
 
 Examples:
 
@@ -887,11 +888,12 @@ Making one:
 - 4. Save and playtest; the dev console's achieve ID unlocks one by hand and reset_achievements locks them all again.
 
 == tab.campaign | Campaign tab
-see: concepts.campaigns, campaign.name, campaign.start, campaign.intro, campaign.dialogue, campaign.worldmap
+see: concepts.campaigns, campaign.name, campaign.start, campaign.intro, campaign.dialogue, campaign.worldmap, campaign.defeat
 
 The Campaign tab is campaign.txt as a form: what the desktop icon and the New
 Game window show, where a new game begins, the intro cutscene, the opening
-dialogue, starting gold, items and flags, and the world map mode.
+dialogue, starting gold, items and flags, the world map mode and what a lost
+fight does (If the party falls).
 
 Order on New Game: character creation -> intro lines (one screen each) -> the
 party appears on the start tile -> the opening dialogue opens.
@@ -5538,6 +5540,27 @@ Format: overworld, off, current, or a map id. Default: overworld.
 Gotchas: coach travel only works in overworld mode. Map items
 (effect=revealmap:) and revealmap= actions fill in whichever map they name.
 
+== campaign.defeat | If the party falls
+see: tab.campaign, concepts.scripts, dlg.actions
+
+What a lost fight does in this campaign (Campaign tab, "If the party falls").
+
+Format: a script (actions key:value separated by ;). Default: empty.
+
+  defeat=dialogue:tut_fallen
+
+- Empty: the usual game over - "You have fallen", back to the desktop, load a save.
+- A script: the party gets back up at full health, the enemies in that fight
+  are whole again and hold still for a few steps (like after fleeing), and the
+  script runs. Open a dialogue, teleport the party somewhere safe, set a flag.
+
+The Tutorial uses it so a new player who loses a fight is helped up and
+pointed back at the lesson instead of losing their progress.
+
+Gotchas: nothing is lost, so a campaign with defeat= has no real danger.
+Use it for tutorials and story-light campaigns. XP from the lost fight is not
+given.
+
 == tileset.browse | Browsing the tileset
 see: tab.tileset, concepts.tiles
 
@@ -5866,18 +5889,24 @@ hints.txt (in a campaign folder) drives the green Training panel: guidance
 that stays on screen until the player has done what it asks. It is a list of
 hints; the LAST one whose condition holds is shown, like quest stages, so
 put later lessons lower down. The Tutorial campaign (assets/campaigns/tutorial)
-is built this way: one room per lesson, each door opening (openif=) when its
-lesson's condition is met.
+is built this way: each lesson's hint holds while the lessons before it are
+done, so the panel always names the first thing still to do, even when the
+player does things out of order. Gates (a door's openif=, an exit's require=)
+wait for the lessons on that side of them.
 
   [hint]
-  if=tut_chest&!equipped:warden_badge
+  if=tut_lamp&tut_chest
   title=Training
-  text=Open the party screen with {menu} and equip the badge.
+  text=Open the party screen with {menu} and equip the token.
 
-- if: any condition, plus mode:explore|combat|shop|menu|journal|levelup|worldmap|craft, equipped:item, fav:item (or fav:any), map:id.
+- if: any condition, plus mode:explore|combat|shop|menu|journal|levelup|worldmap|craft, equipped:item, fav:item (or fav:any), map:id, lit.
+- A state that can be undone (equipped:, fav:, lit) makes a poor milestone: a
+  trigger with require= on it, covering the area where the player will walk,
+  turns it into a flag that stays set.
 - title: the panel's label (Training by default).
-- {action} in the text becomes that key on the device in use ({interact}, {menu}, {journal}, {worldmap}, {endturn}...); {move} says how to walk, {click} adds "(or click)" with a mouse. The same works in dialogue, signs and messages.
+- {action} in the text becomes that key on the device in use ({interact}, {menu}, {journal}, {worldmap}, {endturn}...); {move} says how to walk, {click} adds "(or click)" with a mouse, {craft} names the Items tab's field-crafting key (C, or X on a gamepad). The same works in dialogue, signs and messages.
 - finish=CAMPAIGN|line|line in dialogue ends a tutorial-style campaign: closing lines, then the desktop with New Game open for CAMPAIGN.
+- defeat= in campaign.txt (Campaign tab, "If the party falls") keeps a lost fight from ending the game: see campaign.defeat.
 
 The base game has no hints (the old one-time tips were replaced by the Tutorial).
 

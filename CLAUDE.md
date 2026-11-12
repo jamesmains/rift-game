@@ -42,7 +42,9 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
   editor_* tests pass (1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
-  facing_1_1_5, music_ambient; 1.1.6: those plus every editor_* test and editor_import_1_1_6).
+  facing_1_1_5, music_ambient; 1.1.6: those plus every editor_* test and editor_import_1_1_6; 1.1.7: all of those plus tutorial,
+  tutorial_defeat_1_1_7, sprites_1010, fight_to_victory, standing_1_1_2, resource_nodes_1_1, story_choices,
+  side_quests_1_0).
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
   an `editor` icon at 0,0 (already so in the 1.0.10 source).
@@ -202,10 +204,37 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - #30: `edMatch` (edui.h, all words, case-insensitive) in every search box; `EdUI::searchField` (hint text + x);
   generic lists search every value and have a Filter button (`openFieldFilter`, `GenericEditor::filterKey/filterVal`,
   tokens from `edFilterTokens`); Maps and Dialogue lists got search boxes (dialogue searches file text).
-- The owner's "The Lost Lighthouse" campaign (made in the installed 1.1.5 with the old full template, unedited) was
-  pulled into `src\assets\campaigns` at 1.1.6 and ships with the full build unless deleted.
+- The owner's "The Lost Lighthouse" campaign was pulled into `src\assets\campaigns` at 1.1.6; the owner said it was
+  added by accident and it was deleted at 1.1.7.
 - Gotcha: the Bash tool eats backslashes inside heredocs (a doubled backslash-n becomes a newline). Write patch scripts
   with the Write tool and run them rather than piping Python through a heredoc.
+
+## 1.1.7 the Tutorial remade (owner's #31: "more robust and more in theme")
+- `src\assets\campaigns\tutorial` (id stays `tutorial`: the setup wizard and desktop look for it), version 2.0. Story:
+  the day before the main game; old Wick (Hollowmere's lamplighter, a scout; NOT a Warden - the Wardens of Hollowmere
+  died out long ago, his grandmother was one) and the violet light that fell into Greywood. Ends with finish= into the
+  main game's opening ("Elder Mara has sent for you"). Three maps: `tut_watch` (Wick's yard: beacon lever, footlocker,
+  Warden's Token, moonleaf gather + field crafting, wayshrine, gate), `tut_wood` (glass-backed rats, hotbar, Dace's
+  shop: sell splinters / buy the quarry key, thornwrack obstacle needs=burn, key gate), `tut_quarry` (dark: torch,
+  Wick joins as ranger `join=ranger:Old Wick:156,24`, winch lever + bridge [change], goblins, scrap drone, the shard
+  chest with onuse=dialogue:tut_end).
+- The maps were generated from hand-drawn rows by a throwaway script (markers for object positions); edit the .txt
+  files directly now. Wick stands in front of the quarry winch so it can't be pulled before he joins.
+- hints.txt rule: each lesson's hint holds while all EARLIER lessons are done (cumulative `a&b&c`), so the panel shows
+  the first unfinished lesson; mode hints (combat/shop/menu/craft...) come last so they win. Undoable states become
+  flags via whole-map triggers with require= (tut_equipped, tut_crafted, tut_fav, tut_lit); a "b" hint with the live
+  condition covers the step before the trigger fires. Triggers fire on a step; only the first matching trigger fires
+  per step (onStep returns).
+- Robustness: Wick's yard talk (`tut_wick`) answers each unfinished lesson; skip option in `tut_wick_first`; Wick gives
+  torches if you have none (camp + quarry); Dace gives the key if you're broke; campaign `defeat=dialogue:tut_fallen`.
+- Engine added for it: campaign.txt `defeat=SCRIPT` (CampaignInfo::defeat; `combatFinish` revives + full heal, resets
+  the groups, _fleegrace, runs the script; Editor Campaign tab field "If the party falls", Import, guide topic
+  campaign.defeat). Condition `lit` (evalCond: lightSteps > 0 or equipped gear with light=). Doors opened by openif=
+  now set their flag= (worldstate.cpp) - before, only a door the party opened did. Journal quest pins show a visited
+  map's name. The Training panel sits higher on the crafting screen. Headless: expect `cond:X`, command `partywipe`.
+- Bot gotcha: `choose`/`bump` settle and answer the rest of a dialogue themselves (closeDialogue). To look at a talk
+  that a chest/trigger opens, stand next to it and `key E`, then answer with `key ENTER` + ~60 frames each.
+- Tests: `tutorial` (whole playthrough) and `tutorial_defeat_1_1_7` (skip + losing a fight).
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
@@ -234,7 +263,7 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 ## Where things live
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,
   quests, dialogue, ASCII maps...). Campaigns: `src\assets\campaigns\` (tutorial only; the
-  Gullwatch sample campaign was removed at 1.1.1 by the owner).
+  Gullwatch sample campaign was removed at 1.1.1 by the owner, The Lost Lighthouse at 1.1.7).
 - Art: `src\assets\tiles.png` is the Urizen 1-bit sheet by vurmux (CC0), `icons.png` the desktop icons
   (Cute Desktop Icons by Mayke-Arth). Sound and music are generated by `src\tools\mksounds.py`.
 - `assets\tilesheets\` - the original Urizen sheets (`urizen_onebit_tileset__v2d0.png` = same file as tiles.png;

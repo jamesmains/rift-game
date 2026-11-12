@@ -1,0 +1,122 @@
+[map]
+id=tut_wood
+name=Greywood Edge
+kind=town
+spawn=1,12
+bg=0,0,0
+music=forest
+ambient=amb_forest
+worldmap=self
+
+[legend]
+T = tree|tree|tree2|tree3|pine_t
+t = pine_t
+. = floor_grass
+, = floor_dirt
+Y = path
+% = tallgrass
+k = crate
+c = cart
+O = campfire
+# = palisade
+Q = door_wood
+
+[rows]
+TTTTtTTTTTTtTTTTTTTTtTTTTTTTtTTTTTTTTTtTTTTTTT
+TTtTTTTTtTTTTTTTTtTTTTT....TTTTTtTTTTTTTTTtTTT
+TTTTTTtTTTTTTTTTtTTTT....%...TTTTTTTtTTTTTTTTT
+TtTTTTTTTTtTTTTTTTT...k..c...TTTTTTTTTTTTtTTTT
+TTTTTtTTTTTTTtTTTT...k...O...%.TTTTTtTTTTTTTTT
+TTtTTTTTTTTTTTTTT..........k...TTTTTTTTTTtTTTT
+TTTTTTTtTTTTtTTTT.%.............TTtTTTTTTTTTTT
+TTTTtTTTTTTTTTTTTT.......,.....TTTTTTTTtTTTTTT
+TtTTTTTTTtTTTTTTTTTT....,...TTTTTTTTTTTTTTTTTT
+TTTTTTtTTTTTTT..%.TTTT..,.TTTTTTTtTTTTT#######
+TTTtTTTTTTTT.......TTTTT,TTTTTTTTTTTTTTT#,,,,,
+TTTTTTTTT%.....%.....TT.,.TTTTtTTTTTT..T#,,,,,
+YYYYYYYYY...........YYYYYYYYYYYYYYYYYYYYQ,,,,,
+YYTTTTTT.%.........%TTTTTTTTTTTTTTTTTTTT#,,,,,
+TTTTTtTTT..%.....%.TTtTTTTTTtTTTTTTTTTTT#,,,,,
+TTtTTTTTTTT.......TTTTTTTTTTTTTTTTTtTTTT######
+TTTTTTTTtTTTTT..TTTTTTtTTTTTTTTTTTTTTTTTTTTTTT
+TTTTtTTTTTTTTTTTTTTTTTTTTTTtTTTTTTTTTtTTTTTTTT
+
+[exit]
+x=0
+y=12
+h=2
+to=tut_watch
+tx=33
+ty=11
+
+[trigger]
+x=2
+y=11
+w=3
+h=3
+flag=tut_road
+script=log:Greywood. The trees close in, and something rustles in the bracken ahead.
+
+[enemy]
+group=glass_rat,glass_rat
+x=14
+y=12
+aggro=4
+flag=tut_rats
+ondefeat=item:violet_splinter:3;xp:90;notify:The rats' backs bristle with violet glass. You pry out three splinters.
+
+[npc]
+id=dace
+name=Dace the Pedlar
+sprite=117,23
+x=21
+y=5
+dialogue=tut_dace
+
+[npc]
+id=wick_camp
+name=Old Wick
+sprite=156,24
+x=29
+y=6
+dialogue=tut_wick_camp
+hide=tut_inquarry
+
+[obstacle]
+x=34
+y=12
+name=Thornwrack
+needs=burn
+kind=vines
+clear=path
+flag=tut_brambles
+text=A wall of thornwrack has grown across the trail - black, wet, and sharp as fish-hooks. Nothing gets through it. Fire would.
+onclear=notify:The thornwrack burns away. The quarry gate is just ahead.
+
+[door]
+x=40
+y=12
+key=quarry_key
+flag=tut_quarry_gate
+text=The key turns, stiff with rust. The quarry gate groans open.
+
+[exit]
+x=25
+y=7
+to=tut_quarry
+tx=1
+ty=11
+
+[trigger]
+x=0
+y=0
+w=46
+h=18
+flag=tut_fav
+require=fav:any
+
+[sign]
+x=37
+y=11
+title=Painted board
+text=GREYWOOD QUARRY - CLOSED BY ORDER OF THE HOLLOWMERE COUNCIL. (Underneath, in charcoal: DACE HAS THE KEY. ASK NICELY. BRING COIN.)

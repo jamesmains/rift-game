@@ -20,7 +20,7 @@ void Editor::loadCampaignForm() {
         std::string k = trim(l.substr(0, eq)), v = trim(l.substr(eq + 1));
         if (k == "name") camp.name = v; else if (k == "desc") camp.desc = v; else if (k == "author") camp.author = v; else if (k == "version") camp.version = v;
         else if (k == "icon") camp.icon = v; else if (k == "gold") camp.gold = atoi(v.c_str()); else if (k == "items") camp.items = v; else if (k == "flags") camp.flags = v;
-        else if (k == "dialogue") camp.dialogue = v; else if (k == "intro") camp.intro.push_back(v); else if (k == "worldmap") camp.worldMap = v;
+        else if (k == "dialogue") camp.dialogue = v; else if (k == "intro") camp.intro.push_back(v); else if (k == "worldmap") camp.worldMap = v; else if (k == "defeat") camp.defeat = v;
         else if (k == "start") { auto p = split(v, ','); camp.startMap = trim(p[0]); camp.startX = p.size() > 1 ? atoi(p[1].c_str()) : 0; camp.startY = p.size() > 2 ? atoi(p[2].c_str()) : 0; }
         else camp.extra.push_back({k, v});
     }
@@ -38,6 +38,7 @@ bool Editor::saveCampaignForm() {
     for (auto& l : camp.intro) if (!trim(l).empty()) o += "intro=" + l + "\n";
     if (!camp.dialogue.empty()) o += "dialogue=" + camp.dialogue + "\n";
     if (!camp.worldMap.empty() && camp.worldMap != "overworld") o += "worldmap=" + camp.worldMap + "\n";
+    if (!trim(camp.defeat).empty()) o += "defeat=" + trim(camp.defeat) + "\n";
     for (auto& kv : camp.extra) o += kv.first + "=" + kv.second + "\n";
     if (!writeFile(camp.path, o)) { say("Could not write " + camp.path); return false; }
     camp.dirty = false; changed = true; say("Saved " + camp.path);
@@ -117,7 +118,9 @@ void Editor::drawCampaign(InputState& in) {
         const char* expl = lw == "overworld" ? "M shows the overworld; it fills in as the party walks it (or enters places with reveal=)." : lw == "off" ? "No world map: M and the pause-menu entry say there is no map." : lw == "current" ? "M shows whichever map the party is on, filled in as it is explored." : "M always shows this map (e.g. a castle's hall); its exits are the places listed. revealmap= in dialogue fills it in.";
         auto wl = font->wrap(bad ? "that map does not exist in this campaign" : expl, x + 630 - (fx + 210)); for (size_t i = 0; i < wl.size() && i < 3; i++) ui.text(fx + 210, ry + 3 + (int)i * 12, wl[i], bad ? DANGER : DIM);
     }
-    ry += row;
+    ry += row + 12;
+    // ---- 1.1.7: what a lost fight does ----
+    field("If the party falls", camp.defeat, "Empty: game over (load a save). A script: the party gets back up healed and it runs, e.g. dialogue:my_fallen", "defeat");
     // ---- right column: playtest state, export ----
     { int rx = x + 640, rw = w - 646; drawPlayState(rx, y + 22, rw, 300, in); drawExportPanel(rx, y + 328, rw, h - 334 - 30, in); }
     // ---- buttons ----

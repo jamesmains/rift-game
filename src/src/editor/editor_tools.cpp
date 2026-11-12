@@ -126,6 +126,9 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
             else if (startsWith(c, "approval:") || startsWith(c, "kills:") || startsWith(c, "itemn:")) { auto p = split(c.substr(c.find(':') + 1), ':'); if (startsWith(c, "approval:") && !gd->cls(p[0])) err(line, "approval: uses unknown class '" + p[0] + "'"); if (startsWith(c, "kills:") && !gd->creature(p[0])) err(line, "kills: uses unknown creature '" + p[0] + "'"); if (startsWith(c, "itemn:") && !gd->item(p[0])) err(line, "itemn: uses unknown item '" + p[0] + "'"); }
             else if (startsWith(c, "rep:")) { auto p = split(c.substr(4), ':'); if (!knownFaction(p[0])) warn(line, "rep: uses faction '" + p[0] + "' that is not in factions.txt or a board id"); }
             else if (startsWith(c, "party:")) { std::string p = c.substr(6); bool ok = gd->cls(p) != nullptr; if (!ok) warn(line, "condition party:" + p + " is not a class id (it will match a member's name only)"); }
+            else if (startsWith(c, "map:")) { if (!isMap(c.substr(4))) warn(line, "condition map: names a map that does not exist ('" + c.substr(4) + "')"); }
+            else if (startsWith(c, "equipped:")) { if (!gd->item(c.substr(9))) err(line, "condition uses unknown item '" + c.substr(9) + "'"); }
+            else if (startsWith(c, "mode:") || startsWith(c, "fav:") || startsWith(c, "weather:") || c == "lit" || c == "night" || c == "day" || c == "room") { }   // 1.1.7: game states, not flags
             else { std::string f = c; size_t ge = f.find(">="); if (ge != std::string::npos) f = trim(f.substr(0, ge)); if (!flags.count(f)) warn(line, "flag '" + f + "' is never set by any dialogue, trigger, chest, enemy or dungeon"); } }
     };
     for (size_t i = 0; i < lines.size(); i++) {
@@ -177,7 +180,8 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
     for (auto& f : mapFiles) if (readFile(readPath("maps/" + f + ".txt"), text2)) { size_t at = 0; while ((at = text2.find("dialogue:" + id, at)) != std::string::npos) { size_t e = at + 9 + id.size(); if (e >= text2.size() || !(isalnum((unsigned char)text2[e]) || text2[e] == '_')) used = true; at = e; } }
     if (readFile(readPath("dungeons.txt"), text2) && text2.find("dialogue:" + id) != std::string::npos) used = true;
     for (auto& f : dlgFiles) if (f != id && readFile(readPath("dialogue/" + f + ".txt"), text2)) if (text2.find("dialogue=" + id) != std::string::npos) used = true;
-    { std::string ct; if (readFile(readPath("campaign.txt"), ct) && (ct.find("dialogue=" + id + "\n") != std::string::npos || ct.find("dialogue=" + id + "\r") != std::string::npos)) used = true; }   // the campaign's opening dialogue
+    { std::string ct; if (readFile(readPath("campaign.txt"), ct) && (ct.find("dialogue=" + id + "\n") != std::string::npos || ct.find("dialogue=" + id + "\r") != std::string::npos)) used = true;   // the campaign's opening dialogue
+      size_t at = 0; while ((at = ct.find("dialogue:" + id, at)) != std::string::npos) { size_t e = at + 9 + id.size(); if (e >= ct.size() || !(isalnum((unsigned char)ct[e]) || ct[e] == '_')) used = true; at = e; } }   // 1.1.7: or its defeat= script
     if (!used && id != "start" && id != "intro") warn(0, "no NPC on any map (and no other dialogue) uses '" + id + "'");
     std::stable_sort(out.begin(), out.end(), [](const LintItem& a, const LintItem& b) { return a.warn < b.warn; });
     return out;

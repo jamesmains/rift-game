@@ -238,7 +238,7 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
             int rightX = x0 + w - 8;
             if (failed) { textRight(ctx, rightX, y + 3, "failed", C::Red); rightX -= ctx.font->width("failed") + 10; }
             else if (startsWith(r.st, "DONE")) { textRight(ctx, rightX, y + 3, "done", C::Green); rightX -= ctx.font->width("done") + 10; }
-            std::string pin = questPin(q); if (!pin.empty() && !done) { std::string nm = pin; for (auto& l : locations) if (l.id == pin) nm = l.name; textRight(ctx, rightX, y + 3, "> " + nm, C::Cyan); rightX -= ctx.font->width("> " + nm) + 10; }
+            std::string pin = questPin(q); if (!pin.empty() && !done) { std::string nm = pin; for (auto& l : locations) if (l.id == pin) nm = l.name; if (nm == pin) { auto mi = maps.find(pin); if (mi != maps.end() && mi->second && !mi->second->name.empty()) nm = mi->second->name; }   /* 1.1.7: a map pin shows the map's name */ textRight(ctx, rightX, y + 3, "> " + nm, C::Cyan); rightX -= ctx.font->width("> " + nm) + 10; }
             { ctx.font->bold = true; std::string nm = q.name; while (nm.size() > 4 && x0 + 8 + ctx.font->width(nm) > rightX) nm = nm.substr(0, nm.size() - 4) + "..";
               UI::text(ctx, x0 + 8, y + 3, nm, failed ? C::Red : done ? C::Gray : C::Gold); ctx.font->bold = false; }
             if (sel) { int ly = y + 17; for (auto& l : r.full) { UI::text(ctx, x0 + 8, ly, l, failed ? RGB(220, 130, 115) : done ? C::DkGray : C::White); ly += 13; } if (r.full.empty()) ly += 13;

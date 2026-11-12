@@ -1,0 +1,32 @@
+# Old Wick, first talk in his yard (the NPC "wick", hidden once tut_intro is set; "wick_yard" with tut_wick takes over).
+[start]
+speaker=Old Wick
+text=There you are. You saw it too, then? Last night - a violet light, dropping into Greywood past the old quarry like somebody let go of a lantern. Shook the cups off my shelf.
+option=What do you think it was?|what
+option=Why send for me?|why
+
+[what]
+speaker=Old Wick
+text=Forty years ago the sky tore open and dropped pieces of other worlds all over Aldmoor. It's been quiet since. Quiet-ish. Last night didn't look quiet. I mean to go and see - and I'm not going alone.
+next=why
+
+[why]
+speaker=Old Wick
+text=Because you're young, you're bored, and you've got two good legs. Mine are old, and only one of them's any use. But nobody walks into Greywood with me until they've shown me they can look after themselves. So: a few jobs round the yard first.
+next=jobs
+
+[jobs]
+speaker=Old Wick
+text=Watch the green Training box at the top of your screen. It always says what's next, and it stays put until you've done it. First job: the beacon up on the rocks to the north has gone out. Walk up to it and press {interact} to light it.
+set=tut_intro
+quest=The Fallen Light
+option=On my way.|end
+option=I've done all this before. (Skip the yard lessons)|skip
+
+[skip]
+speaker=Old Wick
+text=Have you now? Then you'll not mind me just handing you the kit. My grandmother's token - wear it, it's lucky. Bandages. A torch. The gate's open. Don't make me sorry.
+set=tut_intro,tut_beacon,tut_chest,tut_equipped,tut_crafted,tut_saved
+give=warden_token,bandage:2,torch_item:1
+gold=10
+option=Let's go.|end

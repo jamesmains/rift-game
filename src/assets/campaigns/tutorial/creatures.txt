@@ -1,0 +1,18 @@
+# Monsters only the Tutorial has (the base game's goblins and the scrap drone are used too).
+[creature]
+id=glass_rat
+name=Glass-backed Rat
+sprite=105,40
+color=190,120,255
+hp=10
+darkvision=1
+stats=str:5,dex:11,con:5,int:2,wis:3,cha:2
+dmg=1-4
+apmax=6
+move=5
+evasion=5
+xp=8
+level=1
+gold=0-1
+ai=melee
+faction=wild

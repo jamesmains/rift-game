@@ -18,7 +18,7 @@ static const int BOTTOM = 18;
 static bool nonFlagTerm(const std::string& c) {
     static const char* pre[] = {"item:", "gold:", "level:", "party:", "kills:", "itemn:", "approval:", "weather:", "rep:", "mode:", "equipped:", "fav:", "map:"};
     for (auto p : pre) if (startsWith(c, p)) return true;
-    return c == "night" || c == "day";
+    return c == "night" || c == "day" || c == "lit" || c == "room";   // 1.1.7: lit (a light is on)
 }
 std::vector<std::string> condFlags(const std::string& cond) {
     std::vector<std::string> out;
@@ -60,6 +60,7 @@ std::string Editor::condEnglish(const std::string& cond) const {
         else if (startsWith(c, "fav:")) s = c.substr(4) == "any" ? std::string(neg ? "the hotbar is empty" : "something is on the hotbar") : std::string(neg ? "NOT on the hotbar: " : "on the hotbar: ") + c.substr(4);
         else if (startsWith(c, "map:")) s = std::string(neg ? "the party is NOT on " : "the party is on ") + c.substr(4);
         else if (c == "night" || c == "day") s = std::string("it is ") + (neg ? "not " : "") + c;
+        else if (c == "lit") s = neg ? "the party has no light going" : "the party has a light going";
         else if (c.find(">=") != std::string::npos) { auto p = c.find(">="); s = trim(c.substr(0, p)) + (neg ? " is below " : " is at least ") + trim(c.substr(p + 2)); }
         else s = c + (neg ? " is NOT set" : " is set");
         o += (o.empty() ? "" : " and ") + s;

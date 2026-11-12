@@ -1,0 +1,22 @@
+# Runs when the party loses a fight (campaign.txt defeat=): everyone is back on their feet, the enemies are whole again,
+# and Wick puts the party somewhere safe on the map where it fell.
+[start]
+speaker=Old Wick
+text=Easy. Easy! You're breathing - good. I dragged you clear. No shame in it: the first fights always go worse than you think. Patch yourself up, think it through, and try again.
+option=What should I do differently?|tips
+option=(Get up)|up_wood|map:tut_wood
+option=(Get up)|up_quarry|map:tut_quarry
+option=(Get up)|end|!map:tut_wood&!map:tut_quarry
+
+[tips]
+speaker=Old Wick
+text=Don't stand in the open: crates, rocks and walls between you and them make you harder to hit. Heal from the hotbar before you're on your knees. Let them come to you - {defend} braces you for it. And there's always {flee}: running away is allowed.
+option=(Get up)|up_wood|map:tut_wood
+option=(Get up)|up_quarry|map:tut_quarry
+option=(Get up)|end|!map:tut_wood&!map:tut_quarry
+
+[up_wood]
+teleport=tut_wood,5,12
+
+[up_quarry]
+teleport=tut_quarry,10,11

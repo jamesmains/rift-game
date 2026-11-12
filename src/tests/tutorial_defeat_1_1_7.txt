@@ -1,0 +1,46 @@
+# 1.1.7 (#31): the Tutorial's safety nets. Wick's "I've done all this before" skips the yard lessons (kit handed over,
+# gate open). Losing a fight doesn't end the game (campaign defeat=): the party is back up at full health, Wick's talk
+# opens and puts it somewhere safe, and the enemies are there to fight again.
+campaign tutorial
+careful 0
+newgame Bo mage 0
+frames 90
+talk wick
+choose Why send for me
+frames 10
+choose done all this before
+frames 10
+expect flag:tut_intro == 1
+expect flag:tut_gate == 1
+expect item:warden_token == 1
+expect item:bandage == 2
+expect hint contains gate is open
+goto tut_wood
+frames 5
+expect map == tut_wood
+walk 3 12
+expect flag:tut_road == 1
+# walk into the rats and lose
+teleport tut_wood 9 12
+frames 5
+key RIGHT
+frames 30
+expect mode == COMBAT
+partywipe
+frames 60
+expect running == 1
+expect mode == DIALOGUE
+shot defeat_wick.png
+# (choose answers the rest of the talk itself: the first "(Get up)" there is, the one for this map)
+choose What should I do differently
+frames 90
+settle
+expect map == tut_wood
+expect x == 5
+expect hp >= 30
+expect flag:tut_rats == 0
+expect hint contains fight starts
+fight tut_rats
+settle
+expect flag:tut_rats == 1
+expect item:violet_splinter == 3

@@ -1,0 +1,48 @@
+# Old Wick at Dace's camp in Greywood (hidden once the party is inside the quarry).
+[start]
+speaker=Old Wick
+text=Told you I knew a short cut. That's Dace by the fire - pedlar, scavenger, liar. He's had the key to the quarry gate since the council shut the place, and he'll sell it to you, because Dace sells everything.
+option=What were those rats?|rats|tut_rats
+option=How do I use a bandage quickly?|hotbar|!tut_fav
+option=How does trading work?|trade
+option=I'm short of coin.|coin|!item:quarry_key
+option=Something's grown across the trail.|burn|!tut_brambles
+option=I've no torch to burn it with.|notorch|!tut_brambles&!item:torch_item
+option=Right.|end
+
+[notorch]
+speaker=Old Wick
+text=A lamplighter with no light to lend? Never. Here. Dace sells them too, mind, when I'm not about.
+give=torch_item:2
+option=Something else.|start
+option=Right.|end
+
+[rats]
+speaker=Old Wick
+text=Violet glass, growing out of them like a second spine. I saw that once before, the week after the sky tore. Whatever came down last night, it's changing what lives near it. Keep those splinters - Dace buys them.
+option=Something else.|start
+option=Right.|end
+
+[hotbar]
+speaker=Old Wick
+text=Party screen ({menu}), Items tab, pick a Bandage and press 1. That's your hotbar, bottom right: press 1 and it's used, out here or on your turn in a fight. Eight slots, keys 1 to 8. Spells go there the same way.
+option=Something else.|start
+option=Right.|end
+
+[trade]
+speaker=Old Wick
+text=Talk to Dace and say you want to trade. {up}/{down} pick, {confirm} buys, {left}/{right} change how many. {pageup}/{pagedown} switch between Buy and Sell. {cancel} when you're done.
+option=Something else.|start
+option=Right.|end
+
+[coin]
+speaker=Old Wick
+text=Sell him those violet splinters - glass like that fetches a good price. If you're still short, tell him so. He owes me more than he lets on.
+option=Something else.|start
+option=Right.|end
+
+[burn]
+speaker=Old Wick
+text=Thornwrack. Nothing cuts it, but it burns. Walk into it, or face it and press {interact} - it'll show you what you can do about it. A torch will set it going.
+option=Something else.|start
+option=Right.|end

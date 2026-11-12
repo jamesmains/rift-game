@@ -88,6 +88,7 @@ void Editor::impSelectSource(int i) {
         add("items", "Starting items", c.startItems, !camp.items.empty());
         add("flags", "Starting flags", c.startFlags, !camp.flags.empty());
         add("worldmap", "World map (M)", c.worldMap, !camp.worldMap.empty());
+        add("defeat", "If the party falls", c.defeat, !camp.defeat.empty());
     }
 }
 
@@ -143,7 +144,7 @@ int Editor::doImport() {
             else if (e.id == "start") { camp.startMap = c.startMap; camp.startX = c.startX; camp.startY = c.startY; }
             else if (e.id == "intro") camp.intro = c.intro; else if (e.id == "dialogue") camp.dialogue = c.startDialogue;
             else if (e.id == "gold") camp.gold = c.gold; else if (e.id == "items") camp.items = c.startItems;
-            else if (e.id == "flags") camp.flags = c.startFlags; else if (e.id == "worldmap") camp.worldMap = c.worldMap;
+            else if (e.id == "flags") camp.flags = c.startFlags; else if (e.id == "worldmap") camp.worldMap = c.worldMap; else if (e.id == "defeat") camp.defeat = c.defeat;
         }
         if (n) { camp.dirty = true; say(fmt("Imported %d setting(s) from %s - Save to keep them.", n, c.name.c_str())); }
     }

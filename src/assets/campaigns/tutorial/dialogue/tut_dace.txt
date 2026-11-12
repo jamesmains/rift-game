@@ -1,0 +1,30 @@
+# Dace the pedlar: his shop, and the quarry key for anyone who can't pay (so nobody gets stuck).
+[start]
+speaker=Dace the Pedlar
+text=Customers! Out here! Welcome to Dace's Travelling Emporium: lamp oil, bandages, salvage, and keys to places you shouldn't go. What'll it be?
+option=Let's trade.|trade
+option=I hear you have the quarry key.|key|!item:quarry_key
+option=I can't afford the key.|broke|!item:quarry_key&!gold:50
+option=Nothing. Goodbye.|end
+
+[trade]
+shop=tut_pedlar
+
+[key]
+speaker=Dace the Pedlar
+text=The quarry key! Lovely old thing. Found it, didn't I - on a nail, where anyone could take it. It's on my Buy list, fifty or near enough. Got any of that violet glass? I buy glass. I buy anything.
+option=Let's trade.|trade
+option=Later.|end
+
+[broke]
+speaker=Dace the Pedlar
+text=Short, are we? Sell me those violet splinters first - I pay fair. Fair-ish.
+option=I'll sell the splinters.|trade|item:violet_splinter
+option=I've nothing left to sell.|gift|!item:violet_splinter
+option=Later.|end
+
+[gift]
+speaker=Dace the Pedlar
+text=...Oh, take it. Wick's good for it. I'll put it on his slate - he'll never know. He'll know. Take it anyway.
+give=quarry_key
+option=Thanks, Dace.|end

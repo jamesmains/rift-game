@@ -1,7 +1,8 @@
-# Quartermaster Ott's store in the training hall (always open).
+# Dace the pedlar's stall at the Greywood camp (always open). He buys anything, the violet splinters included.
 [shop]
-id=tut_store
-item=bandage
+id=tut_pedlar
+item=quarry_key:1
+item=bandage:4
+item=torch_item:4
+item=potion_red:2
 item=bread
-item=potion_red
-item=torch_item

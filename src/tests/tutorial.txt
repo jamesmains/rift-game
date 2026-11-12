@@ -1,29 +1,39 @@
-# 1.0.7: the Tutorial campaign, played the way a new player would: walk, open the chest, equip from the party screen,
-# buy in a shop, save at a shrine, talk, two fights, a hotbar favourite, and the finish back to New Game.
+# 1.1.7: the remade Tutorial (#31), played the way a new player would. Wick's yard: talk, light the beacon (a lever),
+# the footlocker, wearing the token from the party screen, picking moonleaf and field-crafting bandages, saving at the
+# wayshrine, the gate. Greywood: the rat fight, levelling up, the hotbar, selling and buying at Dace's, burning the
+# thornwrack, the key gate. The quarry: a torch in the dark, Wick joining, the winch and bridge, the goblins, the
+# machine, the shard and the finish back to New Game. Also: losing a fight (campaign defeat=) puts the party back up.
 campaign tutorial
+careful 0
 newgame Ana warrior 0
 frames 90
-expect hint contains Talk to Warden Hale
+expect map == tut_watch
+expect hint contains Talk to Old Wick
 shot tut_start.png
-choose How will I know
+talk wick
+choose Why send for me
+frames 10
+choose On my way
 frames 30
 expect flag:tut_intro == 1
-expect hint contains glowing marker
-walk 9 10
+expect quest:tut_fallen_light >= 1
+expect hint contains beacon
+# the beacon is a lever: bump it
+bump 22 2 beacon
 frames 5
-expect flag:tut_moved == 1
-expect hint contains supply chest
-bump 2 2 chest
+expect flag:tut_beacon == 1
+expect hint contains footlocker
+bump 4 7 chest
 frames 5
-expect item:warden_badge == 1
-expect hint contains Warden's Badge
-# equip it the real way: party screen, Items tab, the badge (4th), Equip on..., the hero
+expect item:warden_token == 1
+expect hint contains Warden's Token
+shot tut_chest.png
 key TAB
 frames 3
 key PGDN
 frames 3
 expect hint contains Equip on
-shot tut_menu.png
+shot tut_items.png
 keys DOWN DOWN DOWN
 key ENTER
 frames 2
@@ -35,71 +45,204 @@ key ESC
 frames 2
 key ESC
 frames 3
-expect hint contains Badge on
-walk 14 7
-frames 5
-expect flag:tut_r2 == 1
-talk ott
+expect hint contains moonleaf
+walk 14 17
 frames 3
-expect mode == SHOP
-expect hint contains Shopping
-shot tut_shop.png
-key ENTER
-frames 3
-expect item:bandage == 1
-key ESC
-frames 3
-walk 24 7
-frames 5
-expect flag:tut_r3 == 1
-walk 26 3
 key E
-frames 5
-shot tut_shrine.png
+frames 20
 settle
-talk brin
-choose What's through the door
-frames 5
-expect flag:tut_brin == 1
-expect hint contains journal
-walk 32 7
-frames 5
-expect hint contains Two giant rats
-fight tut_rats
-settle
-expect flag:tut_rats == 1
-expect level >= 2
-expect hint contains hotbar
-# the bandage on hotbar slot 1 from the Items tab (it is the last item: bread, potion, torch, badge... sort as found)
+expect item:herb_moon >= 1
+expect hint contains field crafting
 key TAB
 frames 3
 key PGDN
 frames 3
+key C
+frames 3
+expect mode == CRAFT
+expect hint contains Moonleaf
+shot tut_craft.png
+key ENTER
+frames 10
+settle
+expect item:bandage >= 2
+key ESC
+frames 3
+key ESC
+frames 3
+walk 14 16
+frames 3
+expect flag:tut_crafted == 1
+expect hint contains wayshrine
+walk 29 18
+frames 3
+key E
+frames 10
+shot tut_shrine.png
+expect flag:tut_saved == 1
+key ESC
+frames 5
+settle
+expect flag:tut_gate == 1
+expect hint contains gate is open
+key J
+frames 5
+expect hint contains checklist
+shot tut_journal.png
+key ESC
+frames 5
+talk wick_yard
+choose Everything's done
+frames 5
+settle
+goto tut_wood
+frames 5
+expect map == tut_wood
+walk 2 12
+frames 3
+expect flag:tut_road == 1
+expect hint contains fight starts
+fight tut_rats
+settle
+expect flag:tut_rats == 1
+expect item:violet_splinter == 3
+expect level >= 2
+expect hint contains hotbar
+key TAB
+frames 3
+key PGDN
+frames 3
+expect hint contains hotbar slot 1
 shot tut_items2.png
-keys DOWN DOWN DOWN
+keys DOWN DOWN DOWN DOWN
 key 1
 frames 3
 expect fav:1 == item:bandage
-expect hint contains That's your hotbar
 key ESC
 frames 3
-walk 44 7
+walk 6 12
+frames 3
+expect flag:tut_fav == 1
+expect hint contains Dace
+talk dace
+choose Let's trade
 frames 5
-expect flag:tut_r5 == 1
+expect mode == SHOP
+expect hint contains sell the splinters
+shot tut_shop.png
+key PGDN
+frames 3
+shot tut_shop_sell.png
+keys DOWN DOWN DOWN DOWN DOWN
+key E
+frames 3
+expect item:violet_splinter == 0
+key PGUP
+frames 3
+key ENTER
+frames 3
+expect item:quarry_key == 1
+expect hint contains Got the key
+key ESC
+frames 3
+settle
+expect hint contains Thornwrack
+bump 34 12 thornwrack
+frames 5
+shot tut_thorn.png
+choose torch
+frames 30
+settle
+expect flag:tut_brambles == 1
+expect hint contains quarry gate
+bump 40 12 gate
+frames 5
+expect flag:tut_quarry_gate == 1
+goto tut_quarry
+frames 5
+walk 3 11
+frames 3
+expect flag:tut_inquarry == 1
+expect hint contains Light a torch
+shot tut_dark.png
+key TAB
+frames 3
+key PGDN
+frames 3
+expect hint contains pick a Torch
+keys DOWN DOWN
+key ENTER
+frames 3
+key ENTER
+frames 3
+key ENTER
+frames 5
+expect cond:lit == 1
+key ESC
+frames 3
+key ESC
+frames 3
+walk 5 11
+frames 3
+expect flag:tut_lit == 1
+expect hint contains Wick is waiting
+shot tut_torch.png
+talk wick_quarry
+choose Glad to have you
+frames 5
+key ENTER
+frames 5
+settle
+expect members == 2
+expect flag:joined_ranger == 1
+expect hint contains winch
+bump 13 9 winch
+frames 5
+expect flag:tut_winch == 1
 expect hint contains Goblins
+shot tut_bridge.png
 fight tut_goblins
 settle
 expect flag:tut_goblins == 1
-expect hint contains Warden Hale is waiting
-walk 58 7
-talk hale_end
-key DOWN
+expect hint contains crater
+fight tut_drone
+settle
+expect flag:tut_drone == 1
+expect hint contains shard
+# stand next to the shard and press E (a bump would let the bot answer the closing talk by itself)
+walk 37 11
+key RIGHT
+frames 3
+key E
+frames 10
+expect item:fallen_shard == 1
+expect mode == DIALOGUE
+shot tut_shard.png
+frames 60
+key ENTER
+frames 60
+expect mode == DIALOGUE
+key ENTER
+frames 60
+shot tut_end_talk.png
+key ENTER
+frames 60
+expect flag:tut_done == 1
+expect queststatus:tut_fallen_light contains Rift-glass
 key ENTER
 frames 60
 shot tut_cutscene.png
-keys ENTER ENTER ENTER
-frames 60
-keys ENTER ENTER
+key ENTER
+frames 40
+key ENTER
+frames 40
+key ENTER
+frames 40
+key ENTER
+frames 40
+key ENTER
+frames 40
+key ENTER
 frames 60
 expect running == 0
 expect window == new

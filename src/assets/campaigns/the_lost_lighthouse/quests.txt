@@ -1,4 +1,0 @@
-[quest]
-id=the_lost_lighthouse_main
-name=The Lost Lighthouse
-stage=the_lost_lighthouse_started | The story has begun. (Edit quests.txt to write the rest.)

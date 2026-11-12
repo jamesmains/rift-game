@@ -28,6 +28,25 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.7 a new Tutorial
+
+* **The Tutorial is new.** It's now a short adventure set the day before the main story: last night a violet light fell
+  into Greywood, and old Wick, Hollowmere's lamplighter, wants to see what it was - once you've shown him you can look
+  after yourself. Light his watch beacon, open his footlocker and wear his grandmother's Warden's Token, pick moonleaf
+  and make bandages, save at the wayshrine, then follow the road: glass-backed rats, Dace the pedlar and his quarry
+  key, a wall of thornwrack to burn, a pitch-dark quarry, Wick joining you, a winch and a bridge, goblins behind cover,
+  and a machine guarding what fell. It ends where the main game begins.
+  * It teaches more than before: map objects (levers, obstacles, gather nodes), field crafting, selling as well as
+    buying, darkness and torches, a companion and the journal's checklist.
+  * It's harder to get stuck in. The Training panel always shows the first lesson you haven't done yet, even if you
+    do things out of order. Wick answers "how do I...?" for every lesson, hands out torches if you run out, and Dace
+    lets you have the key if you can't pay. Losing a fight no longer ends the game: Wick helps you up and you try again.
+  * Played it before? Tell Wick so, and he hands you the yard's kit and opens the gate.
+* The old training-hall tutorial and The Lost Lighthouse (an empty campaign added by mistake) are gone.
+* Quest pins in the journal show a place's name instead of its id.
+* Editor: the Campaign tab has **If the party falls**: leave it empty for the usual game over, or give it a script to
+  run instead (see the guide). New condition `lit`: the party has a light going.
+
 ## 1.1.6 ambience that fits, empty new campaigns, search and filters in the Editor
 
 * **Background sounds are back, where they fit.** Every place has its own loop again: wind on the open road, voices in
@@ -673,13 +692,17 @@ player can buy or find (the base game's Surveyor's Map at the Brasswick market r
 **Tutorial hints** (`hints.txt`, 1.0.8): a list of `[hint]` blocks with `if=` (a condition), optional `title=` and
 `text=`; the last one whose condition holds is shown in the Training panel and stays until it stops holding - quest
 stages for teaching. Extra conditions for it (usable anywhere): `mode:explore|combat|shop|menu|journal|levelup|worldmap`,
-`equipped:<item>`, `fav:<item or spell>` / `fav:any`, `map:<id>`. `{interact}`, `{menu}` and the other action names
+`equipped:<item>`, `fav:<item or spell>` / `fav:any`, `map:<id>`, `lit` (1.1.7: a torch, light spell or light-giving
+gear is on). `{interact}`, `{menu}` and the other action names
 become the key (or pad button) in use - in hints, dialogue, signs and messages. `finish=<campaign>|line|line` in dialogue
 ends a campaign without the epilogue: closing lines, then the desktop with New Game open for that campaign.
 `order=` sorts the campaign icons (the Tutorial is 0) and `achievements=0` keeps achievements from unlocking.
+`defeat=<script>` (1.1.7; Campaign tab, "If the party falls") keeps a lost fight from ending the game: the party gets
+back up at full health, the enemies in that fight are whole again, and the script runs (the Tutorial opens a dialogue
+that puts the party somewhere safe).
 
-`assets/campaigns/tutorial` is the Tutorial, built only from these pieces (one map, five dialogues, a shop, a quest,
-`hints.txt`, one item and one tile kind). `triffall_headless bakeall` bakes every generated
+`assets/campaigns/tutorial` is the Tutorial, built only from these pieces (three maps, eight dialogues, a shop, a quest
+with a checklist, `hints.txt`, four items and one monster). `triffall_headless bakeall` bakes every generated
 dungeon/overworld to map files.
 
 ## Modding

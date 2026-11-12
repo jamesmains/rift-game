@@ -132,6 +132,7 @@ struct CampaignInfo {
     int order = 100;                      // desktop icon / campaign list order (lower first; the tutorial is 0)
     bool achievements = true;             // achievements=0: nothing unlocks while playing it (the tutorial)
     std::string worldMap = "overworld";   // what M shows: overworld | off | current (the map you are on) | <map id>
+    std::string defeat;                   // 1.1.7 defeat=SCRIPT: a lost fight doesn't end the game - the party gets back up and this runs (the tutorial)
 };
 std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base game first
 CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, const std::string& dir);

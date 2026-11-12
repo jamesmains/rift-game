@@ -1,10 +1,21 @@
-# The tutorial's quest (the base game's quests are merged in too but never start here).
+# The Tutorial's quest (the base game's quests are merged in too but never start here). The objectives under stage 1
+# are the yard lessons, so the journal shows a checklist from the start.
 [quest]
-id=tut_training
-name=Basic Training
-stage=tut_brin | Sergeant Brin's half of the hall: get past the rats in the next room, then the goblins. @tut_hall
-stage=tut_rats | The rats are dead. Next room: goblins - one of them has a bow. @tut_hall
-stage=tut_goblins | The goblins are beaten. Report to Warden Hale in the last room. @tut_hall
-stage=tut_done | DONE You walked the Wardens' training hall end to end.
-objective=1 | tut_rats | Clear the rat pit
-objective=1 | tut_goblins | Beat the goblins on the firing range
+id=tut_fallen_light
+name=The Fallen Light
+stage=tut_intro | Last night a violet light fell into Greywood, past the old quarry. Old Wick means to go and look - once you've shown him you can look after yourself. @tut_watch
+stage=tut_road | Wick is satisfied. Follow the road east into Greywood, toward the old quarry. @tut_wood
+stage=tut_rats | Rats with violet glass growing out of their backs. Dace the pedlar, camped north of the trail, has the key to the quarry gate. @tut_wood
+stage=tut_inquarry | Into the dark quarry workings, where the light came down. Wick said he'd meet you inside. @tut_quarry
+stage=tut_goblins | The goblins are beaten. Something whirs in the glowing crater beyond. @tut_quarry
+stage=tut_shard | A shard of violet glass, warm as a hearthstone. Wick has something to say about it. @tut_quarry
+stage=tut_done | DONE You found what fell out of the sky: Rift-glass. In the morning, Elder Mara must see it.
+objective=1 | tut_beacon | Light the watch beacon
+objective=1 | tut_chest | Open Wick's footlocker
+objective=1 | tut_equipped | Wear the Warden's Token
+objective=1 | tut_crafted | Make bandages from moonleaf
+objective=1 | tut_saved | Save at the wayshrine
+objective=3 | item:quarry_key | Get the quarry key from Dace
+objective=3 | tut_brambles | Clear the thornwrack
+objective=4 | joined_ranger | Find Wick
+objective=4 | tut_winch | Lower the bridge

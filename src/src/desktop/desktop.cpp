@@ -816,7 +816,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         static const char* lines[] = {
             "TRIFFALL - README", "=================", "",
             "An old-school open-world RPG with X-COM style tactical combat.", "",
-            "HOW TO PLAY - THE FIRST TEN MINUTES", "  New to Triffall? Double-click Tutorial first: ten minutes in the", "  training hall teach everything below by doing it.", "", "  1. Double-click New Game, name your hero, pick a class. (You can", "     add ranks in any class later, so don't agonise.)",
+            "HOW TO PLAY - THE FIRST TEN MINUTES", "  New to Triffall? Double-click Tutorial first: a short adventure", "  with old Wick that teaches everything below by doing it.", "", "  1. Double-click New Game, name your hero, pick a class. (You can", "     add ranks in any class later, so don't agonise.)",
             "  2. Walk out of the cottage and talk to Elder Mara at the north-west", "     edge of the village. Your journal (J) always says where to go", "     next; M shows it on the world map.",
             "  3. Recruit Bram at the inn. Buy torches and potions - caves are dark.", "  4. When you meet monsters the fight happens right where you stand.",
             "     Move, attack, end turn. Stand next to walls for cover; hit things", "     from two sides to flank them. Fleeing is allowed and often smart.",

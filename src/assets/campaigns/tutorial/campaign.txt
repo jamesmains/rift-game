@@ -1,19 +1,26 @@
-# The tutorial: a short campaign that teaches Triffall by playing it - one room per lesson, each door opening when its
-# lesson is done. The green Training panel (hints.txt) says what to do next and stays up until it's done. It builds on
-# the base game (inherit=1) for classes, items, monsters and spells; its own folder has the map, dialogue, quest, shop
-# and hints. At the end, finish= takes the player back to the desktop with New Game open for the main campaign.
+# The Tutorial (remade at 1.1.7): the day before the main story. A violet light fell into Greywood last night, and old
+# Wick, Hollowmere's lamplighter, wants to go and see - once the hero has shown they can look after themselves.
+# Three maps: Wick's Watch (moving, talking, levers, chests, gear, gathering, crafting, saving, the journal),
+# Greywood Edge (a first fight, levelling up, the hotbar, a pedlar's shop, an obstacle, a locked gate) and the
+# quarry workings (darkness and torches, a companion, a winch and bridge, cover, a machine, the ending).
+# The green Training panel (hints.txt) always names the first lesson not done yet. Losing a fight doesn't end it:
+# defeat= runs Wick's "up you get" talk, which puts the party back somewhere safe. It builds on the base game
+# (inherit=1) for classes, items, monsters and spells; finish= hands over to New Game for the main campaign.
 [campaign]
 name=Tutorial
-desc=Ten minutes in the Wardens' training hall that teach the game by playing it. Recommended before your first game.
-author=Parent House
-version=1.0
+desc=The day before it all begins: a violet light fell into Greywood last night, and old Wick wants to see what it was. About twenty minutes that teach the game by playing it. Recommended before your first game.
+author=Triffall team
+version=2.0
 icon=0,7
 order=0
 inherit=1
 achievements=0
-start=tut_hall,0,0
-gold=20
-intro=Before the Wardens send anyone out into Aldmoor, they walk the training hall.
-intro=$hero has come to walk it.
-dialogue=tut_intro
+start=tut_watch,0,0
+gold=10
+intro=The Rift opened forty years ago. Since then it has been quiet - or quiet enough.
+intro=Last night a violet light fell out of a clear sky into Greywood, and the cups rattled on every shelf in Hollowmere.
+intro=Old Wick, who lights the village lamps and keeps the watch-house on the last hill, saw it come down.
+intro=At first light he sent for $hero.
+dialogue=tut_arrive
 worldmap=current
+defeat=dialogue:tut_fallen

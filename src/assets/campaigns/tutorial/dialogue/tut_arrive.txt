@@ -1,0 +1,5 @@
+# Opens after the intro lines: where the hero is and who to talk to. The Training panel takes it from there.
+[start]
+speaker=$hero
+text=Wick's watch-house stands on the last hill before Greywood: a stone hut, a fenced yard, a beacon nobody has lit in years. The old man himself is out in the yard by the well, leaning on his lamp-hook, waiting.
+next=end

@@ -212,12 +212,14 @@ void Editor::runCampaignCheck() {
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue;
         auto walk = [&](int cx, int cy) { if (cx < 0 || cy < 0 || cx >= m.w || cy >= m.h) return false; const TileKind* k = tileKind(trim(split(m.at(cx, cy), '|')[0])); return k && k->walkable; };
+        // 1.1.7: a trigger or exit area is fine while any of its cells can be walked on (a whole-map trigger starts on a tree)
+        auto areaWalk = [&](const EdObj& ob, int x0, int y0) { int w = std::max(1, ob.geti("w")), h = std::max(1, ob.geti("h")); for (int yy = y0; yy < y0 + h; yy++) for (int xx = x0; xx < x0 + w; xx++) if (walk(xx, yy)) return true; return false; };
         for (size_t oi = 0; oi < m.objs.size(); oi++) { const EdObj& raw = m.objs[oi]; EdObj o = resolvedObj(raw); FlagUse u; u.tab = 0; u.file = f; u.obj = (int)oi; int ox = o.geti("x"), oy = o.geti("y");
             std::string at = fmt("map %s: %s at %d,%d", f.c_str(), o.type.c_str(), ox, oy);
             if (!raw.get("template").empty() && !templateSec(raw.get("template"))) addF(true, at + " uses unknown template '" + raw.get("template") + "' (Objects tab)", u);
             if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) addF(true, at + " uses unknown resource node type '" + o.get("node") + "' (Resources tab)", u);
             if (ox < 0 || oy < 0 || ox >= m.w || oy >= m.h) addF(true, at + " is outside the map", u);
-            else if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !walk(ox, oy)) addF(false, at + " stands on a blocked tile", u);
+            else if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !((o.type == "trigger" || o.type == "exit") ? areaWalk(o, ox, oy) : walk(ox, oy))) addF(false, at + ((o.type == "trigger" || o.type == "exit") && (o.geti("w") > 1 || o.geti("h") > 1) ? " covers only blocked tiles" : " stands on a blocked tile"), u);
             if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) addF(true, at + " uses missing dialogue '" + o.get("dialogue") + "'", u);
             if (o.type == "npc" && !o.get("shop").empty()) { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == o.get("shop")) ok = true; if (!ok) addF(true, at + " uses unknown shop '" + o.get("shop") + "'", u); }
             if (o.type == "exit" && !isMap(o.get("to"))) addF(true, at + " leads to unknown map '" + o.get("to") + "'", u);

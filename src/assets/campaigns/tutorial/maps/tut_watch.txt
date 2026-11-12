@@ -1,0 +1,157 @@
+[map]
+id=tut_watch
+name=Wick's Watch
+kind=town
+spawn=5,12
+bg=0,0,0
+music=town
+ambient=amb_forest
+worldmap=self
+
+[legend]
+T = tree|tree|tree2|tree3
+t = pine_t
+. = floor_grass
+, = floor_dirt
+Y = path
+# = wall_stone
+w = window_stone
+h = floor_wood
+D = door_wood
+B = bed
+A = table
+S = shelf
+K = bookshelf
+b = barrel
+f = fence_wood
+m = floor_dirt|floor_dirt|sprouts|floor_dirt|sprouts2
+M = mushroom
+F = flower|flower2|flower3
+r = rocks
+X = stump
+o = well
+p = pillar
+g = floor_stone
+G = door_wood
+E = path
+
+[rows]
+TTtTTTtTTTTtTTTTTtTTTTtTTTTTtTTTTTTT
+TT....F....tT.......rr.r....F..ftTTt
+Tt................rrr.r.r......fTTtT
+T..#########.......r.....r.....fTtTT
+T..#BhhhhhK#..F.........F......ftTTt
+T..#hhhhhhS#...................fTTtT
+t..#hhhAhhh#..X................fTtTT
+T..#hhhhhhb#........F..........ftTTt
+T..##w#D#w##...................fTTtT
+TF.....Y.........X.....r.......fTtTT
+T......Y.......................ftTTt
+T..F...YYYYYYYYYYYYYYYYYYYYYYYYGYYYE
+T................Y.............fTtTT
+t.......o........Y.............ftTTt
+T..X.............Y........F....fTTtT
+T.....F....ffffff,ffffff.......fTtTT
+T..........fmmmmmmmmmmmf.......ftTTt
+TT.........fmmMmmmmmMmmf....p.pfTTtT
+Tt.....r...fmmmmmmmmmmmf.....g.fTtTT
+T...F......fffffffffffff....p.pftTTt
+TT.....................F.......fTTtT
+TTt.X.........F.............X..fTtTT
+TTTTtTTTTTtTTTTTTtTTTTTtTTTTTtTTTTTT
+
+[npc]
+id=wick
+name=Old Wick
+sprite=156,24
+x=9
+y=12
+dialogue=tut_wick_first
+hide=tut_intro
+
+[npc]
+id=wick_yard
+name=Old Wick
+sprite=156,24
+x=9
+y=12
+dialogue=tut_wick
+show=tut_intro
+hide=tut_road
+
+[lever]
+x=22
+y=2
+name=Watch beacon
+flag=tut_beacon
+toggle=0
+sprite=29,22
+onsprite=27,22
+sound=spell_fire
+text=The oil catches. The beacon on Wick's hill burns again, the way it did when there was a watch to keep.
+
+[chest]
+x=4
+y=7
+flag=tut_chest
+items=warden_token:1,torch_item:1
+gold=10
+
+[savepoint]
+x=29
+y=18
+text=The old wayshrine.
+onuse=set:tut_saved
+
+[sign]
+x=27
+y=12
+title=Signpost
+text=EAST: Greywood, and the old quarry beyond it. WEST: Hollowmere, half an hour's walk. (Scratched underneath: WICK - IF THE BEACON'S OUT, SO AM I.)
+
+[gather]
+x=14
+y=17
+node=herb_moon
+count=2
+
+[gather]
+x=20
+y=17
+node=herb_moon
+count=2
+
+[door]
+x=31
+y=11
+flag=tut_gate
+openif=tut_beacon&tut_chest&tut_equipped&tut_crafted&tut_saved
+locked=Old Wick: "Not yet. Beacon, footlocker, token on, bandages made, a prayer at the shrine - then we go." (The Training panel says what's left.)
+text=The gate swings open onto the Greywood road.
+
+[trigger]
+x=0
+y=0
+w=36
+h=23
+flag=tut_equipped
+require=equipped:warden_token
+script=log:The Warden's Token sits cold against your chest.
+
+[trigger]
+x=0
+y=0
+w=36
+h=23
+flag=tut_crafted
+require=item:bandage
+
+[exit]
+x=35
+y=11
+h=1
+to=tut_wood
+tx=1
+ty=12
+require=tut_gate
+locked=The gate is shut.

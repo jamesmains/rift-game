@@ -100,3 +100,8 @@ panel's text), `fav:N` (the hero's favorite slot N); op `lacks` (the opposite of
 entries / maps / dialogue / settings, search and Filter counts, an empty campaign can be started. Commands:
 `newcampaign NAME`, `edimport gen|maps|dlg|kinds|camp|flags GEN SOURCE all|id,id`, `edsearch GEN [words]`,
 `edfilter GEN KEY [VALUE]`, `edsave GEN`; expect keys `edcount:GEN`, `edshown:GEN`, `asset:<path under assets>`.
+
+1.1.7: `tutorial` plays the remade Tutorial (#31) end to end; `tutorial_defeat_1_1_7` takes Wick's skip and loses a fight
+on purpose (campaign `defeat=`). New: expect key `cond:CONDITION` (any game condition, e.g. `cond:lit`), command
+`partywipe` (in a fight: the party loses at once). `editor_import_1_1_6` imports the Tutorial's `tut_arrive` dialogue
+and `editor_playstate_export` expects `tutorial_2.0.zip` (the Tutorial is version 2.0).

@@ -36,9 +36,16 @@ std::vector<std::string> edObjLookKeys(const std::string& t) {
     return edObjKeys(t);   // the rest: any of the keys the type reads can get a default here
 }
 const EdSection* Editor::resourceSec(const std::string& node, const std::string& item) const {
-    if (!node.empty()) { const EdSection* out = nullptr; for (auto& s : gens[16].secs) if (s.name == "resource" && s.get("id") == node) out = &s; return out; }
-    if (!item.empty()) for (auto& s : gens[16].secs) if (s.name == "resource" && s.get("item") == item) return &s;
-    return nullptr;
+    auto find = [&](const std::vector<EdSection>& secs) -> const EdSection* {
+        if (!node.empty()) { const EdSection* out = nullptr; for (auto& s : secs) if (s.name == "resource" && s.get("id") == node) out = &s; return out; }
+        if (!item.empty()) for (auto& s : secs) if (s.name == "resource" && s.get("item") == item) return &s;
+        return nullptr;
+    };
+    if (const EdSection* s = find(gens[16].secs)) return s;
+    // 1.1.7: a campaign with inherit=1 also gets the base game's resource types (the game merges both files)
+    if (!campaignInherit || dataRoot == baseRoot) return nullptr;
+    if (!baseResLoaded) { baseResLoaded = true; baseRes.clear(); std::string bt; if (readFile(baseRoot + "/resources.txt", bt)) for (auto& s : parseConfig(bt)) if (s.name == "resource") { EdSection e; e.name = s.name; e.kv = s.kv; baseRes.push_back(e); } }   // read again after a campaign switch
+    return find(baseRes);
 }
 EdObj Editor::resolvedObj(const EdObj& o) const {
     EdObj r = o;

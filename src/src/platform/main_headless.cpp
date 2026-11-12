@@ -130,6 +130,7 @@ int main(int argc, char** argv) {
             if (best >= 0) { G.cb.selX = G.cb.units[best].x; G.cb.selY = G.cb.units[best].y; }
             in.press(K_ENTER); step(1); in.release(K_ENTER); step(1); }
         else if (cmd == "combat") { std::vector<std::string> cs; for (auto& c : split(p[1], ',')) cs.push_back(c); app.game.startCombat(cs, app.game.px + 3, app.game.py, 0, {}, ""); step(2); }
+        else if (cmd == "partywipe") { if (app.game.mode == GMode::COMBAT) { for (auto& u : app.game.cb.units) if (u.partyIndex >= 0) { u.ch.hp = 0; u.ch.alive = false; } app.game.cb.ending = true; app.game.cb.victory = false; app.game.cb.fled = false; app.game.cb.endTimer = 0; step(150); } }   // 1.1.7: lose the fight now
         else if (cmd == "forceflee") { if (app.game.mode == GMode::COMBAT) { app.game.cb.ending = true; app.game.cb.fled = true; app.game.cb.endTimer = 0; step(2); } }
         else if (cmd == "gold") { app.game.party.gold += atoi(p[1].c_str()); }
         else if (cmd == "give") { app.game.giveItem(p[1], p.size() > 2 ? atoi(p[2].c_str()) : 1); }
@@ -151,6 +152,7 @@ int main(int argc, char** argv) {
             else if (key == "windows") got = std::to_string(app.desktop.windows.size());
             else if (startsWith(key, "flag:")) { auto it = g.flags.find(key.substr(5)); got = std::to_string(it == g.flags.end() ? 0 : it->second); }
             else if (startsWith(key, "item:")) got = std::to_string(g.party.countItem(key.substr(5)));
+            else if (startsWith(key, "cond:")) got = g.evalCond(key.substr(5)) ? "1" : "0";   // 1.1.7: any condition (lit, equipped:x, map:y...)
             else if (startsWith(key, "savefile:")) { std::error_code ec; got = std::filesystem::exists(app.saveDir + "/" + key.substr(9), ec) ? "1" : "0"; }
             else if (key == "cursorundermouse") { const int T = UI::TILE; got = (g.cb.selX == (in.mouseX + g.camX) / T && g.cb.selY == (in.mouseY + g.camY) / T) ? "1" : "0"; }
             else if (key == "cursoronunit") { got = "0"; if (g.cb.selectedUnit >= 0) { auto& u = g.cb.units[g.cb.selectedUnit]; got = (g.cb.selX == u.x && g.cb.selY == u.y) ? "1" : "0"; } }

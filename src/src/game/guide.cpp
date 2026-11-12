@@ -22,7 +22,8 @@ void Game::loadHints() {
     hintShown = -1; hintFade = 0;
 }
 
-// {action} -> that action's key on the device in use; {move} -> how to walk; {click} -> " (or click)" with a mouse
+// {action} -> that action's key on the device in use; {move} -> how to walk; {click} -> " (or click)" with a mouse;
+// {craft} -> the Items tab's field-crafting key (C, or pad X)
 std::string Game::keyText(const std::string& raw) const {
     std::string o; size_t i = 0;
     while (i < raw.size()) {
@@ -31,6 +32,7 @@ std::string Game::keyText(const std::string& raw) const {
         o += raw.substr(i, a - i); std::string k = raw.substr(a + 1, b - a - 1), val = "{" + k + "}";
         if (k == "move") val = gPadGlyphs ? "the left stick" : "the arrow keys or WASD";
         else if (k == "click") val = gPadGlyphs ? "" : " (or click)";
+        else if (k == "craft") val = gPadGlyphs && gKeys.pad[A_INTERACT] ? "[" + std::string(keyName(gKeys.pad[A_INTERACT])) + "]" : "[C]";   // 1.1.7: field crafting from the Items tab
         else for (int x = 0; x < A_COUNT; x++) if (k == actionName(x)) {   // just the main key (or pad button): "[Tab]", not "[Tab/I]"
             int code = gPadGlyphs && gKeys.pad[x] ? gKeys.pad[x] : gKeys.key1[x] ? gKeys.key1[x] : gKeys.key2[x];
             val = code ? "[" + std::string(keyName(code)) + "]" : "[" + gKeys.label(x) + "]"; break; }
