@@ -45,6 +45,8 @@ bool App::startPlaytest() {
     }
     game.modeStack.clear(); game.mode = GMode::EXPLORE;
     game.enterMap(editor.playMap, editor.playX, editor.playY, true);
+    game.playtest = true;   // the pause menu offers Back to Editor
+    game.log("Esc > Back to Editor returns to the Editor.");
     desktop.windows.clear();
     return true;
 }
@@ -98,7 +100,15 @@ void App::frame(InputState& in, float dt) {
                 game.draw(canvas, gin);
             }
             game.drawAchievementPopups(canvas, dt);   // last, so no screen or menu can cover a popup
-            if (game.requestDesktop) { game.requestDesktop = false; game.running = false; state = AppState::DESKTOP; desktop.windows.clear(); desktop.refreshSlots(); if (!game.desktopAction.empty()) { std::string act = game.desktopAction; game.desktopAction.clear(); desktop.runAction(act); } if (game.gameOver) { desktop.showDialog("Triffall.exe", "Your party has fallen. Load a saved game to try again."); } }
+            if (game.requestDesktop) { game.requestDesktop = false; game.running = false; game.playtest = false; state = AppState::DESKTOP; desktop.windows.clear(); desktop.refreshSlots(); if (!game.desktopAction.empty()) { std::string act = game.desktopAction; game.desktopAction.clear(); desktop.runAction(act); } if (game.gameOver) { desktop.showDialog("Triffall.exe", "Your party has fallen. Load a saved game to try again."); } }
+            if (game.requestEditor) {   // 1.1.3: pause menu > Back to Editor (playtests only); the game keeps running for the next Play
+                game.requestEditor = false;
+#ifndef TRIFFALL_NO_EDITOR
+                state = AppState::EDITOR; desktop.windows.clear(); canvas.init(Editor::W, Editor::H); req.canvasW = Editor::W; req.canvasH = Editor::H;
+                if (editor.campaignId != game.campaignId) editor.setCampaign(game.campaignId);
+                editor.open();
+#endif
+            }
             if (game.requestSettings) { game.requestSettings = false; state = AppState::DESKTOP; desktop.windows.clear(); desktop.openWindow("settings"); desktop.returnToGame = true; }
             break;
         case AppState::EDITOR:

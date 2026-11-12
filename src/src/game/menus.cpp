@@ -285,13 +285,14 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
         } else if (menuPrompt == "equip") {
             std::vector<std::string> cands; for (auto& it : party.inventory) { auto* d = gd->item(it.id); if (d && d->slot() == menuSub) cands.push_back(it.id); }
             int lx = 330, ly = 80, n = (int)cands.size() + 1;
-            panelTitle(ctx, lx, ly, 280, 34 + std::min(14, n) * 16 + 50, std::string("Equip ") + slotName(menuSub));
+            const int detH = std::min(104, SCREEN_H - 76 - (ly + 34 + std::min(14, n) * 16));   // room for the item details under the list
+            panelTitle(ctx, lx, ly, 280, 34 + std::min(14, n) * 16 + detH, std::string("Equip ") + slotName(menuSub));
             for (int i = 0; i < n && i < 14; i++) {
                 bool sel = menuSel == i; if (sel) cv.fillRect(lx + 6, ly + 24 + i * 16, 268, 15, RGB(90, 70, 20));
                 if (i == 0) UI::text(ctx, lx + 12, ly + 26, "(remove)", sel ? C::Yellow : C::Gray);
                 else { const ItemDef* d = gd->item(cands[i - 1]); ctx.ts->draw(cv, d->tile, lx + 10, ly + 25 + i * 16, 1); UI::text(ctx, lx + 26, ly + 26 + i * 16, d->name, sel ? C::Yellow : C::White); }
             }
-            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); std::string s; if (d->dmgMax) s += fmt("Dmg %d-%d %s R%d AP%d ", d->dmgMin, d->dmgMax, dmgTypeName(d->dmgType), d->range, d->ap); if (d->def) s += fmt("Def+%d ", d->def); if (d->evasion) s += fmt("Eva+%d ", d->evasion); for (int b = 0; b < ST_COUNT; b++) if (d->bonus[b]) s += fmt("%s%+d ", statName(b), d->bonus[b]); ctx.font->drawWrapped(cv, *ctx.ts, lx + 10, ly + 28 + std::min(14, n) * 16, 260, s + d->desc, C::LtGray); }
+            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 30 + std::min(14, n) * 16 + detH); }
         } else {
             if (menuSubFocus) { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "slot"); keyHint(ctx, 290, SCREEN_H - 30, "Enter", "change"); keyHint(ctx, 380, SCREEN_H - 30, gKeys.label(A_ITEMS), "unequip"); keyHint(ctx, 490, SCREEN_H - 30, "Left", "back to party"); }
             else { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "member"); keyHint(ctx, 300, SCREEN_H - 30, "Right", "equipment"); keyHint(ctx, 420, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, 540, SCREEN_H - 30, "Esc", "back"); }
@@ -318,17 +319,8 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             panel(ctx, 320, 60, 300, 150, RGB(30, 30, 44));
             ctx.ts->draw(cv, d->tile, 330, 70, 2);
             ctx.font->bold = true; UI::text(ctx, 362, 70, d->name, C::Gold); ctx.font->bold = false;
-            std::string s;
-            if (d->dmgMax) s += fmt("Damage %d-%d %s, range %d, %d AP. Scales with %s.\n", d->dmgMin, d->dmgMax, dmgTypeName(d->dmgType), d->range, d->ap, statName(d->scaleStat));
-            if (d->def) s += fmt("Defense +%d. ", d->def); if (d->evasion) s += fmt("Evasion %+d. ", d->evasion);
-            for (int b = 0; b < ST_COUNT; b++) if (d->bonus[b]) s += fmt("%s %+d. ", statName(b), d->bonus[b]);
-            for (int r = 0; r < DT_COUNT; r++) if (d->res[r]) s += fmt("%s resist %+d%%. ", dmgTypeName(r), d->res[r]);
-            if (d->bonusHP) s += fmt("HP %+d. ", d->bonusHP); if (d->bonusMP) s += fmt("MP %+d. ", d->bonusMP); if (d->bonusAP) s += fmt("AP %+d. ", d->bonusAP); if (d->bonusMove) s += fmt("Move %+d. ", d->bonusMove);
-            if (d->heal) s += fmt("Heals %d HP. ", d->heal); if (d->mana) s += fmt("Restores %d MP. ", d->mana);
-            if (!d->ammo.empty() && gd->item(d->ammo)) s += "Uses " + gd->item(d->ammo)->name + ". ";
-            if (d->twoHanded) s += "Two-handed. ";
-            ctx.font->drawWrapped(cv, *ctx.ts, 330, 92, 280, (d->quest ? "Quest item. " : "") + s + d->desc, C::LtGray);
-            UI::text(ctx, 330, 196, itemCategory(*d), C::DkGray);
+            drawItemDetails(cv, *d, 330, 94, 280, 194);
+            UI::text(ctx, 330, 196, itemCategory(*d), C::Gray);
             if (menuSubFocus) {
                 std::vector<std::string> acts;
                 if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
@@ -540,14 +532,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
         panel(ctx, 350, 60, 270, 180, RGB(30, 30, 44));
         ctx.ts->draw(cv, cur->tile, 360, 70, 2);
         ctx.font->bold = true; UI::text(ctx, 392, 70, cur->name, C::Gold); ctx.font->bold = false;
-        std::string s;
-        if (cur->dmgMax) s += fmt("Damage %d-%d %s, range %d, %d AP.\n", cur->dmgMin, cur->dmgMax, dmgTypeName(cur->dmgType), cur->range, cur->ap);
-        if (cur->def) s += fmt("Defense +%d. ", cur->def); if (cur->evasion) s += fmt("Evasion %+d. ", cur->evasion);
-        for (int b = 0; b < ST_COUNT; b++) if (cur->bonus[b]) s += fmt("%s %+d. ", statName(b), cur->bonus[b]);
-        for (int r = 0; r < DT_COUNT; r++) if (cur->res[r]) s += fmt("%s resist %+d%%. ", dmgTypeName(r), cur->res[r]);
-        if (cur->heal) s += fmt("Heals %d HP. ", cur->heal); if (cur->mana) s += fmt("Restores %d MP. ", cur->mana);
-        if (cur->bonusHP) s += fmt("HP %+d. ", cur->bonusHP); if (cur->bonusMP) s += fmt("MP %+d. ", cur->bonusMP);
-        ctx.font->drawWrapped(cv, *ctx.ts, 360, 94, 250, s + cur->desc, C::LtGray);
+        drawItemDetails(cv, *cur, 360, 94, 250, cur->equippable() ? 182 : 240);
         if (cur->equippable()) { int y = 186; for (auto& m : party.members) { const ItemDef* e = m.equip[cur->slot()].empty() ? nullptr : gd->item(m.equip[cur->slot()]); std::string cmp = e ? e->name : "-"; UI::text(ctx, 360, y, m.name.substr(0, 10) + ": " + cmp, C::Gray); y += 13; if (y > 231) break; } }
         // quantity + total
         int maxQ = shopMaxQty(shopTab, curReal), q = std::max(1, shopQty);
@@ -564,6 +549,68 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     int hx = keyHint(ctx, 20, SCREEN_H - 30, "Enter", shopTab == 0 ? "buy" : "sell"); hx = keyHint(ctx, hx, SCREEN_H - 30, "L/R", "quantity"); hx = keyHint(ctx, hx, SCREEN_H - 30, gKeys.label(A_INTERACT), shopTab == 0 ? "buy max" : "sell all");
     hx = keyHint(ctx, hx, SCREEN_H - 30, gPadGlyphs ? "LB/RB" : "PgUp/PgDn", shopTab == 0 ? "sell tab" : "buy tab"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "leave");
     { int kx = keyHint(ctx, 20, SCREEN_H - 44, gKeys.label(A_CATPREV) + "/" + gKeys.label(A_CATNEXT), "category"); keyHint(ctx, kx, SCREEN_H - 44, gKeys.label(A_SORT), "sort"); }
+}
+
+// ---------------- item details (1.1.3) ----------------
+// One look for an item's breakdown everywhere (pack, shop, equip picker): tags, a two-column grid of "label value"
+// rows (gains green, losses red; equal resists to every damage type fold into "All resists"), then the description
+// on its own, in a softer colour under a rule. Whatever does not fit above maxY is left out (the description before any stat).
+int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY) {
+    const Color8 UP = RGB(120, 215, 120), DOWN = RGB(235, 105, 95), LABEL = RGB(150, 150, 165);
+    struct Row { std::string label, value; Color8 col; bool full; };
+    std::vector<Row> rows;
+    auto num = [&](const std::string& label, int v, const char* suffix) { rows.push_back({label, fmt("%+d%s", v, suffix), v > 0 ? UP : DOWN, false}); };
+    auto txt = [&](const std::string& label, const std::string& v, Color8 c, bool full) { rows.push_back({label, v, c, full}); };
+    std::string tags;
+    auto tag = [&](const char* t) { tags += std::string(tags.empty() ? "" : "  -  ") + t; };
+    if (d.quest) tag("Quest item");
+    if (d.unique) tag("Unique");
+    if (d.twoHanded) tag("Two-handed");
+    if (d.dmgMax) {
+        txt("Damage", fmt("%d-%d %s", d.dmgMin, d.dmgMax, dmgTypeName(d.dmgType)), dmgColor(d.dmgType), true);
+        txt("Range", std::to_string(d.range), C::White, false); txt("AP cost", std::to_string(d.ap), C::White, false);
+        if (d.type == IT_WEAPON) txt("Scales", statName(d.scaleStat), C::White, false);
+        if (d.accuracy) num("Accuracy", d.accuracy, "%");
+        if (d.crit) num("Crit", d.crit, "%");
+        if (!d.ammo.empty() && gd->item(d.ammo)) txt("Ammo", gd->item(d.ammo)->name, C::White, true);
+    }
+    if (d.def) num("Defense", d.def, "");
+    if (d.evasion) num("Evasion", d.evasion, "");
+    for (int b = 0; b < ST_COUNT; b++) if (d.bonus[b]) num(statName(b), d.bonus[b], "");
+    if (d.bonusHP) num("Max HP", d.bonusHP, "");
+    if (d.bonusMP) num("Max MP", d.bonusMP, "");
+    if (d.bonusAP) num("AP", d.bonusAP, "");
+    if (d.bonusMove) num("Move", d.bonusMove, "");
+    {
+        bool allSame = d.res[0] != 0; for (int r = 1; r < DT_COUNT; r++) if (d.res[r] != d.res[0]) allSame = false;
+        if (allSame) num("All resists", d.res[0], "%");
+        else for (int r = 0; r < DT_COUNT; r++) if (d.res[r]) { std::string n = dmgTypeName(r); if (!n.empty()) n[0] = (char)toupper((unsigned char)n[0]); num(n + " res.", d.res[r], "%"); }
+    }
+    if (d.heal) txt("Heals", fmt("%d HP", d.heal), UP, false);
+    if (d.mana) txt("Restores", fmt("%d MP", d.mana), UP, false);
+    if (!d.effect.empty()) { std::string e = d.effect; for (auto& ch : e) if (ch == '_') ch = ' '; txt("Effect", e, C::Cream, true); }
+    if (!d.useSpell.empty()) { const SpellDef* sp = gd->spell(d.useSpell); txt("Casts", sp ? sp->name : d.useSpell, C::Cream, true); }
+    if (d.light) txt("Light", fmt("radius %d", d.light), C::White, false);
+    const int lh = 13, colW = w / 2;
+    int cy = y;
+    if (!tags.empty() && cy + lh <= maxY) { UI::text(ctx, x, cy, tags, C::Gold); cy += lh + 2; }
+    // two columns; a full-width row (or one too long for half the width) gets a line of its own
+    int col = 0;
+    for (auto& r : rows) {
+        bool full = r.full || ctx.font->width(r.label) + ctx.font->width(r.value) + 14 > colW;
+        if (full && col == 1) { col = 0; cy += lh; }
+        if (cy + lh > maxY) break;
+        int cx = x + col * colW, vx = cx + std::max(full ? 64 : 58, ctx.font->width(r.label) + 8);
+        UI::text(ctx, cx, cy, r.label, LABEL);
+        UI::text(ctx, vx, cy, r.value, r.col);
+        if (full) { cy += lh; col = 0; } else if (++col == 2) { col = 0; cy += lh; }
+    }
+    if (col == 1) cy += lh;
+    if (!trim(d.desc).empty() && cy + lh <= maxY) {
+        if (cy > y) { cy += 3; cv.fillRect(x, cy, w, 1, RGB(70, 70, 90)); cy += 5; }
+        for (auto& l : ctx.font->wrap(d.desc, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, RGB(200, 195, 175)); cy += lh; }
+    }
+    return cy;
 }
 
 // ---------------- level up ----------------

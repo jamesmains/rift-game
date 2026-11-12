@@ -19,7 +19,7 @@
 
 [type]
 id=savepoint
-sprite=38,25
+sprite=36,25
 color=
 sparkle=1
 sparklecolor=0,220,220
@@ -57,3 +57,14 @@ sprite=57,17
 onsprite=56,17
 sound=unlock
 onuse=
+
+[template]
+id=door_secret_crypt
+type=door
+sprite=23,3
+opensprite=19,12
+
+[template]
+id=paper_sign
+type=sign
+sprite=27,14

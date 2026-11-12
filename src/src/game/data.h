@@ -45,6 +45,7 @@ struct ItemDef {
     int light = 0;        // carried light radius on dark maps while equipped (lanterns)    // guns and machine-made gear: upgraded and salvaged at the workbench instead of the forge
     bool quest = false;          // quest item: can't be dropped or sold (default for type=key)
     std::string category;        // inventory / shop category (empty = by type)
+    bool unique = false;         // unique=1 (1.1.3): hand-made one-off - never rolls or takes affixes (loot, crafting quality, enchanting)
     bool stackable() const { return type == IT_CONSUMABLE || type == IT_MATERIAL || type == IT_AMMO || type == IT_KEY; }
     int slot() const {
         switch (type) { case IT_WEAPON: return SL_WEAPON; case IT_OFFHAND: return SL_OFFHAND; case IT_HELM: return SL_HEAD;

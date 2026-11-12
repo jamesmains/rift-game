@@ -12,10 +12,13 @@ static const char* ACTIONS[] = {"Attack", "Aimed", "Spell", "Item", "Defend", "O
 static const int NACTIONS = 8;
 static const int ACTION_KEYS[NACTIONS] = {A_ATTACKMODE, A_ATTACKMODE, A_SPELLS, A_ITEMS, A_DEFEND, A_OVERWATCH, A_ENDTURN, A_FLEE};
 static const int HOTBAR_Y = UI::SCREEN_H - 72 - 30;
+static const int TURN_STRIP_Y = 40;   // the turn-order strip on the right; its TURN header sits just under the top bar (1.1.3: was 30, under the Menu button)
 // The action bar: each button carries the key that does the same thing, drawn like the key hints in shops and menus
 // (a controller's button glyph when a pad is in use). Aimed is the attack key pressed twice, so it shows that key twice.
 static int actionChipsW(Ctx& c, int i) { int k = keyChip(c, 0, 0, ACTION_KEYS[i], false); if (!k) return 0; return i == 1 ? k * 2 + 2 : k; }
 static int actionButtonW(Ctx& c, int i) { int k = actionChipsW(c, i); return (k ? k + 5 : 0) + c.font->width(ACTIONS[i]) + 10; }
+// the Menu button at the right end of the bar (1.1.3): opens the pause menu, like Esc
+static int combatMenuButtonW(Ctx& c) { int k = keyChip(c, 0, 0, A_CANCEL, false); return (k ? k + 5 : 0) + c.font->width("Menu") + 10; }
 
 // distance from a unit (1x1 or 2x2) to a tile
 static int unitDist(const Combatant& u, int x, int y) {
@@ -775,6 +778,13 @@ void Game::updateCombat(InputState& in, float dt) {
     // the death burst, spell flashes and damage numbers play on without holding anything up
     bool swingInFlight = false; for (auto& a : cb.anims) if (a.kind == 0 || a.kind == 2) swingInFlight = true;
     bool inputLocked = cb.hitstop > 0 || swingInFlight;
+    // 1.1.3: Esc (or the bar's Menu button) pauses the fight at any moment - on an enemy turn or mid-animation too -
+    // unless it is backing out of a target pick / list / the action menu on your own turn
+    {
+        bool myInput = cb.playerTurn && !autoCombat && cb.selectedUnit >= 0 && !cb.ending;
+        bool menuClick = in.mousePressed[0] && in.mouseY <= 24 && in.mouseX >= SCREEN_W - combatMenuButtonW(ctx) - 4;
+        if (menuClick || (actP(in, A_CANCEL, true) && !(myInput && cb.mode != 0))) { in.eatMouse(); openPause(); return; }
+    }
     if (cb.bufT > 0) cb.bufT -= dt;
     if (inputLocked && cb.playerTurn && !autoCombat && cb.selectedUnit >= 0) {
         if (in.mousePressed[0]) { cb.bufClick = true; cb.bufKey = 0; cb.bufT = 0.6f; cb.bufUnit = cb.selectedUnit; }
@@ -793,8 +803,8 @@ void Game::updateCombat(InputState& in, float dt) {
     if (cb.selectedUnit < 0) { combatNextTurn(); return; }
     Combatant& u = cb.units[cb.selectedUnit];
     // clicking a portrait in the turn-order strip pans the camera to that unit
-    if (in.mousePressed[0] && in.mouseX >= SCREEN_W - 30 && in.mouseY >= 30 && in.mouseY < 30 + 10 * 26) {
-        int slot = (in.mouseY - 30) / 26, shown = 0;
+    if (in.mousePressed[0] && in.mouseX >= SCREEN_W - 30 && in.mouseY >= TURN_STRIP_Y && in.mouseY < TURN_STRIP_Y + 10 * 26) {
+        int slot = (in.mouseY - TURN_STRIP_Y) / 26, shown = 0;
         for (int k = 0; k < (int)cb.order.size(); k++) { int idx = cb.order[(cb.turnPos + k) % cb.order.size()]; if (!cb.units[idx].ch.alive) continue; if (shown == slot) { camFree = true; camCenterOn(cb.units[idx].x, cb.units[idx].y); cb.selX = cb.units[idx].x; cb.selY = cb.units[idx].y; break; } shown++; }
         in.eatMouse(); return;
     }
@@ -809,7 +819,7 @@ void Game::updateCombat(InputState& in, float dt) {
     if (cb.reachDirty) { combatComputeReachable(); cb.reachDirty = false; }
     if (swingInFlight) return;
     const bool CB = true;
-    if (actP(in, A_CANCEL, CB)) { if (cb.mode != 0) { cb.mode = 0; } else { cb.mode = 3; cb.menuSel = 6; } return; }
+    if (actP(in, A_CANCEL, CB)) { cb.mode = 0; return; }   // (with nothing open Esc pauses, above)
     // ---- action commands (bar / menu / hotkeys) ----
     auto runCommand = [&](int cmd) {
         switch (cmd) {
@@ -1137,14 +1147,22 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
             ctx.font->draw(cv, *ctx.ts, cx + (kw ? kw + 5 : 2), 6, ACTIONS[i], C::White);
             bx += bw + 3;
         }
+        int right = SCREEN_W - combatMenuButtonW(ctx) - 8;   // the Menu button sits at the far right
         // whose turn, AP / move and the round, right-aligned in what is left of the bar (it is on the HUD below too)
         std::string st = fmt("%s  AP %d  MV %d  R%d", u.ch.name.c_str(), u.ch.ap, u.ch.move, cb.round);
-        if (bx + 8 + ctx.font->width(st) > SCREEN_W - 6) st = fmt("AP %d MV %d R%d", u.ch.ap, u.ch.move, cb.round);
-        if (bx + 8 + ctx.font->width(st) > SCREEN_W - 6) st = fmt("Round %d", cb.round);
-        if (bx + 8 + ctx.font->width(st) > SCREEN_W - 6) st = fmt("R%d", cb.round);
-        if (bx + 8 + ctx.font->width(st) <= SCREEN_W - 6) textRight(ctx, SCREEN_W - 6, 6, st, C::Yellow);
+        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("AP %d MV %d R%d", u.ch.ap, u.ch.move, cb.round);
+        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("Round %d", cb.round);
+        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("R%d", cb.round);
+        if (bx + 8 + ctx.font->width(st) <= right - 6) textRight(ctx, right - 6, 6, st, C::Yellow);
     } else if (cb.selectedUnit >= 0 && !cb.ending) ctx.font->draw(cv, *ctx.ts, 8, 6, cb.units[cb.selectedUnit].ch.name + "'s turn...", C::Red);
     else if (cb.ending) ctx.font->draw(cv, *ctx.ts, 8, 6, cb.victory ? "Victory!" : cb.fled ? "Escaped!" : "Defeat...", cb.victory ? C::Yellow : C::Red);
+    {   // Menu button (pause: settings, load, exit), on every turn
+        int bw = combatMenuButtonW(ctx), bx = SCREEN_W - bw - 4;
+        bool hover = in.mouseX >= bx && in.mouseY <= 24;
+        cv.fillRect(bx, 3, bw, 18, hover ? RGB(80, 80, 100) : RGB(50, 50, 66)); cv.rect(bx, 3, bw, 18, C::Gold);
+        int kw = keyChip(ctx, bx + 3, 5, A_CANCEL);
+        ctx.font->draw(cv, *ctx.ts, bx + 3 + (kw ? kw + 5 : 2), 6, "Menu", C::White);
+    }
     // round / turn banner under the top bar
     if (cb.banner > 0 && !cb.bannerText.empty()) {
         float a = std::min(1.0f, cb.banner * 3); int bw = ctx.font->width(cb.bannerText, 2) + 24, bx = SCREEN_W / 2 - bw / 2;
@@ -1152,7 +1170,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         ctx.font->draw(cv, *ctx.ts, bx + 12, 32, cb.bannerText, Color8{255, 225, 140, (uint8_t)(255 * a)}, 2);
     }
     // turn order strip (right side) - click a portrait to look at that unit
-    int ox = SCREEN_W - 30, oy = 30; int shown = 0;
+    int ox = SCREEN_W - 30, oy = TURN_STRIP_Y; int shown = 0;
     uiRect(ox, oy, 30, 10 * 26);
     { std::string hdr = "TURN"; ctx.font->drawShadow(cv, *ctx.ts, ox + 13 - ctx.font->width(hdr) / 2, oy - 13, hdr, C::Gold, RGB(0, 0, 0)); }
     for (int k = 0; k < (int)cb.order.size() && shown < 10; k++) {

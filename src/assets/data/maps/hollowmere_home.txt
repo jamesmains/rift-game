@@ -7,29 +7,22 @@ bg=0,0,0
 
 [legend]
 # = wall_wood
+, = bed
 . = floor_wood
-B = bed
-T = table
-C = chair
-S = shelf
-b = barrel
+= = window
 D = door_wood
-W = window
-f = fire
-r = floor_carpet
-w = wardrobe
-K = bookshelf
+o = barrel
 
 [rows]
-##########
-#BwK..S.f#
-#......S.#
-#..TC....#
-#..CTrrr.#
-#....rrr.#
-#b.......#
-#b.......#
-####WD####
+#######
+#,....#
+#.....#
+#.....#
+#.....#
+#.....#
+#o....#
+#o....#
+####=D#
 
 [exit]
 x=5
@@ -39,7 +32,7 @@ tx=20
 ty=10
 
 [chest]
-x=8
+x=1
 y=2
 flag=home_chest
 items=potion_red:1,bread:2
@@ -49,7 +42,9 @@ gold=10
 x=1
 y=6
 text=Mum's old barrels. Still smell of apples.
+sprite=20,20
 
 [savepoint]
 x=1
 y=4
+

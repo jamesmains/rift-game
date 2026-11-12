@@ -3,7 +3,7 @@
 # spells= are learned at rank 1, role= is the one-liner on the level-up screen.
 [class]
 id=warrior
-sprite=104,13
+sprite=104,12
 name=Warrior
 desc=A front-line fighter. High STR and CON, learns battle shouts and a shield bash.
 stats=str:12,dex:9,con:12,int:6,wis:7,cha:8

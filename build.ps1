@@ -30,6 +30,9 @@ if ($Dev) {   # the dev console only exists in this build; it must never be hand
 }
 Write-Host "Building Triffall v$version ($kind)..."
 
+# 1.1.3: Editor edits saved in a built or installed copy go into src\assets first, so this build keeps them
+& "$PSScriptRoot\tools\pull-editor-edits.ps1" | Out-Null
+
 # the built-in tile kinds are compiled from assets\data\tilekinds.txt (src\src\game\tilekinds_builtin.h is committed too)
 if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mktilekinds.py }
 
@@ -45,6 +48,7 @@ Copy-Item "$cmakeDir\Release\Triffall.exe" $out
 Copy-Item "src\assets" "$out\assets" -Recurse
 if (Test-Path "$out\assets\new-art") { Remove-Item "$out\assets\new-art" -Recurse -Force }
 Copy-Item "src\README.md" "$out\README.txt"
+& "$PSScriptRoot\tools\pull-editor-edits.ps1" -ManifestFor $out   # assets-manifest.txt: how assets\ looked as built, to spot Editor edits later
 Write-Host "Built $out\Triffall.exe (v$version, $kind)" -ForegroundColor Green
 
 if ($Package) {   # clean copy to hand out: exe, assets, readme - no saves\
@@ -65,7 +69,7 @@ if ($Release) {
     $dir = "releases\$version$suffix"
     if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
     New-Item -ItemType Directory $dir | Out-Null
-    Copy-Item "$out\Triffall.exe", "$out\README.txt" $dir
+    Copy-Item "$out\Triffall.exe", "$out\README.txt", "$out\assets-manifest.txt" $dir
     Copy-Item "$out\assets" "$dir\assets" -Recurse
     if (-not $Demo -and -not $NoEditor) {   # latest.json always points at the full game
         $latest = [ordered]@{

@@ -6,85 +6,81 @@ spawn=20,29
 bg=0,0,0
 
 [legend]
-. = floor_grass
-, = floor_dirt
-T = tree|tree|tree2|tree3
-t = tree2
-f = fence_wood
-F = flower|flower2|flower3|floor_grass
+! = window
 # = wall_wood
-h = floor_wood
-D = door_wood
-W = window
-o = well
-w = floor_water
+$ = bush_t
+% = flower|flower2|flower3|floor_grass
+& = wall_log
+( = grave3
+) = sprouts|sprouts2|cabbage
+* = floor_water
++ = floor_wood
+, = grass
+- = pine_t
+. = floor_grass
+/ = reeds
+: = tree|tree|tree2|tree3
+; = path
+< = boulder
 = = bridge
-c = crop|crop2
-H = hay
-b = barrel
-B = bed
-A = table
-C = chair
-S = shelf
+> = floor_dirt
+? = grave
+@ = fence_wood
+B = well
+D = door_wood
+F = hay
 K = bookshelf
-n = anvil
-m = forge
-u = cauldron
-s = shop_sign
-i = inn_sign
-p = pillar
+T = stump
+W = shelf
+^ = crop|crop2
+b = tree
+f = forge
+h = lantern
+m = scarecrow
+o = barrel
+r = bed
+t = anvil
+w = shop_sign
 x = void
-G = grave
-g = grave2
-a = altar
-e = fence
-Y = path
-P = pine_t
-y = bush_t
-k = crate
-r = reeds
-R = boulder
-z = scarecrow
-v = sprouts|sprouts2|cabbage
-O = stump
-+ = grave3
-L = lantern
+| = grave2
+~ = fence
 
 [rows]
-TPTPTTPTPTPPTTPTTTTTTPTTPPTTTTTTTPPTTTTTTTTT
-TTT.........TPTy.......TTTT...y.....TTT.PTPP
-PT.....F.......T.......T..............TTT.PT
-T...#######....Ty......T...#########....T..P
-T...#hhhhh#............T...#hhhhhhh#.......P
-P...#hKhhh#.......F....P...#hAAhhhh#......yP
-P...#hhhAC#............TP..#hhhhhBh#.......P
-T...#hhhhh#.F...........PT.#hhBhhhh#...F...T
-P...##WDW##........###...T.#ii#DW###.......P
-P......Y.......F.F.#W#...T....Y.L..FF....R.P
-T......Y...........#D#wwwwwwr.Y............T
-T.FR...YYYYYYYYYYYYYYY=======YYYYYYYY......T
-T......Y...Y.........wwwwwww......Y........T
-T......Y...Y..F....wwwr.........F.Y........T
-T..####D###Y....rwww...o..........Y..###...T
-Ty.#hhhhhh#Y....ww...........######Y.#B#..yT
-T..#hhbbhh#Y....w...........#hhhhhh#Y#h#...T
-T..#hShhhh#Y...ww...F.......#hhmhnh#Y#h#...T
-T..#hhhhhh#Y..rw...........k#hhhhhh#Y#h#...T
-T..##sW#D##Y...w...........b##sWD###Y#D#...T
-T.......YYYYYYY=Y....F.......YYYY...YYY....T
-T.......Y......w...................eeeYeee.T
-P.......Y......w.......ccccc.......e..Y.+e.T
-T..ff...Y....rww.......czccc.......e.GgG.e.T
-T..fv...Y....www.......ccccc.......e.gGg.e.P
-P..fv...Y.....w.rH.....ccccc.......e.GgG.e.T
-P..ff...Y....................R.....e....+e.T
-T.......Y...O......R...............eeeeeeePT
-TT......Y......................T.O.......TTT
-TTP....,,,.....................PT.y....TTTTT
-TTPT...,,,....TTTT.....TTTT.....TPTy.TTPTTPT
-TTTTTTTPTTTTTTPTTPTTTPTTTPTPTTPTTTTPTTTPPTTP
+:-:-::-:-:--::-::::::-::-*:::::::--:::::::::
+:::.........:-:$.......::*:...$.....:::.-:--
+-:.,...%.......:.......:.*............:::.-:
+:.,.#######....:$,,,...:.*.#########....:..-
+:.,.#+++++#.....,,,,,..:.*.#+++++++#.......-
+-.,.#+K+++#..,..,.%.,..-.**#+++++++#,,,,,,$-
+-.,.#+++++#..,,,,..,,..:-.*#+++++++#,....,.-
+:.,.#+++++#.%...,,,,....-:*#+++++++#...%...:
+-.,.&#!D!#&....,,..###...:*&###D!##&..,,...-
+-.,,...;.......%.%.#!#...:*...;.h..%%.,..<.-
+:..,,,.;...........#D#.*****/.;.,,,,,;;....:
+:.%<.,.;;;;;;;;;;;;;;;;=====;;;;;;;;;;;....:
+:.,,,,,;.,,;...........*****......;..;;.,,.:
+:.,,,,,;,,.;..%....*****........%.;.....,,.:
+:..####D###;,.../***...B..........;;;###.,.:
+:$.#++++++#;,,..**........,.########;#r#.,$:
+:..#++oo++#;,,..*........,,.#++++++#;#+#.,.:
+:,.#+W++++#;,,.**...%.,,,,..#++f+t+#;#+#.,.:
+:,,#++++++#;,,/*.,,.,,,,,...#++++++#;#+#.,,:
+:.,&#w!#D#&;...*..,.;;;....o&##!D##&;&D&...:
+:.,.....;;;;;;;=;;;;;%;;;;;;;;;;;;;;;;;....:
+:.,,,,,.;......*.,,.;;;..........,.~~~;~~~.:
+-.,...,.;......*.,..,,,^^^^^...,,,.~..;.(~.:
+:.,@@.,,;,,../**.,,,,.,^m^^^.,,,...~.?|?.~.:
+:..@)..,;,,...**..,,,.,^^^^^,,,,,,.~.|?|.~.-
+-..@).,,;.,,...*/F..,.,^^^^^...,,..~.?|?.~.:
+-.,@@.,.;......*...,,,,.,,,,,<.,...~....(~.:
+:.,,,.,.;...T..*,,,,,,,,,,,,,,,,...~~~~~~~-:
+::..,,,.;...,,,*,......,,,,,,..:.T.......:::
+-:-....>;>.....**..........,,..-:.$....:::::
+::-:..b;;;-...::*:.....::::.....:-:$.::-::-:
+:::::::;;;::::-:*-:::-:::-:-::-::::-:::--::-
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# ---- exits ----
 [exit]
 x=7
 y=30
@@ -101,7 +97,6 @@ to=hollowmere_home
 tx=5
 ty=7
 
-# ---- NPCs ----
 [npc]
 id=elder
 name=Elder Mara
@@ -155,8 +150,8 @@ dialogue=healer_wren
 id=villager1
 name=Farmer Tobb
 sprite=104,24
-x=26
-y=24
+x=22
+y=25
 dialogue=farmer_tobb
 wander=1
 
@@ -186,7 +181,6 @@ y=15
 dialogue=mutt
 wander=1
 
-# ---- signs ----
 [sign]
 x=12
 y=9
@@ -202,7 +196,6 @@ x=33
 y=9
 text=The Weary Goat Inn. Rooms 10 gold. No goblins.
 
-# ---- chests ----
 [chest]
 x=8
 y=4
@@ -217,7 +210,6 @@ flag=hm_inn_chest
 items=cheese:2
 gold=5
 
-# ---- save ----
 [savepoint]
 x=39
 y=26
@@ -238,3 +230,13 @@ color=200,160,90
 x=12
 y=10
 travel=1
+
+[npc]
+id=npc1
+name=Villager
+x=34
+y=12
+sprite=104,0
+dialogue=
+wander=0
+

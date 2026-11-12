@@ -328,6 +328,8 @@ public:
     bool running = false;            // a game is in progress (desktop checks this)
     bool requestDesktop = false;     // return to desktop
     bool requestSettings = false;    // open the desktop settings window and come back
+    bool playtest = false;           // started from the Editor's Play: the pause menu offers Back to Editor (1.1.3)
+    bool requestEditor = false;      // pause menu > Back to Editor: the app reopens the Editor, the game keeps running
     std::vector<Rect> uiRects, uiRectsPrev; // screen regions covered by UI this frame (clicks there never reach the map)
     bool gameOver = false;
     bool godMode = false;            // debug: party takes no damage
@@ -539,6 +541,10 @@ private:                                         // nearby map groups that hear 
     void drawVictory(Canvas& cv, InputState& in);
     void updatePause(InputState& in, float dt);
     void drawPause(Canvas& cv, InputState& in);
+    int drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY);   // stats grid + description (1.1.3); returns the y below it
+    void openPause();                // Esc in explore or combat, the combat bar's Menu button
+    struct PauseEntry { int id; const char* label; bool enabled; };
+    std::vector<PauseEntry> pauseEntries() const;
     void updateSaveLoad(InputState& in, float dt);
     void drawSaveLoad(Canvas& cv, InputState& in);
     void drawHotbar(Canvas& cv, InputState& in, int member, int y);

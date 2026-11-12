@@ -16,6 +16,7 @@
 
 // A key=value section list that round-trips a config file (comments are not preserved).
 struct EdSection { std::string name; std::vector<std::pair<std::string, std::string>> kv;
+    std::string lead;   // 1.1.3: the comment lines just above this [section] in the file, written back on save
     bool inherited = false; std::vector<std::pair<std::string, std::string>> origKv;   // shown from the base game; edited -> becomes the campaign's own copy
     std::string get(const std::string& k, const std::string& def = "") const { for (auto& p : kv) if (p.first == k) return p.second; return def; }
     void set(const std::string& k, const std::string& v) { for (auto& p : kv) if (p.first == k) { p.second = v; return; } kv.push_back({k, v}); }
@@ -32,6 +33,7 @@ struct GenericEditor {
     std::vector<std::string> templateKeys;     // keys offered for a new section
     std::string altSection; std::vector<std::string> altTemplateKeys;   // a second kind of entry in the same file (bounties.txt: [board] and [bounty])
     std::vector<EdSection> secs;
+    std::string tail;                          // comment lines after the last section (written back on save, 1.1.3)
     int sel = -1, scroll = 0, fieldScroll = 0; bool dirty = false; std::string filter, newKey, status;
     // undo / redo: the editor compares the entries with last frame's copy and keeps snapshots (typing is merged)
     std::vector<std::vector<EdSection>> undo, redo; std::vector<EdSection> shadow; bool shadowInit = false; float lastChangeT = -10;

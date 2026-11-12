@@ -34,12 +34,14 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
   (`TRIFFALL_STEAM`) isn't listed: no Steamworks SDK here. Add it to builds.json once it can be built.
 - A first CMake configure once failed for -NoEditor/-Demo and worked on rerun (likely the raylib download); just rerun.
 - `.\install.ps1` copies the latest release to `%LOCALAPPDATA%\Programs\Triffall` (keeping its `saves\`) with a
-  Start Menu shortcut. No in-game self-update yet (follow-up): re-run install.ps1 to update.
+  Start Menu shortcut. No in-game self-update yet (follow-up): re-run install.ps1 to update. It keeps Editor edits
+  made in the installed copy (see "Editor edits" below).
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At 1.1.2 boot_and_setup, tutorial, sprites_1010,
-  side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min) and the editor_* tests pass.
+  (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
+  side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
+  editor_* tests pass.
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
   an `editor` icon at 0,0 (already so in the 1.0.10 source).
@@ -110,8 +112,7 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   text/onuse, lever sprite/onsprite/sound/onuse. Objects made by code (worldgen chests/save points, console) call
   `applyTypeLook`. Drawn in `Game::drawWorld`, used in `Game::interactAt` / `pullLever`. Editor: gens[15] altSection
   "type" (list shows "every X"), `typeSec`, `resolvedObj` mirrors the order, `drawObjectLook` + `drawObjectTypeInfo`
-  (preview panel above Placed objects), `edObjLookKeys`. Guide topic `objtype`. Saving objects.txt from the Editor
-  drops its comments (all GenericEditor files do).
+  (preview panel above Placed objects), `edObjLookKeys`. Guide topic `objtype`.
 - Walkable ground kinds have no empty entries in `ground=` any more (an empty cell on black reads as unlit void; the
   owner reported it as a sight bug). Only grass/snow tufts, ford and crops keep them. The Editor map now picks each
   cell's ground piece by a cell hash, like the game picks one at random (it used to show ground[0] everywhere).
@@ -123,6 +124,38 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   `dlgOptArmed` itself. The skip press never picks an answer.
 - Desktop icons ignore the pointer over a window or the taskbar (`hoverIcon` in `Desktop::update`).
 - Gotcha: a hung `cl.exe` from an earlier build held `game.h` open (writes failed with EPERM) until it was ended.
+
+## Editor edits (1.1.3, owner's #23: "take into account the changes I've made")
+- The owner edits content with the in-game Editor, in the installed copy or a `build\game*` copy (Run). The Editor
+  writes into that copy's `assets\`, which every build / install used to replace - the edits were lost.
+- `tools\pull-editor-edits.ps1` (run first by build.ps1 and install.ps1, or by hand) compares each copy with its
+  `assets-manifest.txt` (SHA-256 per asset file, written by build.ps1 and shipped in releases; a copy without one is
+  compared with `releases\<version.txt>ssets`). Changed files go into `srcssets` when src still has the old
+  version; if src changed the file too, the copy's version is saved to `editor-edits\<time>\<copy>\` (git-ignored)
+  and reported - **if `editor-edits\` exists, merge those files by hand and delete it**. Deletions are only reported.
+  install.ps1 also puts edits back into the new install when the release didn't change that file.
+- **Start of every session: run `.	ools\pull-editor-edits.ps1`** and commit what it pulls with the next version
+  (build.ps1 does it anyway, but look at the diff: Editor saves rewrite maps' legends).
+- GenericEditor files keep their comments now (`EdSection::lead` = comment lines above a section, `GenericEditor::tail`).
+  Map files saved by the Editor still lose their comments and get a new legend lettering (harmless).
+- At 1.1.3 the owner's edits from the installed 1.1.2 were merged by hand: warrior sprite 104,12, savepoint sprite
+  36,25, templates door_secret_crypt / paper_sign, item the_two_ring (made `unique=1`), and the maps ashfall,
+  bandit_camp, crypt (a secret room with a letter, a door and The 2 Ring), hollowmere (now 44x34), hollowmere_home
+  (now 7 wide).
+
+## 1.1.3 other changes
+- Pause menu (`Game::pauseEntries`, game.cpp): entries by id (0 Resume, 1 Party & Items, 2 Load, 3 World Map,
+  4 Journal, 5 Settings, 7 Back to Editor, 6 Exit) - tests count DOWN presses, keep Load third. In combat (`inCombat()`)
+  1 and 3 are greyed ("Not during a fight."). `openPause()`.
+- Combat: Esc pauses at any time (top of `updateCombat`), except on your turn with a sub-mode open (target/list/action
+  menu), where it backs out. It no longer opens the action menu (that's A_ACTIONMENU). Bar has a Menu button at the
+  right (`combatMenuButtonW`); the turn-order strip moved down to `TURN_STRIP_Y` 40 so its header clears the button.
+- Back to Editor: `Game::playtest` (set in `App::startPlaytest`, cleared on requestDesktop) adds the entry;
+  `requestEditor` makes the app reopen the Editor (`editor.open()`, the open map stays); the game keeps running.
+- Item details: `Game::drawItemDetails` (menus.cpp) draws tags, a two-column stat grid and the description under a
+  rule; used by the pack's Items tab, shops and the equip picker (its panel grew by up to 104 px for it).
+- `unique=1` (ItemDef::unique): `makeAffixed` returns the base id, crafting skips the quality roll, enchanting
+  refuses. Editor Items tab has a checkbox for it.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

@@ -19,7 +19,34 @@ bool GenericEditor::load() {
     undo.clear(); redo.clear(); shadowInit = false;
     secs.clear(); std::string text; dirty = false; status.clear();
     bool own = readFile(path, text);
-    if (own) for (auto& s : parseConfig(text)) { if (s.name.empty()) continue; EdSection e; e.name = s.name; e.kv = s.kv; secs.push_back(e); }
+    tail.clear();
+    if (own) {
+        for (auto& s : parseConfig(text)) { if (s.name.empty()) continue; EdSection e; e.name = s.name; e.kv = s.kv; secs.push_back(e); }
+        // 1.1.3: keep the file's comments. Comment lines go with the [section] below them (the file's header with the
+        // first one, "# ==== RANGED ====" headings with the entry they introduce); comments after the last entry are
+        // the tail. (A comment between two keys of one entry ends up above the next entry.)
+        std::vector<std::string> pend; size_t si = 0;
+        auto flush = [&](std::string& into, bool isTail) {
+            if (isTail) while (!pend.empty() && trim(pend.back()).empty()) pend.pop_back();   // (a lead keeps a blank line before its [section])
+            size_t b = 0; while (b < pend.size() && trim(pend[b]).empty()) b++;
+            into.clear(); for (size_t i = b; i < pend.size(); i++) into += pend[i] + "\n";
+            pend.clear();
+        };
+        for (auto& raw : split(text, '\n')) {
+            std::string line = raw; while (!line.empty() && line.back() == '\r') line.pop_back();
+            std::string t = trim(line);
+            if (t.empty()) { if (!pend.empty()) pend.push_back(""); continue; }
+            if (t[0] == '#') { pend.push_back(line); continue; }
+            if (t[0] == '[') {
+                std::string nm = trim(t.substr(1, t.find(']') - 1));
+                if (nm.empty()) { pend.clear(); continue; }
+                if (si < secs.size()) flush(secs[si].lead, false); else pend.clear();
+                si++; continue;
+            }
+            while (!pend.empty() && trim(pend.back()).empty()) pend.pop_back();   // a key line: blank lines before it don't matter
+        }
+        flush(tail, true);
+    }
     // a campaign that builds on the base game: show the base entries too (dimmed, "(base)"); editing one makes a campaign copy
     std::string btext;
     if (!basePath.empty() && basePath != path && (!replaceWhole || !own) && readFile(basePath, btext)) {
@@ -31,8 +58,10 @@ bool GenericEditor::load() {
     return own;
 }
 std::string GenericEditor::toText() const {
-    std::string o = "# " + title + " - edited with the Editor\n\n";
-    for (auto& s : secs) { if (s.inherited && !replaceWhole) continue; o += "[" + s.name + "]\n"; for (auto& kv : s.kv) o += kv.first + "=" + kv.second + "\n"; o += "\n"; }
+    bool headed = false; for (auto& s : secs) if (!(s.inherited && !replaceWhole)) { headed = !s.lead.empty(); break; }
+    std::string o = headed ? "" : "# " + title + " - edited with the Editor\n\n";   // a file's own header comment is kept instead (1.1.3)
+    for (auto& s : secs) { if (s.inherited && !replaceWhole) continue; o += s.lead + "[" + s.name + "]\n"; for (auto& kv : s.kv) o += kv.first + "=" + kv.second + "\n"; o += "\n"; }
+    o += tail;
     return o;
 }
 bool GenericEditor::save() {
@@ -155,7 +184,7 @@ void TextEdit::insert(const std::string& t) {
 bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, PlatformRequests* r) {
     ts = t; font = f; gd = g; assetDir = assets; ui.req = r; baseRoot = dataRoot = assetDir + "/data";
     auto mk = [&](const std::string& file, const std::string& title, const std::string& section, const std::string& listKey, std::vector<std::string> tmpl) { GenericEditor ge; ge.path = dataRoot + "/" + file; ge.title = title; ge.sectionName = section; ge.listKey = listKey; ge.templateKeys = tmpl; gens.push_back(ge); };
-    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest"});
+    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique"});
     mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound"});
     mk("spells.txt", "Spells", "spell", "id", {"id", "name", "desc", "tile", "cost", "ap", "range", "area", "dmg", "dmgtype", "stat", "heal", "effect", "duration", "target", "utility", "ff", "level", "sound"});
     mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn"});
@@ -662,6 +691,11 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         bool def = s.get("type") == "key"; bool on = v.empty() ? def : atoi(v.c_str()) != 0;
         if (ui.checkbox(x, y + 2, on ? "quest item - can't be dropped or sold" : "normal item", on)) { v = on ? "1" : "0"; g.dirty = true; }
         if (v.empty()) ui.text(x + 280, y + 2, def ? "(default for type=key)" : "(default)", DIM);
+        return;
+    }
+    if (s.name == "item" && k == "unique") {   // 1.1.3
+        bool on = atoi(v.c_str()) != 0;
+        if (ui.checkbox(x, y + 2, on ? "unique - never gets affixes (loot, crafting, enchanting)" : "can get random affixes", on)) { v = on ? "1" : ""; g.dirty = true; }
         return;
     }
     if (s.name == "item" && k == "category") {

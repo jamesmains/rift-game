@@ -10,64 +10,65 @@ music=crypt
 
 [legend]
 # = wall_gray
++ = candle
+, = rock
 . = floor_stone
+: = skull_pile
+; = web_nw
 < = stairs_up
+= = web_ne
 C = coffin
 I = pillar
 T = torch_wall
 b = bones
 s = skull
 x = void
-X = rock
-1 = web_nw
-3 = web_ne
-Y = candle
 
 [rows]
-XXXXXXXXX###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#T##########XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#.........3#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#.........Y##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#..........3#XXXXXXXXXXXXXX###XXXXXXXXXXXXXXXXX
-XXXXXXXXX#....b......#XXXXX###XXXXXX#T#####XXXXXXXXXXXXX
-XXXXXXXXX###.#######.#XXXX##T########....3#XXXXXXXXXXXXX
-XXXXXXXXXXX#.#XXXXX#.#XXXX#.....C..##.....#XXXXXXXXXXXXX
-XXXXXXXXXXX#.#XXX###.######........##.I...#XXXXXXXXXXXXX
-XXXX###XXXX#.#XXX#........................#XXXXXXXXXXXXX
-X####T######.#XXX#.#.######........##...b.#XXXXXXXXXXXXX
-X#1..C.......#####.#.#XXXX#........##.....#XXXXXXXXXXXXX
-X#......b....##......#XXXX####...##########XXXXXXXXXXXXX
-X#...........##....C.#########...#XXXXXXXXXXXXXXXXXXXXXX
-X#............................b..##XXXXXXXXXXXXXXXXXXXXX
-X#...........##......###..........#XXXXXXXXXXXXXXXXXXXXX
-X#...........##......#X#..........#XXXXXXXXXXXXXXXXXXXXX
-X###########.#####.#.###x.........#XXX###XXXXXXXXXXXXXXX
-XXXXXXXX####.#XXX#................#XXX#T#########XXXXXXX
-XXXXXXXX#T##.##XX###.###.....C....#XXX#.........#XXXXXXX
-XXXXXXXX#C.I..#XXXX#.#X#..........#XXX#.........#XXXXXXX
-XXXXXXXX#.....######.########....######.....b...#XXXXXXX
-XXXXXXXX#..<.................b..................#XXXXXXX
-XXXXXXXX#.....######.#####......................#XXXXXXX
-XXXXXXXX#.....#XXXX#.#XXX#.........####...C.....#XXXXXXX
-XXXXXXXX####.##XXXX#.#XXX#....C....#XX#.........#XXXXXXX
-XXXXXXXXXXX#.#######.#####.........#XX#.....YY..#XXXXXXX
-XXXXXXXXXXX#.......................#XX#########.##XXXXXX
-XXXXXXXXXXX#.######T.#####.........#XXXXXXXXX#...#XXXXXX
-XXXXXXXXXX##.#XX#1....3#X#.........#XXXXXXXXX#...#XXXXXX
-XXXXXXXXX##T.####......###.........#XXXXXXXXX#...#XXXXXX
-XXXXXXXXX#1.x1.##..b.............###XXXXXXXXX#####XXXXXX
-XXXXXXXXX#.....##.b....#########.###XXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#.....#########XXXX####.#T##XXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#..b..#XXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#.C...#XXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#######XXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#.....C.#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#.....s.#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#.......#XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXX#########XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+,,,,,,,,,###,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#T##########,,,,,,,,,,,,,,,,,,,,,,,,,,,,.,,,,,,
+,,,,,,,,,#.........=#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#.........+##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#..........=#,,,,,,,,,,,,,,###,,,,,,,,,,,,,,,,,
+,,,,,,,,,#....b......#,,,,,###,,,,,,#T#####,,,,,,,,,,,,,
+,,,,,,,,,###.#######.#,,,,##T########....=#,,,,,,,,,,,,,
+,,,,,,,,,,,#.#,,,,,#.#,,,,#.....C..##.....#,,,,,,,,,,,,,
+,,,,,,,,,,,#.#,,,###.######...........I...#,,,,,,,,,,,,,
+,,,,###,,,,#.#,,,#........................#,,,,,,,,,,,,,
+,####T######.#,,,#.#.######.............b.#,,,,,,,,,,,,,
+,#;..C.......#####.#.#,,,,#........##.....#,,,,,,,,,,,,,
+,#......b....##......#,,,,####...##########,,,,,,,,,,,,,
+,#...........##....C.#########...#,,,,,,,,,,,,,,,,,,,,,,
+,#............................b..##,,,,,,,,,,,,,,,,,,,,,
+,#...........##......###..........#,,,,,,,,,,,,,,,,,,,,,
+,#...........##......#,#..........#,,,,,,,,,,,,,,,,,,,,,
+,###########.#####.#.###x.........#,,,###,,,,,,,,,,,,,,,
+,,,,,,,,####.#,,,#................#,,,#T#########,,,,,,,
+,,,,,,,,#T##.##,,###.###.....C....#,,,#.........#,,,,,,,
+,,,,#####C.I..#,,,,#.#,#..........#,,,#.........#,,,,,,,
+,,,##:s.#.....######.########....######.....b...#,,,,,,,
+,,,#:s.....<.................b..................#,,,,,,,
+,,,#ss..#.....######.#####......................#,,,,,,,
+,,,##:s.#.....#,,,,#.#,,,#.........####...C.....#,,,,,,,
+,,,,########.##,,,,#.#,,,#....C....#,,#.........#,,,,,,,
+,,,,,,,,,,,#.#######.#####.........#,,#......+..#,,,,,,,
+,,,,,,,,,,,#.......................#,,#########.##,,,,,,
+,,,,,,,,,,,#.######T.#####.........#,,,,,,,,,#...#,,,,,,
+,,,,,,,,,,##.#,,#;....=#,#.........#,,,,,,,,,#...#,,,,,,
+,,,,,,,,,##T.####......###.........#,,,,,,,,,#...#,,,,,,
+,,,,,,,,,#;....##..b.............###,,,,,,,,,#####,,,,,,
+,,,,,,,,,#.....##.b....#########.###,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#.....#########,,,,####.#T##,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#..b..#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#.C...#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,#######,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.....C.#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.....s.#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,#########,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 [enemy]
 group=necromancer,skeleton,skeleton_archer
@@ -127,7 +128,7 @@ flag=crypt_grp_11
 
 [enemy]
 group=lich,necromancer,ghoul
-x=39
+x=38
 y=9
 aggro=6
 level=4
@@ -218,3 +219,24 @@ y=29
 items=oil_blessed:2,potion_red2:1,arcane_dust:2
 gold=70
 flag=crypt_vines_chest
+
+[door]
+template=door_secret_crypt
+x=8
+y=22
+flag=
+
+[sign]
+template=paper_sign
+x=6
+y=22
+title=Lost Letter
+text=The master loves his secrets... Keep them safe...
+
+[chest]
+x=7
+y=24
+flag=chest_7_24
+items=the_two_ring:1
+locked=
+

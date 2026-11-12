@@ -88,7 +88,7 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
         d.bonusHP = sec.geti("hp", 0); d.bonusMP = sec.geti("mp", 0); d.bonusAP = sec.geti("apbonus", 0); d.bonusMove = sec.geti("move", 0);
         d.heal = sec.geti("heal", 0); d.mana = sec.geti("mana", 0); d.effect = sec.get("effect"); d.useSpell = sec.get("spell");
         d.stackMax = sec.geti("stack", 99); d.salvage = sec.get("salvage"); d.light = sec.geti("light", 0); d.tech = sec.geti("tech", d.isGun ? 1 : 0) != 0;
-        d.quest = sec.geti("quest", d.type == IT_KEY ? 1 : 0) != 0; d.category = trim(sec.get("category"));
+        d.quest = sec.geti("quest", d.type == IT_KEY ? 1 : 0) != 0; d.category = trim(sec.get("category")); d.unique = sec.geti("unique", 0) != 0;
         items[d.id] = d;
     }
     // ---- spells ----

@@ -2271,3 +2271,16 @@ hp=20
 bonus=con:1
 value=800
 desc=A corn-doll on a cord. Millbrook's farmers swear by it.
+
+# ================= 1.1.3 (made in the Editor) =================
+[item]
+id=the_two_ring
+name=The 2 Ring
+type=accessory
+tile=11,43
+value=25
+desc=Stronger than the 1 ring... weaker than the 3 ring...
+res=physical:2,fire:2,cold:2,shock:2,poison:2,magic:2
+bonus=con:2
+category=Accessories
+unique=1

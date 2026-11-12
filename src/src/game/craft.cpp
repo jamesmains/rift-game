@@ -67,7 +67,7 @@ std::string Game::makeAffixed(const std::string& baseId, int tier) {
     const ItemDef* base = gd->item(baseId);
     if (!base || !base->equippable() || tier <= 1 || affixes.empty()) return baseId;
     std::string b0; std::vector<std::string> have; int plus = 0; parseDynId(baseId, b0, have, plus);
-    const ItemDef* root = gd->item(b0); if (!root) return baseId;
+    const ItemDef* root = gd->item(b0); if (!root || root->unique) return baseId;   // unique=1 items stay exactly as made
     std::string tname = kTypeNames[root->type];
     std::vector<const AffixDef*> pre, suf;
     for (auto& a : affixes) {
@@ -171,7 +171,7 @@ bool Game::craft(const Recipe& r) {
     std::string id = r.result;
     const ItemDef* rd = gd->item(id);
     int quality = 0;
-    if (rd && rd->equippable()) {
+    if (rd && rd->equippable() && !rd->unique) {   // unique=1 items always come out exactly as written
         // fine (one affix) or masterwork (two) when the crafter is better than the job needs
         int over = craftSkill(r.station) - r.difficulty, stat = craftStat(r.station);
         int fine = clampi(8 + over * 10 + (stat - 10), 3, 60), master = clampi(over * 5 + (stat - 12), 0, 25);
@@ -294,6 +294,7 @@ void Game::updateCraft(InputState& in, float dt) {
         log("Reinforced: " + gd->item(nid)->name + "."); gAudio.play("craft"); stats.crafted++;
         if (plus + 1 >= 3) setFlag("reinforced3");
     } else if (craftTab == 2) {
+        if (d->unique) { log(d->name + " is one of a kind: no enchantment will take."); gAudio.play("ui_error"); return; }
         int gold = 0; auto mats = enchantCost((int)af.size(), gold);
         for (auto& m : mats) if (party.countItem(m.first) < m.second) { log("You lack the materials."); gAudio.play("ui_error"); return; }
         if (party.gold < gold) { log("Not enough gold."); gAudio.play("ui_error"); return; }
@@ -394,6 +395,8 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
                         UI::text(ctx, x, cy, fmt("Success %d%% (failure keeps the item)", craftSuccess(craftStation, plus + 2)), C::Yellow); cy += 13;
                         label = fmt("Reinforce +%d", plus + 1);
                     }
+                } else if (craftTab == 2 && d->unique) {
+                    UI::text(ctx, x, cy, "One of a kind: it can't be enchanted.", C::Gray); can = false; label = "Unique";
                 } else if (craftTab == 2) {
                     UI::text(ctx, x, cy, af.empty() ? "Bind a random enchantment to it." : "Bind a second enchantment (rare).", C::Cream); cy += 16;
                     int gold = 0; auto mats = enchantCost((int)af.size(), gold); matLines(cy, mats, gold);

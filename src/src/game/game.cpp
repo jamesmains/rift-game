@@ -522,7 +522,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
 void Game::updateExplore(InputState& in, float dt) {
     if (banterVictoryPending) { banterVictoryPending = false; banterTrigger("victory"); }
     if (party.members.size() > 1) { size_t before = party.members.size(); checkCompanionMoods(); if (party.members.size() != before) return; }
-    if (actP(in, A_CANCEL)) { pauseSel = 0; pushMode(GMode::PAUSE); return; }
+    if (actP(in, A_CANCEL)) { openPause(); return; }
     if (actP(in, A_MENU)) { menuTab = 0; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); return; }
     if (actP(in, A_SPELLS)) { menuTab = 2; menuSel = 0; menuScroll = 0; menuSubFocus = false; menuMember = clampi(menuMember, 0, (int)party.members.size() - 1); spellCol = party.members[menuMember].spells.empty() ? 0 : 1; pushMode(GMode::MENU); return; }
     if (actP(in, A_ITEMS)) { menuTab = 1; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); return; }
@@ -1031,37 +1031,58 @@ void Game::drawMessage(Canvas& cv, InputState& in) {
     textCenter(ctx, SCREEN_W / 2, y + h - 18, "[Enter]", C::Gray);
     (void)in;
 }
-static const int PAUSE_N = 7;   // saving only happens at shrines, so there is no Save entry here
+// The pause menu (Esc). 1.1.3: also opens in combat (Party & Items and World Map are greyed out there: they would
+// let you re-equip or travel mid-fight) and, in a playtest started from the Editor, offers Back to Editor.
+std::vector<Game::PauseEntry> Game::pauseEntries() const {
+    bool fight = inCombat();
+    std::vector<PauseEntry> e = {{0, "Resume", true}, {1, "Party & Items", !fight}, {2, "Load Game", true},
+        {3, "World Map", !fight && !worldMapSource().empty()}, {4, "Journal", true}, {5, "Settings", true}};
+    if (playtest) e.push_back({7, "Back to Editor", true});
+    e.push_back({6, "Exit to Desktop", true});
+    return e;
+}
+void Game::openPause() { pauseSel = 0; pushMode(GMode::PAUSE); }
+static int pauseH(int n) { return 30 + n * 26 + 24; }   // the buttons plus the "save at a shrine" line under them
+static int pauseTop(int n) { return (SCREEN_H - 72 - pauseH(n)) / 2; }   // centred between the top of the screen and the party bar
 void Game::updatePause(InputState& in, float dt) {
     (void)dt;
-    const int n = PAUSE_N;
+    auto entries = pauseEntries();
+    const int n = (int)entries.size();
+    pauseSel = clampi(pauseSel, 0, n - 1);
     if (actP(in, A_UP)) pauseSel = (pauseSel + n - 1) % n;
     if (actP(in, A_DOWN)) pauseSel = (pauseSel + 1) % n;
-    int x = SCREEN_W / 2 - 90, y = (SCREEN_H - 72 - (30 + PAUSE_N * 26 + 10)) / 2;   // centred between the top of the screen and the party bar
+    int x = SCREEN_W / 2 - 90, y = pauseTop(n);
     for (int i = 0; i < n; i++) if (in.mouseX >= x && in.mouseX < x + 180 && in.mouseY >= y + 30 + i * 26 && in.mouseY < y + 52 + i * 26 && (in.mouseDX || in.mouseDY)) pauseSel = i;
     if (actP(in, A_CANCEL)) { popMode(); return; }
     if (actP(in, A_CONFIRM) || in.mousePressed[0]) {
         if (in.mousePressed[0]) { if (!(in.mouseX >= x && in.mouseX < x + 180 && in.mouseY >= y + 30 && in.mouseY < y + 30 + n * 26)) return; pauseSel = (in.mouseY - y - 30) / 26; }
-        switch (pauseSel) {
+        const PauseEntry& e = entries[clampi(pauseSel, 0, n - 1)];
+        if (!e.enabled) {
+            if (e.id == 3 && !inCombat()) log("There is no map of this place.");
+            else if (inCombat()) log("Not during a fight.");
+            gAudio.play("ui_error"); return;
+        }
+        switch (e.id) {
             case 0: popMode(); break;
             case 1: popMode(); menuTab = 0; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); break;
             case 2: popMode(); openSaveLoad(false); break;
-            case 3: if (worldMapSource().empty()) { log("There is no map of this place."); gAudio.play("ui_error"); break; } popMode(); openWorldMap(false); break;
+            case 3: popMode(); openWorldMap(false); break;
             case 4: popMode(); jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); break;
             case 5: popMode(); requestSettings = true; break;
             case 6: popMode(); requestDesktop = true; break;
+            case 7: popMode(); requestEditor = true; break;
         }
     }
 }
 void Game::drawPause(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 110);
-    int x = SCREEN_W / 2 - 90, y = (SCREEN_H - 72 - (30 + PAUSE_N * 26 + 10)) / 2;   // centred between the top of the screen and the party bar
-    panelTitle(ctx, x, y, 180, 30 + PAUSE_N * 26 + 10, "Paused");
-    uiRect(x, y, 180, 30 + PAUSE_N * 26 + 10);
-    const char* items[PAUSE_N] = {"Resume", "Party & Items", "Load Game", "World Map", "Journal", "Settings", "Exit to Desktop"};
-    bool haveMap = !worldMapSource().empty();
-    for (int i = 0; i < PAUSE_N; i++) button(ctx, in, x + 12, y + 30 + i * 26, 156, 22, items[i], i != 3 || haveMap, pauseSel == i);
-    textCenter(ctx, SCREEN_W / 2, y + 30 + PAUSE_N * 26 + 14, "Save at any save shrine.", C::Gray);
+    auto entries = pauseEntries();
+    const int n = (int)entries.size();
+    int x = SCREEN_W / 2 - 90, y = pauseTop(n);
+    panelTitle(ctx, x, y, 180, pauseH(n), inCombat() ? "Paused (combat)" : "Paused");
+    uiRect(x, y, 180, pauseH(n));
+    for (int i = 0; i < n; i++) button(ctx, in, x + 12, y + 30 + i * 26, 156, 22, entries[i].label, entries[i].enabled, pauseSel == i);
+    textCenter(ctx, SCREEN_W / 2, y + 30 + n * 26 + 6, "Save at any save shrine.", C::Gray);
 }
 
 // ---------------- in-game save / load ----------------

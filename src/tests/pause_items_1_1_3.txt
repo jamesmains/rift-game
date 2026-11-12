@@ -1,0 +1,54 @@
+# 1.1.3: the pause menu in combat (Esc, the bar's Menu button, greyed entries), the item details panel,
+# unique=1 items (The 2 Ring never rolls an affix from a chest).
+newgame Kai warrior 1
+god
+gold 500
+teleport hollowmere 20 20
+frames 120
+give the_two_ring
+give iron_sword
+# --- item details: the pack's Items tab ---
+key TAB
+frames 3
+key PGDN
+frames 3
+expect mode == MENU
+shot items_panel.png
+key DOWN
+key DOWN
+key DOWN
+frames 3
+shot items_ring.png
+key DOWN
+frames 3
+shot items_sword.png
+key ESC
+frames 3
+key ESC
+frames 3
+# --- Esc in combat pauses the fight ---
+combat rat,rat
+frames 60
+shot combat_bar.png
+frames 240
+shot combat_bar_myturn.png
+key ESC
+frames 3
+expect mode == PAUSE
+shot combat_pause.png
+# Party & Items is greyed out in a fight
+key DOWN
+key ENTER
+frames 3
+expect mode == PAUSE
+expect log contains Not during a fight
+key ESC
+frames 3
+expect mode == COMBAT
+# --- the bar's Menu button does the same ---
+click 620 12
+frames 3
+expect mode == PAUSE
+key ESC
+frames 3
+expect mode == COMBAT

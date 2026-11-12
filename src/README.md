@@ -28,6 +28,23 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.3 pause in a fight, back to the Editor, tidier item details
+
+* **Pause during combat.** Esc (or the new **Menu** button at the right end of the combat bar) opens the pause menu at
+  any moment of a fight, enemy turns included: Load Game, Journal, Settings and Exit to Desktop all work. Party & Items
+  and World Map are greyed out until the fight is over. Esc still backs out of a target pick or a spell/item list first.
+* **Back to Editor.** A game started with the Editor's Play has **Back to Editor** in its pause menu: it reopens the
+  Editor where you left it, and the next Play carries on with the same game.
+* **Item details are easier to read.** The pack, shops and the equip picker show an item as a short grid of stats
+  (gains in green, losses in red; an equal resist to every damage type reads "All resists +2%"), then the description
+  on its own under a line. Tags like Quest item, Unique and Two-handed sit above the stats.
+* **Unique items:** `unique=1` on an item (a checkbox in the Editor's Items tab) means it never gets a random affix -
+  not from loot or chests, not from a crafting roll, and enchanting won't take. Hand-made one-offs stay exactly as
+  written. The 2 Ring is one.
+* **Your Editor changes stick.** The Editor now keeps the comments in the data files it saves. (For the developer
+  build: edits made with the Editor in a built or installed copy are carried back into the source before every build
+  and kept across updates.)
+
 ## 1.1.2 companions, towns and crafting that matter
 
 * **Companions remember what you do - and only that.** Approval no longer creeps up from small talk. It moves when
@@ -453,8 +470,8 @@ Double-click **Editor** on the desktop. It runs at 960x720 and edits the files u
   Courier letters now only go to real boards whose town you have visited; without a bounties.txt every `board=` in the
   maps is found automatically. Problems (a board no NPC opens, letters to something that isn't a board) show beside
   the entry and in Check all.
-* **Items**: `quest=1` marks a quest item that can't be dropped or sold (every `type=key` item is one by default), and
-  `category=` files an item under its own heading. The party menu's Items tab and shops show category chips (T / RB or
+* **Items**: `quest=1` marks a quest item that can't be dropped or sold (every `type=key` item is one by default),
+  `unique=1` keeps an item free of random affixes (loot, crafting, enchanting), and `category=` files an item under its own heading. The party menu's Items tab and shops show category chips (T / RB or
   click) and a sort order (R / Back: as found, name, value, category).
 * **Undo** in every form tab: Ctrl+Z / Ctrl+Y (or the Undo button).
 * **Quest objectives** - `objective=STAGE | DONE-CONDITION | TEXT` adds a checklist line under a stage in the journal

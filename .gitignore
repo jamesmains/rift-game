@@ -12,3 +12,4 @@ src/out/
 src/saves/
 tools/__pycache__/
 .ideajotter-release-notes.json
+editor-edits/
