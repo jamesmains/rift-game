@@ -91,3 +91,6 @@ panel's text), `fav:N` (the hero's favorite slot N); op `lacks` (the opposite of
 1.1.0: `editor_objects_1_1` (clicks in the map object panel stay in the panel; the Objects tab 22 and Resources tab 23),
 `resource_nodes_1_1` (harvesting a gather node that takes item, tool and amount from its resource type). Editor tabs
 18-21 are Campaign, Flags, Bounties, Factions; 22 Objects, 23 Resources.
+
+1.1.5: `facing_1_1_5` (stepping up/down keeps the party's left/right look; expect key `faceright` 0/1).
+`music_ambient` now expects no ambient loop anywhere (#28: only a map header / dungeons.txt `ambient=` plays one).

@@ -1,0 +1,22 @@
+# 1.1.5 (#27): stepping up or down keeps the way the party was looking; only a sideways step turns it.
+newgame Kai warrior 1
+teleport hollowmere 20 20
+frames 120
+key LEFT
+frames 20
+expect faceright == 0
+key UP
+frames 20
+key DOWN
+frames 20
+expect faceright == 0
+shot facing_left.png
+key RIGHT
+frames 20
+expect faceright == 1
+key DOWN
+frames 20
+key UP
+frames 20
+expect faceright == 1
+shot facing_right.png

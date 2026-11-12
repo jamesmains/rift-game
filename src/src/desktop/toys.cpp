@@ -31,7 +31,7 @@ void Desktop::mineReveal(int x, int y) {
 void Desktop::drawMinesweeper(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
     MineState& m = mine; if (m.w == 0) mineReset(0);
     Font& f = *ctx.font; const int CS = 16;
-    int needW = std::max(204, m.w * CS + 24), needH = m.h * CS + 76;
+    int needW = std::max(204, m.w * CS + 24), needH = m.h * CS + 80;   // 1.1.5 (#26): 4 px more under the footer hint
     if (w.w != needW || w.h != needH) { w.w = needW; w.h = needH; w.x = clampi(w.x, 0, UI::SCREEN_W - w.w); w.y = clampi(w.y, 0, UI::SCREEN_H - TASKBAR_H - w.h); }
     int x0 = w.x + 12, y0 = w.y + 60;
     if (m.started && !m.dead && !m.won) m.time += ctx.time - m.lastT; m.lastT = ctx.time;
@@ -67,7 +67,7 @@ void Desktop::drawMinesweeper(Canvas& cv, DeskWindow& w, InputState& in, bool ac
         if (!m.dead && m.started) { int hidden = 0; for (size_t i = 0; i < m.state.size(); i++) if (m.state[i] != 1) hidden++; if (hidden == m.mines) { m.won = true; showToast(fmt("Minesweeper cleared in %d seconds!", (int)m.time)); gAudio.play("achievement"); if (game) game->extra["minesweeper_won"] = "1"; } }
     }
     if (over && !m.dead && !m.won && (in.gamepadActive || padNavWindows)) cv.rect(x0 + hx * CS, y0 + hy * CS, CS, CS, C::Red);
-    f.draw(cv, *ctx.ts, w.x + 6, w.y + w.h - 14, m.dead ? "Boom! Click the face." : m.won ? "You win!" : in.gamepadActive ? "A reveal  X flag  D-pad move" : padNavWindows ? "Enter reveal  F flag  arrows" : (m.w > 9 ? "L reveal  R flag  click a number to chord" : "L reveal  R flag"), SHADOW);
+    f.draw(cv, *ctx.ts, w.x + 6, w.y + w.h - 17, m.dead ? "Boom! Click the face." : m.won ? "You win!" : in.gamepadActive ? "A reveal  X flag  D-pad move" : padNavWindows ? "Enter reveal  F flag  arrows" : (m.w > 9 ? "L reveal  R flag  click a number to chord" : "L reveal  R flag"), SHADOW);
 }
 
 // ======================================================================= Solitaire
@@ -179,7 +179,7 @@ void Desktop::drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool acti
     }
     if (!s.won) { int n = 0; for (auto& fp : s.found) n += (int)fp.size(); if (n == 52) { s.won = true; showToast(fmt("Solitaire won in %d moves!", s.moves)); gAudio.play("achievement"); if (game) game->extra["solitaire_won"] = "1"; } }
     if (s.won) { f.bold = true; f.drawShadow(cv, *ctx.ts, w.x + w.w / 2 - 40, by + 60, "YOU WIN!", C::Yellow, C::Black, 2); f.bold = false; }
-    f.draw(cv, *ctx.ts, w.x + 6, w.y + w.h - 14, in.gamepadActive ? "A pick / drop   X send up   B cancel" : padNavWindows ? "Enter pick / drop   F send up" : "click card, then target - dbl/right-click sends up", RGB(200, 255, 200));
+    f.draw(cv, *ctx.ts, w.x + 6, w.y + w.h - 17, in.gamepadActive ? "A pick / drop   X send up   B cancel" : padNavWindows ? "Enter pick / drop   F send up" : "click card, then target - dbl/right-click sends up", RGB(200, 255, 200));
     (void)dbl;
 }
 

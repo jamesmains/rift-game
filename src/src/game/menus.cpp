@@ -293,7 +293,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
                 if (i == 0) UI::text(ctx, lx + 12, ly + 26, "(remove)", sel ? C::Yellow : C::Gray);
                 else { const ItemDef* d = gd->item(cands[i - 1]); ctx.ts->draw(cv, d->tile, lx + 10, ly + 25 + i * 16, 1); UI::text(ctx, lx + 26, ly + 26 + i * 16, d->name, sel ? C::Yellow : C::White); }
             }
-            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 30 + std::min(14, n) * 16 + detH); }
+            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 26 + std::min(14, n) * 16 + detH); }   // 1.1.5 (#26): 8 px above the panel bottom
         } else {
             if (menuSubFocus) { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "slot"); keyHint(ctx, 290, SCREEN_H - 30, "Enter", "change"); keyHint(ctx, 380, SCREEN_H - 30, gKeys.label(A_ITEMS), "unequip"); keyHint(ctx, 490, SCREEN_H - 30, "Left", "back to party"); }
             else { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "member"); keyHint(ctx, 300, SCREEN_H - 30, "Right", "equipment"); keyHint(ctx, 420, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, 540, SCREEN_H - 30, "Esc", "back"); }
@@ -320,8 +320,8 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             panel(ctx, 320, 60, 300, INV_ACT_Y - 66, RGB(30, 30, 44));   // 1.1.4: 26 px taller, room for the grouped details
             ctx.ts->draw(cv, d->tile, 330, 70, 2);
             ctx.font->bold = true; UI::text(ctx, 362, 70, d->name, C::Gold); ctx.font->bold = false;
-            drawItemDetails(cv, *d, 330, 94, 280, INV_ACT_Y - 22);
-            UI::text(ctx, 330, INV_ACT_Y - 20, itemCategory(*d), C::Gray);
+            UI::text(ctx, 362, 83, itemCategory(*d), C::Gray);   // 1.1.5 (#26): the item type sits under the name, not on the panel's bottom edge
+            drawItemDetails(cv, *d, 330, 98, 280, INV_ACT_Y - 14);   // panel bottom (INV_ACT_Y - 6) less 8 px of padding
             if (menuSubFocus) {
                 std::vector<std::string> acts;
                 if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
@@ -533,8 +533,10 @@ void Game::drawShop(Canvas& cv, InputState& in) {
         panel(ctx, 350, 60, 270, 180, RGB(30, 30, 44));
         ctx.ts->draw(cv, cur->tile, 360, 70, 2);
         ctx.font->bold = true; UI::text(ctx, 392, 70, cur->name, C::Gold); ctx.font->bold = false;
-        drawItemDetails(cv, *cur, 360, 94, 250, cur->equippable() ? 182 : 240);
-        if (cur->equippable()) { int y = 186; for (auto& m : party.members) { const ItemDef* e = m.equip[cur->slot()].empty() ? nullptr : gd->item(m.equip[cur->slot()]); std::string cmp = e ? e->name : "-"; UI::text(ctx, 360, y, m.name.substr(0, 10) + ": " + cmp, C::Gray); y += 13; if (y > 231) break; } }
+        UI::text(ctx, 392, 83, itemCategory(*cur), C::Gray);   // 1.1.5 (#26)
+        // 1.1.5 (#26): text stops 8 px above the panel's bottom edge (panel 60..240)
+        drawItemDetails(cv, *cur, 360, 98, 250, cur->equippable() ? 177 : 232);
+        if (cur->equippable()) { int y = 180; for (auto& m : party.members) { const ItemDef* e = m.equip[cur->slot()].empty() ? nullptr : gd->item(m.equip[cur->slot()]); std::string cmp = e ? e->name : "-"; UI::text(ctx, 360, y, m.name.substr(0, 10) + ": " + cmp, C::Gray); y += 13; if (y + 13 > 232) break; } }
         // quantity + total
         int maxQ = shopMaxQty(shopTab, curReal), q = std::max(1, shopQty);
         int unit = shopTab == 0 ? itemBuyPrice(*cur) : itemSellPrice(*cur);

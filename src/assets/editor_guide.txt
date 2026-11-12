@@ -459,16 +459,18 @@ one copies it into the campaign.
 == concepts.ambient | Ambient sound
 see: tab.sounds, maps.header
 
-Besides music, every place has a quiet ambient loop under it (it follows the
-SFX volume): wind outdoors, crickets at night, rain in rain and storms, a murmur
-in towns, drips in caves, frogs in the marsh, a hum in tech ruins, breathing in
-the Scar. sounds.txt lists them as [ambient] entries (the Sounds tab shows them
-as [ambient]; the kind button cycles sfx / music / ambient).
+A map can play a quiet background loop under its music (it follows the
+Ambience volume): wind, crickets at night, rain, a town murmur, cave drips,
+frogs, a machine hum, breathing in the Scar. sounds.txt lists them as [ambient]
+entries (the Sounds tab shows them as [ambient]; the kind button cycles sfx /
+music / ambient).
 
-The game picks one by the map's kind, its music, the weather and the time. A
-map header can choose for itself: ambient=amb_swamp, or ambient=none for
-silence. (There is no field for it in the map header row yet: add the line in a
-text editor; Editor keeps it when it saves the map.)
+Nothing plays unless the map asks for one (since 1.1.5 the game no longer picks
+a loop by place, weather or time - it often did not fit, like crickets in a
+crypt). Pick one with the ambient field on the second header row of the Maps
+tab (the v button lists every [ambient] entry), or write ambient=amb_swamp in
+the map header. Generated dungeons take ambient= from their dungeons.txt entry.
+Empty or ambient=none means silence.
 
 == tab.maps | Maps tab
 see: maps.tools, maps.objects, maps.select, maps.header, maps.check, maps.play, maps.arrival, maps.start, maps.resize
@@ -1026,7 +1028,7 @@ left, resize, then Select everything (Ctrl+A), cut and paste it further down.
 Resize can be undone with Ctrl+Z.
 
 == maps.header | Map header fields
-see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.table, map.bg, map.worldmap
+see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.table, map.bg, map.worldmap, map.ambient
 
 The two rows above the map view edit the [map] header of the file:
 
@@ -1042,9 +1044,10 @@ The two rows above the map view edit the [map] header of the file:
   table=
   bg=0,0,0
   worldmap=
+  ambient=amb_cave
 
 Fields left empty use their defaults. The id is the file name and is not
-edited here. table and music have pickers. Changes mark the map unsaved; save
+edited here. table and ambient have pickers. Changes mark the map unsaved; save
 with Save or Ctrl+S.
 
 The id is never written by these fields; it comes from the file name you chose
@@ -1207,6 +1210,22 @@ Format: r,g,b. Default: 0,0,0 (black).
 
 Pick a dark version of the map's main ground colour so the edge of a small
 map does not look like a hole. Dark dungeons look best with black.
+
+
+== map.ambient | Map background loop
+see: concepts.ambient, tab.sounds, map.music, maps.header
+
+The background loop played under the music on this map (wind, drips, frogs,
+rain, a town murmur...). It is on the second header row of the Maps tab; the v
+button next to it lists every [ambient] entry of the Sounds tab.
+
+Format: the id of an [ambient] entry, or none. Default: empty = no loop (since
+1.1.5 nothing is chosen automatically).
+
+  ambient=amb_cave
+
+Its loudness is the entry's volume in the Sounds tab times the player's
+Ambience volume setting.
 
 
 == map.worldmap | Map world map override
@@ -4696,6 +4715,15 @@ otherwise.
   music=dungeon
 
 A baked dungeon map keeps this as its header music=. Any [music] track from the Sounds tab can be used, including your own imports.
+
+== dungeon.ambient | Dungeon background loop
+see: map.ambient, concepts.ambient, tab.sounds
+
+The background loop played under the music in the generated dungeon.
+
+Format: an [ambient] id (picker), or none. Default: empty = no loop.
+
+  ambient=amb_cave
 
 == dungeon.table | Dungeon encounter table
 see: map.table, concepts.encounters, table.usedby

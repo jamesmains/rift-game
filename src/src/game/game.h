@@ -312,6 +312,7 @@ public:
     int camTX = 0, camTY = 0;        // camera target
     bool camFree = false;            // user panned the camera; stops auto-follow until recentered
     float moveRepeat = 0; int lastDirX = 0, lastDirY = 0; int facing = 1;
+    bool faceRight = true;   // 1.1.5 (#27): which way the party sprites look; only a sideways step or turn changes it (up/down keep it)
     // utility-spell effects outside combat
     int lightSteps = 0, stealthSteps = 0, detectSteps = 0;
     int lightPower = 0;              // radius of the light the party carries while lightSteps > 0 (torch 5, Light spell 8)

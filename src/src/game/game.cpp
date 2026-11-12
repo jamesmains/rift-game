@@ -158,7 +158,7 @@ Map* Game::loadMap(const std::string& id) {
                                 ex.size() > 0 ? trim(ex[0]) : "overworld", ex.size() > 2 ? atoi(ex[1].c_str()) : 0, ex.size() > 2 ? atoi(ex[2].c_str()) : 0,
                                 pool, sec.get("boss"), sec.get("bossflag"), sec.get("loot", "common"));
                 m->name = sec.get("name", id); m->encounterTable = sec.get("table");
-                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon");
+                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient", "");
                 if (sec.has("bossdefeat")) for (auto& e : m->enemies) if (e.flag == sec.get("bossflag")) e.onDefeatScript = sec.get("bossdefeat");
                 ok = true; break;
             }
@@ -252,18 +252,12 @@ std::string Game::musicWanted() const {
     if (map->kind == "dungeon") return "dungeon";
     return "forest";
 }
+// 1.1.5 (owner's #28): no ambient loop is picked by place, weather or time any more (waves, birds, drips often didn't
+// fit the place - crickets in a crypt). Only a map that asks for one plays it: header ambient=<id> (a Maps tab picker),
+// or ambient= on a dungeons.txt entry for generated dungeons. "none" = silence, as before.
 std::string Game::ambientWanted() const {
     if (!running || !map || mode == GMode::ENDING || mode == GMode::GAMEOVER) return "";
-    if (!map->ambient.empty()) return map->ambient == "none" ? "" : map->ambient;
-    bool night = nightAmount() > 0.6f;
-    if (outdoors() && (weather == "rain" || weather == "storm")) return "amb_rain";
-    if (map->kind == "interior") return "";
-    if (map->kind == "overworld") return night ? "amb_night" : "amb_wind";
-    if (map->kind == "town" || map->kind == "ruins") { if (map->music == "tech" || mapId == "ashfall" || mapId == "wreck") return night ? "amb_night" : "amb_wind"; return night ? "amb_night" : (weather == "snow" ? "amb_wind" : "amb_town"); }
-    if (map->music == "tech") return "amb_machine";
-    if (map->music == "swamp") return "amb_swamp";
-    if (map->music == "rift") return "amb_rift";
-    return "amb_cave";
+    return map->ambient == "none" ? "" : map->ambient;
 }
 std::string Game::weaponSound(const Character& ch) const {
     if (!ch.creatureId.empty()) { if (auto* c = gd->creature(ch.creatureId)) if (!c->attackSound.empty()) return c->attackSound; }
@@ -576,6 +570,7 @@ void Game::updateExplore(InputState& in, float dt) {
 void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     if (dx && dy) dy = 0;
     if (dx < 0) facing = 0; else if (dx > 0) facing = 1; else if (dy < 0) facing = 2; else if (dy > 0) facing = 3;
+    if (dx) faceRight = dx > 0;
     int nx = px + dx, ny = py + dy;
     if (!map->inBounds(nx, ny)) return;
     auto contact = [&](bool present) { if (!present) return false; if (interactOnBlocked) interactAt(nx, ny); return true; };
@@ -669,7 +664,7 @@ void Game::randomEncounter(bool force) {
 
 void Game::interactAt(int x, int y) {
     if (NPC* n = map->npcAt(x, y)) {
-        facing = x < px ? 0 : x > px ? 1 : y < py ? 2 : 3;
+        facing = x < px ? 0 : x > px ? 1 : y < py ? 2 : 3; if (x != px) faceRight = x > px;
         if (!n->hostileCreature.empty()) { startCombat(split(n->hostileCreature, ','), n->x, n->y, 0, {}, ""); hideNpcForGood(*n); return; }
         if (!n->board.empty()) { openBoard(n->board); return; }
         if (n->travel) { log(n->name + ": \"Where to? Coach fare is by the league.\""); openWorldMap(true); return; }
@@ -1334,8 +1329,8 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         // the leader walks in front; everyone else follows the trail in party order (a downed leader hands over to the next living member)
         int ld = activeLeader();
         { int slot = 0; std::vector<int> order = followOrder();
-          for (int k = (int)order.size() - 1; k >= 0; k--) { int i = order[k]; if (k >= (int)trail.size()) continue; auto p = trail[k]; if (!party.members[i].alive) continue; drawUnitSprite(cv, party.members[i], p.first * TILE - cx, p.second * TILE - cy, facing == 1); } (void)slot; }
-        if (!party.members.empty()) drawUnitSprite(cv, party.members[ld], px * TILE - cx, py * TILE - cy, facing == 1);
+          for (int k = (int)order.size() - 1; k >= 0; k--) { int i = order[k]; if (k >= (int)trail.size()) continue; auto p = trail[k]; if (!party.members[i].alive) continue; drawUnitSprite(cv, party.members[i], p.first * TILE - cx, p.second * TILE - cy, faceRight); } (void)slot; }
+        if (!party.members.empty()) drawUnitSprite(cv, party.members[ld], px * TILE - cx, py * TILE - cy, faceRight);
     }
     for (auto& f : floats) {
         float a = std::min(1.0f, f.life);
@@ -1727,7 +1722,7 @@ void Game::drawHotbar(Canvas& cv, InputState& in, int member, int y) {
             if (kind == "spell") { if (auto* s = gd->spell(id)) { ctx.ts->draw(cv, s->tile, x + 1, y + 1, 2); ok = m.mp >= s->cost && (mode == GMode::COMBAT || spellUsableOutside(*s)); tip = s->name + fmt(" (%d MP)", s->cost); } }
             else if (auto* d = gd->item(id)) { ctx.ts->draw(cv, d->tile, x + 1, y + 1, 2); int n = party.countItem(id); ok = n > 0; if (n > 0) ctx.font->draw(cv, *ctx.ts, x + 16, y + 15, std::to_string(std::min(n, 99)), C::White); tip = d->name; }
             if (!ok) cv.fillRect(x + 1, y + 1, 24, 24, RGB(0, 0, 0, 140));
-            if (hover && !tip.empty()) { int tw = ctx.font->width(tip) + 8; cv.fillRect(x, y - 16, tw, 14, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, x + 4, y - 15, tip, C::Cream); }
+            if (hover && !tip.empty()) { int tw = ctx.font->width(tip) + 8; cv.fillRect(x, y - 17, tw, 16, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, x + 4, y - 15, tip, C::Cream); }
         }
         std::string k = gKeys.key1[A_FAV1 + i] ? keyName(gKeys.key1[A_FAV1 + i]) : "";
         if (!k.empty()) { cv.fillRect(x, y, ctx.font->width(k) + 3, 9, RGB(0, 0, 0, 180)); ctx.font->draw(cv, *ctx.ts, x + 1, y - 2, k, C::Yellow); }

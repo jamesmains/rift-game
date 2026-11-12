@@ -41,7 +41,8 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass (1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass).
+  editor_* tests pass (1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
+  facing_1_1_5, music_ambient).
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
   an `editor` icon at 0,0 (already so in the 1.0.10 source).
@@ -164,6 +165,24 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   at that column's widest label + 8 (full-width rows at least the left column's); a row whose value would overflow
   its column gets its own line. Pack panel is 26 px taller: `INV_ACT_Y`/`INV_WHO_Y` (top of menus.cpp) place the
   actions and "Who?" lists, used by both the drawing and the mouse code. Test: `tests/item_details_1_1_4.txt`.
+
+## 1.1.5 (owner's #26-#28)
+- #26 text padding (owner: "nothing should sit at the bottom of text boxes"): keep text >= ~6 px above a box's bottom
+  edge. Item panels (pack, shop): the item type is a grey line under the name (y 83), details start at y 98 and stop
+  8 px above the panel bottom (`drawItemDetails` maxY); shop compare lines start at 180. Equip picker likewise.
+- #27 facing: `Game::faceRight` (game.h) is the party's left/right look, changed only by a sideways step/turn
+  (`tryMove`, `interactAt`); `facing` (0-3) is still the interact direction. Sprites face left unflipped. Not saved.
+  Combat units never flip. Headless `expect faceright`. Test: `tests/facing_1_1_5.txt`.
+- #28 ambience: `Game::ambientWanted` plays only `map->ambient` (map header `ambient=`, or `ambient=` on a dungeons.txt
+  entry for generated dungeons); no choice by place/weather/time any more. No base-game map sets one (owner's call:
+  the automatic ones didn't fit). Editor: `ambient` field + v picker on the Maps tab's second header row, picker for
+  `ambient` keys in generic tabs; guide topics map.ambient, dungeon.ambient, concepts.ambient.
+- The Maps tab's hover-cell info moved from the right end of header row 2 (now full: bg 54 wide, ambient + v) to a
+  boxed line at the bottom right of the map view, above the key hints (`ay + ah - 38`).
+- #26 audit (other boxes fixed): board Standing cards (standing.cpp), Minesweeper/Solitaire footers (toys.cpp,
+  Minesweeper window +4 px), hotbar hover tip (game.cpp), Editor tooltip (edui.h, 16 px), graph/text-view hints.
+  Font ink spans y+2..y+11 for text drawn at y: `bottom - 17` leaves ~4 px. Not changed: the combat Spells/Items
+  popup draws "1-8: put on the hotbar" just below its box (combat.cpp ~1218).
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

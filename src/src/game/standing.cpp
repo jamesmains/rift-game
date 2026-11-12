@@ -165,9 +165,9 @@ void Game::drawStanding(Canvas& cv, InputState& in) {
         }
         Color8 paper = open ? RGB(225, 215, 180) : RGB(195, 190, 170);
         cv.fillRect(30, yy, SCREEN_W - 60, 42, sel ? RGB(250, 240, 205) : paper); cv.rect(30, yy, SCREEN_W - 60, 42, sel ? C::Gold : RGB(120, 100, 60));
-        ctx.font->bold = true; UI::text(ctx, 40, yy + 4, title, ink); ctx.font->bold = false;
-        UI::text(ctx, 40, yy + 17, body.size() > 96 ? body.substr(0, 93) + "..." : body, RGB(60, 45, 25));
-        UI::text(ctx, 40, yy + 29, status, stc); if (!right.empty()) textRight(ctx, SCREEN_W - 40, yy + 29, right, RGB(120, 80, 10));
+        ctx.font->bold = true; UI::text(ctx, 40, yy + 3, title, ink); ctx.font->bold = false;
+        UI::text(ctx, 40, yy + 15, body.size() > 96 ? body.substr(0, 93) + "..." : body, RGB(60, 45, 25));
+        UI::text(ctx, 40, yy + 27, status, stc); if (!right.empty()) textRight(ctx, SCREEN_W - 40, yy + 27, right, RGB(120, 80, 10));
     }
     keyHint(ctx, 30, SCREEN_H - 40, "Enter", "pay / deliver / claim"); keyHint(ctx, 230, SCREEN_H - 40, "Tab", "notices"); keyHint(ctx, 340, SCREEN_H - 40, "Esc", "leave");
     (void)in;

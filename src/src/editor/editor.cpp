@@ -191,7 +191,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
     mk("encounters.txt", "Encounter tables", "table", "id", {"id", "level", "group"});
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
-    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "table"});
+    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "ambient", "table"});
     mk("overworld.txt", "Overworld locations", "location", "id", {"id", "name", "x", "y", "kind", "map", "tx", "ty", "clear", "road", "require", "locked", "reveal"});
     mk("recipes.txt", "Recipes", "recipe", "id", {"id", "name", "result", "count", "station", "materials", "gold", "level", "difficulty", "skill", "known", "reveal"});          // gens[9]
     mk("affixes.txt", "Affixes", "affix", "id", {"id", "name", "pos", "tier", "types", "mods", "dmgtype", "value"});                   // gens[10]
@@ -669,6 +669,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     if (k == "map" || k == "to") { singlePick("map", mapIds()); return; }
     if (k == "sound" || k == "attacksound") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") o.push_back(id); singlePick("sound event (empty = automatic)", o); return; }
     if (k == "music") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "music") o.push_back(id); singlePick("music track", o); return; }
+    if (k == "ambient") { std::vector<std::string> o{"", "none"}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "ambient") o.push_back(id); singlePick("background loop (empty = none)", o); return; }
     // --- list builders (comma lists) ---
     auto listPick = [&](const std::string& title, std::vector<std::string> opts, const std::string& suffix) {
         if (ui.textField(x, y, w - 60, v, 400)) g.dirty = true;
@@ -978,7 +979,13 @@ void Editor::drawMaps(InputState& in) {
     hy += 20; cx = vx + 22;
     hfield("table", cx, 70);
     if (ui.button(cx - 8, hy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& e : gens[5].secs) ids.push_back(e.get("id")); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == em.hget("table")) cur = (int)i; openListPicker("Encounter table (used where a tile kind has no biome table)", ids, cur, [this, ids](int i) { em.hset("table", i == 0 ? "" : ids[i]); mapDirty = true; }); }
-    cx += 10; hfield("bg", cx, 70); hfield("worldmap", cx, 60);
+    cx += 10; hfield("bg", cx, 54); hfield("worldmap", cx, 60);
+    // 1.1.5 (#28): the map's background loop - nothing plays unless a map picks one here (the list = [ambient] entries in the Sounds tab)
+    hfield("ambient", cx, 64);
+    if (ui.button(cx - 8, hy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}, labels{"(none)"}; for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "ambient") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
+        int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == em.hget("ambient")) cur = (int)i;
+        openListPicker("Background loop (plays under the music on this map)", labels, cur, [this, ids](int i) { em.hset("ambient", i == 0 ? "" : ids[i]); mapDirty = true; }); }
+    cx += 10;
     ui.label(cx, hy + 2, "size"); cx += 30; ui.intField(cx, hy, 56, resizeW, 4, 300); cx += 58; ui.intField(cx, hy, 56, resizeH, 4, 300); cx += 60;
     if (ui.button(cx, hy, 50, 16, "Resize", resizeW != em.w || resizeH != em.h)) { mapPushUndo(); em.resize(resizeW, resizeH, brush); mapDirty = true; } cx += 56;
     if (ui.button(cx, hy, 60, 16, "Play >", true, false, OK)) { auto sp = split(em.hget("spawn"), ','); requestPlay(sp.size() == 2 ? atoi(sp[0].c_str()) : 0, sp.size() == 2 ? atoi(sp[1].c_str()) : 0); } if (ui.hover(cx, hy, 60, 16)) ui.tip("Saves everything and starts the game here at the spawn point (P over a tile: play there; N over a tile: overworld arrival point)");
@@ -1053,7 +1060,8 @@ void Editor::drawMaps(InputState& in) {
             bool tbl = false; for (auto& e : gens[5].secs) if (!hk->biome.empty() && e.get("id") == hk->biome) tbl = true;
             std::string t = tbl ? hk->biome : em.hget("table"); if (!t.empty()) info += "  fights: " + t; }
         if (hoverObj >= 0) info += "  obj: " + em.objs[hoverObj].type + " " + em.objs[hoverObj].get("id") + em.objs[hoverObj].get("name");
-        ui.cv->resetClip(); ui.textRight(vx + vw - 6, hy + 2, info, ACCENT2); ui.cv->setClip({ax, ay, aw, ah});
+        // 1.1.5: drawn in a box at the bottom right of the view, over the key hints (the header row is full since the ambient field)
+        { int iw = font->width(info) + 10, ix = std::max(ax, ax + aw - iw - 4), iy = ay + ah - 38; ui.cv->fillRect(ix, iy, iw, 18, RGB(24, 26, 34)); ui.cv->rect(ix, iy, iw, 18, RGB(70, 74, 90)); ui.text(ix + 5, iy + 3, info, ACCENT2); }
         if (!typing && pop == P_NONE && !ui.modal) {
             if (in.pressed[K_K]) { jumpToKind(trim(split(em.at(mtx, mty), '|')[0])); return; }
             if (in.pressed[K_P]) { requestPlay(mtx, mty); return; }
@@ -1141,9 +1149,9 @@ void Editor::drawMaps(InputState& in) {
         if (in.pressed[K_ESCAPE] && (pasting || selX0 >= 0)) { pasting = false; selX0 = -1; in.eatKeys(); }
     }
     ui.cv->resetClip();
-    if (mapTool <= 2) ui.text(ax + 4, ay + ah - 14, "LMB paint  RMB pick  K: edit kind  P: play here  B: new-game start  N: overworld arrival  mid-drag/wheel/WASD: scroll  Rect: shift = outline  ^Z undo  ^S save", Color8{255, 255, 255, 150});
-    else if (mapTool == 5) ui.text(ax + 4, ay + ah - 14, pasting ? "click to stamp (shift-click: keep stamping)  RMB/Esc: cancel" : "click object: edit properties  drag empty space: select  ^C copy  ^X cut  ^V paste  Del: clear  ^A all", Color8{255, 255, 255, 150});
-    else ui.text(ax + 4, ay + ah - 14, "click empty: place  click object: select/drag  Delete key: remove selected  ctrl+Z undo", Color8{255, 255, 255, 150});
+    if (mapTool <= 2) ui.text(ax + 4, ay + ah - 17, "LMB paint  RMB pick  K: edit kind  P: play here  B: new-game start  N: overworld arrival  mid-drag/wheel/WASD: scroll  Rect: shift = outline  ^Z undo  ^S save", Color8{255, 255, 255, 150});
+    else if (mapTool == 5) ui.text(ax + 4, ay + ah - 17, pasting ? "click to stamp (shift-click: keep stamping)  RMB/Esc: cancel" : "click object: edit properties  drag empty space: select  ^C copy  ^X cut  ^V paste  Del: clear  ^A all", Color8{255, 255, 255, 150});
+    else ui.text(ax + 4, ay + ah - 17, "click empty: place  click object: select/drag  Delete key: remove selected  ctrl+Z undo", Color8{255, 255, 255, 150});
     if (objSel >= 0 && objSel < (int)em.objs.size() && !typing && in.pressed[K_DELETE] && pop == P_NONE && mapTool == 3) { mapPushUndo(); em.objs.erase(em.objs.begin() + objSel); objSel = -1; mapDirty = true; }
     // object property panel (its area is kept free of map clicks above)
     if (objSel >= 0 && objSel < (int)em.objs.size() && showObjs) {
@@ -1331,7 +1339,7 @@ void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState&
         font->draw(*ui.cv, *ts, x + 4, ry, std::to_string(i + 1), DIM);
     }
     ui.cv->resetClip();
-    ui.text(x + w - 330, y + h - 13, "drag/shift: select  ctrl+A/C/X/V  ctrl+Z undo  ctrl+S save  ctrl+D dup line", Color8{255, 255, 255, 110});
+    { const char* hint = "drag/shift: select  ctrl+A/C/X/V  ctrl+Z undo  ctrl+S save  ctrl+D dup line"; ui.text(std::max(x + 6, x + w - 6 - font->width(hint)), y + h - 16, hint, Color8{255, 255, 255, 110}); }
 }
 void Editor::drawDialogue(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;

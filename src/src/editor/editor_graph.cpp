@@ -320,7 +320,7 @@ void Editor::drawDialogueGraph(int x, int y, int w, int h, InputState& in) {
         seg(cv, a.first, a.second, in.mouseX, a.second, C::White, true, ph); seg(cv, in.mouseX, a.second, in.mouseX, in.mouseY, C::White, true, ph);
         int t = nodeAt(in.mouseX, in.mouseY); if (t >= 0) { auto q = S(dlgG[t].x, dlgG[t].y); cv.rect(q.first - 2, q.second - 2, dlgG[t].w + 4, dlgG[t].h + 4, C::White); }
     }
-    ui.text(gx + gw - 4 - font->width("drag: move   shift-drag option: relink   right-drag/wheel: pan"), gy + gh - 13, "drag: move   shift-drag option: relink   right-drag/wheel: pan", Color8{255, 255, 255, 100});
+    ui.text(gx + gw - 4 - font->width("drag: move   shift-drag option: relink   right-drag/wheel: pan"), gy + gh - 16, "drag: move   shift-drag option: relink   right-drag/wheel: pan", Color8{255, 255, 255, 100});
     cv.resetClip();
 
     // ---- info strip ----
@@ -353,7 +353,7 @@ void Editor::drawDialogueGraph(int x, int y, int w, int h, InputState& in) {
             ui.text(x + 6 + col * colW, ly + row * 12, fitText(font, items[k].first, (two ? colW : w - 12) - 6), items[k].second);
         }
         std::string acts; for (auto& a : g.acts) { if (!acts.empty()) acts += "   "; acts += a; }
-        if (!acts.empty()) ui.text(x + 6, iy + STRIP_H - 14, fitText(font, "actions: " + acts, w - 12), ACCENT2);
+        if (!acts.empty()) ui.text(x + 6, iy + STRIP_H - 16, fitText(font, "actions: " + acts, w - 12), ACCENT2);
     }
     cv.resetClip();
 }

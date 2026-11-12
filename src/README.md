@@ -28,6 +28,17 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.5 room under the text, steady facing, no stray ambience
+
+* **Text no longer sits on the bottom edge of its box.** In the pack and shops the item type now shows under the item's
+  name, and the item details stop well above the panel's edge. The same goes for the town board's Standing cards, the
+  Minesweeper and Solitaire hints, the hotbar's hover names and several Editor hints and tooltips.
+* **Your character keeps looking the way they were.** Walking up or down no longer turns the party to face left; only
+  a step to the side turns them.
+* **No more automatic background sounds.** Waves, birds, crickets, drips and the like no longer play by themselves
+  (they often didn't fit the place). A map can still have a background loop: the Editor's Maps tab has an **ambient**
+  field with a list of every loop (and generated dungeons can set one in the Dungeons tab).
+
 ## 1.1.4 item details line up
 
 * **Item details line up.** In the pack, shops and the equip picker, every value in a column of an item's stats now
@@ -270,7 +281,8 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   a coloured hit chance, and a cover bar on the side of the target that faces you ("in half cover", "FLANKED").
 * **Music and sound**: a theme for Brasswick, Ashfall, Murkwater, Sunscar and Frosthold, crypt / swamp / Scar music,
   a night overworld, an ending theme, and ambient loops under the music (wind, cave drips, swamp, rain, town, machines,
-  night insects, the Rift) chosen by place, weather and time (`[ambient]` in sounds.txt, `ambient=` in a map header).
+  night insects, the Rift) for maps that pick one (`[ambient]` in sounds.txt, `ambient=` in a map header; since 1.1.5
+  none is chosen automatically).
 * **First impression**: a logo splash after the BIOS lines, and on the very first launch a Win98 setup wizard whose last
   page asks two real questions (tips, large text). The Readme starts with "How to play - the first ten minutes".
 * **Demo**: `cmake -DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`) builds the demo: no editor, the base campaign

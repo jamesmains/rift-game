@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
             else if (key == "hp") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].hp);
             else if (key == "level") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].level);
             else if (key == "members") got = std::to_string(g.party.members.size());
-            else if (key == "running") got = g.running ? "1" : "0";
+            else if (key == "running") got = g.running ? "1" : "0"; else if (key == "faceright") got = g.faceRight ? "1" : "0";
             else if (key == "state") got = std::to_string((int)app.state);
             else if (key == "bounties") got = std::to_string(g.bounties.size());
             else if (key == "windows") got = std::to_string(app.desktop.windows.size());

@@ -147,5 +147,5 @@ struct EdUI {
         else { cv->line(x, y, x + 12 * scale - 1, y + 12 * scale - 1, ED::DANGER); }
     }
     void tip(const std::string& s) { tooltip = s; tipX = in->mouseX + 12; tipY = in->mouseY + 12; }
-    void drawTooltip() { if (tooltip.empty()) return; int w = font->width(tooltip) + 8; int x = std::min(tipX, cv->w - w - 2); cv->fillRect(x, tipY, w, 14, RGB(0, 0, 0, 220)); cv->rect(x, tipY, w, 14, ED::BORDER); font->draw(*cv, *ts, x + 4, tipY + 1, tooltip, C::White); }
+    void drawTooltip() { if (tooltip.empty()) return; int w = font->width(tooltip) + 8; int x = std::min(tipX, cv->w - w - 2); cv->fillRect(x, tipY, w, 16, RGB(0, 0, 0, 220)); cv->rect(x, tipY, w, 16, ED::BORDER); font->draw(*cv, *ts, x + 4, tipY + 1, tooltip, C::White); }
 };
