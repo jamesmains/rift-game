@@ -28,6 +28,16 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.8 item colours
+
+* **Items can have their own colour.** Every item picture is a single colour on the sheet, so an item can now be drawn
+  as a white shape in any colour you like: `color=r,g,b` in items.txt. Without it the picture keeps its colour from
+  the sheet, so every existing item looks the same as before. The colour shows everywhere the item does (pack, shops,
+  crafting, the hotbar, on the ground).
+* **The Editor's Items tab has a Look card** at the top of the form: the picture large, as it looks in a menu and on
+  the ground, a Pick sprite button (the sheet is shown as it is), the colour as numbers with Sheet colour / Lighter /
+  Darker buttons, and swatches of the colours the items already use plus the sheet's most used ones.
+
 ## 1.1.7 a new Tutorial
 
 * **The Tutorial is new.** It's now a short adventure set the day before the main story: last night a violet light fell
@@ -525,7 +535,7 @@ Double-click **Editor** on the desktop. It runs at 960x720 and edits the files u
   maps is found automatically. Problems (a board no NPC opens, letters to something that isn't a board) show beside
   the entry and in Check all.
 * **Items**: `quest=1` marks a quest item that can't be dropped or sold (every `type=key` item is one by default),
-  `unique=1` keeps an item free of random affixes (loot, crafting, enchanting), and `category=` files an item under its own heading. The party menu's Items tab and shops show category chips (T / RB or
+  `unique=1` keeps an item free of random affixes (loot, crafting, enchanting), `color=r,g,b` (1.1.8) draws its picture as a white shape in that colour, and `category=` files an item under its own heading. The party menu's Items tab and shops show category chips (T / RB or
   click) and a sort order (R / Back: as found, name, value, category).
 * **Undo** in every form tab: Ctrl+Z / Ctrl+Y (or the Undo button).
 * **Quest objectives** - `objective=STAGE | DONE-CONDITION | TEXT` adds a checklist line under a stage in the journal

@@ -1314,7 +1314,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if ((ctx.frame / 4) % 2) cv.rect(sx - 2 * TILE, sy - 2 * TILE, 5 * TILE, 5 * TILE, C::Red);
         ctx.font->drawShadow(cv, *ctx.ts, sx, sy - 14, fmt("%.1f", fuseT), C::Orange, C::Black);
     }
-    for (auto& d : map->drops) if (visible(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawBacking(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
+    for (auto& d : map->drops) if (visible(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawBacking(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); if (it) drawItemTile(*ctx.ts, cv, *it, d.x * TILE - cx, d.y * TILE - cy, 2); else ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
     if (!combat) {
         for (auto& n : map->npcs) {
             if (n.hidden || !visible(n.x, n.y)) continue;
@@ -1729,7 +1729,7 @@ void Game::drawHotbar(Canvas& cv, InputState& in, int member, int y) {
             std::string kind = f.substr(0, f.find(':')), id = f.substr(f.find(':') + 1);
             bool ok = true; std::string tip;
             if (kind == "spell") { if (auto* s = gd->spell(id)) { ctx.ts->draw(cv, s->tile, x + 1, y + 1, 2); ok = m.mp >= s->cost && (mode == GMode::COMBAT || spellUsableOutside(*s)); tip = s->name + fmt(" (%d MP)", s->cost); } }
-            else if (auto* d = gd->item(id)) { ctx.ts->draw(cv, d->tile, x + 1, y + 1, 2); int n = party.countItem(id); ok = n > 0; if (n > 0) ctx.font->draw(cv, *ctx.ts, x + 16, y + 15, std::to_string(std::min(n, 99)), C::White); tip = d->name; }
+            else if (auto* d = gd->item(id)) { drawItemTile(*ctx.ts, cv, *d, x + 1, y + 1, 2); int n = party.countItem(id); ok = n > 0; if (n > 0) ctx.font->draw(cv, *ctx.ts, x + 16, y + 15, std::to_string(std::min(n, 99)), C::White); tip = d->name; }
             if (!ok) cv.fillRect(x + 1, y + 1, 24, 24, RGB(0, 0, 0, 140));
             if (hover && !tip.empty()) { int tw = ctx.font->width(tip) + 8; cv.fillRect(x, y - 17, tw, 16, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, x + 4, y - 15, tip, C::Cream); }
         }

@@ -46,6 +46,7 @@ struct ItemDef {
     bool quest = false;          // quest item: can't be dropped or sold (default for type=key)
     std::string category;        // inventory / shop category (empty = by type)
     bool unique = false;         // unique=1 (1.1.3): hand-made one-off - never rolls or takes affixes (loot, crafting quality, enchanting)
+    bool recolor = false; Color8 color = C::White;   // color=r,g,b (1.1.8): the sprite drawn as a white shape in this colour; none = the sheet's own colour
     bool stackable() const { return type == IT_CONSUMABLE || type == IT_MATERIAL || type == IT_AMMO || type == IT_KEY; }
     int slot() const {
         switch (type) { case IT_WEAPON: return SL_WEAPON; case IT_OFFHAND: return SL_OFFHAND; case IT_HELM: return SL_HEAD;
@@ -53,6 +54,9 @@ struct ItemDef {
     }
     bool equippable() const { return slot() >= 0; }
 };
+
+// 1.1.8: an item's icon, in its color= when it has one (every item picture on the sheet is a single colour)
+inline void drawItemTile(const Tileset& ts, Canvas& cv, const ItemDef& d, int x, int y, int scale) { if (d.recolor) ts.drawRecolor(cv, d.tile, x, y, scale, d.color); else ts.draw(cv, d.tile, x, y, scale); }
 
 struct SpellDef {
     std::string id, name, desc;

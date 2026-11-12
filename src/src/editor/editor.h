@@ -240,6 +240,10 @@ private:
     int bulkObjects(const std::function<bool(EdObj&)>& fn, int& mapsChanged);   // runs fn on every matching placed object, saves the maps it changed
     void drawObjectsTab(InputState& in); void drawPlacedObjects(int x, int y, int w, int h, InputState& in);
     void drawResourcesTab(InputState& in); void drawResourceInfo(int x, int y, int w, int h, InputState& in);
+    // 1.1.8 (#32): Items tab Look card (editor_items.cpp): preview, sprite, color= tint over the white shape, palette
+    int drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w);
+    Color8 tileOwnColor(Tile t); const std::vector<std::pair<Color8, int>>& sheetColors();
+    std::vector<std::pair<Color8, int>> sheetPal; std::map<int, Color8> ownColCache;
     void drawGatherNode(const EdObj& resolved, int sx, int sy, int scale, const std::string& cellSpec, bool spent = false);
     void templateFromObject(const EdObj& o, const std::string& mapId, int objIndex);
     std::string placeTmpl; int objPanelScroll = 0;   // Maps tab: the template the Objects tool places; the object panel's scroll

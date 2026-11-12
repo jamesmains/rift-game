@@ -597,7 +597,7 @@ clearings made from the location list) or, once baked, a hand-painted map in
 the Maps tab. See World > Bake.
 
 == tab.items | Items tab
-see: item.id, item.type, item.effect, item.dmg, item.def, concepts.ids, editor.usedby, editor.undo
+see: item.id, item.color, item.type, item.effect, item.dmg, item.def, concepts.ids, editor.usedby, editor.undo
 
 Items are weapons, armour, potions, keys, materials and ammo (items.txt). The
 list on the left has a filter box; New adds an item with the common keys,
@@ -607,6 +607,15 @@ number fields, damage is a from-to pair, types and damage types are dropdowns,
 tile has a picker, resistances and stat bonuses are rows of six numbers. The x
 at the end of a row removes that key. "add key" adds any key; the buttons next
 to it add common keys the item does not have yet.
+
+The Look card at the top of the form (1.1.8) shows the item's picture large,
+in a menu and on the ground. Pick sprite opens the sheet as it is; the colour
+row sets the item's colour (see item.color): every item picture is a single
+colour, so it can be drawn as a white shape in any colour. Without a colour
+the picture keeps its own colour from the sheet (shown as the starting
+value). The swatches are the colours the items already use plus the sheet's
+most used ones; hover one to see who uses it. Sheet colour goes back to the
+picture's own colour; Lighter and Darker nudge the current one.
 
 Making a new weapon:
 - 1. Select a similar weapon and press Duplicate.
@@ -3004,6 +3013,21 @@ Format: col,row (picker). Default: 26,46.
 
 Weapons, armour, potions and scrolls are grouped on the sheet; open the picker
 on a similar item's tile to land near the right area.
+
+== item.color | Item colour
+see: item.tile, tab.items
+
+The colour the item's picture is drawn in (1.1.8): the picture becomes a white
+shape tinted with this colour, everywhere the item is shown (pack, shops,
+crafting, hotbar, on the ground). Set it in the Look card of the Items tab.
+
+Format: r,g,b (0-255 each). Default: none - the picture's own colour on the
+sheet.
+
+  color=218,0,0
+
+Handy for variants that share a picture: a copper, iron and mithril version of
+the same ring, or a red and a blue potion.
 
 == item.value | Item value
 see: tab.shops, item.salvage

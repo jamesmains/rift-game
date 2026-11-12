@@ -105,3 +105,4 @@ entries / maps / dialogue / settings, search and Filter counts, an empty campaig
 on purpose (campaign `defeat=`). New: expect key `cond:CONDITION` (any game condition, e.g. `cond:lit`), command
 `partywipe` (in a fight: the party loses at once). `editor_import_1_1_6` imports the Tutorial's `tut_arrive` dialogue
 and `editor_playstate_export` expects `tutorial_2.0.zip` (the Tutorial is version 2.0).
+1.1.8: `item_color_1_1_8` (Items tab Look card: a palette colour sets color=, saved, the pack draws it; run from a copy of assets).

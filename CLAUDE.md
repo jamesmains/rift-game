@@ -236,6 +236,18 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   that a chest/trigger opens, stand next to it and `key E`, then answer with `key ENTER` + ~60 frames each.
 - Tests: `tutorial` (whole playthrough) and `tutorial_defeat_1_1_7` (skip + losing a fight).
 
+## 1.1.8 item colours (owner's #32: "go over the entire sprite in white then allow a color tint")
+- Every item picture on the sheet is one colour (checked for all items at 1.1.8), so items.txt `color=r,g,b`
+  (`ItemDef::recolor/color`) draws it with `drawRecolor` (white shape x colour). No color= = the sheet's own colour,
+  so old items look the same. Draw item icons with `drawItemTile(ts, cv, def, x, y, scale)` (data.h), never
+  `ts->draw(d->tile)` - every item icon in menus/craft/combat/hotbar/ground drops goes through it.
+- Editor Items tab: `Editor::drawItemLook` (editor_items.cpp) is the Look card above the fields (big preview, menu +
+  ground previews, tile + Pick sprite, RGB fields, Sheet colour / Lighter / Darker, palette). The `tile`/`color` rows
+  are hidden in the form for items. Owner's "keep the colours as they are in the picker": the tile picker still shows
+  the sheet unchanged; the RGB fields start at the picture's own colour (`tileOwnColor`, most common non-black pixel);
+  the palette = colours the items use + the sheet's most used (`sheetColors`, near shades merged), in hue order.
+  Guide topic `item.color`.
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).

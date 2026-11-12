@@ -336,7 +336,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
         for (int i = 0; i < 17; i++) {
             int idx = craftScroll + i; if (idx >= n) break; const Recipe& r = *list[idx];
             bool ok = canCraft(r); listRow(ctx, in, 20, 56 + i * 18, 310, 18, idx == craftSel);
-            if (auto* d = gd->item(r.result)) ctx.ts->draw(cv, d->tile, 24, 58 + i * 18, 1);
+            if (auto* d = gd->item(r.result)) drawItemTile(*ctx.ts, cv, *d, 24, 58 + i * 18, 1);
             UI::text(ctx, 42, 59 + i * 18, r.name + (r.count > 1 ? fmt(" x%d", r.count) : ""), ok ? C::White : C::Gray);
             std::string stars; for (int k = 0; k < r.difficulty; k++) stars += "*";
             textRight(ctx, 326, 59 + i * 18, stars, r.difficulty > craftSkill(r.station) ? C::Red : C::Gold);
@@ -345,7 +345,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
         if (n > 0) {
             const Recipe& r = *list[clampi(craftSel, 0, n - 1)];
             if (auto* d = gd->item(r.result)) {
-                ctx.ts->draw(cv, d->tile, x, y, 2); ctx.font->bold = true; UI::text(ctx, x + 30, y + 2, d->name, C::Gold); ctx.font->bold = false;
+                drawItemTile(*ctx.ts, cv, *d, x, y, 2); ctx.font->bold = true; UI::text(ctx, x + 30, y + 2, d->name, C::Gold); ctx.font->bold = false;
                 int cy = y + 30; cy += wrapped(ctx, x, cy, SCREEN_W - x - 24, d->desc, C::LtGray) + 4;
                 if (d->dmgMax > 0) { UI::text(ctx, x, cy, fmt("Damage %d-%d %s, range %d, %d AP", d->dmgMin, d->dmgMax, dmgTypeName(d->dmgType), d->range, d->ap), C::White); cy += 13; }
                 if (d->def || d->evasion) { UI::text(ctx, x, cy, fmt("Defense %d  Evasion %d", d->def, d->evasion), C::White); cy += 13; }
@@ -370,7 +370,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
         for (int i = 0; i < 17; i++) {
             int idx = craftScroll + i; if (idx >= n) break; auto& t = targets[idx]; const ItemDef* d = gd->item(t.id); if (!d) continue;
             listRow(ctx, in, 20, 56 + i * 18, 310, 18, idx == craftSel);
-            ctx.ts->draw(cv, d->tile, 24, 58 + i * 18, 1);
+            drawItemTile(*ctx.ts, cv, *d, 24, 58 + i * 18, 1);
             UI::text(ctx, 42, 59 + i * 18, d->name.substr(0, 34), C::White);
             if (t.member >= 0) textRight(ctx, 326, 59 + i * 18, party.members[t.member].name.substr(0, 6), C::DkGray);
         }
@@ -378,7 +378,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
             auto& t = targets[clampi(craftSel, 0, n - 1)]; const ItemDef* d = gd->item(t.id);
             std::string base; std::vector<std::string> af; int plus = 0; parseDynId(t.id, base, af, plus);
             if (d) {
-                ctx.ts->draw(cv, d->tile, x, y, 2); ctx.font->bold = true; UI::text(ctx, x + 30, y + 2, d->name.substr(0, 30), C::Gold); ctx.font->bold = false;
+                drawItemTile(*ctx.ts, cv, *d, x, y, 2); ctx.font->bold = true; UI::text(ctx, x + 30, y + 2, d->name.substr(0, 30), C::Gold); ctx.font->bold = false;
                 int cy = y + 30;
                 if (d->dmgMax > 0) { UI::text(ctx, x, cy, fmt("Damage %d-%d %s  Acc %+d", d->dmgMin, d->dmgMax, dmgTypeName(d->dmgType), d->accuracy), C::White); cy += 13; }
                 if (d->def || d->evasion) { UI::text(ctx, x, cy, fmt("Defense %d  Evasion %d", d->def, d->evasion), C::White); cy += 13; }

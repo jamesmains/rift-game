@@ -1,0 +1,33 @@
+# 1.1.8 (#32): the Items tab Look card - pick a palette colour for an item (color=), save, and see it in the pack.
+# Saves items.txt: run it from a copy of assets (see README).
+frames 5
+editor
+frames 5
+tab 3
+frames 3
+edsearch 0 iron sword
+frames 3
+click 40 102
+frames 3
+move 600 300
+frames 2
+shot look_sheet_colour.png
+# a swatch in the palette (row 1) - the item now has color= and is drawn as a white shape in it
+click 610 144
+frames 3
+move 600 300
+frames 2
+shot look_tinted.png
+edsave 0
+frames 2
+newgame Kai warrior 1
+god
+teleport hollowmere 20 20
+frames 120
+give iron_sword
+key TAB
+frames 3
+key PGDN
+frames 3
+expect mode == MENU
+shot pack_tinted.png

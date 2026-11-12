@@ -514,17 +514,20 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     std::string useKey = &g == &gens[0] ? "item" : &g == &gens[1] ? "creature" : &g == &gens[2] ? "spell" : &g == &gens[4] ? "shop" : "";
     int usedH = useKey.empty() ? 0 : 130;
     int fieldsBottom = y + h - 32 - usedH;
-    int rowH = 22; int fy = y + 22 - g.fieldScroll;
-    if (ui.hover(fx, y + 20, fw, fieldsBottom - y - 20) && in.wheel) g.fieldScroll = std::max(0, g.fieldScroll - in.wheel * 22);
-    ui.cv->setClip({fx + 1, y + 18, fw - 2, fieldsBottom - y - 18});
+    bool itemLook = &g == &gens[0] && s.name == "item";   // 1.1.8 (#32): items get a Look card (sprite + colour) above their fields
+    int lookH = itemLook ? drawItemLook(g, s, fx, y + 17, fw) : 0;
+    int rowH = 22; int fy = y + 22 + lookH - g.fieldScroll;
+    if (ui.hover(fx, y + 20 + lookH, fw, fieldsBottom - y - 20 - lookH) && in.wheel) g.fieldScroll = std::max(0, g.fieldScroll - in.wheel * 22);
+    ui.cv->setClip({fx + 1, y + 18 + lookH, fw - 2, fieldsBottom - y - 18 - lookH});
     int keyW = 110;
     bool quests = &g == &gens[6];
     int row = 0;
     for (size_t i = 0; i < s.kv.size(); i++) {
         auto& kv = s.kv[i];
         if (quests && (kv.first == "stage" || kv.first == "fail" || (kv.first == "objective" && atoi(trim(split(kv.second, '|')[0]).c_str()) != 0))) { ui.idCounter += 3; continue; }   // drawn as stage cards below
+        if (itemLook && (kv.first == "tile" || kv.first == "color")) { ui.idCounter += 3; continue; }   // set in the Look card
         int ry = fy + row * rowH; row++;
-        if (ry + 16 > fieldsBottom || ry < y + 18) { ui.idCounter += 3; continue; }
+        if (ry + 16 > fieldsBottom || ry < y + 18 + lookH) { ui.idCounter += 3; continue; }
         ui.label(fx + 8, ry + 2, kv.first);
         if (s.name == "template") helpBtn(fx + keyW - 17, ry + 1, "obj." + s.get("type") + "." + kv.first, kv.first == "type" || kv.first == "id" ? "tab.objects" : "obj." + s.get("type"));
         else if (s.name == "type" && objTab) helpBtn(fx + keyW - 17, ry + 1, kv.first == "id" ? "objtype" : "obj." + s.get("id") + "." + kv.first, "objtype");
@@ -532,7 +535,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
         fieldWidgets(g, s, kv, fx + keyW, ry, fw - keyW - 30);
         if (ui.button(fx + fw - 24, ry, 18, 16, "x", true, false, DANGER)) { s.kv.erase(s.kv.begin() + i); g.dirty = true; ui.blur(); break; }
     }
-    if (!quests) g.fieldScroll = std::min(g.fieldScroll, std::max(0, row * rowH - (fieldsBottom - y - 40)));
+    if (!quests) g.fieldScroll = std::min(g.fieldScroll, std::max(0, row * rowH - (fieldsBottom - y - 40 - lookH)));
     if (quests) { int used = drawQuestStages(g, s, fx, fy + row * rowH + 4, fw, y + 18, y + h - 32, in); if (ui.hover(fx, y + 20, fw, h - 50) && in.wheel) {} g.fieldScroll = std::min(g.fieldScroll, std::max(0, row * rowH + used - (h - 80))); }
     ui.cv->resetClip();
     if (usedH) drawUsedBy(useKey + ":" + s.get("id"), fx + 4, fieldsBottom + 2, fw - 8, usedH - 6, in);
@@ -546,7 +549,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     std::vector<std::string> quick = g.templateKeys;   // templates: the keys their object type reads
     if (s.name == "template") for (auto& k : edObjKeys(s.get("type"))) if (std::find(quick.begin(), quick.end(), k) == quick.end()) quick.push_back(k);
     if (s.name == "type" && objTab) { quick.clear(); for (auto& k : edObjKeys(s.get("id"))) quick.push_back(k); }
-    for (auto& k : quick) { if (s.has(k)) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
+    for (auto& k : quick) { if (s.has(k) || (itemLook && (k == "tile" || k == "color"))) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
 }
 
 

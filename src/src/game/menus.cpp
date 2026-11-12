@@ -101,7 +101,7 @@ void Game::drawCharacterSheet(Canvas& cv, InputState& in, int mi, int x, int y, 
         bool sel = menuSubFocus && menuSub == s;
         if (sel) { cv.fillRect(x + 6, sy - 1, w - 12, 14, RGB(90, 70, 20)); cv.rect(x + 6, sy - 1, w - 12, 14, C::Gold); UI::selCursor(ctx, x + 6, sy - 1, 14); }
         UI::text(ctx, x + 8, sy, slotName(s), C::Gray);
-        if (it) { ctx.ts->draw(cv, it->tile, x + 78, sy - 1, 1); UI::text(ctx, x + 94, sy, it->name, sel ? C::Yellow : C::White); }
+        if (it) { drawItemTile(*ctx.ts, cv, *it, x + 78, sy - 1, 1); UI::text(ctx, x + 94, sy, it->name, sel ? C::Yellow : C::White); }
         else UI::text(ctx, x + 94, sy, "-", C::DkGray);
         sy += 14;
     }
@@ -291,7 +291,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             for (int i = 0; i < n && i < 14; i++) {
                 bool sel = menuSel == i; if (sel) cv.fillRect(lx + 6, ly + 24 + i * 16, 268, 15, RGB(90, 70, 20));
                 if (i == 0) UI::text(ctx, lx + 12, ly + 26, "(remove)", sel ? C::Yellow : C::Gray);
-                else { const ItemDef* d = gd->item(cands[i - 1]); ctx.ts->draw(cv, d->tile, lx + 10, ly + 25 + i * 16, 1); UI::text(ctx, lx + 26, ly + 26 + i * 16, d->name, sel ? C::Yellow : C::White); }
+                else { const ItemDef* d = gd->item(cands[i - 1]); drawItemTile(*ctx.ts, cv, *d, lx + 10, ly + 25 + i * 16, 1); UI::text(ctx, lx + 26, ly + 26 + i * 16, d->name, sel ? C::Yellow : C::White); }
             }
             if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 26 + std::min(14, n) * 16 + detH); }   // 1.1.5 (#26): 8 px above the panel bottom
         } else {
@@ -309,7 +309,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             auto& st = party.inventory[view[idx]]; const ItemDef* d = gd->item(st.id); if (!d) continue;
             bool sel = idx == menuSel;
             listRow(ctx, in, 20, 50 + i * 16, 280, 16, sel);
-            ctx.ts->draw(cv, d->tile, 24, 52 + i * 16, 1);
+            drawItemTile(*ctx.ts, cv, *d, 24, 52 + i * 16, 1);
             UI::text(ctx, 42, 52 + i * 16, itemLabel(*d, st.count), sel ? C::Yellow : d->quest ? C::Cream : C::White);
             textRight(ctx, 296, 52 + i * 16, d->quest ? "quest" : fmt("%d g", itemSellPrice(*d)), d->quest ? C::Gold : C::DkGray);
             for (int f = 0; f < 8; f++) if (party.members[menuMember].favs[f] == "item:" + d->id) UI::text(ctx, 32, 52 + i * 16, std::to_string(f + 1), C::Cyan);
@@ -318,7 +318,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
         if (n > 0 && menuSel < n) {
             const ItemDef* d = gd->item(party.inventory[view[menuSel]].id);
             panel(ctx, 320, 60, 300, INV_ACT_Y - 66, RGB(30, 30, 44));   // 1.1.4: 26 px taller, room for the grouped details
-            ctx.ts->draw(cv, d->tile, 330, 70, 2);
+            drawItemTile(*ctx.ts, cv, *d, 330, 70, 2);
             ctx.font->bold = true; UI::text(ctx, 362, 70, d->name, C::Gold); ctx.font->bold = false;
             UI::text(ctx, 362, 83, itemCategory(*d), C::Gray);   // 1.1.5 (#26): the item type sits under the name, not on the panel's bottom edge
             drawItemDetails(cv, *d, 330, 98, 280, INV_ACT_Y - 14);   // panel bottom (INV_ACT_Y - 6) less 8 px of padding
@@ -520,7 +520,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
         const ItemDef* d = gd->item(shopTab == 0 ? stock[idx].first : party.inventory[idx].id); if (!d) continue;
         bool sel = vi == shopSel; if (sel) { cur = d; curReal = idx; }
         listRow(ctx, in, 20, 50 + i * 16, 310, 16, sel);
-        ctx.ts->draw(cv, d->tile, 24, 52 + i * 16, 1);
+        drawItemTile(*ctx.ts, cv, *d, 24, 52 + i * 16, 1);
         int price = shopTab == 0 ? itemBuyPrice(*d) : itemSellPrice(*d);
         int left = shopTab == 0 ? shopStockLeft(shopId, d->id, stock[idx].second) : -1;
         std::string nm = shopTab == 0 ? d->name : itemLabel(*d, party.inventory[idx].count);
@@ -531,7 +531,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     if (n == 0) UI::text(ctx, 20, 52, shopCat != "All" ? "Nothing in this category." : shopTab == 0 ? "Nothing for sale." : "Nothing to sell.", C::Gray);
     if (cur) {
         panel(ctx, 350, 60, 270, 180, RGB(30, 30, 44));
-        ctx.ts->draw(cv, cur->tile, 360, 70, 2);
+        drawItemTile(*ctx.ts, cv, *cur, 360, 70, 2);
         ctx.font->bold = true; UI::text(ctx, 392, 70, cur->name, C::Gold); ctx.font->bold = false;
         UI::text(ctx, 392, 83, itemCategory(*cur), C::Gray);   // 1.1.5 (#26)
         // 1.1.5 (#26): text stops 8 px above the panel's bottom edge (panel 60..240)

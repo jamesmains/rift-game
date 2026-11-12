@@ -1210,7 +1210,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
             if (cb.mode == 4) { const SpellDef* sp = gd->spell(list[i]); if (!sp) continue; std::string cost = fmt("%dMP %dAP", sp->cost, sp->ap); int cw = ctx.font->width(cost);
                 ctx.ts->draw(cv, sp->tile, mx + 8, ry + 1, 1); ctx.font->draw(cv, *ctx.ts, mx + 24, ry + 3, fit(sp->name, PW - 46 - cw), u.ch.mp >= sp->cost ? (sel ? C::Yellow : C::White) : C::Gray); textRight(ctx, mx + PW - 16, ry + 3, cost, u.ch.mp >= sp->cost ? C::LtGray : C::Gray); }
             else { const ItemDef* d = gd->item(list[i]); if (!d) continue; std::string cnt = fmt("x%d", party.countItem(list[i])); int cw = ctx.font->width(cnt);
-                ctx.ts->draw(cv, d->tile, mx + 8, ry + 1, 1); ctx.font->draw(cv, *ctx.ts, mx + 24, ry + 3, fit(d->name, PW - 46 - cw), sel ? C::Yellow : C::White); textRight(ctx, mx + PW - 16, ry + 3, cnt, C::LtGray); }
+                drawItemTile(*ctx.ts, cv, *d, mx + 8, ry + 1, 1); ctx.font->draw(cv, *ctx.ts, mx + 24, ry + 3, fit(d->name, PW - 46 - cw), sel ? C::Yellow : C::White); textRight(ctx, mx + PW - 16, ry + 3, cnt, C::LtGray); }
         }
         if (n > VIS) {   // scrollbar
             int sx = mx + PW - 9, sy = my + 24, sh = VIS * 20 - 2, th = std::max(10, sh * VIS / n), ty = sy + (sh - th) * cb.menuScroll / std::max(1, n - VIS);

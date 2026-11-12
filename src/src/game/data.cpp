@@ -89,6 +89,7 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
         d.heal = sec.geti("heal", 0); d.mana = sec.geti("mana", 0); d.effect = sec.get("effect"); d.useSpell = sec.get("spell");
         d.stackMax = sec.geti("stack", 99); d.salvage = sec.get("salvage"); d.light = sec.geti("light", 0); d.tech = sec.geti("tech", d.isGun ? 1 : 0) != 0;
         d.quest = sec.geti("quest", d.type == IT_KEY ? 1 : 0) != 0; d.category = trim(sec.get("category")); d.unique = sec.geti("unique", 0) != 0;
+        if (!trim(sec.get("color")).empty()) { d.recolor = true; d.color = parseColor(sec.get("color")); }
         items[d.id] = d;
     }
     // ---- spells ----
