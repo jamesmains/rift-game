@@ -199,3 +199,8 @@ x=10
 y=23
 flag=lab_signal_tape
 items=signal_tape:1
+
+[gather]
+x=3
+y=35
+node=rift_crystal

@@ -5,33 +5,84 @@
 # Paying a bounty at a notice board adds the board's rep= (default 3) to the faction with the board's id.
 # Tiers: Hated <= -50, Disliked <= -10, Neutral, Liked >= 10, Friendly >= 30, Honoured >= 60.
 # A faction id without an entry here still works; it shows the board name or the id.
+# 1.1.2 - what standing is good for, and what it costs (the notice board's Standing page, Tab):
+#   reward=REP|item:n,gold:n|title           a favour, claimed once at the town's notice board when standing reaches REP
+#   project=title|item:n,...|rep|gold|text   civic projects, delivered one after another at the board (+rep, gold, XP)
+#   Bounties raise standing only up to 30 (Friendly); past that it takes projects and story choices. Dropping a taken
+#   notice costs 2. Disliked (-10): the board posts no work. Hated (-50): the town's shops won't trade. Below 0 the
+#   board offers to make amends for gold (back to 0, never higher). A shop's item=id:stock:REP only shows from REP up.
 
 [faction]
 id=hollowmere
 name=Hollowmere
 text=The lakeside village where it all starts. Healer Wren and the elders remember who helps.
+reward=10|potion_red:3,bandage:4|Wren's thanks
+reward=30|amulet_life:1|The elders' gift
+reward=60|elders_mantle:1|The Elder's Mantle
+project=Mend the mill wheel|iron_ingot:4,tanned_leather:2|8|60|The mill by the lake has stood still since the goblin raids. New iron bands and leather belts would set it turning.
+project=Stock the healer's shelves|potion_red:5,antidote:4,bandage:6|10|80|Healer Wren is down to her last bandage. Brewed potions, antidotes and dressings for the winter.
+project=Rebuild the watchtower|steel_ingot:4,iron_ingot:6,tanned_leather:3|14|150|A watchtower on the north road, so the next raid is seen coming.
 
 [faction]
 id=brasswick
 name=Brasswick
 text=The clockwork trade town. Merchants talk, and prices follow.
+reward=10|gold:120|A guild stipend
+reward=30|lucky_coin:1|The Mayor's lucky coin
+reward=60|guild_signet:1|The Guild Signet
+project=Repair the tram line|iron_ingot:6,circuit:2|8|100|The old clockwork tram to the east gate has jammed. Rails, bolts and a working control board.
+project=Arm the militia|steel_ingot:4,hardened_leather:4|10|160|Captain Reyna's militia drills with broom handles. Steel and hardened leather for real kit.
+project=Wind the great clock|power_core:2,steel_ingot:3,circuit:4|14|260|The tower clock that gives Brasswick its name has stopped. It needs power cores to run again.
 
 [faction]
 id=frosthold
 name=Frosthold
 text=Mountain hold of the northern clans.
+reward=10|stew:3,wolfhide_mittens:1|A clan welcome
+reward=30|charm_frost:1|The shrine's blessing
+reward=60|clan_mantle:1|The Clan Fur Mantle
+project=Furs for the winter|wolf_pelt:6,tanned_leather:4|8|70|The outer huts lose someone every winter. Pelts and leather to line them.
+project=Light the shrine lamps|ember_cap:6,slime_gel:4|10|90|The shrine's lamps burn ember oil. The old stores ran out the year the Rift opened.
+project=Reforge the clan spears|mithril_ingot:2,steel_ingot:3|14|200|The clans' spears are older than the hold. Mithril heads would see them through another hundred winters.
 
 [faction]
 id=murkwater
 name=Murkwater
 text=Stilt village in the swamps.
+reward=10|antidote:4|The stilt-folk's thanks
+reward=30|charm_venom:1|The keepers' charm
+reward=60|bogwalker_boots:1|Bogwalker Boots
+project=Mend the stilts|iron_ingot:3,spider_silk:4|8|60|Half the walkways sag into the bog. Iron pins and silk rope to lash them.
+project=Fever remedies|antidote:5,herb_moon:6|10|90|Marsh fever every summer. Antidotes now, and moonleaf for Keeper Aldra's own brews.
+project=Bloodroot tinctures|potion_purple:2,bloodroot:4|14|180|Regeneration draughts for the sick, and bloodroot for the keepers to grow their own.
 
 [faction]
 id=sunscar
 name=Sunscar
 text=Desert outpost on the edge of the dunes.
+reward=10|potion_red:2,stew:2|Water and bread
+reward=30|charm_fire:1|A salamander charm
+reward=60|sunscar_veil:1|The Sunscar Veil
+project=Water barrels|iron_ingot:4,tanned_leather:3|8|70|Iron-bound barrels so the outpost can store water against the dry months.
+project=Sand screens|spider_silk:6,scrap:6|10|100|Screens of silk and scrap around the market, so the wind stops burying it.
+project=Stoneskin for the riders|potion_shield:3,sunpetal:4|14|180|Stoneskin draughts for the riders who guard the oasis road, and sunpetal for the next batch.
 
 [faction]
 id=ashfall
 name=Ashfall
 text=The scavengers who live in the ruins of the fallen city. They trade in what the Rift left behind.
+reward=10|ammo_pistol:30,medkit:1|Scavenger's welcome
+reward=30|grounding_strap:1|A rigger's strap
+reward=60|scrapper_goggles:1|Scrapper's Goggles
+project=Scrap barricade|scrap:12,iron_ingot:3|8|70|A barricade across the south street, against whatever crawls out of the Annex.
+project=Power the market|circuit:4,power_core:1|10|120|Lights for the night market, so the traders stop getting robbed in the dark.
+project=Sky Wardens' lenses|rift_crystal:2,circuit:3|14|220|Lenses ground from rift crystal, to watch the sky over the Scar.
+
+[faction]
+id=millbrook
+name=Millbrook
+text=Farming hamlet on the road south. The fields feed half of Aldmoor.
+reward=10|bread:4,cheese:2|A basket from the fields
+reward=30|harvest_charm:1|The Harvest Charm
+project=Fence the fields|iron_ingot:2,tanned_leather:3|8|50|Wolves keep getting at the sheep. A proper fence with iron posts.
+project=Mend the granary|iron_ingot:4,spider_silk:3|12|100|The granary roof leaks and the rats have moved in. Nails, bands and netting.

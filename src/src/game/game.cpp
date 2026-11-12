@@ -470,7 +470,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     uiRectsPrev = uiRects; uiRects.clear();
     GMode modeBefore = mode; size_t stackBefore = modeStack.size();
     if (mode == GMode::EXPLORE || mode == GMode::COMBAT) updateCameraInput(in, dt);
-    if (running && actP(in, A_CONSOLE) && (mode == GMode::EXPLORE || mode == GMode::COMBAT || mode == GMode::MENU || mode == GMode::JOURNAL)) { pushMode(GMode::CONSOLE); in.eatKeys(); }
+    if (kDevConsole && running && actP(in, A_CONSOLE) && (mode == GMode::EXPLORE || mode == GMode::COMBAT || mode == GMode::MENU || mode == GMode::JOURNAL)) { pushMode(GMode::CONSOLE); in.eatKeys(); }
     if (banterT > 0) banterT -= dt;
     checkAchievements(); updateHints(dt);
     switch (mode) {
@@ -521,6 +521,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
 // ---------------- explore ----------------
 void Game::updateExplore(InputState& in, float dt) {
     if (banterVictoryPending) { banterVictoryPending = false; banterTrigger("victory"); }
+    if (party.members.size() > 1) { size_t before = party.members.size(); checkCompanionMoods(); if (party.members.size() != before) return; }
     if (actP(in, A_CANCEL)) { pauseSel = 0; pushMode(GMode::PAUSE); return; }
     if (actP(in, A_MENU)) { menuTab = 0; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); return; }
     if (actP(in, A_SPELLS)) { menuTab = 2; menuSel = 0; menuScroll = 0; menuSubFocus = false; menuMember = clampi(menuMember, 0, (int)party.members.size() - 1); spellCol = party.members[menuMember].spells.empty() ? 0 : 1; pushMode(GMode::MENU); return; }
@@ -674,7 +675,7 @@ void Game::interactAt(int x, int y) {
         if (n->travel) { log(n->name + ": \"Where to? Coach fare is by the league.\""); openWorldMap(true); return; }
         if (!n->craft.empty() && n->dialogue.empty()) { openCraft(n->craft); return; }
         if (!n->dialogue.empty()) startDialogue(n->dialogue, n);
-        else if (!n->shop.empty()) { std::string hrs; if (!shopOpen(n->shop, hrs)) { log(n->name + ": \"We're closed. Open " + hrs + ".\""); gAudio.play("door_locked"); return; } shopId = n->shop; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); pushMode(GMode::SHOP); }
+        else if (!n->shop.empty()) { std::string hrs; if (shopRefuses(n->shop)) return; if (!shopOpen(n->shop, hrs)) { log(n->name + ": \"We're closed. Open " + hrs + ".\""); gAudio.play("door_locked"); return; } shopId = n->shop; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); pushMode(GMode::SHOP); }
         else log(n->name + " has nothing to say.");
         return;
     }
@@ -756,6 +757,7 @@ bool Game::evalCond(const std::string& cond) const {
         else if (startsWith(c, "itemn:")) { auto p = split(c.substr(6), ':'); val = party.countItem(p[0]) >= (p.size() > 1 ? atoi(p[1].c_str()) : 1); }
         else if (startsWith(c, "rep:")) { auto p = split(c.substr(4), ':'); auto it = reputation.find(p[0]); int a = it == reputation.end() ? 0 : it->second; val = a >= (p.size() > 1 ? atoi(p[1].c_str()) : 1); }
         else if (startsWith(c, "approval:")) { auto p = split(c.substr(9), ':'); auto it = approval.find(p[0]); int a = it == approval.end() ? 0 : it->second; val = a >= (p.size() > 1 ? atoi(p[1].c_str()) : 1); }
+        else if (c == "room") val = party.members.size() < 4;   // a free place in the party
         else if (c == "night") val = nightAmount() > 0.5f; else if (c == "day") val = nightAmount() <= 0.5f;
         else if (startsWith(c, "weather:")) val = weather == c.substr(8);
         else if (startsWith(c, "mode:")) { static const char* MN[] = {"explore", "dialogue", "combat", "menu", "shop", "message", "transition", "gameover", "levelup", "name", "victory", "pause", "cutscene", "saveload", "journal", "worldmap", "craft", "console", "bounty", "ending"};
@@ -840,6 +842,7 @@ void Game::showNode(const std::string& node) {
 void Game::runAction(const std::string& k, const std::string& v) {
     runActionInner(k, v);
     if (map && (k == "set" || k == "flag" || k == "clear" || k == "inc")) applyWorldState(*map);
+    if (k == "set" || k == "flag" || k == "clear") syncBonds();
 }
 void Game::runActionInner(const std::string& k, const std::string& v) {
     if (k == "obstacle") { obstacleAction(v); return; }
@@ -856,7 +859,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "gold") { int g = atoi(v.c_str()); party.gold = std::max(0, party.gold + g); if (g > 0) stats.goldEarned += g; else stats.goldSpent -= g; log(g >= 0 ? fmt("Received %d gold.", g) : fmt("Paid %d gold.", -g)); gAudio.play("gold"); }
     else if (k == "xp") giveXP(atoi(v.c_str()));
     else if (k == "heal") { for (auto& m : party.members) m.fullHeal(*gd); log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; }
-    else if (k == "shop") { std::string hrs; if (!shopOpen(v, hrs)) { if (mode == GMode::DIALOGUE) popMode(); showMessage("Closed", "The shop is closed right now. Opening hours: " + hrs + "."); } else { shopId = v; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); if (mode == GMode::DIALOGUE) popMode(); pushMode(GMode::SHOP); } }
+    else if (k == "shop") { std::string hrs; if (shopRefuses(v)) return; if (!shopOpen(v, hrs)) { if (mode == GMode::DIALOGUE) popMode(); showMessage("Closed", "The shop is closed right now. Opening hours: " + hrs + "."); } else { shopId = v; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); if (mode == GMode::DIALOGUE) popMode(); pushMode(GMode::SHOP); } }
     else if (k == "join") {
         auto jp = split(v, ':'); std::string cls = trim(jp[0]); std::string cname = jp.size() > 1 ? trim(jp[1]) : ""; Tile ctile = jp.size() > 2 ? parseTile(jp[2]) : Tile{};
         const ClassDef* c = gd->cls(cls);
@@ -865,7 +868,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
             if (!already) { if (mode == GMode::DIALOGUE) extra["dlg_" + cls] = dlgId; Character ch; ch.initFromClass(*gd, *c, cname.empty() ? c->name : cname); int lvl = party.members[0].level;
                 // companions arrive trained in their own class at the hero's level (respec at a shrine to change that)
                 while (ch.level < lvl) { ch.level++; ch.ranks[cls]++; for (int s = 0; s < ST_COUNT; s++) if (ch.level % 2 == 0) ch.baseStats[s]++; }
-                for (auto& sl : c->spellLevels) if (sl.first <= ch.rank(cls) && std::find(ch.spells.begin(), ch.spells.end(), sl.second) == ch.spells.end()) ch.spells.push_back(sl.second); if (ctile.valid()) ch.tile = ctile; ch.hp = ch.maxHP(*gd); ch.mp = ch.maxMP(*gd); party.members.push_back(ch); log(ch.name + " joined the party!"); setFlag("joined_" + cls); if (dlgNpc) hideNpcForGood(*dlgNpc); }
+                for (auto& sl : c->spellLevels) if (sl.first <= ch.rank(cls) && std::find(ch.spells.begin(), ch.spells.end(), sl.second) == ch.spells.end()) ch.spells.push_back(sl.second); if (ctile.valid()) ch.tile = ctile; ch.hp = ch.maxHP(*gd); ch.mp = ch.maxMP(*gd); party.members.push_back(ch); log(ch.name + " joined the party!"); setFlag("joined_" + cls); flags.erase("left_" + cls); if (dlgNpc) { hideNpcForGood(*dlgNpc); if (!dlgNpc->id.empty()) extra["home_" + cls] = "hidenpc_" + mapId + "_" + dlgNpc->id; } syncBonds(); }
         } else if (party.members.size() >= 4) log("Your party is full.");
     }
     else if (k == "leave") { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == v) { log(party.members[i].name + " left the party."); party.members.erase(party.members.begin() + i); break; } }
@@ -885,7 +888,12 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "travel") { if (mode == GMode::DIALOGUE) popMode(); openWorldMap(true); }
     else if (k == "revealmap") { auto p = split(v, ','); std::string id = trim(p[0]); if (id.empty() || id == "here") id = mapId; if (p.size() >= 4) revealMap(id, atoi(p[1].c_str()), atoi(p[2].c_str()), atoi(p[3].c_str())); else revealMap(id); notify("Map updated."); }
     else if (k == "rep") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() >= 2) changeRep(trim(p[0]), atoi(p[1].c_str())); } }
-    else if (k == "approve") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2) continue; int d = atoi(p[1].c_str()); std::string cls = trim(p[0]); if (cls == "all") { for (size_t i = 1; i < party.members.size(); i++) approval[party.members[i].classId] += d; } else approval[cls] += d; for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == cls || cls == "all") notify(party.members[i].name + (d >= 0 ? " approves." : " disapproves.")); } }
+    // approve=CLASS:N,...: only companions in the party see it happen (all = every companion with you)
+    else if (k == "approve") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2) continue; int d = atoi(p[1].c_str()); std::string cls = trim(p[0]); for (size_t i = 1; i < party.members.size(); i++) if (cls == "all" || party.members[i].classId == cls) changeApproval(party.members[i].classId, d); } }
+    // amends=CLASS:N: approval for a companion who isn't with you (making up with one who left)
+    else if (k == "amends") { auto p = split(v, ':'); if (p.size() >= 2) { approval[trim(p[0])] += atoi(p[1].c_str()); syncBonds(); } }
+    // craftxp=STATION:N: practice at a station (forge, alchemy, workbench, field) - master crafters' trials
+    else if (k == "craftxp") { auto p = split(v, ':'); if (p.size() >= 2) addCraftXP(trim(p[0]), atoi(p[1].c_str())); }
     else if (k == "note") { auto p = split(v, '|'); addNote(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); notify("Added to journal."); }
     else if (k == "win") { if (mode == GMode::DIALOGUE) popMode(); std::vector<std::string> ls; for (auto& l : split(v, '|')) ls.push_back(endingText(l)); startCutscene(ls, [this]() { setFlag("game_won"); checkAchievements(true); startEnding(); }); }
     else if (k == "savepoint") { if (map) { SavePoint s; s.x = px; s.y = py; applyTypeLook(s); map->savepoints.push_back(s); } }
@@ -1516,7 +1524,10 @@ std::vector<std::pair<std::string, int>> Game::shopItems(const std::string& shop
     auto secs = mergedConfig("shops.txt"); std::reverse(secs.begin(), secs.end());
     for (auto& sec : secs) {
         if (sec.name != "shop" || sec.get("id") != shop) continue;
-        for (auto& kv : sec.kv) if (kv.first == "item") { auto p = split(kv.second, ':'); if (gd->item(trim(p[0]))) out.push_back({trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : -1}); }
+        // item=id[:stock[:rep]] - with rep, only shown once the party's standing with the shop's faction reaches it
+        std::string fac = sec.get("faction");
+        for (auto& kv : sec.kv) if (kv.first == "item") { auto p = split(kv.second, ':'); if (p.size() > 2 && !trim(p[2]).empty() && repOf(fac) < atoi(p[2].c_str())) continue;
+            if (gd->item(trim(p[0]))) out.push_back({trim(p[0]), p.size() > 1 && !trim(p[1]).empty() ? atoi(p[1].c_str()) : -1}); }
         break;   // the campaign's shop (if any) replaces the base one
     }
     return out;
@@ -1672,6 +1683,7 @@ bool Game::deserialize(const std::string& text) {
     if (dropped) log(fmt("%d item%s from an older version of the game no longer exist%s and were removed.", dropped, dropped == 1 ? "" : "s", dropped == 1 ? "s" : ""));
     for (size_t i = 0; i < party.members.size(); i++) if (party.members[i].statPoints > 0 || party.members[i].rankPoints > 0) levelUpQueue.push_back((int)i);
     lightSteps = stealthSteps = detectSteps = 0;
+    syncBonds();
     rng.reseed(fixedSeed ? fixedSeed : (uint64_t)time(nullptr));
     enterMap(mid, sx, sy, false);
     fadeIn = 0.8f;

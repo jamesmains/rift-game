@@ -40,6 +40,7 @@ struct Character {
     int combatId = -1;
     std::string portraitHint;
     std::string favs[8];                // favorites hotbar: "spell:id" or "item:id"
+    int bond = 0;                       // companions: +1 Loyal (+10 hit, +5 evasion), -1 Strained (-10 / -5); Game::syncBonds
     // multiclassing: every level is a rank in some class (D&D style). level == sum of ranks.
     std::map<std::string, int> ranks;   // class id -> rank
     int rankPoints = 0;                 // class ranks waiting to be assigned on the level-up screen

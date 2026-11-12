@@ -42,6 +42,7 @@ void Game::addFloat(int tx, int ty, const std::string& s, Color8 c, int scale) {
 
 void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int cy, int levelBonus, const std::vector<int>& groupIndices, const std::string& onDefeat) {
     if (hasFlag("_fleegrace") && flags["_fleegrace"] > 0 && groupIndices.size() && creatureIds.size()) { /* grace period: still fight if walked into */ }
+    syncBonds();   // Loyal / Strained companions (standing.cpp)
     cb = CombatState(); cb.units.reserve(128);   // summons and reinforcements push units mid-turn; keep references stable
     cb.defeatedGroups = groupIndices; cb.onDefeatScript = onDefeat;
     std::vector<std::pair<int, int>> taken;

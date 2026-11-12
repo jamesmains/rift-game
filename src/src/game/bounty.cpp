@@ -145,7 +145,7 @@ void Game::bountyEvent(const std::string& kind, const std::string& id, int n) {
 }
 
 void Game::openBoard(const std::string& town) {
-    boardTown = town; bountySel = 0;
+    boardTown = town; bountySel = 0; boardPage = 0; standSel = 0;
     bountyEvent("board", town);
     generateBounties(town);
     pushMode(GMode::BOUNTY);
@@ -155,12 +155,17 @@ void Game::openBoard(const std::string& town) {
 static void boardRows(const Game& g, std::vector<std::pair<int, bool>>& rows) {   // (index, isOffer)
     rows.clear();
     for (size_t i = 0; i < g.bounties.size(); i++) if (g.bounties[i].town == g.boardTown) rows.push_back({(int)i, false});
-    for (size_t i = 0; i < g.bountyOffers.size(); i++) if (g.bountyOffers[i].town == g.boardTown) rows.push_back({(int)i, true});
+    if (g.repOf(g.boardTown) > -10)   // Disliked: nobody here will hire you
+        for (size_t i = 0; i < g.bountyOffers.size(); i++) if (g.bountyOffers[i].town == g.boardTown) rows.push_back({(int)i, true});
 }
 
 void Game::updateBounty(InputState& in, float dt) {
     (void)dt;
     if (actP(in, A_CANCEL)) { popMode(); return; }
+    // two pages: today's notices and the town's standing (favours, civic projects, amends)
+    if (actP(in, A_PAGEUP) || actP(in, A_PAGEDOWN) || actP(in, A_MENU)) { boardPage = 1 - boardPage; gAudio.play("ui_move"); return; }
+    if (in.mousePressed[0] && in.mouseY >= 24 && in.mouseY < 38) { if (in.mouseX >= 30 && in.mouseX < 100) { boardPage = 0; return; } if (in.mouseX >= 104 && in.mouseX < 180) { boardPage = 1; return; } }
+    if (boardPage == 1) { updateStanding(in); return; }
     std::vector<std::pair<int, bool>> rows; boardRows(*this, rows);
     int n = (int)rows.size();
     if (n > 0) { if (actP(in, A_UP)) bountySel = (bountySel + n - 1) % n; if (actP(in, A_DOWN)) bountySel = (bountySel + 1) % n; }
@@ -172,7 +177,9 @@ void Game::updateBounty(InputState& in, float dt) {
     if (actP(in, A_INTERACT) && !row.second) {   // drop a taken bounty
         Bounty& b = bounties[row.first];
         if (b.kind == "deliver") party.removeItem("courier_letter", 1);
-        log("You take the notice down: " + b.targetName + "."); bounties.erase(bounties.begin() + row.first); gAudio.play("ui_close"); return;
+        log("You take the notice down: " + b.targetName + ". Word gets around that you didn't keep your word."); std::string bt = b.town; bounties.erase(bounties.begin() + row.first); gAudio.play("ui_close");
+        if (board(bt)) changeRep(bt, -2);
+        return;
     }
     if (!(actP(in, A_CONFIRM) || click)) return;
     if (row.second) {
@@ -192,7 +199,7 @@ void Game::updateBounty(InputState& in, float dt) {
         party.gold += b.reward; stats.goldEarned += b.reward; stats.bounties++; giveXP(b.xp);
         if (startsWith(b.id, "fix:")) extra["bounty_done_" + b.id.substr(4)] = std::to_string(day);
         log(fmt("Bounty paid: %d gold.", b.reward)); gAudio.play("gold");
-        if (const BoardDef* bd = board(b.town)) changeRep(bd->id, bd->rep);   // the town remembers who helps it
+        if (const BoardDef* bd = board(b.town)) { int now = repOf(bd->id), d = std::min(bd->rep, 30 - now); if (d > 0) changeRep(bd->id, d); }   // the town remembers who helps it - up to Friendly
         bounties.erase(bounties.begin() + row.first);
     } else if (b.kind == "fetch") { b.have = std::min(b.need, party.countItem(b.target)); if (b.have >= b.need) { b.done = true; log("You already have what they need."); } else log(fmt("Bring %d %s (you have %d).", b.need, b.targetName.c_str(), b.have)); }
     else log("Still open. Progress shows in the Journal (" + gKeys.label(A_JOURNAL) + ").");
@@ -203,9 +210,12 @@ void Game::drawBounty(Canvas& cv, InputState& in) {
     std::string tn = boardTown; for (auto& l : locations) if (l.mapId == boardTown || l.id == boardTown) tn = l.name; if (const BoardDef* bd = board(boardTown)) if (!bd->name.empty()) tn = bd->name;
     panel(ctx, 20, 20, SCREEN_W - 40, SCREEN_H - 40, RGB(70, 50, 30), RGB(160, 120, 60));
     ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 28, "NOTICE BOARD - " + tn, C::Cream); ctx.font->bold = false;
+    for (int t = 0; t < 2; t++) { int tx = t == 0 ? 30 : 104, tw = t == 0 ? 70 : 76; bool on = boardPage == t; cv.fillRect(tx, 24, tw, 14, on ? RGB(160, 120, 60) : RGB(90, 65, 40)); cv.rect(tx, 24, tw, 14, on ? C::Gold : RGB(120, 90, 50)); textCenter(ctx, tx + tw / 2, 26, t == 0 ? "Notices" : "Standing", on ? C::Cream : RGB(200, 180, 140)); }
+    if (boardPage == 1) { drawStanding(cv, in); return; }
     int taken = 0; for (auto& b : bounties) if (!b.done) taken++;
     textCenter(ctx, SCREEN_W / 2, 40, fmt("Day %d. You carry %d/%d bounties. New notices go up each morning.", day, taken, MAX_TAKEN), RGB(220, 200, 160));
     std::vector<std::pair<int, bool>> rows; boardRows(*this, rows);
+    if (repOf(boardTown) <= -10) textCenter(ctx, SCREEN_W / 2, rows.empty() ? 80 : SCREEN_H - 56, "Nobody here will hire you while they dislike you. (Tab: Standing - make amends.)", RGB(230, 150, 120));
     if (rows.empty()) textCenter(ctx, SCREEN_W / 2, 100, "Nothing posted today. Check back tomorrow.", C::Gray);
     for (size_t i = 0; i < rows.size() && i < 6; i++) {
         const Bounty& b = rows[i].second ? bountyOffers[rows[i].first] : bounties[rows[i].first];
@@ -223,6 +233,6 @@ void Game::drawBounty(Canvas& cv, InputState& in) {
         UI::text(ctx, 40, y + 36, st, b.done ? RGB(20, 120, 40) : rows[i].second ? RGB(120, 60, 20) : RGB(40, 90, 60));
         textRight(ctx, SCREEN_W - 40, y + 36, fmt("Reward: %d gold, %d XP", b.reward, b.xp), RGB(120, 80, 10));
     }
-    keyHint(ctx, 30, SCREEN_H - 40, "Enter", "take / collect"); keyHint(ctx, 170, SCREEN_H - 40, gKeys.label(A_INTERACT), "drop taken"); keyHint(ctx, 310, SCREEN_H - 40, "Esc", "leave"); keyHint(ctx, 400, SCREEN_H - 40, gKeys.label(A_JOURNAL), "journal");
+    keyHint(ctx, 30, SCREEN_H - 40, "Enter", "take / collect"); keyHint(ctx, 170, SCREEN_H - 40, gKeys.label(A_INTERACT), "drop taken"); keyHint(ctx, 310, SCREEN_H - 40, "Esc", "leave"); keyHint(ctx, 400, SCREEN_H - 40, gKeys.label(A_JOURNAL), "journal"); keyHint(ctx, 500, SCREEN_H - 40, "Tab", "standing");
     (void)in;
 }

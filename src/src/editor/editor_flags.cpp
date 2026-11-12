@@ -140,6 +140,8 @@ void Editor::buildFlagIndex() {
     }
     // ---- set by the game itself ----
     if (flagIndex.count("reinforced3")) { FlagUse u; add("reinforced3", true, "the game (crafting)", "set when an item is reinforced to +3", u); }
+    if (flagIndex.count("room")) { FlagUse u; add("room", true, "the game (party)", "a condition, not a flag: true while the party has a free place", u); }
+    for (auto& c : gd->classes) if (flagIndex.count("left_" + c.first)) { FlagUse u; add("left_" + c.first, true, "the game (companions)", "set when the companion leaves the party at -40 approval; join= clears it", u); }
     // ---- campaign start ----
     for (auto& f : split(camp.flags, ',')) { std::string n = trim(split(trim(f), '=')[0]); FlagUse u; u.tab = 18; if (!n.empty()) add(n, true, "campaign start", "starting flags - set when a new game begins", u); }
     for (auto& d : flagDocs) if (!flagIndex.count(d.first)) flagIndex[d.first];   // documented but not used yet

@@ -1,0 +1,122 @@
+# 1.1.2: companions (leaving, amends, gifts, loyalty), town standing (amends, favours, projects, refusals),
+# crafting tiers (skill-gated recipes, the smith's trial), the dev console wrapping its output.
+newgame Kai warrior 1
+god
+gold 1000
+# --- the console wraps long lines ---
+teleport hollowmere 20 20
+frames 120
+key GRAVE
+frames 3
+expect mode == CONSOLE
+type help
+key ENTER
+frames 3
+type rep hollowmere 0
+key ENTER
+frames 3
+shot console_wrap.png
+key ESC
+frames 3
+# --- a companion pushed to -40 leaves ---
+con join warrior
+expect members == 2
+con approve warrior -45
+frames 5
+expect members == 1
+expect flag:left_warrior == 1
+expect flag:joined_warrior == 0
+shot companion_left.png
+key ENTER
+frames 5
+# --- making amends brings them back ---
+con dialogue bram sorry
+frames 60
+shot amends.png
+key ENTER
+frames 30
+key ENTER
+frames 10
+expect members == 2
+expect approval:warrior == 0
+expect flag:left_warrior == 0
+# --- a gift, once ---
+give firewater 1
+con dialogue bram gifts
+frames 60
+key ENTER
+frames 30
+key ENTER
+frames 10
+expect approval:warrior == 6
+expect item:firewater == 0
+expect flag:gift_warrior_firewater == 1
+# --- choices only count for companions who are there ---
+con run approve:mage:10
+expect approval:mage == 0
+# --- loyalty ---
+con approve warrior 30
+con flag q_bram_done
+con dialogue bram loyal
+frames 60
+key ENTER
+frames 10
+expect flag:loyal_warrior == 1
+# --- towns: amends, favours, projects ---
+con rep hollowmere -20
+con bounty hollowmere
+frames 5
+shot board_disliked.png
+key TAB
+frames 3
+shot standing_amends.png
+key ENTER
+frames 3
+expect rep:hollowmere == 0
+con rep hollowmere 30
+frames 2
+shot standing_friendly.png
+key DOWN
+frames 2
+key ENTER
+frames 3
+expect item:potion_red >= 3
+give iron_ingot 4
+give tanned_leather 2
+key UP
+frames 2
+key ENTER
+frames 3
+expect rep:hollowmere == 38
+expect flag:project_hollowmere_1 == 1
+shot standing_project.png
+key ESC
+frames 3
+# --- Hated: shops refuse ---
+con rep brasswick -60
+con shop brasswick_market
+frames 3
+expect mode == MESSAGE
+shot shop_refused.png
+key ENTER
+frames 3
+# --- crafting: skill-gated recipe list, smith's trial ---
+give steel_ingot 2
+give iron_ingot 1
+con craft forge
+frames 3
+shot forge_skill1.png
+key ESC
+frames 3
+con cskill forge 120
+expect cskill:forge == 3
+give tempered_blank 1
+con flag q_smith 1
+con dialogue smith_gorran trial1_done
+frames 60
+key ENTER
+frames 10
+expect flag:q_smith == 2
+expect item:formula_mithril == 1
+expect cskill:forge == 3
+log

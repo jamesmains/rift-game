@@ -15,7 +15,14 @@ void Game::runConsole(const std::string& line) {
     auto p = split(cmd, ' '); std::string c = toLower(p[0]);
     auto arg = [&](size_t i, const std::string& d = "") { return i < p.size() ? p[i] : d; };
     auto argi = [&](size_t i, int d = 0) { return i < p.size() ? atoi(p[i].c_str()) : d; };
-    if (c == "help") { out("teleport MAP [X Y] | give ITEM [N] | gold N | xp N | level N | flag NAME [V] | unflag NAME | god | heal | time HH:MM | day N | weather clear|rain|storm|fog|snow"); out("spawn CREATURE[,CREATURE] | kill | item? | spells | learn SPELL | join CLASS | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | reveal | worldmap MODE | bounties | bestiary CREATURE N | hurt N [poison] | achieve ID | reset_achievements | bounty | craft | shop ID | dialogue ID [NODE] | run SCRIPT | maps | stats | reload | clear"); }
+    if (c == "help") {   // one topic per line; drawConsole wraps anything wider than the screen
+        out("world: teleport MAP [X Y] | maps | pos | reveal | worldmap MODE | time HH:MM | day N | weather clear|rain|storm|fog|snow");
+        out("party: give ITEM [N] | gold N | xp N | level N | heal | hurt N [poison] | god | auto | spells | learn SPELL [MEMBER] | join CLASS | item?");
+        out("story: flag NAME [V] | unflag NAME | flags | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | achieve ID | reset_achievements");
+        out("fights: spawn CREATURE[,CREATURE] | kill | cast SPELL [DX DY] | bestiary CREATURE N | difficulty 0-2");
+        out("screens: bounty [TOWN] | bounties | craft [STATION] | cskill STATION XP | shop ID | dialogue ID [NODE] | run SCRIPT");
+        out("misc: stats | hint | doors | demo 0|1 | autosave | crashtest | reload | clear");
+    }
     else if (c == "teleport" || c == "tp") { if (p.size() < 2) { out("usage: teleport MAP [X Y]"); return; } modeStack.clear(); mode = GMode::EXPLORE; enterMap(arg(1), argi(2), argi(3), true); out("-> " + mapId + fmt(" %d,%d", px, py)); pushMode(GMode::CONSOLE); }
     else if (c == "give") { std::string id = arg(1); if (!gd->item(id)) { out("unknown item '" + id + "' (ids: see assets/data/items.txt)"); return; } giveItem(id, argi(2, 1)); out("ok"); }
     else if (c == "gold") { party.gold = std::max(0, party.gold + argi(1)); out(fmt("gold = %d", party.gold)); }
@@ -63,6 +70,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "stats") { out(fmt("kills %d fights %d gold+ %d chests %d crits %d crafted %d bounties %d travels %d steps %d", stats.kills, stats.fightsWon, stats.goldEarned, stats.chests, stats.crits, stats.crafted, stats.bounties, stats.travels, stepCounter)); }
     else if (c == "reload") { reloadContent(); out("content reloaded"); pushMode(GMode::CONSOLE); }
     else if (c == "clear") consoleOut.clear();
+    else if (c == "cskill") { if (arg(1).empty()) { for (const char* st : {"field", "forge", "alchemy", "workbench"}) out(fmt("%s skill %d (%d xp)", st, craftSkill(std::string(st) == "field" ? "any" : st), craftXP(st))); } else { addCraftXP(arg(1), argi(2, 100)); out(fmt("%s skill %d", arg(1).c_str(), craftSkill(arg(1) == "field" ? "any" : arg(1)))); } }
     else if (c == "demo") { demoMode = argi(1, 1) != 0; out(demoMode ? "demo mode: the base campaign is limited to demo.txt" : "full game"); }
     else if (c == "crashtest") { std::string path = crashWriteReport("crash test from the dev console (the game is fine)"); emergencySave(); out("wrote " + path + " and crash_recovery.sav"); }
     else if (c == "autosave") { lastAutosave = -1000; autosave(); out("autosaved"); }
@@ -84,8 +92,11 @@ void Game::updateConsole(InputState& in, float dt) {
 void Game::drawConsole(Canvas& cv, InputState& in) {
     (void)in;
     int h = 200; cv.fillRect(0, 0, SCREEN_W, h, RGB(10, 10, 14, 230)); cv.hline(0, h, SCREEN_W, C::Gold); uiRect(0, 0, SCREEN_W, h + 1);
-    int lines = (h - 24) / 12; int start = std::max(0, (int)consoleOut.size() - lines);
-    for (int i = start; i < (int)consoleOut.size(); i++) UI::text(ctx, 6, 4 + (i - start) * 12, consoleOut[i], startsWith(consoleOut[i], "> ") ? C::Yellow : C::LtGray);
+    // long output lines wrap to the screen width (the newest lines stay at the bottom)
+    std::vector<std::pair<std::string, bool>> rows;
+    for (auto& o : consoleOut) { bool cmd = startsWith(o, "> "); auto ws = ctx.font->wrap(o, SCREEN_W - 24); if (ws.empty()) ws.push_back(""); for (size_t k = 0; k < ws.size(); k++) rows.push_back({(k ? "  " : "") + ws[k], cmd}); }
+    int lines = (h - 24) / 12; int start = std::max(0, (int)rows.size() - lines);
+    for (int i = start; i < (int)rows.size(); i++) UI::text(ctx, 6, 4 + (i - start) * 12, rows[i].first, rows[i].second ? C::Yellow : C::LtGray);
     UI::text(ctx, 6, h - 16, "> " + consoleBuf + (((ctx.frame / 20) % 2) ? "_" : ""), C::White);
     textRight(ctx, SCREEN_W - 6, h - 16, "dev console - 'help' for commands, ~ or Esc to close", C::DkGray);
 }

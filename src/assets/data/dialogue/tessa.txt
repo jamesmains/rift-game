@@ -1,8 +1,9 @@
 [start]
 speaker=Tessa
 text=Mayor Aldous sent you? Figures. He sends a letter every spring asking me to "secure the Annex", like I've got a key. I've got a crowbar and a bad attitude.
+option=About the way we parted...|sorry|left_scavenger
 option=I need the shard inside the Annex.|annex|q_main>=4&!q_main>=5
-option=Come with me.|join|q_main>=5
+option=Come with me.|join|q_main>=5&!left_scavenger
 option=Who are you?|who
 option=Can you build something from this scrap?|workbench
 option=Goodbye.|end
@@ -36,12 +37,14 @@ text=Yeah?
 option=Found anything good lately?|chat
 option=What do you actually want out of all this?|story|approval:scavenger:15
 option=I have three circuit boards.|circuit_turnin|tessa_quest&itemn:circuit:3&!q_tessa_done
+option=I brought you something.|gifts
+option=You've been quiet lately.|strained|!approval:scavenger:-14
+option=We've come a long way, you and I.|loyal|approval:scavenger:30&q_tessa_done&!loyal_scavenger
 option=Nothing.|end
 
 [chat]
 speaker=Tessa
 text=A drone's optic. Still works if you squint. I'm keeping it.
-approve=scavenger:1
 option=Of course you are.|end
 
 [story]
@@ -53,7 +56,7 @@ option=Machines that talk are how this started.|refuse
 [refuse]
 speaker=Tessa
 text=Machines that talk are how it ends, too. One way or another.
-approve=scavenger:-3
+approve=scavenger:-8
 option=...|end
 
 [accept]
@@ -74,3 +77,52 @@ xp=120
 approve=scavenger:15
 quest=Tessa: One Question - done
 option=Machines.|end
+
+[gifts]
+speaker=Tessa
+text=Oh? What is it? (Tessa would love circuit boards to tinker with, or a power core - those are rare.)
+option=(Give 2 circuit boards)|gift_circuit|itemn:circuit:2&!gift_scavenger_circuit
+option=(Give a power core)|gift_power_core|itemn:power_core:1&!gift_scavenger_power_core
+option=Never mind.|end
+
+[gift_circuit]
+speaker=Tessa
+text=Boards! Still warm, too. You're all right, you know that?
+take=circuit:2
+set=gift_scavenger_circuit
+approve=scavenger:6
+option=...|end
+
+[gift_power_core]
+speaker=Tessa
+text=A whole power core? For me? I could kiss you. I won't. But I could.
+take=power_core:1
+set=gift_scavenger_power_core
+approve=scavenger:8
+option=...|end
+
+[strained]
+speaker=Tessa
+text=You keep making calls I don't like. I've worked with worse, but not for long.
+option=I hear you.|end
+
+[loyal]
+speaker=Tessa
+text=Nobody's ever asked what I wanted before. You did, and then you helped me get it. I'm in. Whatever it takes.
+set=loyal_scavenger
+notify=Tessa is now Loyal: +10 to hit and +5 evasion in a fight.
+option=Glad to have you.|end
+
+[sorry]
+speaker=Tessa
+text=Look who it is. Sorry's free. Two hundred gold isn't. Pay what you owe the scrapyard for the mess and we're square.
+option=(Pay 200 gold) You're right. Here.|amends|gold:200&room
+option=I can't afford that right now.|end
+
+[amends]
+speaker=Tessa
+text=Square. Grab your gun.
+gold=-200
+amends=scavenger:45
+join=scavenger:Tessa:116,15
+option=Let's go.|end

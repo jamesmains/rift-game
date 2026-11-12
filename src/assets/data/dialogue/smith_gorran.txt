@@ -5,6 +5,10 @@ option=Show me your wares.|shop
 option=Can you forge something from parts I bring?|forge
 option=Can I use your workbench?|bench
 option=How does smithing work?|howto
+option=Teach me to work better metal.|trial1|!q_smith>=1
+option=Here is the blade blank I forged.|trial1_done|q_smith>=1&!q_smith>=2&item:tempered_blank
+option=What comes after mithril?|trial2|q_smith>=2&!q_smith>=3
+option=I made the masterwork hilt.|trial2_done|q_smith>=3&!q_smith>=4&item:master_hilt
 option=Nothing today.|end
 
 [shop]
@@ -24,3 +28,40 @@ craft=workbench
 speaker=Smith Gorran
 text=Ore and scrap go in the forge and come out as ingots. Ingots become blades and mail - and they make good gear better: bring me a blade and an ingot and I'll reinforce it. Three times, if you've the steel. The more you work, the better your hands get; push past your skill and you'll ruin metal. And any junk you won't wear, break it down here for parts.
 option=Good to know.|start
+
+[trial1]
+speaker=Smith Gorran
+text=Better metal needs better hands. Prove yours: fold steel into a tempered blade blank - you need Smithing 3 for that, so work the forge until you're there. Bring it to me and I'll show you what I know of mithril.
+set=q_smith=1
+quest=The Smith's Trial
+option=I'll be back with it.|end
+
+[trial1_done]
+speaker=Smith Gorran
+text=(Gorran taps the blank, listens, bends it over his knee.) It rings true. Right. Mithril: pale ore, deep down - Rimehollow under Frosthold, and the old Ashwing workings. Pickaxe, patience, and a forge hot enough to make you sweat. Here are my notes. Smithing 4 to smelt it, mind.
+take=tempered_blank
+give=formula_mithril
+craftxp=forge:80
+xp=150
+set=q_smith=2
+quest=The Smith's Trial - done
+option=Thank you, master.|end
+
+[trial2]
+speaker=Smith Gorran
+text=After mithril? Riftsteel, they say - mithril folded around a sliver of the sky. I never had the hands for it. Make me a masterwork hilt from mithril and a good gem, and if it's as good as I think it'll be, my last lesson is yours.
+set=q_smith=3
+quest=The Master's Hilt
+option=I'll make it.|end
+
+[trial2_done]
+speaker=Smith Gorran
+text=(He turns the hilt in the light for a long time.) ...You've passed me. Take this - everything I ever worked out about the rift crystals. They grow where the sky came down: the Scar, the Wreck's lower decks, the Annex. Smithing 5 for the blade, 6 for the plate.
+take=master_hilt
+give=formula_riftsteel
+craftxp=forge:150
+xp=300
+set=q_smith=4
+rep=hollowmere:5
+quest=The Master's Hilt - done
+option=I'll make you proud.|end

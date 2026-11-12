@@ -251,3 +251,13 @@ aggro=4
 level=3
 flag=old_gulp_dead
 ondefeat=item:lucky_hook:1;notify:Something glints in the biggest toad: a hook as long as your finger.
+
+[gather]
+x=24
+y=29
+node=bloodroot
+
+[gather]
+x=33
+y=8
+node=bloodroot

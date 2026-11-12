@@ -3,6 +3,8 @@ speaker=Arcanist Morrow
 text=The Gilded Circle: scrolls, staves, and the occasional miracle. Mind the cauldron.
 option=Let's see your wares.|shop
 option=Could you brew something from these herbs?|alchemy
+option=Can you teach me rarer brews?|herb1|!q_herbal>=1
+option=Here is the distilled essence.|herb1_done|q_herbal>=1&!q_herbal>=2&item:distilled_essence
 option=Goodbye.|end
 
 [shop]
@@ -12,3 +14,21 @@ shop=brasswick_arcane
 speaker=Arcanist Morrow
 text=The cauldron is always warm. Lay the ingredients on the bench.
 craft=alchemy
+
+[herb1]
+speaker=Arcanist Morrow
+text=Rarer brews need steadier hands. Distil me an essence - arcane dust, moonleaf, a little ectoplasm, three times through the still. You'll need Alchemy 3. If it's clear, my herbal is yours.
+set=q_herbal=1
+quest=The Alchemist's Trial
+option=I'll bring it.|end
+
+[herb1_done]
+speaker=Arcanist Morrow
+text=(Morrow holds the flask to the lamp.) Clear as a bell. Well. Here is my herbal. Sunpetal opens only in the desert sun around Sunscar; bloodroot grows in Murkwater's bogs and the Drowning Marsh. The true elixir and the phoenix tonic want a rift crystal too - and a master's hand.
+take=distilled_essence
+give=formula_herbal
+craftxp=alchemy:80
+xp=150
+set=q_herbal=2
+quest=The Alchemist's Trial - done
+option=Thank you.|end

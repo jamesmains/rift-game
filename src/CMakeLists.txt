@@ -33,6 +33,14 @@ if(TRIFFALL_DEMO)
   set(TRIFFALL_EDITOR OFF CACHE BOOL "" FORCE)
   add_compile_definitions(TRIFFALL_DEMO=1)
 endif()
+# Debug builds: cmake -DTRIFFALL_DEV_CONSOLE=ON (build.ps1 -Dev) turns on the dev console (~). A Debug configuration
+# turns it on too; Release builds of every variant leave it out. The headless test runner always has it.
+option(TRIFFALL_DEV_CONSOLE "Debug build: the developer console (~) can be opened" OFF)
+if(TRIFFALL_DEV_CONSOLE)
+  add_compile_definitions(TRIFFALL_DEV_CONSOLE=1)
+else()
+  add_compile_definitions($<$<CONFIG:Debug>:TRIFFALL_DEV_CONSOLE=1>)
+endif()
 if(TRIFFALL_EDITOR)
   file(GLOB GAME_SRC src/app.cpp src/core/*.cpp src/game/*.cpp src/desktop/*.cpp src/editor/*.cpp src/platform/steam_services.cpp)
 else()
@@ -86,6 +94,7 @@ if(NOT EMSCRIPTEN)   # (the browser build packs its assets into index.data inste
 # headless test driver (no raylib) - handy for scripted testing
 add_executable(triffall_headless src/platform/main_headless.cpp ${GAME_SRC})
 target_include_directories(triffall_headless PRIVATE third_party)
+target_compile_definitions(triffall_headless PRIVATE TRIFFALL_DEV_CONSOLE=1)
 
 # copy assets next to the executable
 add_custom_command(TARGET Triffall POST_BUILD

@@ -40,6 +40,7 @@ text=...Free. Fine. Sefa will be insufferable. But I suppose it's hard to be rai
 set=q_well=2,well_free
 xp=200
 rep=sunscar:15
+approve=cleric:5,ranger:3,scavenger:-3
 option=It's the right thing.|end
 
 [well_toll]
@@ -49,4 +50,5 @@ set=q_well=2,well_toll
 gold=250
 xp=150
 rep=sunscar:-5
+approve=scavenger:5,cleric:-5,warrior:-3
 option=Pleasure.|end

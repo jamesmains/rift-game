@@ -2,11 +2,12 @@
 #   .\build.ps1                          build for testing (full game, with the Editor)
 #   .\build.ps1 -NoEditor                the game without the Editor
 #   .\build.ps1 -Demo                    the demo (no Editor, first chapter only)
+#   .\build.ps1 -Dev                     debug build: full game plus the dev console (~), in build\game-dev; never released
 #   .\build.ps1 -Release -Notes "..."    also publish to releases\ (zip + latest.json)
 #   .\build.ps1 -Package                 also make a clean copy to hand out (no saves\) in build\dist\<full|noeditor|demo>
-# Each variant builds into its own folder: build\game (full), build\game-noeditor, build\game-demo.
+# Each variant builds into its own folder: build\game (full), build\game-noeditor, build\game-demo, build\game-dev.
 # Needs Visual Studio (C++ workload) and CMake. raylib 5.5 is downloaded by CMake on the first build (needs internet once).
-param([switch]$Release, [string]$Notes = "", [switch]$NoEditor, [switch]$Demo, [switch]$Package)
+param([switch]$Release, [string]$Notes = "", [switch]$NoEditor, [switch]$Demo, [switch]$Package, [switch]$Dev)
 $ErrorActionPreference = "Continue"   # native tools (cmake, MSBuild) write warnings to stderr
 Set-Location $PSScriptRoot
 
@@ -22,12 +23,17 @@ $version = $Matches[1]
 $editor = "ON"; $demoFlag = "OFF"; $cmakeDir = "build\cmake"; $kind = "full"; $out = "build\game"; $dist = "build\dist\full"
 if ($NoEditor) { $editor = "OFF"; $cmakeDir = "build\cmake-noeditor"; $kind = "no editor"; $out = "build\game-noeditor"; $dist = "build\dist\noeditor" }
 if ($Demo)     { $editor = "OFF"; $demoFlag = "ON"; $cmakeDir = "build\cmake-demo"; $kind = "demo"; $out = "build\game-demo"; $dist = "build\dist\demo" }
+$devFlag = "OFF"
+if ($Dev) {   # the dev console only exists in this build; it must never be handed out
+    if ($Release -or $Package -or $NoEditor -or $Demo) { Write-Host "-Dev is a debug build for testing: it can't be combined with -Release, -Package, -NoEditor or -Demo." -ForegroundColor Red; exit 1 }
+    $devFlag = "ON"; $cmakeDir = "build\cmake-dev"; $kind = "debug, dev console"; $out = "build\game-dev"
+}
 Write-Host "Building Triffall v$version ($kind)..."
 
 # the built-in tile kinds are compiled from assets\data\tilekinds.txt (src\src\game\tilekinds_builtin.h is committed too)
 if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mktilekinds.py }
 
-cmake -S src -B $cmakeDir -A x64 "-DTRIFFALL_EDITOR=$editor" "-DTRIFFALL_DEMO=$demoFlag"   # quoted: PowerShell leaves $vars unexpanded in a bare -arg
+cmake -S src -B $cmakeDir -A x64 "-DTRIFFALL_EDITOR=$editor" "-DTRIFFALL_DEMO=$demoFlag" "-DTRIFFALL_DEV_CONSOLE=$devFlag"   # quoted: PowerShell leaves $vars unexpanded in a bare -arg
 if ($LASTEXITCODE -ne 0) { Write-Host "CMake configure failed. Is Visual Studio with the C++ workload installed?" -ForegroundColor Red; exit 1 }
 cmake --build $cmakeDir --config Release --target Triffall triffall_headless
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed." -ForegroundColor Red; exit 1 }

@@ -231,3 +231,8 @@ x=20
 y=28
 flag=rime_pilgrim_body
 items=prayer_beads:1,potion_red:1
+
+[gather]
+x=33
+y=20
+node=mithril_ore

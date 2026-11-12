@@ -199,3 +199,13 @@ color=200,160,90
 x=12
 y=17
 travel=1
+
+[gather]
+x=29
+y=24
+node=bloodroot
+
+[gather]
+x=37
+y=12
+node=bloodroot

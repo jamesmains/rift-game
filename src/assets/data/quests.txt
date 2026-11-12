@@ -214,3 +214,27 @@ stage=q_maud>=1 | Sister Maud at Frosthold wants four frost wolves hunted on the
 stage=q_maud>=1&kills:frost_wolf:4 | Enough frost wolves are dead. Tell Sister Maud. @frosthold
 stage=q_maud>=2 | DONE Sister Maud sewed you a pair of wolfhide mittens.
 objective=1 | kills:frost_wolf:4 | Hunt frost wolves ({kills:frost_wolf}/4)
+
+[quest]
+id=smith_trial
+name=The Smith's Trial
+stage=q_smith>=1 | Smith Gorran in Hollowmere wants a tempered blade blank forged by your own hand (forge, Smithing 3). @hollowmere
+objective=1 | itemn:tempered_blank:1 | Tempered blade blank ({itemn:tempered_blank}/1)
+stage=q_smith>=2 | DONE Gorran gave you his notes on mithril. Mithril veins run in Rimehollow and Ashwing's Mine; smelting it takes Smithing 4.
+stage=q_smith>=3 | Gorran will teach you riftsteel if you bring him a masterwork hilt (mithril, steel and a rough gem; Smithing 4). @hollowmere
+objective=3 | itemn:master_hilt:1 | Masterwork hilt ({itemn:master_hilt}/1)
+stage=q_smith>=4 | DONE Gorran's last lesson is yours: riftsteel, from mithril and rift crystals.
+
+[quest]
+id=herbal_trial
+name=The Alchemist's Trial
+stage=q_herbal>=1 | Arcanist Morrow in Brasswick wants a flask of distilled essence (alchemy bench, Alchemy 3). @brasswick
+objective=1 | itemn:distilled_essence:1 | Distilled essence ({itemn:distilled_essence}/1)
+stage=q_herbal>=2 | DONE Morrow gave you his herbal. Sunpetal grows around Sunscar, bloodroot in Murkwater and the Drowning Marsh.
+
+[quest]
+id=tinker_trial
+name=The Tinker's Trial
+stage=q_tinker>=1 | Junk-Dealer Vosk in Ashfall wants a calibrated servo (workbench, Tinkering 3). @ashfall
+objective=1 | itemn:calibrated_servo:1 | Calibrated servo ({itemn:calibrated_servo}/1)
+stage=q_tinker>=2 | DONE Vosk gave you his blueprints. Rift crystals grow in the Scar, the Wreck and the Annex.

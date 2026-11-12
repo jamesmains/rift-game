@@ -4,6 +4,8 @@ text=Guns, ammo, medkits, the occasional thing that beeps. Everything's salvage,
 option=Show me.|shop
 option=I want to build something.|bench
 option=I have a copper still coil.|coil|item:copper_coil&q_still>=1&!q_still>=2
+option=Teach me to build real tech.|tink1|!q_tinker>=1
+option=Here is the calibrated servo.|tink1_done|q_tinker>=1&!q_tinker>=2&item:calibrated_servo
 option=Goodbye.|end
 
 [shop]
@@ -27,4 +29,23 @@ take=copper_coil
 gold=150
 set=coil_sold
 rep=ashfall:-5
+approve=scavenger:3,cleric:-3,warrior:-3
 option=...|end
+
+[tink1]
+speaker=Junk-Dealer Vosk
+text=Everyone wants the good blueprints. Nobody wants to earn them. Build me a calibrated servo - boards, an ingot, scrap, and Tinkering 3 so you don't strip the gears. Then we'll talk.
+set=q_tinker=1
+quest=The Tinker's Trial
+option=Deal.|end
+
+[tink1_done]
+speaker=Junk-Dealer Vosk
+text=(Vosk spins the servo up and listens.) Huh. It purrs. Fine - my blueprints. Power cores need a rift crystal; you'll find them where the sky came down - the Scar, the Wreck, the Annex. Bring a pickaxe.
+take=calibrated_servo
+give=formula_rifttech
+craftxp=workbench:80
+xp=150
+set=q_tinker=2
+quest=The Tinker's Trial - done
+option=Pleasure doing business.|end

@@ -143,6 +143,8 @@ int main(int argc, char** argv) {
             else if (key == "cursoronunit") { got = "0"; if (g.cb.selectedUnit >= 0) { auto& u = g.cb.units[g.cb.selectedUnit]; got = (g.cb.selX == u.x && g.cb.selY == u.y) ? "1" : "0"; } }
             else if (key == "cblog") { got.clear(); for (auto& l : g.cb.log) got += l + "\n"; num = false; }
             else if (key == "allies" || key == "summons") { int c = 0; for (auto& u : g.cb.units) if (u.ch.alive && (key == "allies" ? u.ally : u.summoned)) c++; got = std::to_string(c); }
+            else if (startsWith(key, "approval:")) got = std::to_string(g.approvalOf(key.substr(9)));
+            else if (startsWith(key, "cskill:")) got = std::to_string(g.craftSkill(key.substr(7)));
             else if (startsWith(key, "rep:")) { auto it = g.reputation.find(key.substr(4)); got = std::to_string(it == g.reputation.end() ? 0 : it->second); }
             else if (startsWith(key, "queststatus:")) { got = ""; for (auto& q : g.quests) if (q.id == key.substr(12)) got = g.questStatus(q); }
             else if (startsWith(key, "price:")) { const ItemDef* d = g.gd->item(key.substr(6)); got = d ? std::to_string(g.itemBuyPrice(*d)) : "-1"; }

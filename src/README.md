@@ -28,6 +28,46 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.2 companions, towns and crafting that matter
+
+* **Companions remember what you do - and only that.** Approval no longer creeps up from small talk. It moves when
+  a companion sees you make a real choice (sparing the goblins, the converts' fate, the Sunscar well, selling
+  Rusty's coil...), when you take up or turn down their own quest, and when you give them something they value
+  (each companion says what they'd like; every gift counts once). Companions who aren't with you don't react.
+  * **Strained** (-15 or lower): they fight worse (-10 to hit, -5 evasion). At **-40 they leave**, take nothing but
+    leave their gear with you, and go back to where you met them. You can make amends there (200 gold).
+  * **Loyal**: at 30+ approval, with their own quest done, a new talk in the party menu (T) makes them Loyal:
+    +10 to hit and +5 evasion while their approval stays 10+.
+  * The Journal shows each companion's standing (Resentful, Strained, Neutral, Warm, Trusting, Loyal).
+* **Towns: a Standing page on every notice board** (Tab). It shows what your reputation does for you there and offers:
+  * **Favours** at Liked (10), Friendly (30) and Honoured (60), claimed once each - including a unique piece of gear
+    from each town (the Elder's Mantle, the Guild Signet, the Clan Fur Mantle, Bogwalker Boots, the Sunscar Veil,
+    Scrapper's Goggles, the Harvest Charm).
+  * **Civic projects**: three deliveries per town (two in Millbrook), from mill parts to rift-crystal lenses. They are
+    the way past Friendly - odd jobs from the notice board now raise standing only up to 30.
+  * **Making amends**: below Neutral, pay fines to be a stranger again (back to 0, never higher).
+  * Consequences: Disliked (-10) - nobody will hire you, the board posts no work. Hated (-50) - the town's shops
+    refuse to trade. Dropping a bounty you took costs 2 standing.
+  * Friendly and Honoured customers see extra stock in some shops (steel swords and chain mail in Hollowmere, katanas
+    and the Steelwork folio in Brasswick, a sniper rifle and power armour in Ashfall...).
+* **Crafting tiers.** Recipes now need a station skill to attempt at all (shown on the recipe), so skill is a real
+  progression: iron and leather, then steel and hardened leather, then **mithril**, then **riftsteel**.
+  * New materials and harvest nodes: mithril veins (Rimehollow, Ashwing's Mine), rift crystal outcrops (the Scar, the
+    Wreck's lower decks, the Annex), sunpetal (around Sunscar), bloodroot (Murkwater, the Drowning Marsh).
+  * **The master crafters' trials**: Smith Gorran (Hollowmere), Arcanist Morrow (Brasswick) and Junk-Dealer Vosk
+    (Ashfall) each ask for a trial piece made at skill 3, then teach the next tier (mithril; sunpetal, bloodroot,
+    phoenix tonic and the elixir; power cores, stimpaks and energy shields). Gorran has a second trial that unlocks
+    riftsteel (Smithing 5 and 6).
+  * New gear: mithril sword, spear, helm, shield and mail; riftsteel blade and plate; the hardened jerkin.
+  * Reinforcing to +3 now takes a mithril ingot (tech gear: a rift crystal), and a second enchantment a rift crystal.
+* **Balance**: shops have limited stock of potions, scrolls, grenades and oils (it comes back every 3 days), so gold
+  alone can't buy an endless supply. Several cheap recipes give less (arrows, bullets, bandages, mana potions;
+  healing potions take 3 moonleaf), the elixir and Draught of Forgetting need rare ingredients, and a few doubled
+  monster drops were trimmed (slime gel, goblin ears, rift dust). Frost lichen regrows in 3 days, like other herbs.
+* **The dev console only exists in debug builds** (`build.ps1 -Dev`, the "Debug" build in Idea Jotter). The Full,
+  No Editor and Demo builds can't open it. Its output now wraps instead of running off the screen, and `help` is
+  grouped by topic. New command: `cskill [STATION XP]`.
+
 ## 1.1.1 object types, one boot screen, clearer caves
 
 * **Object types (Editor, Objects tab)**: the list now starts with "every savepoint", "every chest", "every sign",
@@ -299,7 +339,7 @@ gamepad button per action). Defaults:
 | Overwatch (combat) | O | LS |
 | World map | M (also in the pause menu) | - |
 | Journal (quests, bounties, bestiary, stats, notes, achievements) | J | Back |
-| Dev console | ` (grave) | - |
+| Dev console (debug builds) | ` (grave) | - |
 | Quick save (on a shrine) | F5 | - |
 | Fullscreen | F11 / Alt+Enter | - |
 
@@ -317,9 +357,13 @@ Load/Save icons still work when no game is running.
   melee reach, and a roll (20% + 2 x DEX, -12% per enemy within 5 tiles, -25% against a boss; haste and
   stealth help); escaping drops 5% of your gold.
   The hit-chance readout names each modifier.
-* **Companions** comment on what happens (`banter.txt`), gain or lose **approval** through dialogue choices
-  (`approve=class:n`), and at 60+ approval each one opens a personal quest. The party tab lets you pick who
-  walks in front (**leader**).
+* **Companions** comment on what happens (`banter.txt`), gain or lose **approval** through choices they witness
+  (`approve=class:n` only counts for companions in the party), their own quest (it opens at 15 approval) and
+  one-off gifts. Strained (-15) fight worse and leave at -40 (amends at their home: `amends=class:n`); Loyal
+  (talked to at 30+ with their quest done) fight better. The party tab lets you pick who walks in front (**leader**).
+* **Town standing**: every notice board has a Standing page (Tab) with favours (`reward=` in `factions.txt`),
+  civic projects (`project=`) and amends. Bounties raise standing up to 30 only; Disliked towns post no work for
+  you, Hated towns' shops won't trade. Shops can hold stock back for friends: `item=id:stock:rep`.
 * **Time and weather**: a day is 24 minutes of walking; the HUD shows the day, time and weather. Night tints the
   map and swaps encounter tables to `<table>_night` where one exists; shops keep `hours=7-20` and their front
   door is locked while closed (inns never close; anyone already inside can always walk out); rain, storms,
@@ -353,7 +397,9 @@ Load/Save icons still work when no game is running.
 * **Crafting**: `recipes.txt`; a smith (forge), alchemist (alchemy) or tinker (workbench) in each town opens
   the crafting screen with tabs **Craft / Reinforce / Enchant / Salvage**. Each station has its own skill that
   rises as you craft; hard recipes can fail (losing half the materials) and better skill rolls **fine** and
-  **masterwork** results with extra affixes. Many recipes need a **formula** (found, bought or rewarded).
+  **masterwork** results with extra affixes. Each recipe needs a minimum station skill (`skill=`). Many recipes
+  need a **formula** (found, bought or rewarded - the master crafters' trials teach mithril, riftsteel and the
+  rare brews). Dialogue `craftxp=station:n` gives practice.
   Gold is scarcer and shops stock limited gear that restocks every few days; buy/sell work in stacks
   (Left/Right, hold to accelerate, E for max). **Loot tiers**: equipment from chests and kills can roll affixes from `affixes.txt`
   ("Keen Iron Sword of Burning"); uncommon = one affix, rare = two, with coloured names.
@@ -367,7 +413,7 @@ Load/Save icons still work when no game is running.
 * **Achievements**: `achievements.txt` (conditions over stats and flags), unlocked across all save slots,
   popped up Win98-style and listed in the desktop Achievements window. With a Steam build they are forwarded
   to Steam (see `STEAM.md`).
-* **Dev console** (`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
+* **Dev console** (`, debug builds only: `build.ps1 -Dev`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
   weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run, difficulty,
   auto (lets the AI fight for the party - handy for balance testing)...
 * **Desktop toys**: Minesweeper, Solitaire, My Computer (lore files in `assets/data/lore`), and a starfield

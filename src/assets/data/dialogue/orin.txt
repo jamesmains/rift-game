@@ -1,14 +1,15 @@
 [start]
 speaker=Orin
 text=You've the look of someone the Rift has noticed. The Abbot says I'm needed here, tending candles. I say the old shrines were built by people who walked out to meet the dark. Let me come.
-option=Join me.|join
+option=About the way we parted...|sorry|left_cleric
+option=Join me.|join|!left_cleric
 option=Who are you?|who
 option=Not now.|end
 
 [who]
 speaker=Orin
 text=Orin, cleric of Frosthold. I mend wounds, lift curses and hit things with a mace when prayer runs short. Which it does.
-option=Join me.|join
+option=Join me.|join|!left_cleric
 option=Later.|end
 
 [join]
@@ -24,12 +25,14 @@ text=Peace be on you. What do you need?
 option=How is everyone?|chat
 option=Why did a priest pick up a mace?|story|approval:cleric:15
 option=The lich is destroyed.|lich_turnin|orin_quest&lich_dead&!q_orin_done
+option=I brought you something.|gifts
+option=You've been quiet lately.|strained|!approval:cleric:-14
+option=We've come a long way, you and I.|loyal|approval:cleric:30&q_orin_done&!loyal_cleric
 option=Nothing, father.|end
 
 [chat]
 speaker=Orin
 text=Tired, bruised, alive. I have said prayers over worse.
-approve=cleric:1
 option=Good.|end
 
 [story]
@@ -41,7 +44,7 @@ option=We have bigger problems than one crypt.|refuse
 [refuse]
 speaker=Orin
 text=We do. I will try to remember that.
-approve=cleric:-3
+approve=cleric:-8
 option=...|end
 
 [accept]
@@ -61,3 +64,52 @@ xp=120
 approve=cleric:15
 quest=Orin: Let Them Rest - done
 option=Rest well, Orin.|end
+
+[gifts]
+speaker=Orin
+text=Oh? What is it? (Orin could use moonleaf for his remedies, or a greater healing potion for the sick at the abbey.)
+option=(Give 4 moonleaf)|gift_herb_moon|itemn:herb_moon:4&!gift_cleric_herb_moon
+option=(Give a greater healing potion)|gift_potion_red2|itemn:potion_red2:1&!gift_cleric_potion_red2
+option=Never mind.|end
+
+[gift_herb_moon]
+speaker=Orin
+text=Moonleaf. The sick at the abbey will thank you, and so do I.
+take=herb_moon:4
+set=gift_cleric_herb_moon
+approve=cleric:6
+option=...|end
+
+[gift_potion_red2]
+speaker=Orin
+text=This would save a life at the abbey. You are kinder than you let on.
+take=potion_red2:1
+set=gift_cleric_potion_red2
+approve=cleric:8
+option=...|end
+
+[strained]
+speaker=Orin
+text=I have prayed on it, and I cannot bless what you have been doing. Mercy is not weakness. Show me you remember that.
+option=I hear you.|end
+
+[loyal]
+speaker=Orin
+text=You brought peace to my parish's dead. I will stand between you and the dark for as long as I have breath. That is not a vow I make lightly.
+set=loyal_cleric
+notify=Orin is now Loyal: +10 to hit and +5 evasion in a fight.
+option=Glad to have you.|end
+
+[sorry]
+speaker=Orin
+text=Peace be on you. From over there. Penance is not words. Give two hundred gold to the abbey's poor, and I will walk with you again.
+option=(Pay 200 gold) You're right. Here.|amends|gold:200&room
+option=I can't afford that right now.|end
+
+[amends]
+speaker=Orin
+text=Then let us begin again. Carefully.
+gold=-200
+amends=cleric:45
+join=cleric:Orin:104,26
+option=Let's go.|end

@@ -30,10 +30,12 @@ next=spare2
 [spare2]
 speaker=$hero
 text=By the time you reach the cave mouth the tribe is already a line of torches climbing into the hills, carrying their pots and their old ones. Some of Hollowmere won't like this. Mara will want to see the crown.
+approve=cleric:5,warrior:-5,ranger:-3
 option=(Leave the cave.)|end
 
 [fight]
 speaker=Grakk, Goblin Chief
 text=Then Grakk dies with sword in hand, like a chief. GRAKK'S HUNTERS! KILL THEM!
 set=goblin_parley_refused
+approve=warrior:3,ranger:3,cleric:-3
 option=(Draw your weapon.)|end

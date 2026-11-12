@@ -13,7 +13,13 @@ void Game::loadSystems() {
     loadBoards(); loadHints();
     setResourceDefs(mergedConfig("resources.txt")); setObjectTemplates(mergedConfig("objects.txt"));   // 1.1.0: read by map loading
     banters.clear(); achievements.clear(); recipes.clear(); affixes.clear(); factions.clear();
-    for (auto& sec : mergedConfig("factions.txt")) { if (sec.name != "faction" || sec.get("id").empty()) continue; FactionDef f{sec.get("id"), sec.get("name", sec.get("id")), sec.get("text")}; bool dup = false; for (auto& o : factions) if (o.id == f.id) { o = f; dup = true; } if (!dup) factions.push_back(f); }
+    for (auto& sec : mergedConfig("factions.txt")) { if (sec.name != "faction" || sec.get("id").empty()) continue; FactionDef f{sec.get("id"), sec.get("name", sec.get("id")), sec.get("text")};
+        for (auto& kv : sec.kv) {   // reward=REP|item:n,gold:n|title    project=title|item:n,...|rep|gold|text
+            auto p = split(kv.second, '|');
+            if (kv.first == "reward" && p.size() >= 2) { FactionReward r; r.rep = atoi(p[0].c_str()); r.items = trim(p[1]); r.title = p.size() > 2 ? trim(p[2]) : ""; f.rewards.push_back(r); }
+            else if (kv.first == "project" && p.size() >= 2) { FactionProject pr; pr.title = trim(p[0]); for (auto& m : split(p[1], ',')) { auto q = split(trim(m), ':'); if (!trim(q[0]).empty()) pr.mats.push_back({trim(q[0]), q.size() > 1 ? atoi(q[1].c_str()) : 1}); }
+                pr.rep = p.size() > 2 ? atoi(p[2].c_str()) : 10; pr.gold = p.size() > 3 ? atoi(p[3].c_str()) : 0; pr.text = p.size() > 4 ? trim(p[4]) : ""; pr.xp = 40 + pr.rep * 8; f.projects.push_back(pr); }
+        } bool dup = false; for (auto& o : factions) if (o.id == f.id) { o = f; dup = true; } if (!dup) factions.push_back(f); }
     for (auto& sec : mergedConfig("banter.txt")) {
         if (sec.name != "banter") continue;
         BanterLine b; b.cls = sec.get("class"); b.when = sec.get("when", "idle"); b.map = sec.get("map"); b.flag = sec.get("flag"); b.cond = sec.get("if");
@@ -27,7 +33,7 @@ void Game::loadSystems() {
     for (auto& sec : mergedConfig("recipes.txt")) {
         if (sec.name != "recipe") continue;
         Recipe r; r.id = sec.get("id"); r.result = sec.get("result", r.id); r.name = sec.get("name"); r.station = sec.get("station", "any"); r.count = sec.geti("count", 1); r.gold = sec.geti("gold", 0); r.level = sec.geti("level", 1);
-        r.difficulty = clampi(sec.geti("difficulty", 1), 1, 6); r.known = sec.geti("known", 1) != 0; r.reveal = sec.get("reveal"); r.category = sec.get("category");
+        r.difficulty = clampi(sec.geti("difficulty", 1), 1, 6); r.skill = clampi(sec.geti("skill", 1), 1, 6); r.known = sec.geti("known", 1) != 0; r.reveal = sec.get("reveal"); r.category = sec.get("category");
         for (auto& m : split(sec.get("materials"), ',')) { auto p = split(trim(m), ':'); if (trim(p[0]).empty()) continue; r.mats.push_back({trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1}); }
         if (r.name.empty()) { if (auto* d = gd->item(r.result)) r.name = d->name; else r.name = r.result; }
         for (auto& o : recipes) if (o.id == r.id) { o = r; r.id.clear(); break; }   // a campaign recipe with the same id replaces the base one
@@ -320,7 +326,9 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
         int y = y0; for (auto& r : rows) { UI::text(ctx, x0 + 8, y, r.first, C::Gray); UI::text(ctx, x0 + 190, y, r.second, C::White); y += 15; }
         // companions & approval
         int cx = x0 + 380; UI::text(ctx, cx, y0, "Companions", C::Gold);
-        int cy = y0 + 16; for (size_t i = 1; i < party.members.size(); i++) { auto& m = party.members[i]; int ap = approval.count(m.classId) ? approval[m.classId] : 0; UI::text(ctx, cx, cy, m.name, C::White); bar(ctx, cx + 90, cy + 2, 100, 8, clampi(ap + 50, 0, 100), 100, ap >= 0 ? RGB(80, 200, 100) : RGB(200, 80, 60)); UI::text(ctx, cx + 196, cy, fmt("%+d", ap), ap >= 0 ? C::Green : C::Red); cy += 16; }
+        int cy = y0 + 16; for (size_t i = 1; i < party.members.size(); i++) { auto& m = party.members[i]; int ap = approval.count(m.classId) ? approval[m.classId] : 0; UI::text(ctx, cx, cy, m.name, C::White); bar(ctx, cx + 90, cy + 2, 60, 8, clampi(ap + 50, 0, 100), 100, ap >= 0 ? RGB(80, 200, 100) : RGB(200, 80, 60));
+            bool loyal = companionLoyal(m.classId); UI::text(ctx, cx + 156, cy, fmt("%s %+d", loyal ? "Loyal" : approvalTier(ap), ap), loyal ? C::Cyan : ap <= -15 ? C::Red : ap >= 10 ? C::Green : C::LtGray); cy += 16; }
+        if (party.members.size() > 1) { UI::text(ctx, cx, cy, "Loyal +10 hit. Strained (-15) -10 hit; -40 leaves.", C::DkGray); cy += 14; }
         if (party.members.size() < 2) { UI::text(ctx, cx, cy, "none yet", C::Gray); cy += 16; }
         // reputation with towns and groups (only the ones you have dealt with, plus any the campaign lists)
         cy += 10; UI::text(ctx, cx, cy, "Reputation", C::Gold); cy += 16; std::vector<std::string> ids; for (auto& r : reputation) ids.push_back(r.first);

@@ -1,14 +1,15 @@
 [start]
 speaker=Bram
 text=$hero! Tell me the elder's finally sending someone after those goblins. Tell me it's you.
-option=It's me. Want to come?|join|q_main>=1
+option=About the way we parted...|sorry|left_warrior
+option=It's me. Want to come?|join|q_main>=1&!left_warrior
 option=Not yet.|end
 option=Who are you again?|who
 
 [who]
 speaker=Bram
 text=Bram. Blacksmith's cousin, former Brasswick militia, current drinker. I swing a sword better than I hold a job.
-option=Want to come with me?|join|q_main>=1
+option=Want to come with me?|join|q_main>=1&!left_warrior
 option=Later.|end
 
 [join]
@@ -24,12 +25,14 @@ text=Boss. Need something?
 option=How are you holding up?|chat
 option=You said you were militia. What happened?|story|approval:warrior:15
 option=About that shield...|shield_turnin|bram_quest&bandit_leader_dead&!q_bram_done
+option=I brought you something.|gifts
+option=You've been quiet lately.|strained|!approval:warrior:-14
+option=We've come a long way, you and I.|loyal|approval:warrior:30&q_bram_done&!loyal_warrior
 option=Nothing. Carry on.|end
 
 [chat]
 speaker=Bram
 text=Fed, armed and nobody's bleeding. Better than most days I had in Brasswick.
-approve=warrior:1
 option=Good.|end
 
 [story]
@@ -41,7 +44,7 @@ option=That's a lot of bandits.|coward
 [coward]
 speaker=Bram
 text=Yeah. It is.
-approve=warrior:-3
+approve=warrior:-8
 option=...|end
 
 [accept]
@@ -61,3 +64,52 @@ xp=120
 approve=warrior:15
 quest=Bram: The Captain's Shield - done
 option=I'll carry it well.|end
+
+[gifts]
+speaker=Bram
+text=Oh? What is it? (Bram would appreciate Ashfall firewater, or good steel for his blade.)
+option=(Give the Ashfall firewater)|gift_firewater|itemn:firewater:1&!gift_warrior_firewater
+option=(Give 2 steel ingots)|gift_steel_ingot|itemn:steel_ingot:2&!gift_warrior_steel_ingot
+option=Never mind.|end
+
+[gift_firewater]
+speaker=Bram
+text=Ashfall firewater? Boss, you shouldn't have. ...I'm keeping the bottle.
+take=firewater:1
+set=gift_warrior_firewater
+approve=warrior:6
+option=...|end
+
+[gift_steel_ingot]
+speaker=Bram
+text=Brasswick steel. I can put a real edge on this old blade now. Thanks, boss.
+take=steel_ingot:2
+set=gift_warrior_steel_ingot
+approve=warrior:8
+option=...|end
+
+[strained]
+speaker=Bram
+text=You want to know what's wrong? I joined to protect people, not to watch you sell them out. Sedge taught me there are lines you don't cross. Show me you know where they are.
+option=I hear you.|end
+
+[loyal]
+speaker=Bram
+text=Three years I carried that shield in my head. You helped me put it down. Wherever this ends, boss, I'm at your shoulder. Count on it.
+set=loyal_warrior
+notify=Bram is now Loyal: +10 to hit and +5 evasion in a fight.
+option=Glad to have you.|end
+
+[sorry]
+speaker=Bram
+text=Boss. ...Or not boss, now. I said what I had to say. Words are cheap. Pay for the trouble you caused - two hundred gold to the families you let down - and I'll walk with you again.
+option=(Pay 200 gold) You're right. Here.|amends|gold:200&room
+option=I can't afford that right now.|end
+
+[amends]
+speaker=Bram
+text=All right. All right. Don't make me regret it twice.
+gold=-200
+amends=warrior:45
+join=warrior:Bram:105,22
+option=Let's go.|end

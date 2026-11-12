@@ -38,7 +38,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At 1.1.1 boot_and_setup, tutorial, sprites_1010,
+  (outdir must exist; see `src\tests\README.md`). At 1.1.2 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min) and the editor_* tests pass.
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
@@ -123,6 +123,30 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   `dlgOptArmed` itself. The skip press never picks an answer.
 - Desktop icons ignore the pointer over a window or the taskbar (`hoverIcon` in `Desktop::update`).
 - Gotcha: a hung `cl.exe` from an earlier build held `game.h` open (writes failed with EPERM) until it was ended.
+
+## 1.1.2 standing and crafting tiers (standing.cpp)
+- Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
+  (no decay, no chat grind - the +1 "chat" approval was removed).
+- Companions: `approve=` only applies to companions in the party (`changeApproval`); `amends=CLS:N` for absent ones.
+  Strained <= -15 (`Character::bond` -1: -10 accuracy, -5 evasion), leaves at -40 (`checkCompanionMoods` in
+  updateExplore -> `companionLeaves`: gear to the pack, `joined_` cleared, `left_CLS` set, NPC unhidden via
+  extra `home_CLS` = its hidenpc key). Loyal = flag `loyal_CLS` and approval >= 10 (bond +1). `syncBonds()` runs
+  at startCombat, load, join and after set/clear. Each companion dialogue has [gifts] (once each, `gift_CLS_ITEM`),
+  [strained], [loyal], [sorry]/[amends] (200 gold, cond `room` = party has space). Choice reactions were added
+  to converts, goblin_parley (spare2), raider_kesh, junk_vosk.
+- Towns: factions.txt `reward=REP|items|title` and `project=title|mats|rep|gold|text` (FactionDef). Board has two
+  pages (Tab/PgUp/PgDn, `boardPage`): notices and Standing (amends / current project / favours). State in extra:
+  `favour_TOWN_i`, `project_TOWN` (count). Bounty rep only up to 30; dropping a taken notice -2; Disliked (-10)
+  hides offers; Hated (-50) `shopRefuses`. Shop `item=id:stock:rep` hides stock below rep.
+- Crafting: `Recipe::skill` (recipes.txt `skill=`, gate in `canCraft`; diff 3/4/5 got skill 2/3/4). `addCraftXP` +
+  dialogue `craftxp=station:n`. Tiers: mithril (formula_mithril from Gorran's trial 1, `q_smith`), riftsteel
+  (formula_riftsteel, trial 2 = master_hilt), Morrow's herbal (`q_herbal`), Vosk's blueprints (`q_tinker`).
+  New nodes in resources.txt (mithril_ore, rift_crystal, sunpetal, bloodroot) placed by hand on troll_cave,
+  old_mine, rift_core, ship, lab, sunscar, murkwater, marsh (no styles= so generated dungeons draw as before).
+  Reinforce +3 = steel + mithril ingot (tech: + rift crystal); 2nd enchant needs a rift crystal.
+- New item icons reuse unused cells picked by eye (no tiles\ folder); some gear shares pictures with older items.
+- Test: `tests/standing_1_1_2.txt` (leave/amends/gift/loyal, board standing, shop refusal, skill gate, trial).
+  Headless `expect` knows `approval:CLS` and `cskill:STATION`.
 
 ## Where things live
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,

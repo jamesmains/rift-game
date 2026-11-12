@@ -245,3 +245,13 @@ x=6
 y=25
 flag=mine_music_box
 items=music_box:1
+
+[gather]
+x=4
+y=9
+node=mithril_ore
+
+[gather]
+x=31
+y=17
+node=mithril_ore

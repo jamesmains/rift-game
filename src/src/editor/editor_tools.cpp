@@ -100,7 +100,8 @@ std::set<std::string> Editor::knownFlags() {
     // the open dialogue file as it is right now (the index may predate the last keystrokes)
     if (!te.path.empty()) for (auto& l0 : te.lines) { std::string l = trim(l0); size_t eq = l.find('='); if (eq == std::string::npos) continue; std::string k = trim(l.substr(0, eq)), v = trim(l.substr(eq + 1));
         if (k == "set" || k == "clear") { for (auto& f : split(v, ',')) { std::string n = trim(split(trim(f), '=')[0]); if (!n.empty()) flags.insert(n); } } else if (k == "flag" || k == "inc") flags.insert(v); }
-    for (auto& c : gd->classes) flags.insert("joined_" + c.first);
+    for (auto& c : gd->classes) { flags.insert("joined_" + c.first); flags.insert("left_" + c.first); }   // left_: a companion who walked out (1.1.2)
+    flags.insert("room");   // condition: a free place in the party
     flags.insert("game_won"); flags.insert("reinforced3");
     return flags;
 }
@@ -154,6 +155,8 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
         else if (k == "dialogue") { curClosed = true; if (std::find(dlgFiles.begin(), dlgFiles.end(), v) == dlgFiles.end() && v != id) err(ln, "dialogue= refers to missing file '" + v + "'"); }
         else if (k == "hidenpc" || k == "shownpc") { if (v.empty()) err(ln, k + "= needs an npc id"); }
         else if (k == "rep") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2 || atoi(p[1].c_str()) == 0) err(ln, "rep needs faction:amount (amount not zero)"); else if (!knownFaction(trim(p[0]))) warn(ln, "rep= faction '" + trim(p[0]) + "' is not in factions.txt or a board id"); } }
+        else if (k == "amends") { auto p = split(v, ':'); if (p.size() < 2 || !gd->cls(trim(p[0]))) err(ln, "amends needs class:amount with a known class"); }
+        else if (k == "craftxp") { auto p = split(v, ':'); std::string st = trim(p[0]); if (p.size() < 2 || (st != "forge" && st != "alchemy" && st != "workbench" && st != "field")) err(ln, "craftxp needs forge|alchemy|workbench|field:amount"); }
         else if (k == "approve") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2) err(ln, "approve needs class:amount"); else if (trim(p[0]) != "all" && !gd->cls(trim(p[0]))) err(ln, "approve= uses unknown class '" + trim(p[0]) + "'"); } }
         else if (k == "craft") { curClosed = true; if (v != "forge" && v != "alchemy" && v != "workbench" && v != "any" && v != "1") warn(ln, "craft= should be forge, alchemy, workbench or any"); }
         else if (k == "board") { curClosed = true; }

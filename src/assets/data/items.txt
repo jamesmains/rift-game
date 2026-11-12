@@ -1969,3 +1969,305 @@ bonus=wis:2
 res=poison:15
 value=220
 desc=A tiny lantern of green glass on a cord. The keepers of the Drowned say it lights the way back.
+
+# ================= 1.1.2 CRAFTING TIERS =================
+# Tier 1 iron / tanned leather / moonleaf / scrap - tier 2 steel / hardened leather / sunpetal / circuits -
+# tier 3 mithril / bloodroot / power cores (taught by the master crafters' trials) - tier 4 riftsteel / rift crystal.
+
+[item]
+id=mithril_ore
+name=Mithril Ore
+type=material
+tile=57,12
+value=50
+desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Rimehollow and Ashwing's Mine. Smelting it takes Smithing 4 and Gorran's know-how.
+
+[item]
+id=mithril_ingot
+name=Mithril Ingot
+type=material
+tile=8,46
+value=180
+desc=Half the weight of steel and twice as stubborn. The heart of the best gear a smith can make, and what it takes to reinforce anything to +3.
+
+[item]
+id=rift_crystal
+name=Rift Crystal
+type=material
+tile=1,22
+value=120
+desc=A shard of the sky that fell. It hums against a pickaxe. Found where the Rift touched hardest: the Scar, the Wreck, the Annex. Riftsteel, a second enchantment, power cores and the strongest brews all need one.
+
+[item]
+id=sunpetal
+name=Sunpetal
+type=material
+tile=7,24
+value=35
+desc=A tough gold flower that only opens in the desert sun around Sunscar. Alchemists make stoneskin draughts from it.
+
+[item]
+id=bloodroot
+name=Bloodroot
+type=material
+tile=5,24
+value=45
+desc=A red, knotted root from the drowned bogs of Murkwater and the Drowning Marsh. It mends flesh - and, in a master's hands, more than that.
+
+[item]
+id=hardened_leather
+name=Hardened Leather
+type=material
+tile=7,23
+value=45
+desc=Tanned leather boiled in slime gel and pressed until it turns aside a knife. Made at a workbench (Tinkering 2).
+
+[item]
+id=tempered_blank
+name=Tempered Blade Blank
+type=material
+tile=5,23
+value=150
+desc=A steel blank folded and quenched just right. Smith Gorran in Hollowmere asked for one made by your own hand.
+
+[item]
+id=master_hilt
+name=Masterwork Hilt
+type=material
+tile=31,6
+value=400
+desc=Mithril wire on a steel core, set with a polished gem. Only a smith with real skill could make this. Gorran wants to see it.
+
+[item]
+id=distilled_essence
+name=Distilled Essence
+type=material
+tile=3,21
+value=150
+desc=Three times distilled, clear as glass and smelling of thunder. Arcanist Morrow in Brasswick asked for a flask of it.
+
+[item]
+id=calibrated_servo
+name=Calibrated Servo
+type=material
+tile=55,16
+value=150
+desc=A servo rebuilt from salvage and tuned until it purrs. Junk-Dealer Vosk in Ashfall wanted to see if you could make one.
+
+[item]
+id=formula_mithril
+category=Formulas
+name=Gorran's Notes: Mithril
+type=consumable
+tile=26,14
+effect=learn:smelt_mithril,mithril_sword,mithril_spear,mithril_helm,mithril_shield,mithril_mail,master_hilt
+value=500
+desc=Read it (Use) to learn to smelt mithril and forge mithril swords, spears, helms, shields and mail (Smithing 4).
+
+[item]
+id=formula_riftsteel
+category=Formulas
+name=Gorran's Last Lesson: Riftsteel
+type=consumable
+tile=26,14
+effect=learn:riftsteel_blade,riftsteel_plate
+value=900
+desc=Read it (Use) to learn to fold rift crystal into mithril: the riftsteel blade (Smithing 5) and riftsteel plate (Smithing 6).
+
+[item]
+id=formula_herbal
+category=Formulas
+name=Morrow's Herbal
+type=consumable
+tile=27,14
+effect=learn:sun_healing,bloodroot_regen,phoenix_brew,elixir_brew
+value=500
+desc=Read it (Use) to learn sunpetal healing draughts, bloodroot regeneration, phoenix tonic and the true elixir.
+
+[item]
+id=formula_rifttech
+category=Formulas
+name=Vosk's Blueprints
+type=consumable
+tile=76,19
+effect=learn:power_core_craft,stimpak_craft,energy_shield_craft
+value=500
+desc=Read it (Use) to learn to build power cores, stimpaks and energy shields.
+
+[item]
+id=hardened_jerkin
+name=Hardened Jerkin
+type=armor
+tile=8,27
+def=5
+evasion=4
+value=320
+salvage=hardened_leather:1
+desc=Boiled-leather plates over a padded coat. Light enough to run in.
+
+[item]
+id=mithril_sword
+name=Mithril Sword
+type=weapon
+tile=28,6
+dmg=11-18
+ap=4
+stat=str
+accuracy=10
+value=950
+salvage=mithril_ingot:1
+desc=Light as a branch, keen as winter. It finds gaps in armour by itself.
+
+[item]
+id=mithril_spear
+name=Mithril Spear
+type=weapon
+tile=36,8
+dmg=10-17
+ap=4
+range=2
+stat=str
+accuracy=5
+value=900
+salvage=mithril_ingot:1
+desc=A long pale blade on an ash shaft. Reaches over a friend's shoulder.
+
+[item]
+id=mithril_helm
+name=Mithril Helm
+type=helm
+tile=41,12
+def=4
+value=650
+salvage=mithril_ingot:1
+desc=A close helm that weighs no more than a cap.
+
+[item]
+id=mithril_shield
+name=Mithril Shield
+type=offhand
+tile=27,12
+def=7
+res=magic:10
+value=1000
+salvage=mithril_ingot:1
+desc=Spells skid off it like rain off oilcloth.
+
+[item]
+id=mithril_mail
+name=Mithril Mail
+type=armor
+tile=30,11
+def=9
+res=cold:10
+value=1500
+salvage=mithril_ingot:2
+desc=Fine rings of pale metal. All the protection of plate, none of the clatter - no penalty to evasion.
+
+[item]
+id=riftsteel_blade
+name=Riftsteel Blade
+type=weapon
+tile=40,6
+dmg=16-26
+dmgtype=magic
+ap=4
+stat=str
+accuracy=10
+crit=8
+value=2600
+salvage=mithril_ingot:1,rift_crystal:1
+desc=Mithril folded around a sliver of the sky. It cuts the things that shouldn't be.
+
+[item]
+id=riftsteel_plate
+name=Riftsteel Plate
+type=armor
+tile=31,11
+def=14
+evasion=-2
+res=magic:20,fire:10,cold:10
+bonus=con:2
+value=3800
+salvage=mithril_ingot:2,rift_crystal:1
+desc=The best armour anyone in Aldmoor can make, and only a master smith can make it.
+
+# ================= 1.1.2 TOWN FAVOURS (Honoured) =================
+
+[item]
+id=elders_mantle
+name=Elder's Mantle
+type=armor
+tile=9,27
+def=5
+evasion=6
+res=magic:15
+bonus=wis:2
+value=1400
+desc=Hollowmere's elders gave it to the one who stood by the village when nobody else did.
+
+[item]
+id=guild_signet
+name=Guild Signet
+type=accessory
+tile=12,44
+bonus=cha:2,int:1,dex:1
+hp=10
+value=1300
+desc=The brass seal of Brasswick's merchant guilds. Doors open; prices soften.
+
+[item]
+id=clan_mantle
+name=Clan Fur Mantle
+type=armor
+tile=10,27
+def=6
+evasion=2
+res=cold:40
+bonus=con:2
+value=1400
+desc=Frost-wolf fur in the colours of the northern clans. Only the clans' friends wear it.
+
+[item]
+id=bogwalker_boots
+name=Bogwalker Boots
+type=boots
+tile=6,29
+def=2
+move=1
+res=poison:40
+value=1100
+desc=Murkwater stilt-folk make them from eel leather. Swamps stop being a problem.
+
+[item]
+id=sunscar_veil
+name=Sunscar Veil
+type=helm
+tile=4,30
+def=2
+evasion=4
+res=fire:35
+value=1100
+desc=A desert rider's veil, given to friends of the truce town. The sun and the dragon's breath both slide off it.
+
+[item]
+id=scrapper_goggles
+name=Scrapper's Goggles
+type=helm
+tile=5,30
+tech=1
+def=3
+res=shock:30
+bonus=dex:2,int:1
+value=1200
+desc=Ashfall scavengers only give their goggles to someone they'd trust in the dark.
+
+[item]
+id=harvest_charm
+name=Harvest Charm
+type=accessory
+tile=13,44
+hp=20
+bonus=con:1
+value=800
+desc=A corn-doll on a cord. Millbrook's farmers swear by it.

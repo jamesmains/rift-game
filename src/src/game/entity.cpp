@@ -62,6 +62,7 @@ int Character::evasion(const GameData& gd) const {
     int v = baseEvasion + stat(ST_DEX, gd);
     for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) v += it->evasion;
     if (hasEffect("stun") || hasEffect("freeze")) v -= 15;
+    v += bond * 5;
     return v;
 }
 int Character::resist(int dt, const GameData& gd) const {
@@ -74,6 +75,7 @@ int Character::accuracy(const GameData& gd) const {
     if (auto* w = weapon(gd)) v += w->accuracy;
     if (hasEffect("aim")) v += 25;
     if (hasEffect("blind")) v -= 30;
+    v += bond * 10;
     return v;
 }
 const ItemDef* Character::weapon(const GameData& gd) const {

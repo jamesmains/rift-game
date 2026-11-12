@@ -2,15 +2,17 @@
 #   .\run.ps1              full game with the Editor (build\game)
 #   .\run.ps1 -NoEditor    the game without the Editor (build\game-noeditor)
 #   .\run.ps1 -Demo        the demo (build\game-demo)
+#   .\run.ps1 -Dev         debug build with the dev console (~) (build\game-dev)
 # Fresh runs: when Idea Jotter sets IDEAJOTTER_RUN_DATA (a new empty folder per run), the game gets --saves
 # "$env:IDEAJOTTER_RUN_DATA\saves", so saves, settings and the desktop layout start empty. Unset = saves\ next to the exe.
-param([switch]$NoEditor, [switch]$Demo)
+param([switch]$NoEditor, [switch]$Demo, [switch]$Dev)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 $dir = "build\game"; $buildArgs = @{}
 if ($NoEditor) { $dir = "build\game-noeditor"; $buildArgs = @{ NoEditor = $true } }
 if ($Demo)     { $dir = "build\game-demo";     $buildArgs = @{ Demo = $true } }
+if ($Dev)      { $dir = "build\game-dev";      $buildArgs = @{ Dev = $true } }
 $exe = "$dir\Triffall.exe"
 
 $newest = Get-ChildItem "src\src", "src\assets", "src\CMakeLists.txt", "build.ps1" -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1

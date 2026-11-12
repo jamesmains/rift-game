@@ -175,3 +175,8 @@ node=circuit
 x=34
 y=12
 node=circuit
+
+[gather]
+x=26
+y=5
+node=rift_crystal

@@ -14,6 +14,14 @@
 #include "world.h"
 #include "ui.h"
 
+// The dev console (~) only exists in debug builds: CMake -DTRIFFALL_DEV_CONSOLE=ON (build.ps1 -Dev), a Debug configuration,
+// and the headless test runner. Release builds (Full, No Editor, Demo) never open it.
+#if defined(TRIFFALL_DEV_CONSOLE)
+static constexpr bool kDevConsole = true;
+#else
+static constexpr bool kDevConsole = false;
+#endif
+
 // objective=STAGE | DONE-CONDITION | TEXT : a checklist line under stage STAGE (1-based, 0 = every stage); TEXT may hold
 // counters {itemn:id} {kills:creature} {flag:name} {gold}
 struct QuestObjective { int stage = 0; std::string cond, text; };
@@ -92,12 +100,16 @@ enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, G
 struct GameStats { int kills = 0, fightsWon = 0, fightsFled = 0, goldEarned = 0, goldSpent = 0, chests = 0, crits = 0, damageDealt = 0, damageTaken = 0, spellsCast = 0, crafted = 0, bounties = 0, travels = 0, knockouts = 0, questsDone = 0; };
 struct AchievementDef { std::string id, name, desc, cond; Tile tile; bool hidden = false; };
 struct BanterLine { std::string cls, when, map, text, flag, cond; };
-struct Recipe { std::string id, name, result, station, category, reveal; int count = 1, gold = 0, level = 1, difficulty = 1; bool known = true; std::vector<std::pair<std::string, int>> mats; };
+struct Recipe { std::string id, name, result, station, category, reveal; int count = 1, gold = 0, level = 1, difficulty = 1, skill = 1; bool known = true; std::vector<std::pair<std::string, int>> mats; };
 struct AffixDef { std::string id, name, dmgType; bool prefix = true; int tier = 1, valuePct = 160; std::vector<std::string> types; std::vector<std::pair<std::string, int>> mods; };
 struct Bounty { std::string id, kind, target, targetName, where, whereName, town, title, text; int need = 1, have = 0, reward = 0, xp = 0, posted = 0; bool done = false, taken = false; };
 // bounties.txt: [board] = a notice board and what it posts; [bounty] = a hand-written notice a board always offers
 struct HintDef { std::string cond, title, text; };   // hints.txt: tutorial guidance shown while its condition holds (guide.cpp)
-struct FactionDef { std::string id, name, text; };   // a town or group the party has a reputation with (factions.txt)
+// factions.txt (1.1.2): reward= favours claimed once at a notice board when standing reaches rep; project= civic works,
+// delivered one after another at the board for reputation (the only way past Friendly besides story choices)
+struct FactionReward { int rep = 10; std::string items, title; };
+struct FactionProject { std::string title, text; std::vector<std::pair<std::string, int>> mats; int rep = 10, gold = 0, xp = 0; };
+struct FactionDef { std::string id, name, text; std::vector<FactionReward> rewards; std::vector<FactionProject> projects; };   // a town or group the party has a reputation with
 struct BoardDef { std::string id, name, map, location; int offers = 3, reward = 100, rep = 3; std::vector<std::string> kinds{"kill", "fetch", "deliver"}, kill, creatures, fetch, deliver; bool fromFile = false; };
 struct FixedBountyDef { std::string id, board, kind, target, where, title, text, require; int need = 1, reward = 30, xp = 20; bool repeat = false; };
 struct WorldLocation { std::string id, name, mapId, kind; int x = 0, y = 0, tx = 0, ty = 0, reveal = 0; };   // reveal: entering its map uncovers the overworld this far around it
@@ -194,6 +206,13 @@ public:
     GameStats stats;
     std::map<std::string, int> bestiary;          // creature id -> kills (present = seen)
     std::map<std::string, int> approval;          // companion class id -> approval
+    // 1.1.2 companions (standing.cpp): approval only moves through choices they witness, gifts and their own quests.
+    // Strained (<= -15) fight worse, at -40 they leave and go home; Loyal (talked to at 30+, own quest done) fight better.
+    static const char* approvalTier(int a); int approvalOf(const std::string& cls) const; bool companionLoyal(const std::string& cls) const;
+    void changeApproval(const std::string& cls, int d); void syncBonds(); void checkCompanionMoods(); void companionLeaves(size_t idx);
+    // towns: standing page on the notice board (favours, civic projects, amends); Disliked = no work, Hated = no trade
+    int repOf(const std::string& id) const; const FactionDef* faction(const std::string& id) const; bool shopRefuses(const std::string& shop);
+    int amendsCost(const std::string& id) const; int projectsDone(const std::string& id) const;
     std::vector<HintDef> hintDefs; int hintShown = -1; float hintFade = 0;
     void loadHints(); int currentHint() const; void updateHints(float dt); int drawHint(Canvas& cv, int y); std::string keyText(const std::string& raw) const;
     std::string desktopAction;                   // run on the desktop when the game hands back to it (finishtutorial: "campaign:triffall")
@@ -211,7 +230,7 @@ public:
     std::map<std::string, std::string> dynItems;  // generated item id -> "base|affix,affix"
     std::vector<Bounty> bounties;      // taken by the party
     std::vector<Bounty> bountyOffers;  // posted on boards, not taken yet
-    std::string boardTown; int bountySel = 0;
+    std::string boardTown; int bountySel = 0, boardPage = 0, standSel = 0;   // boardPage 0 = notices, 1 = town standing
     std::vector<BoardDef> boards; std::vector<FixedBountyDef> fixedBounties;
     void loadBoards(); const BoardDef* board(const std::string& id) const; std::string boardName(const std::string& id) const;
     std::vector<WorldLocation> locations;
@@ -251,6 +270,7 @@ public:
     // crafting depth: station skills, recipe discovery, success/quality rolls, upgrades (+1..+3), enchanting, salvage
     int craftTab = 0, craftQty = 1;                                  // 0 craft, 1 upgrade, 2 enchant, 3 salvage
     int craftSkill(const std::string& station) const;                // 1..6
+    void addCraftXP(const std::string& station, int xp);             // station: forge|alchemy|workbench|field; announces a new level
     int craftXP(const std::string& station) const;
     int craftStat(const std::string& station) const;                 // best party stat for the station
     int craftSuccess(const std::string& station, int difficulty) const;
@@ -274,6 +294,7 @@ public:
     void runConsole(const std::string& cmd); void updateConsole(InputState& in, float dt); void drawConsole(Canvas& cv, InputState& in);
     // bounties (bounty.cpp)
     void openBoard(const std::string& town); void updateBounty(InputState& in, float dt); void drawBounty(Canvas& cv, InputState& in);
+    void updateStanding(InputState& in); void drawStanding(Canvas& cv, InputState& in);
     void generateBounties(const std::string& town); void bountyEvent(const std::string& kind, const std::string& id, int n = 1);
 
     // ---- runtime ----

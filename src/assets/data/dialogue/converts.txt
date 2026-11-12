@@ -18,6 +18,7 @@ set=converts_spared
 rep=ashfall:15,brasswick:-5
 xp=150
 quest=The Open Sky - Vell's followers stay in Ashfall
+approve=cleric:5,scavenger:5,warrior:-5
 option=Don't make me regret it.|end
 
 [judge]
@@ -28,4 +29,5 @@ rep=brasswick:10,ashfall:-10
 gold=150
 xp=150
 quest=The Open Sky - Vell's followers go to Brasswick's court
+approve=warrior:5,scavenger:-5,cleric:-3
 option=Go, then.|end

@@ -101,6 +101,14 @@ void Game::restoreDynItems() {
 // ---------------- skills ----------------
 static const int kSkillXP[6] = {0, 40, 120, 250, 450, 700};
 int Game::craftXP(const std::string& station) const { auto it = extra.find("cskill_" + station); return it == extra.end() ? 0 : atoi(it->second.c_str()); }
+void Game::addCraftXP(const std::string& station0, int xp) {
+    std::string st = station0 == "any" ? "field" : station0; if (xp == 0) return;
+    std::string station = st == "field" ? "any" : st;
+    int before = craftSkill(station);
+    extra["cskill_" + st] = std::to_string(std::max(0, craftXP(st) + xp));
+    int now = craftSkill(station);
+    if (now > before) { notify(fmt("%s skill rises to %d!", st == "field" ? "Field craft" : st == "forge" ? "Smithing" : st == "alchemy" ? "Alchemy" : "Tinkering", now)); gAudio.play("levelup"); }
+}
 int Game::craftSkill(const std::string& station) const { int xp = craftXP(station == "any" ? "field" : station), lv = 1; for (int i = 0; i < 6; i++) if (xp >= kSkillXP[i]) lv = i + 1; return lv; }
 int Game::craftStat(const std::string& station) const {
     int best = 0;
@@ -141,6 +149,7 @@ static std::vector<const Recipe*> recipesFor(const Game& g, const std::string& s
 bool Game::canCraft(const Recipe& r) const {
     if (party.gold < r.gold) return false;
     int lvl = party.members.empty() ? 1 : party.members[0].level; if (lvl < r.level) return false;
+    if (craftSkill(r.station) < r.skill) return false;   // 1.1.2: harder recipes need the station's skill, not just luck
     for (auto& m : r.mats) if (party.countItem(m.first) < m.second) return false;
     return gd->item(r.result) != nullptr;
 }
@@ -196,15 +205,16 @@ std::vector<Game::CraftTarget> Game::craftTargets(int tab) const {
 std::vector<std::pair<std::string, int>> Game::upgradeCost(const ItemDef& d, int plus, int& gold) const {
     static const int g[3] = {30, 80, 160};
     gold = g[clampi(plus, 0, 2)];
-    if (d.tech) { if (plus == 0) return {{"circuit", 1}, {"scrap", 2}}; if (plus == 1) return {{"circuit", 2}, {"iron_ingot", 1}}; return {{"power_core", 1}, {"circuit", 2}}; }
+    // 1.1.2: +3 takes the top-tier material of each craft (mithril for smiths, rift crystal for tinkers)
+    if (d.tech) { if (plus == 0) return {{"circuit", 1}, {"scrap", 2}}; if (plus == 1) return {{"circuit", 2}, {"iron_ingot", 1}}; return {{"power_core", 1}, {"circuit", 2}, {"rift_crystal", 1}}; }
     if (plus == 0) return {{"iron_ingot", 1}};
     if (plus == 1) return {{"iron_ingot", 2}, {"steel_ingot", 1}};
-    return {{"steel_ingot", 2}, {"gem_rough", 1}};
+    return {{"steel_ingot", 1}, {"mithril_ingot", 1}};
 }
 std::vector<std::pair<std::string, int>> Game::enchantCost(int affixCount, int& gold) const {
     gold = affixCount == 0 ? 60 : 150;
     if (affixCount == 0) return {{"rift_dust", 1}, {"arcane_dust", 2}};
-    return {{"rift_dust", 3}, {"arcane_dust", 3}};
+    return {{"rift_dust", 2}, {"arcane_dust", 3}, {"rift_crystal", 1}};   // a second enchantment needs a rift crystal (1.1.2)
 }
 std::vector<std::pair<std::string, int>> Game::salvageYield(const ItemDef& d) const {
     std::vector<std::pair<std::string, int>> out;
@@ -343,6 +353,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
                 if (d->heal || d->mana) { UI::text(ctx, x, cy, fmt("Heals %d HP / %d MP", d->heal, d->mana), C::White); cy += 13; }
                 cy += 6; matLines(cy, r.mats, r.gold);
                 if (r.level > 1) { UI::text(ctx, x + 8, cy, fmt("hero level %d", r.level), (party.hero() && party.hero()->level >= r.level) ? C::Green : C::Red); cy += 13; }
+                if (r.skill > 1) { int have = craftSkill(r.station); UI::text(ctx, x + 8, cy, fmt("%s skill %d (you have %d)", r.station == "forge" ? "Smithing" : r.station == "alchemy" ? "Alchemy" : r.station == "workbench" ? "Tinkering" : "Field craft", r.skill, have), have >= r.skill ? C::Green : C::Red); cy += 13; }
                 int ch = craftSuccess(r.station, r.difficulty);
                 cy += 4; UI::text(ctx, x, cy, fmt("Difficulty %d  -  success %d%%", r.difficulty, ch), ch >= 100 ? C::Green : ch >= 60 ? C::Yellow : C::Red); cy += 13;
                 if (d->equippable()) { int over = craftSkill(r.station) - r.difficulty, stat = craftStat(r.station); UI::text(ctx, x, cy, fmt("Fine %d%%  Masterwork %d%%", clampi(8 + over * 10 + (stat - 10), 3, 60), clampi(over * 5 + (stat - 12), 0, 25)), C::Cyan); cy += 13; }

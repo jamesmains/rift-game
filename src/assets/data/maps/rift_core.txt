@@ -242,3 +242,13 @@ w=5
 h=5
 script=cutscene:A voice without a mouth fills the cavern:|'LITTLE KEY. LITTLE SHARDS. YOU HAVE CARRIED ME HOME.'|'I WAS UNMADE ONCE. I REMEMBER HOW IT ENDED. DO YOU?'
 flag=rc_whisper3
+
+[gather]
+x=39
+y=10
+node=rift_crystal
+
+[gather]
+x=11
+y=17
+node=rift_crystal

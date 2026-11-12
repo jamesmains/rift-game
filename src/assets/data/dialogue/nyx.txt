@@ -1,14 +1,15 @@
 [start]
 speaker=Nyx
 text=You're the one from Hollowmere going after the goblins. I've been tracking that band for a month. Their chief wears something that glows. I want to see it up close - through a bow sight, preferably.
-option=Come along, then.|join
+option=About the way we parted...|sorry|left_ranger
+option=Come along, then.|join|!left_ranger
 option=Who are you?|who
 option=Maybe later.|end
 
 [who]
 speaker=Nyx
 text=Nyx. I hunt what the farms can't. Wolves, mostly. Goblins when they pay. I don't miss and I don't talk much, which you'll come to appreciate.
-option=Come along.|join
+option=Come along.|join|!left_ranger
 option=Later.|end
 
 [join]
@@ -24,12 +25,14 @@ text=Mm?
 option=Anything out there?|chat
 option=You don't talk about where you're from.|story|approval:ranger:15
 option=I have the pelts.|pelt_turnin|nyx_quest&itemn:wolf_pelt:4&!q_nyx_done
+option=I brought you something.|gifts
+option=You've been quiet lately.|strained|!approval:ranger:-14
+option=We've come a long way, you and I.|loyal|approval:ranger:30&q_nyx_done&!loyal_ranger
 option=Nothing.|end
 
 [chat]
 speaker=Nyx
 text=Tracks. Always tracks. Most of them are ours, which is the problem with walking in a group.
-approve=ranger:1
 option=Noted.|end
 
 [story]
@@ -41,7 +44,7 @@ option=That sounds like revenge with extra steps.|refuse
 [refuse]
 speaker=Nyx
 text=Maybe. Forget I said anything.
-approve=ranger:-3
+approve=ranger:-8
 option=...|end
 
 [accept]
@@ -62,3 +65,52 @@ xp=120
 approve=ranger:15
 quest=Nyx: Four Pelts - done
 option=Thank you.|end
+
+[gifts]
+speaker=Nyx
+text=Oh? What is it? (Nyx would take bear claws as trophies, or tanned leather for a new quiver.)
+option=(Give 2 bear claws)|gift_bear_claw|itemn:bear_claw:2&!gift_ranger_bear_claw
+option=(Give 3 tanned leather)|gift_tanned_leather|itemn:tanned_leather:3&!gift_ranger_tanned_leather
+option=Never mind.|end
+
+[gift_bear_claw]
+speaker=Nyx
+text=Bear. Big one, from the size. ...Good kill.
+take=bear_claw:2
+set=gift_ranger_bear_claw
+approve=ranger:6
+option=...|end
+
+[gift_tanned_leather]
+speaker=Nyx
+text=Good hide. I'll make a quiver. Maybe two.
+take=tanned_leather:3
+set=gift_ranger_tanned_leather
+approve=ranger:6
+option=...|end
+
+[strained]
+speaker=Nyx
+text=You don't keep your word. Out here that gets people killed. I'm still deciding if it gets me killed.
+option=I hear you.|end
+
+[loyal]
+speaker=Nyx
+text=My father taught me to hunt alone. He was wrong about that. I've got your back - all the way to the end of the trail.
+set=loyal_ranger
+notify=Nyx is now Loyal: +10 to hit and +5 evasion in a fight.
+option=Glad to have you.|end
+
+[sorry]
+speaker=Nyx
+text=... Tracks don't lie. Yours went the wrong way. Two hundred gold for the hunts you cost me, and I'll follow them again.
+option=(Pay 200 gold) You're right. Here.|amends|gold:200&room
+option=I can't afford that right now.|end
+
+[amends]
+speaker=Nyx
+text=Lead. I'll watch the trees.
+gold=-200
+amends=ranger:45
+join=ranger:Nyx:117,10
+option=Let's go.|end

@@ -1,14 +1,15 @@
 [start]
 speaker=Elowen
 text=You carry Rift-touched things, don't you? I can feel them from here, like a draught under a door. I've studied the Rift my whole life and never seen it. Take me with you.
-option=Join me.|join
+option=About the way we parted...|sorry|left_mage
+option=Join me.|join|!left_mage
 option=Who are you?|who
 option=Not now.|end
 
 [who]
 speaker=Elowen
 text=Elowen, journeyman of the Gilded Circle, and bored to tears of inventory spells. I know fire, frost and the sky's own lightning. Morrow says I'm reckless. Morrow is correct.
-option=Join me.|join
+option=Join me.|join|!left_mage
 option=Later.|end
 
 [join]
@@ -24,12 +25,14 @@ text=Yes? I was in the middle of a thought.
 option=What are you working on?|chat
 option=You study the Rift. Why?|story|approval:mage:15
 option=I've put down three wisps.|wisp_turnin|elowen_quest&kills:rift_wisp:3&!q_elowen_done
+option=I brought you something.|gifts
+option=You've been quiet lately.|strained|!approval:mage:-14
+option=We've come a long way, you and I.|loyal|approval:mage:30&q_elowen_done&!loyal_mage
 option=Never mind.|end
 
 [chat]
 speaker=Elowen
 text=A way to make the light spell last longer. Walking in the dark with you people is exhausting.
-approve=mage:1
 option=Fair.|end
 
 [story]
@@ -41,7 +44,7 @@ option=Some things are better left alone.|refuse
 [refuse]
 speaker=Elowen
 text=Said every coward in history.
-approve=mage:-3
+approve=mage:-8
 option=...|end
 
 [accept]
@@ -61,3 +64,52 @@ xp=120
 approve=mage:15
 quest=Elowen: What the Rift Keeps - done
 option=I'm sorry, Elowen.|end
+
+[gifts]
+speaker=Elowen
+text=Oh? What is it? (Elowen would treasure rift dust to study, or a scroll of lightning to take apart.)
+option=(Give 2 rift dust)|gift_rift_dust|itemn:rift_dust:2&!gift_mage_rift_dust
+option=(Give the scroll of lightning)|gift_scroll_lightning|itemn:scroll_lightning:1&!gift_mage_scroll_lightning
+option=Never mind.|end
+
+[gift_rift_dust]
+speaker=Elowen
+text=Rift dust! Do you know how hard this is to get without Morrow counting every grain? Thank you!
+take=rift_dust:2
+set=gift_mage_rift_dust
+approve=mage:8
+option=...|end
+
+[gift_scroll_lightning]
+speaker=Elowen
+text=A storm scroll. I'm going to unpick every rune in it. Then I'll make a better one.
+take=scroll_lightning:1
+set=gift_mage_scroll_lightning
+approve=mage:6
+option=...|end
+
+[strained]
+speaker=Elowen
+text=You keep choosing the easy way, or the cruel one. I didn't leave the Circle to watch someone throw away everything worth knowing.
+option=I hear you.|end
+
+[loyal]
+speaker=Elowen
+text=My mother walked into the Scar alone. I won't. Whatever's out there, we find it together - and I'll burn anything that gets between us and the answer.
+set=loyal_mage
+notify=Elowen is now Loyal: +10 to hit and +5 evasion in a fight.
+option=Glad to have you.|end
+
+[sorry]
+speaker=Elowen
+text=Oh. It's you. You'll have to do better than sorry. The Circle wants two hundred gold for the books I ruined following you. Pay that and I'll come back.
+option=(Pay 200 gold) You're right. Here.|amends|gold:200&room
+option=I can't afford that right now.|end
+
+[amends]
+speaker=Elowen
+text=Fine. But I'm keeping notes this time.
+gold=-200
+amends=mage:45
+join=mage:Elowen:109,17
+option=Let's go.|end

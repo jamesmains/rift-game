@@ -164,12 +164,12 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
     mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "table"});
     mk("overworld.txt", "Overworld locations", "location", "id", {"id", "name", "x", "y", "kind", "map", "tx", "ty", "clear", "road", "require", "locked", "reveal"});
-    mk("recipes.txt", "Recipes", "recipe", "id", {"id", "name", "result", "count", "station", "materials", "gold", "level", "difficulty", "known", "reveal"});          // gens[9]
+    mk("recipes.txt", "Recipes", "recipe", "id", {"id", "name", "result", "count", "station", "materials", "gold", "level", "difficulty", "skill", "known", "reveal"});          // gens[9]
     mk("affixes.txt", "Affixes", "affix", "id", {"id", "name", "pos", "tier", "types", "mods", "dmgtype", "value"});                   // gens[10]
     mk("banter.txt", "Banter", "banter", "class", {"class", "when", "map", "if", "flag", "text"});                                    // gens[11]
     mk("achievements.txt", "Achievements", "achievement", "id", {"id", "name", "desc", "cond", "tile", "hidden"});                   // gens[12]
     mk("bounties.txt", "Notice boards & bounties", "board", "id", {"id", "name", "map", "location", "offers", "kinds", "kill", "creatures", "fetch", "deliver", "reward"});   // gens[13]
-    mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text"});                                          // gens[14]
+    mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text", "reward", "project"});                                          // gens[14]
     mk("objects.txt", "Object types & templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
     mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles"});   // gens[16] (1.1.0)
     gens[13].altSection = "bounty"; gens[13].altTemplateKeys = {"id", "board", "kind", "target", "need", "where", "reward", "xp", "title", "text", "require", "repeat"};
