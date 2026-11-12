@@ -28,6 +28,21 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.6 ambience that fits, empty new campaigns, search and filters in the Editor
+
+* **Background sounds are back, where they fit.** Every place has its own loop again: wind on the open road, voices in
+  the towns, birdsong at Millbrook and the hermit's hut, drips in the caves, a still, heavy air in the crypts, frogs in
+  the marsh, a campfire at the bandit camp, machines in the tech ruins. Rain, storms (with thunder) and snow take over
+  outdoors, and towns and woods turn to night insects after dark. No more wave-like sounds where there's no water: the
+  wind was reworked to sound like wind, and the crypt music lost the swell that sounded like surf. New loops: crypt,
+  storm, forest, fire and sea (the sea is there for campaigns with a coast).
+* **Editor: a new campaign starts empty.** Each tab now has an **Import** button that copies entries in from the base
+  game or another campaign: items, creatures, classes, quests, maps, dialogue, tile kinds, flag notes, campaign
+  settings and more. Tick what you want; things you already have are marked and replaced.
+* **Editor: search and filters.** Every list has a search box (all words must match, and in the data tabs it looks at
+  every field, in Dialogue at the text too). The data tabs also have a **Filter** button: pick a field and a value,
+  like type = weapon or faction = undead. The pickers' search works the same way.
+
 ## 1.1.5 room under the text, steady facing, no stray ambience
 
 * **Text no longer sits on the bottom edge of its box.** In the pack and shops the item type now shows under the item's
@@ -281,8 +296,8 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   a coloured hit chance, and a cover bar on the side of the target that faces you ("in half cover", "FLANKED").
 * **Music and sound**: a theme for Brasswick, Ashfall, Murkwater, Sunscar and Frosthold, crypt / swamp / Scar music,
   a night overworld, an ending theme, and ambient loops under the music (wind, cave drips, swamp, rain, town, machines,
-  night insects, the Rift) for maps that pick one (`[ambient]` in sounds.txt, `ambient=` in a map header; since 1.1.5
-  none is chosen automatically).
+  night insects, the Rift; 1.1.6: crypt, storm, forest, fire, sea) set per map (`[ambient]` in sounds.txt, `ambient=` in a
+  map header; outdoors, rain/storm/snow and night replace it).
 * **First impression**: a logo splash after the BIOS lines, and on the very first launch a Win98 setup wizard whose last
   page asks two real questions (tips, large text). The Readme starts with "How to play - the first ten minutes".
 * **Demo**: `cmake -DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`) builds the demo: no editor, the base campaign

@@ -83,7 +83,7 @@ void Editor::drawGuide(InputState& in, bool& close) {
     guideCur = clampi(guideCur, 0, (int)guide.size() - 1);
     // ---- topic list ----
     int lw = 250, lx = x + 6, ly = y + 22;
-    ui.label(lx, ly + 2, "find:"); ui.idCounter = 7000; ui.textField(lx + 34, ly, lw - 34, guideFilter, 40);
+    ui.label(lx, ly + 2, "find:"); ui.idCounter = 7000; ui.searchField(lx + 34, ly, lw - 34, guideFilter, "search the guide...", 40);
     std::vector<int> idx; std::vector<std::string> labels; std::string f = toLower(guideFilter);
     for (size_t i = 0; i < guide.size(); i++) {
         auto& t = guide[i]; bool hit = f.empty() || toLower(t.title).find(f) != std::string::npos || toLower(t.id).find(f) != std::string::npos;

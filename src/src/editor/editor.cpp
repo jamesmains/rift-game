@@ -72,9 +72,27 @@ bool GenericEditor::save() {
     if (replaceWhole && anyInherited) for (auto& s : secs) { s.inherited = false; s.origKv.clear(); }   // the whole file now lives in the campaign
     dirty = false; status = "saved"; return true;
 }
+// the values a filter can pick for one key=value: the whole value, plus each comma-separated part without its ":n" tail
+std::set<std::string> edFilterTokens(const std::string& v) {
+    std::set<std::string> out; std::string t = trim(v); if (t.empty()) return out; out.insert(t);
+    bool letters = false; for (char c : t) if (isalpha((unsigned char)c)) letters = true;
+    if (letters && (t.find(',') != std::string::npos || t.find(':') != std::string::npos)) for (auto& part : split(t, ',')) { std::string id = trim(split(part, ':')[0]); if (!id.empty()) out.insert(id); }
+    return out;
+}
 std::vector<int> GenericEditor::filtered() const {
-    std::vector<int> out; std::string f = toLower(filter);
-    for (size_t i = 0; i < secs.size(); i++) { std::string lbl = toLower(secs[i].get(listKey) + " " + secs[i].get("name")); if (f.empty() || lbl.find(f) != std::string::npos) out.push_back((int)i); }
+    // 1.1.6 (#30): the search box looks at every value of an entry, every word must match; the field filter keeps
+    // entries whose key has the value (or one item of a comma list, ids before any ":count")
+    std::vector<int> out;
+    for (size_t i = 0; i < secs.size(); i++) {
+        const EdSection& s = secs[i];
+        if (!filter.empty()) { std::string all = s.get(listKey) + " " + s.get("name") + " " + s.name; for (auto& kv : s.kv) all += " " + kv.second; if (!edMatch(all, filter)) continue; }
+        if (!filterKey.empty()) {
+            bool has = false, hit = false;
+            for (auto& kv : s.kv) if (kv.first == filterKey) { if (!trim(kv.second).empty()) has = true; if (edFilterTokens(kv.second).count(filterVal)) hit = true; }
+            if (filterVal == "\x01has" ? !has : filterVal == "\x01none" ? has : !hit) continue;
+        }
+        out.push_back((int)i);
+    }
     return out;
 }
 
@@ -227,16 +245,17 @@ void Editor::setCampaign(const std::string& id) {
         g.path = dataRoot + "/" + file;
         g.basePath.clear();   // campaigns are edited on their own, never mixed with the base game
         g.replaceWhole = file == "overworld.txt";
-        g.load(); g.sel = -1; g.scroll = 0; g.filter.clear();
+        g.load(); g.sel = -1; g.scroll = 0; g.filter.clear(); g.filterKey.clear(); g.filterVal.clear();
     }
-    mapLoaded = false; mapDirty = false; te = TextEdit(); refreshFiles(); worldNeedsGen = true; mapListScroll = 0; tab = 0;
+    mapLoaded = false; mapDirty = false; te = TextEdit(); mapFilter.clear(); dlgFilter.clear(); refreshFiles(); worldNeedsGen = true; mapListScroll = 0; tab = 0;
     loadCampaignForm(); loadPlayState(); loadFlagDocs(); flagIndexDirty = true; mapScan.clear(); flagSelName.clear(); questPreview.clear();
     // open the campaign's own starting map (its own files are listed first)
     std::string first = c->startMap; if (std::find(mapFiles.begin(), mapFiles.end(), first) == mapFiles.end() && !mapFiles.empty()) first = mapFiles[0];
     for (size_t i = 0; i < mapFiles.size(); i++) if (mapFiles[i] == first) { mapListSel = (int)i; loadMapFile(first); }
     say("Editing campaign: " + c->name + (c->dir.empty() ? " (the base game)" : " - " + c->dir));
 }
-// A new campaign folder with a starter map, an intro dialogue and a quest, ready to play with Play > or from its desktop icon.
+// 1.1.6 (owner's #29): a new campaign is an empty folder - campaign.txt with its name and nothing else. Each tab's Import
+// button copies what it needs from the base game or another campaign; the first map made becomes the start.
 void Editor::newCampaign(const std::string& name0) {
     std::string name = trim(name0); if (name.empty()) return;
     std::string id; for (char ch : toLower(name)) { if (isalnum((unsigned char)ch)) id += ch; else if (!id.empty() && id.back() != '_') id += '_'; }
@@ -244,21 +263,9 @@ void Editor::newCampaign(const std::string& name0) {
     std::string dir = assetDir + "/campaigns/" + id; std::error_code ec;
     if (fs::exists(dir)) { say("A campaign folder '" + id + "' already exists."); return; }
     fs::create_directories(dir + "/maps", ec); fs::create_directories(dir + "/dialogue", ec);
-    writeFile(dir + "/campaign.txt", "# Campaign settings - edit them in the Editor's Campaign tab. This campaign is a separate game: it only uses the\n# files in this folder (tiles, sprites and sounds are shared by every campaign).\n[campaign]\nname=" + name + "\ndesc=A new adventure.\nauthor=\nicon=0,7\nstart=" + id + "_start,6,9\ngold=50\nintro=A new story begins.\nintro=$hero sets out at first light.\ndialogue=" + id + "_intro\n");
-    // a starter library so the campaign is playable from the first minute: the base game's classes, spells, items,
-    // monsters, recipes and affixes are copied in (they are the campaign's own from now on - edit or delete freely)
-    for (const char* f : {"classes.txt", "spells.txt", "items.txt", "creatures.txt", "recipes.txt", "affixes.txt"}) {
-        std::string t; if (readFile(baseRoot + "/" + f, t)) writeFile(dir + "/" + f, "# Copied from the base game when the campaign was created - this copy belongs to the campaign.\n" + t);
-    }
-    writeFile(dir + "/shops.txt", "[shop]\nid=" + id + "_store\nitem=bread\nitem=potion_red\nitem=antidote\nitem=torch_item\nitem=arrows\nitem=iron_dagger\nitem=leather_armor\n");
-    std::string m = "[map]\nid=" + id + "_start\nname=" + name + "\nkind=town\nspawn=6,9\nbg=20,40,20\n\n[legend]\n. = floor_grass\nT = tree|tree2\nr = road\n, = flower|floor_grass\n\n[rows]\n";
-    for (int y = 0; y < 18; y++) { std::string row; for (int x = 0; x < 28; x++) row += (x == 0 || y == 0 || x == 27 || y == 17) ? (y == 9 && x == 27 ? 'r' : 'T') : (y == 9 ? 'r' : ((x * 7 + y * 3) % 11 == 0 ? ',' : '.')); m += row + "\n"; }
-    m += "\n[sign]\nx=10\ny=8\ntext=Welcome to " + name + ". Paint this map in the Editor (Maps tab), add NPCs and exits, then press Play >.\n\n[npc]\nid=guide\nname=Guide\nsprite=104,0\nx=13\ny=10\ndialogue=" + id + "_intro\n\n[savepoint]\nx=7\ny=11\n";
-    writeFile(dir + "/maps/" + id + "_start.txt", m);
-    writeFile(dir + "/dialogue/" + id + "_intro.txt", "[start]\nspeaker=Guide\ntext=Welcome, $hero. This is the first page of a new story - every word of it can be rewritten in the Editor's Dialogue tab.\noption=Where do I start?|quest|!" + id + "_started\noption=Goodbye.|end\n\n[quest]\nspeaker=Guide\ntext=Anywhere you like. Here is a quest flag to get you going.\nset=" + id + "_started\nquest=First steps\noption=Thanks.|end\n");
-    writeFile(dir + "/quests.txt", "[quest]\nid=" + id + "_main\nname=" + name + "\nstage=" + id + "_started | The story has begun. (Edit quests.txt to write the rest.)\n");
+    writeFile(dir + "/campaign.txt", "# Campaign settings - edit them in the Editor's Campaign tab. This campaign is a separate game: it only uses the\n# files in this folder (tiles, sprites and sounds are shared by every campaign). It started empty: each tab's\n# Import button copies entries in from the base game or another campaign.\n[campaign]\nname=" + name + "\ndesc=\nauthor=\nicon=0,7\ngold=0\n");
     setCampaign(id);
-    say("Created campaign '" + name + "' in " + dir + ". New games start at the yellow START tile (B over a tile moves it; the Campaign tab has the rest).");
+    say("Created the empty campaign '" + name + "'. Each tab's Import button brings in items, monsters, maps... from other campaigns; the first new map becomes the start.");
 }
 void Editor::open() {
     for (auto& g : gens) g.load();
@@ -309,16 +316,16 @@ void Editor::drawPopup(InputState& in) {
     } else if (pop == P_LIST) {
         int w = 360, h = 360, x = (W - w) / 2, y = (H - h) / 2;
         ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
-        ui.label(x + 8, y + 22, "filter:"); ui.idCounter = 6000; if (ui.focus < 6001) { ui.focus = 6001; ui.caret = (int)popValue.size(); } ui.textField(x + 50, y + 20, w - 60, popValue);
+        ui.label(x + 8, y + 22, "find:"); ui.idCounter = 6000; if (ui.focus < 6001) { ui.focus = 6001; ui.caret = (int)popValue.size(); } ui.searchField(x + 50, y + 20, w - 60, popValue, "type to search");
         std::vector<std::string> shown; std::vector<int> idx; std::string f = toLower(popValue);
-        for (size_t i = 0; i < popItems.size(); i++) if (f.empty() || toLower(popItems[i]).find(f) != std::string::npos) { shown.push_back(popItems[i]); idx.push_back((int)i); }
+        for (size_t i = 0; i < popItems.size(); i++) if (edMatch(popItems[i], popValue)) { shown.push_back(popItems[i]); idx.push_back((int)i); }
         int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == popSel) lsel = (int)i;
         if (in.pressed[K_DOWN] && !shown.empty()) { lsel = std::min((int)shown.size() - 1, lsel + 1); popSel = idx[lsel]; }
         if (in.pressed[K_UP] && !shown.empty()) { lsel = std::max(0, lsel - 1); popSel = idx[lsel]; }
         int hit = ui.listBox(x + 8, y + 42, w - 16, h - 80, shown, lsel, popScroll);
         if (hit < 0 && in.pressed[K_ENTER] && !shown.empty()) hit = lsel >= 0 ? lsel : 0;
         if (hit >= 0) { auto cb = popList; close = true; cb(idx[hit]); }
-        ui.text(x + 8, y + h - 24, "type to filter, arrows + Enter or click", DIM);
+        ui.text(x + 8, y + h - 24, fmt("%d of %d - arrows + Enter or click", (int)shown.size(), (int)popItems.size()), DIM);
         if (ui.button(x + w - 80, y + h - 28, 70, 20, "Cancel") || in.pressed[K_ESCAPE]) close = true;
     } else if (pop == P_CONFIRM) {
         int w = 360, h = 110, x = (W - w) / 2, y = (H - h) / 2;
@@ -330,6 +337,8 @@ void Editor::drawPopup(InputState& in) {
         drawGuide(in, close);
     } else if (pop == P_REPORT) {
         drawReport(in, close);
+    } else if (pop == P_IMPORT) {
+        drawImport(in, close);
     } else if (pop == P_TEXT) {
         int w = 360, h = 100, x = (W - w) / 2, y = (H - h) / 2;
         ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
@@ -371,7 +380,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
             for (size_t i = 0; i < all.size(); i++) { names.push_back(all[i].name + (all[i].id == "triffall" ? "  (base game)" : "  [" + all[i].id + "]")); if (all[i].id == campaignId) cur = (int)i; }
             names.push_back("+ New campaign...");
             openListPicker("Campaign to edit", names, cur, [this, all](int i) {
-                if (i >= (int)all.size()) { openTextPrompt("Name of the new campaign", "The Lost Lighthouse", [this](const std::string& nm) { newCampaign(nm); }); return; }
+                if (i >= (int)all.size()) { openTextPrompt("Name of the new campaign (it starts empty)", "", [this](const std::string& nm) { newCampaign(nm); }); return; }
                 bool any = mapDirty || kindsDirty || te.dirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
                 std::string id = all[i].id;
                 if (any) openConfirm("Unsaved changes will be lost. Switch campaign anyway?", [this, id]() { setCampaign(id); }); else setCampaign(id);
@@ -420,13 +429,44 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite"; }
 static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent" || k == "sparklecolor"; }
 
+// 1.1.6 (#30): Filter button - pick a field the entries have, then one of its values (counted)
+void Editor::openFieldFilter(GenericEditor& g) {
+    std::map<std::string, std::map<std::string, int>> vals; std::map<std::string, int> keyN;
+    for (auto& sc : g.secs) { std::set<std::string> seen; for (auto& kv : sc.kv) { if (kv.first == g.listKey && kv.first != "type") continue; if (seen.insert(kv.first).second) keyN[kv.first]++; for (auto& t : edFilterTokens(kv.second)) vals[kv.first][t]++; } }
+    std::vector<std::string> keys, labels;
+    for (auto& k : keyN) { if (vals[k.first].size() > 400) continue; keys.push_back(k.first); }   // free text (desc, text...) has nothing to pick from
+    std::sort(keys.begin(), keys.end(), [&](const std::string& a, const std::string& b) { return keyN[a] != keyN[b] ? keyN[a] > keyN[b] : a < b; });
+    for (auto& k : keys) labels.push_back(k + fmt("   (%d entries)", keyN[k]));
+    if (keys.empty()) { say("Nothing to filter by yet."); return; }
+    GenericEditor* gp = &g;
+    openListPicker("Filter by which field?", labels, 0, [this, gp, keys, vals](int i) {
+        std::string key = keys[i]; auto vm = vals.at(key);
+        std::vector<std::pair<int, std::string>> order; for (auto& v : vm) order.push_back({-v.second, v.first}); std::sort(order.begin(), order.end());
+        std::vector<std::string> ids{"\x01has", "\x01none"}, lab{"(any value - has " + key + ")", "(missing or empty)"};
+        for (auto& o : order) { ids.push_back(o.second); lab.push_back(o.second + fmt("   (%d)", -o.first)); }
+        openListPicker(key + " = ?", lab, 2 < (int)lab.size() ? 2 : 0, [this, gp, key, ids](int j) { gp->filterKey = key; gp->filterVal = ids[j]; gp->scroll = 0; });
+    });
+}
 void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputState& in) {
     genUndo(g, in);
     int lw = 230;
-    ui.panel(x, y, lw, h); { int own = 0; for (auto& sc : g.secs) if (!sc.inherited) own++; ui.header(x, y, lw, g.title + (own == (int)g.secs.size() ? fmt(" (%d)", own) : fmt(" (%d + %d base)", own, (int)g.secs.size() - own))); }
-    helpBtn(x + lw - 16, y + 1, tabTopic());
-    ui.textField(x + 4, y + 20, lw - 8, g.filter, 40);
     auto idx = g.filtered(); std::vector<std::string> labels;
+    ui.panel(x, y, lw, h); { int own = 0; for (auto& sc : g.secs) if (!sc.inherited) own++;
+        std::string cnt = own == (int)g.secs.size() ? fmt(" (%d)", own) : fmt(" (%d + %d base)", own, (int)g.secs.size() - own);
+        if (!g.filter.empty() || !g.filterKey.empty()) cnt = fmt(" (%d of %d)", (int)idx.size(), (int)g.secs.size());
+        listHeader(x, y, lw, g.title + cnt, IMP_GEN, (int)(&g - &gens[0])); }
+    helpBtn(x + lw - 16, y + 1, tabTopic());
+    // 1.1.6 (#30): search box (every value) + a field filter ("type = weapon"), shown as a removable line under it
+    if (ui.searchField(x + 4, y + 20, lw - 58, g.filter, "search...", 60)) g.scroll = 0;
+    if (ui.hover(x + 4, y + 20, lw - 58, 16) && !ui.typing()) ui.tip("Finds entries with every typed word in any field (id, name, type, loot...)");
+    if (ui.button(x + lw - 52, y + 20, 48, 16, "Filter", true, !g.filterKey.empty())) openFieldFilter(g);
+    if (ui.hover(x + lw - 52, y + 20, 48, 16)) ui.tip("Show only entries with a chosen value in a field (type = weapon, faction = undead...)");
+    int fy0 = 0;
+    if (!g.filterKey.empty()) {
+        fy0 = 18; std::string v = g.filterVal == "\x01has" ? "(any value)" : g.filterVal == "\x01none" ? "(missing / empty)" : g.filterVal;
+        ui.cv->fillRect(x + 4, y + 38, lw - 8, 16, PANEL2); ui.cv->setClip({x + 4, y + 38, lw - 30, 16}); ui.text(x + 8, y + 40, g.filterKey + " = " + v, ACCENT); ui.cv->resetClip();
+        if (ui.button(x + lw - 22, y + 38, 18, 16, "x")) { g.filterKey.clear(); g.filterVal.clear(); g.scroll = 0; }
+    }
     for (auto& sc : g.secs) if (sc.inherited && sc.kv != sc.origKv) { sc.inherited = false; sc.origKv.clear(); g.dirty = true; say("Copied '" + sc.get(g.listKey) + "' into the campaign - Save to keep it."); }
     bool objTab = &g == &gens[15];   // 1.1.1: Objects tab lists [type] entries ("every <type>") and templates
     for (int i : idx) { std::string l = g.secs[i].get(g.listKey); if (l.empty()) l = g.secs[i].get("name"); if (l.empty()) l = "(" + g.secs[i].name + ")"; if (g.secs[i].inherited) l += "  (base)";
@@ -434,7 +474,9 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
         else if (!g.altSection.empty()) l = (g.secs[i].name == g.altSection ? "  notice: " : "board: ") + l;
         if (&g == &gens[5] && encounterUnused(g.secs[i].get("id"))) l += "  (unused)"; labels.push_back(l); }
     int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == g.sel) lsel = (int)i;
-    int hit = ui.listBox(x + 4, y + 40, lw - 8, h - (g.altSection.empty() ? 100 : 124), labels, lsel, g.scroll);
+    int hit = ui.listBox(x + 4, y + 40 + fy0, lw - 8, h - (g.altSection.empty() ? 100 : 124) - fy0, labels, lsel, g.scroll);
+    if (g.secs.empty()) ui.text(x + 10, y + 44 + fy0, "Empty - New, or Import.", DIM);
+    else if (idx.empty()) ui.text(x + 10, y + 44 + fy0, "Nothing matches.", DIM);
     if (hit >= 0) { g.sel = idx[hit]; g.fieldScroll = 0; ui.blur(); }
     int by = y + h - 56;
     if (objTab) {   // a [type] entry: pick an object type that has none yet; it starts with every look / use key, empty = built-in
@@ -733,10 +775,10 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
 void Editor::drawKinds(InputState& in) {
     auto& kinds = editableTileKinds();
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 230;
-    ui.panel(x, y, lw, h); ui.header(x, y, lw, fmt("Tile kinds (%d)", (int)kinds.size())); helpBtn(x + lw - 16, y + 1, "tab.tiles");
-    ui.textField(x + 4, y + 20, lw - 8, kindFilter, 40);
-    std::vector<int> idx; std::vector<std::string> labels; std::string f = toLower(kindFilter);
-    for (size_t i = 0; i < kinds.size(); i++) if (f.empty() || toLower(kinds[i].name).find(f) != std::string::npos) { idx.push_back((int)i); labels.push_back(kinds[i].name); }
+    ui.panel(x, y, lw, h); listHeader(x, y, lw, fmt("Tile kinds (%d)", (int)kinds.size()), IMP_KINDS); helpBtn(x + lw - 16, y + 1, "tab.tiles");
+    ui.searchField(x + 4, y + 20, lw - 8, kindFilter, "search name, biome, water, blocked...");
+    std::vector<int> idx; std::vector<std::string> labels;
+    for (size_t i = 0; i < kinds.size(); i++) if (edMatch(kinds[i].name + " " + kinds[i].biome + (kinds[i].walkable ? " walk" : " blocked") + (kinds[i].water ? " water" : "") + (kinds[i].prop.valid() ? " prop" : ""), kindFilter)) { idx.push_back((int)i); labels.push_back(kinds[i].name); }
     int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == kindSel) lsel = (int)i;
     // draw list with previews
     int lx = x + 4, ly = y + 40, lh = h - 100, rowH = 18; int rows = lh / rowH;
@@ -816,8 +858,8 @@ void Editor::drawKinds(InputState& in) {
 
 // ---------------- maps ----------------
 std::vector<std::string> Editor::paletteList() const {
-    std::vector<std::string> out; std::string f = toLower(paletteFilter);
-    for (auto& k : allTileKinds()) if (f.empty() || toLower(k.name).find(f) != std::string::npos) out.push_back(k.name);
+    std::vector<std::string> out;
+    for (auto& k : allTileKinds()) if (edMatch(k.name + " " + k.biome, paletteFilter)) out.push_back(k.name);
     return out;
 }
 void Editor::loadMapFile(const std::string& f) {
@@ -888,13 +930,18 @@ void Editor::drawMaps(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;
     // ---- left column: maps list + tools + palette ----
     ui.panel(x, y, lw, h);
-    ui.header(x, y, lw, "Maps"); helpBtn(x + lw - 16, y + 1, "tab.maps");
-    std::vector<std::string> ml = mapFiles;
-    if (dataRoot != baseRoot) for (auto& n : ml) if (!fileExists(dataRoot + "/maps/" + n + ".txt")) n += "  (base)";   // inherited: saving copies it into the campaign
-    int hit = ui.listBox(x + 4, y + 20, lw - 8, 110, ml, mapListSel, mapListScroll);
+    listHeader(x, y, lw, fmt("Maps (%d)", (int)mapFiles.size()), IMP_MAPS); helpBtn(x + lw - 16, y + 1, "tab.maps");
+    ui.searchField(x + 4, y + 20, lw - 8, mapFilter, "search maps...");
+    std::vector<std::string> ml; std::vector<int> mIdx;
+    for (size_t i = 0; i < mapFiles.size(); i++) { std::string n = mapFiles[i]; if (!edMatch(n, mapFilter)) continue; if (dataRoot != baseRoot && !fileExists(dataRoot + "/maps/" + n + ".txt")) n += "  (base)"; ml.push_back(n); mIdx.push_back((int)i); }   // (base) = inherited: saving copies it into the campaign
+    int mSel = -1; for (size_t i = 0; i < mIdx.size(); i++) if (mIdx[i] == mapListSel) mSel = (int)i;
+    int hit = ui.listBox(x + 4, y + 38, lw - 8, 92, ml, mSel, mapListScroll);
+    if (mapFiles.empty()) ui.text(x + 10, y + 42, "No maps yet: New or Import.", DIM);
+    if (hit >= 0) { hit = mIdx[hit]; mapListSel = hit; }
     if (hit >= 0) { if (mapDirty) { std::string f = mapFiles[hit]; openConfirm("Discard unsaved changes to the current map?", [this, f]() { loadMapFile(f); }); } else loadMapFile(mapFiles[hit]); }
     int by = y + 134;
-    if (ui.button(x + 4, by, 44, 18, "New")) openTextPrompt("New map id (file name)", "new_map", [this](const std::string& nm) { em = EdMap(); em.id = nm; em.path = dataRoot + "/maps/" + nm + ".txt"; em.header = {{"id", nm}, {"name", nm}, {"kind", "town"}, {"spawn", "5,5"}, {"bg", "0,0,0"}}; em.init(30, 20, "floor_grass"); for (int i = 0; i < 30; i++) { em.at(i, 0) = "tree"; em.at(i, 19) = "tree"; } for (int j = 0; j < 20; j++) { em.at(0, j) = "tree"; em.at(29, j) = "tree"; } mapLoaded = true; mapDirty = true; resizeW = 30; resizeH = 20; objSel = -1; refreshFiles(); });
+    if (ui.button(x + 4, by, 44, 18, "New")) openTextPrompt("New map id (file name)", "new_map", [this](const std::string& nm) { em = EdMap(); em.id = nm; em.path = dataRoot + "/maps/" + nm + ".txt"; em.header = {{"id", nm}, {"name", nm}, {"kind", "town"}, {"spawn", "5,5"}, {"bg", "0,0,0"}}; em.init(30, 20, "floor_grass"); for (int i = 0; i < 30; i++) { em.at(i, 0) = "tree"; em.at(i, 19) = "tree"; } for (int j = 0; j < 20; j++) { em.at(0, j) = "tree"; em.at(29, j) = "tree"; } mapLoaded = true; mapDirty = true; resizeW = 30; resizeH = 20; objSel = -1; refreshFiles();
+        if (camp.startMap.empty() && dataRoot != baseRoot) { camp.startMap = nm; camp.startX = 5; camp.startY = 5; saveCampaignForm(); say("New games of this campaign start on " + nm + " (B over a tile or the Campaign tab changes it). Save the map to keep it."); } });
     if (ui.button(x + 52, by, 44, 18, "Save", mapLoaded && mapDirty, false, OK)) { if (em.save()) { mapDirty = false; changed = true; refreshFiles(); say("Saved " + em.path); } else say("Save failed!"); }
     if (ui.button(x + 100, by, 48, 18, "Revert", mapLoaded && mapDirty)) { std::string f = em.id; openConfirm("Revert all changes?", [this, f]() { loadMapFile(f); }); }
     if (ui.button(x + 152, by, 44, 18, "Check", mapLoaded)) {
@@ -949,7 +996,7 @@ void Editor::drawMaps(InputState& in) {
         }
     } else {
         ui.label(x + 4, ty, "brush:"); ui.text(x + 44, ty, brush, ACCENT2); if (ui.button(x + lw - 50, ty - 2, 44, 14, "edit")) jumpToKind(brush); ty += 14;
-        ui.textField(x + 4, ty, lw - 8, paletteFilter, 30); ty += 20;
+        ui.searchField(x + 4, ty, lw - 8, paletteFilter, "search tiles...", 30); ty += 20;
         auto pal = paletteList(); int psel = -1; for (size_t i = 0; i < pal.size(); i++) if (pal[i] == brush) psel = (int)i;
         int ph = y + h - ty - 4; int rowH = 16, rows = ph / rowH;
         ui.cv->fillRect(x + 4, ty, lw - 8, ph, FIELD); ui.cv->rect(x + 4, ty, lw - 8, ph, BORDER);
@@ -1343,10 +1390,15 @@ void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState&
 }
 void Editor::drawDialogue(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;
-    ui.panel(x, y, lw, h); ui.header(x, y, lw, "Dialogue files"); helpBtn(x + lw - 16, y + 1, "tab.dialogue");
-    std::vector<std::string> dl = dlgFiles;
-    if (dataRoot != baseRoot) for (auto& n : dl) if (!fileExists(dataRoot + "/dialogue/" + n + ".txt")) n += "  (base)";
-    int hit = ui.listBox(x + 4, y + 20, lw - 8, h - 80, dl, dlgSel, dlgScroll);
+    ui.panel(x, y, lw, h); listHeader(x, y, lw, fmt("Dialogue (%d)", (int)dlgFiles.size()), IMP_DLG); helpBtn(x + lw - 16, y + 1, "tab.dialogue");
+    ui.searchField(x + 4, y + 20, lw - 8, dlgFilter, "search names and text...");
+    if (dlgFilter != dlgFilterLast || dlgFilterN != dlgFiles.size()) { dlgFilterLast = dlgFilter; dlgFilterN = dlgFiles.size(); dlgFilterHits.clear(); std::string t; if (!dlgFilter.empty()) for (auto& f : dlgFiles) if (readFile(readPath("dialogue/" + f + ".txt"), t) && edMatch(f + " " + t, dlgFilter)) dlgFilterHits.insert(f); }   // searches the file names and what is said in them
+    std::vector<std::string> dl; std::vector<int> dIdx;
+    for (size_t i = 0; i < dlgFiles.size(); i++) { std::string n = dlgFiles[i]; if (!dlgFilter.empty() && !dlgFilterHits.count(n)) continue; if (dataRoot != baseRoot && !fileExists(dataRoot + "/dialogue/" + n + ".txt")) n += "  (base)"; dl.push_back(n); dIdx.push_back((int)i); }
+    int dSel = -1; for (size_t i = 0; i < dIdx.size(); i++) if (dIdx[i] == dlgSel) dSel = (int)i;
+    int hit = ui.listBox(x + 4, y + 38, lw - 8, h - 98, dl, dSel, dlgScroll);
+    if (dlgFiles.empty()) ui.text(x + 10, y + 42, "No dialogue yet: New or Import.", DIM);
+    if (hit >= 0) { hit = dIdx[hit]; dlgSel = hit; }
     if (hit >= 0) { if (te.dirty) { int hh = hit; openConfirm("Discard unsaved changes?", [this, hh]() { te.load(readPath("dialogue/" + dlgFiles[hh] + ".txt")); te.path = dataRoot + "/dialogue/" + dlgFiles[hh] + ".txt"; }); } else { te.load(readPath("dialogue/" + dlgFiles[hit] + ".txt")); te.path = dataRoot + "/dialogue/" + dlgFiles[hit] + ".txt"; } }
     int by = y + h - 54;
     if (ui.button(x + 4, by, 50, 20, "New")) openTextPrompt("New dialogue id", "npc_name", [this](const std::string& nm) { std::string p = dataRoot + "/dialogue/" + nm + ".txt"; if (!fileExists(p)) writeFile(p, "[start]\nspeaker=" + nm + "\ntext=Hello, $hero.\noption=Goodbye.|end\n"); refreshFiles(); te.load(p); for (size_t i = 0; i < dlgFiles.size(); i++) if (dlgFiles[i] == nm) dlgSel = (int)i; });

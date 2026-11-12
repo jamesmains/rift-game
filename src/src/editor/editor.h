@@ -27,6 +27,7 @@ struct CampaignForm {
     int startX = 0, startY = 0, gold = 25; std::vector<std::string> intro; std::vector<std::pair<std::string, std::string>> extra; bool dirty = false;
 };
 struct PlayState { bool on = false, dirty = false; int level = 1, gold = 500; std::string cls, flags, items, party; };   // Campaign tab > Play from a state (playtest.txt)
+std::set<std::string> edFilterTokens(const std::string& v);   // 1.1.6: the values a list filter offers for one key=value
 struct GenericEditor {
     std::string path, title, sectionName, listKey = "id";
     std::string basePath; bool replaceWhole = false;   // campaigns: base-game file shown underneath; replaceWhole = the game reads one file or the other, not both
@@ -35,6 +36,7 @@ struct GenericEditor {
     std::vector<EdSection> secs;
     std::string tail;                          // comment lines after the last section (written back on save, 1.1.3)
     int sel = -1, scroll = 0, fieldScroll = 0; bool dirty = false; std::string filter, newKey, status;
+    std::string filterKey, filterVal;          // 1.1.6 (#30): list filter "key = value" (filterVal "\x01has" = has the key, "\x01none" = lacks it)
     // undo / redo: the editor compares the entries with last frame's copy and keeps snapshots (typing is merged)
     std::vector<std::vector<EdSection>> undo, redo; std::vector<EdSection> shadow; bool shadowInit = false; float lastChangeT = -10;
     bool load();
@@ -113,7 +115,7 @@ private:
     std::string toast; float toastT = 0;
     void say(const std::string& s) { toast = s; toastT = 3; }
     // ---- popups ----
-    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT } pop = P_NONE;
+    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT } pop = P_NONE;
     std::function<void(Tile)> popTile; std::function<void(int)> popList; std::function<void()> popYes; std::function<void(const std::string&)> popText;
     std::vector<std::string> popItems; std::string popTitle, popValue; int popSel = 0, popScroll = 0; int tileScrollX = 0, tileScrollY = 0; Tile popCur;
     int frameNo = 0, popOpenedFrame = -1;   // a popup ignores the click that opened it
@@ -174,7 +176,7 @@ private:
     int kindSel = 0, kindScroll = 0; std::string kindFilter; bool kindsDirty = false;
     void drawKinds(InputState& in);
     // ---- maps ----
-    std::vector<std::string> mapFiles; int mapListSel = -1, mapListScroll = 0;
+    std::vector<std::string> mapFiles; int mapListSel = -1, mapListScroll = 0; std::string mapFilter;   // 1.1.6: map list search
     EdMap em; bool mapLoaded = false, mapDirty = false;
     int mapTool = 0;                                // 0 paint, 1 fill, 2 rect, 3 objects, 4 erase object
     int zoom = 1; int viewX = 0, viewY = 0;         // scroll in tiles * px
@@ -203,6 +205,7 @@ private:
     bool campaignStart(const std::string& mapId, int& x, int& y); void setCampaignStart(const std::string& mapId, int x, int y);
     // ---- dialogue ----
     std::vector<std::string> dlgFiles; int dlgSel = -1, dlgScroll = 0; TextEdit te;
+    std::string dlgFilter, dlgFilterLast; size_t dlgFilterN = 0; std::set<std::string> dlgFilterHits;   // 1.1.6: dialogue search (names + text)
     void drawDialogue(InputState& in);
     void textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in);
     // ---- dialogue node graph (editor_graph.cpp): a view of te.lines that edits through the text ----
@@ -239,6 +242,29 @@ private:
     void drawGatherNode(const EdObj& resolved, int sx, int sy, int scale, const std::string& cellSpec, bool spent = false);
     void templateFromObject(const EdObj& o, const std::string& mapId, int objIndex);
     std::string placeTmpl; int objPanelScroll = 0;   // Maps tab: the template the Objects tool places; the object panel's scroll
+    // ---- import from another campaign (editor_import.cpp, 1.1.6 #29): every tab can copy entries in ----
+public:
+    enum ImpKind { IMP_GEN, IMP_MAPS, IMP_DLG, IMP_KINDS, IMP_CAMP, IMP_FLAGS };
+    struct ImpEntry { std::string id, label, detail; bool have = false, on = false; EdSection sec; };
+    int impKind = IMP_GEN, impGen = -1, impSrc = -1, impSrcScroll = 0, impScroll = 0; std::string impFilter, impTitle;
+    std::vector<CampaignInfo> impSrcs; std::vector<ImpEntry> impEntries;
+    void openImport(int kind, int gen = -1);   // also used by the headless tests
+    void impSelectSource(int i);
+    int doImport();                            // copies the ticked entries in; returns how many
+    // headless tests (1.1.6): a data tab's entry count, how many its search / filter show, set them, save it
+    int genCount(int g) const { return (int)gens[g].secs.size(); }
+    int genShown(int g) const { return (int)gens[g].filtered().size(); }
+    void genSearch(int g, const std::string& q, const std::string& key = "", const std::string& val = "") { gens[g].filter = q; gens[g].filterKey = key; gens[g].filterVal = val; }
+    bool genSave(int g) { return gens[g].save(); }
+    void closePopup() { pop = P_NONE; ui.modal = false; ui.blur(); }
+private:
+    bool importBtn(int x, int y, int kind, int gen = -1);   // the small "Import" button in a list header
+    void listHeader(int x, int y, int w, const std::string& title, int kind, int gen = -1);   // header + Import button (title clipped before it)
+    std::string impRoot(const CampaignInfo& c) const { return c.dir.empty() ? baseRoot : c.dir; }
+    std::string impReadPath(const CampaignInfo& c, const std::string& rel) const;   // the campaign's file, else the base game's when it inherits
+    std::vector<std::string> impFiles(const CampaignInfo& c, const std::string& sub) const;   // maps / dialogue ids it has
+    void drawImport(InputState& in, bool& close);
+    void openFieldFilter(GenericEditor& g);    // 1.1.6 (#30): pick a field, then a value, to filter the list by
     // ---- tileset ----
     int tsScroll = 0; Tile tsHover, tsPick;
     void drawTileset(InputState& in);

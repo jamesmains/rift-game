@@ -12,6 +12,19 @@ constexpr Color8 TEXT = {220, 222, 228, 255}, DIM = {140, 145, 158, 255}, ACCENT
 constexpr Color8 FIELD = {20, 22, 27, 255}, SEL = {60, 90, 140, 255}, HOVER = {56, 62, 76, 255}, DANGER = {200, 70, 70, 255}, OK = {80, 190, 110, 255};
 }
 
+// 1.1.6 (#30): search matching for every search box - case-insensitive, every word typed must appear somewhere
+inline bool edMatch(const std::string& hay, const std::string& query) {
+    auto low = [](std::string v) { for (auto& c : v) c = (char)tolower((unsigned char)c); return v; };
+    std::string h = low(hay), q = low(query); size_t i = 0;
+    while (i < q.size()) {
+        while (i < q.size() && q[i] == ' ') i++;
+        size_t j = q.find(' ', i); if (j == std::string::npos) j = q.size();
+        if (j > i && h.find(q.substr(i, j - i)) == std::string::npos) return false;
+        i = j;
+    }
+    return true;
+}
+
 struct EdUI {
     Canvas* cv = nullptr; Tileset* ts = nullptr; Font* font = nullptr;
     const InputState* in = nullptr;
@@ -108,6 +121,13 @@ struct EdUI {
         if (f && ((int)(time * 2) % 2 == 0)) cv->fillRect(x + 4 - off + cw, y + 2, 1, 12, ED::TEXT);
         cv->resetClip();
         return changed;
+    }
+    // 1.1.6 (#30): a search box - a text field that says what it searches when empty, with an x that clears it
+    bool searchField(int x, int y, int w, std::string& v, const std::string& hint = "search...", int maxLen = 60) {
+        bool ch = textField(x, y, v.empty() ? w : w - 16, v, maxLen);
+        if (v.empty() && focus != idCounter) { cv->setClip({x + 2, y, w - 4, 16}); font->draw(*cv, *ts, x + 4, y + 2, hint, ED::DIM); cv->resetClip(); }
+        if (!v.empty() && button(x + w - 15, y, 15, 16, "x")) { v.clear(); ch = true; blur(); }
+        return ch;
     }
     bool intField(int x, int y, int w, int& v, int lo = -1000000, int hi = 1000000) {
         std::string s = std::to_string(v); bool ch = false;

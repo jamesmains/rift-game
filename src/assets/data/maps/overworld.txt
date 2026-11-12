@@ -2,6 +2,7 @@
 id=overworld
 name=Aldmoor
 kind=overworld
+ambient=amb_wind
 spawn=44,93
 encounter=4
 table=plains

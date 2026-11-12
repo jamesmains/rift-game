@@ -91,6 +91,19 @@ int main(int argc, char** argv) {
 #ifndef TRIFFALL_NO_EDITOR
         else if (cmd == "guide") { app.editor.openGuide(p.size() > 1 ? p[1] : "start"); step(2); }
         else if (cmd == "tab") { app.editor.tab = atoi(p[1].c_str()); step(2); }
+        // 1.1.6: newcampaign NAME... | edimport KIND GEN SOURCE all|id,id (KIND gen/maps/dlg/kinds/camp/flags) | edsearch GEN [text] | edfilter GEN KEY VALUE | edsave GEN
+        else if (cmd == "newcampaign") { std::string nm; for (size_t i = 1; i < p.size(); i++) nm += (i > 1 ? " " : "") + p[i]; app.editor.newCampaign(nm); step(2); }
+        else if (cmd == "edimport") {
+            std::string k = p[1]; int kind = k == "maps" ? Editor::IMP_MAPS : k == "dlg" ? Editor::IMP_DLG : k == "kinds" ? Editor::IMP_KINDS : k == "camp" ? Editor::IMP_CAMP : k == "flags" ? Editor::IMP_FLAGS : Editor::IMP_GEN;
+            app.editor.openImport(kind, atoi(p[2].c_str()));
+            for (size_t i = 0; i < app.editor.impSrcs.size(); i++) if (app.editor.impSrcs[i].id == p[3]) app.editor.impSelectSource((int)i);
+            std::vector<std::string> ids = split(p.size() > 4 ? p[4] : "all", ',');
+            for (auto& e : app.editor.impEntries) if (ids[0] == "all" || std::find(ids.begin(), ids.end(), e.id) != ids.end()) e.on = true;
+            int n = app.editor.doImport(); printf("edimport: %d of %d entries\n", n, (int)app.editor.impEntries.size()); app.editor.closePopup(); step(2);
+        }
+        else if (cmd == "edsearch") { std::string q; for (size_t i = 2; i < p.size(); i++) q += (i > 2 ? " " : "") + p[i]; app.editor.genSearch(atoi(p[1].c_str()), q); }
+        else if (cmd == "edfilter") app.editor.genSearch(atoi(p[1].c_str()), "", p[2], p.size() > 3 ? p[3] : "\x01has");
+        else if (cmd == "edsave") { printf("edsave %s: %d\n", p[1].c_str(), app.editor.genSave(atoi(p[1].c_str())) ? 1 : 0); }
         else if (cmd == "checkall") {   // the Editor's Check all over the whole campaign; errors count as failures
             app.editor.open(); app.editor.runCampaignCheck(); int errs = 0;
             for (auto& f : app.editor.report) { printf("  check %s: %s\n", f.err ? "ERROR" : "warn", f.text.c_str()); if (f.err) errs++; }
@@ -145,6 +158,11 @@ int main(int argc, char** argv) {
             else if (key == "allies" || key == "summons") { int c = 0; for (auto& u : g.cb.units) if (u.ch.alive && (key == "allies" ? u.ally : u.summoned)) c++; got = std::to_string(c); }
             else if (startsWith(key, "approval:")) got = std::to_string(g.approvalOf(key.substr(9)));
             else if (startsWith(key, "cskill:")) got = std::to_string(g.craftSkill(key.substr(7)));
+#ifndef TRIFFALL_NO_EDITOR
+            else if (startsWith(key, "edcount:")) got = std::to_string(app.editor.genCount(atoi(key.substr(8).c_str())));
+            else if (startsWith(key, "edshown:")) got = std::to_string(app.editor.genShown(atoi(key.substr(8).c_str())));
+            else if (startsWith(key, "asset:")) got = fileExists(app.assetDir + "/" + key.substr(6)) ? "1" : "0";
+#endif
             else if (startsWith(key, "rep:")) { auto it = g.reputation.find(key.substr(4)); got = std::to_string(it == g.reputation.end() ? 0 : it->second); }
             else if (startsWith(key, "queststatus:")) { got = ""; for (auto& q : g.quests) if (q.id == key.substr(12)) got = g.questStatus(q); }
             else if (startsWith(key, "price:")) { const ItemDef* d = g.gd->item(key.substr(6)); got = d ? std::to_string(g.itemBuyPrice(*d)) : "-1"; }

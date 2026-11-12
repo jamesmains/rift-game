@@ -158,7 +158,7 @@ Map* Game::loadMap(const std::string& id) {
                                 ex.size() > 0 ? trim(ex[0]) : "overworld", ex.size() > 2 ? atoi(ex[1].c_str()) : 0, ex.size() > 2 ? atoi(ex[2].c_str()) : 0,
                                 pool, sec.get("boss"), sec.get("bossflag"), sec.get("loot", "common"));
                 m->name = sec.get("name", id); m->encounterTable = sec.get("table");
-                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient", "");
+                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient", st == "cave" || st == "mine" ? "amb_cave" : st == "crypt" ? "amb_crypt" : st == "tech" || st == "ship" ? "amb_machine" : "");
                 if (sec.has("bossdefeat")) for (auto& e : m->enemies) if (e.flag == sec.get("bossflag")) e.onDefeatScript = sec.get("bossdefeat");
                 ok = true; break;
             }
@@ -252,12 +252,20 @@ std::string Game::musicWanted() const {
     if (map->kind == "dungeon") return "dungeon";
     return "forest";
 }
-// 1.1.5 (owner's #28): no ambient loop is picked by place, weather or time any more (waves, birds, drips often didn't
-// fit the place - crickets in a crypt). Only a map that asks for one plays it: header ambient=<id> (a Maps tab picker),
-// or ambient= on a dungeons.txt entry for generated dungeons. "none" = silence, as before.
+// 1.1.6 (owner's #28, 2nd take): each map names its own loop (header ambient=<id>, a Maps tab picker; generated dungeons
+// take ambient= from dungeons.txt, else one by style) - nothing is guessed from the place any more, so no waves or birds
+// where they don't fit. On top of that, outdoors: rain / storm / snow replace the map's loop, and the daytime life of a
+// town or forest gives way to night insects at night. ambient=none = silence, weather included.
 std::string Game::ambientWanted() const {
     if (!running || !map || mode == GMode::ENDING || mode == GMode::GAMEOVER) return "";
-    return map->ambient == "none" ? "" : map->ambient;
+    const std::string& a = map->ambient; if (a == "none") return "";
+    if (outdoors()) {
+        if (weather == "storm") return "amb_storm";
+        if (weather == "rain") return "amb_rain";
+        if (weather == "snow") return "amb_wind";
+        if ((a == "amb_town" || a == "amb_forest") && nightAmount() > 0.6f) return "amb_night";
+    }
+    return a;
 }
 std::string Game::weaponSound(const Character& ch) const {
     if (!ch.creatureId.empty()) { if (auto* c = gd->creature(ch.creatureId)) if (!c->attackSound.empty()) return c->attackSound; }

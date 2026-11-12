@@ -58,6 +58,23 @@ def save_wav(name, x):
     with wave.open(path, "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
         w.writeframes((x * 32767).astype("<i2").tobytes())
+def to_ogg(wavp, x, q):
+    """1.1.6: encode x to the .ogg next to wavp. ffmpeg if it is on PATH, else the soundfile package (pip install
+    soundfile); returns True when the .ogg was written (the caller then deletes the .wav)."""
+    oggp = wavp[:-4] + ".ogg"
+    try:
+        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wavp, "-c:a", "libvorbis", "-q:a", str(q), oggp])
+        if r.returncode == 0: return True
+    except FileNotFoundError:
+        pass
+    try:
+        import soundfile
+        with soundfile.SoundFile(oggp, "w", SR, 1, format="OGG", subtype="VORBIS", compression_level=max(0.0, min(1.0, 1.0 - q / 10.0))) as f:
+            y = np.clip(x, -1, 1)
+            for i in range(0, len(y), 8192): f.write(y[i:i + 8192])   # libsndfile crashes on one big vorbis write
+        return True
+    except Exception as e:
+        print("no ffmpeg or soundfile:", e); return False
 def mix(*parts):
     n = max(len(p) for p in parts); out = np.zeros(n)
     for p in parts: out[:len(p)] += p
@@ -321,8 +338,9 @@ def render_style2(name, bpm, root, scale, bars, chords, style, seed, loop=True):
             n = int(bar * 1.1 * SR)
             for dg, v in ((chord, 0.08), (chord + 1, 0.05), (chord + 5, 0.04)):
                 f = freq(deg(dg, -1)); place((sine(f, n) + sine(f * 1.007, n)) * env(n, 0.8, 0.5, 0.9, 0.6) * v, t0)
-            if rnd.random() < 0.5:
-                k = int(beat * 2 * SR); place(lowpass(noise(k, b + seed), 900) * env(k, 0.5, 0.5, 0.6, 0.6) * 0.25, t0 + beat)   # a whisper
+            if rnd.random() < 0.5 and name != "crypt":   # 1.1.6 (#28): a breathy whisper - it was a slow low swell that read as waves
+                k = int(beat * 0.9 * SR); w_ = noise(k, b + seed); w_ = lowpass(w_, 3800) - lowpass(w_, 1300)
+                place(w_ * (0.7 + 0.3 * np.sin(2 * math.pi * 9 * t(k))) * env(k, 0.12, 0.2, 0.6, 0.3) * 0.22, t0 + beat)
             if b % 4 == 3: place(bell(deg(chord + 6, 1), beat * 4, 0.10), t0 + 2 * beat)
         elif style == "ruin":
             place(tone(deg(chord, -2), bar, tri, 0.14, a=0.4, d=0.5, s_=0.7, r=0.4), t0)
@@ -344,9 +362,8 @@ def save_music(name, x):
     with wave.open(wavp, "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
         w.writeframes((np.clip(x, -1, 1) * 32767).astype("<i2").tobytes())
-    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wavp, "-c:a", "libvorbis", "-q:a", "3", oggp])
-    if r.returncode == 0: os.remove(wavp)
-    else: print("ffmpeg failed, keeping", wavp)
+    if to_ogg(wavp, x, 3): os.remove(wavp)
+    else: print("ogg encoding failed, keeping", wavp)
 
 def music():
     tracks = [
@@ -382,7 +399,7 @@ def music():
 
 # ------------------------------------------------------------------ ambient loops (1.0)
 # Quiet beds that play under the music (Settings: SFX volume): wind, cave drips, the swamp, rain, a town, machines,
-# night insects, the Rift. Each loop is 24 s and seamless (the end crossfades into the start).
+# night insects, the Rift; 1.1.6: a crypt, a storm, forest birdsong, a fire, the sea. Each loop is 24 s and seamless (the end crossfades into the start).
 def ambient():
     L = 24.0; n = int(L * SR); rnd = np.random.RandomState(42)
     def seamless(x):
@@ -397,10 +414,20 @@ def ambient():
         if s0 + len(x) > n: out[:s0 + len(x) - n] += x[n - s0:]
     loops = {}
     # wind: two slow gusting noise bands
-    loops["amb_wind"] = seamless(bed(500, 1, 1.0, 0.05) + bed(1400, 2, 0.35, 0.11))
+    # 1.1.6 (#28): a slow low swell read as surf; wind is now a higher band with uneven gusts and a faint whistle
+    def gusts(seed, m):
+        g = np.random.RandomState(seed); tt = t(m); y = np.zeros(m)
+        for k in range(4): y += np.sin(2 * math.pi * g.uniform(0.07, 0.31) * tt + g.uniform(0, 6.3)) * g.uniform(0.5, 1.0)
+        return np.clip(0.55 + 0.25 * y / 2.0, 0.08, 1.0)
+    m_ = n + int(2 * SR); gst = gusts(21, m_); nz = noise(m_, 1)
+    band = lowpass(nz, 2600) - lowpass(nz, 650)
+    whistle = sine(780 * (1 + 0.06 * (gst - 0.5)), m_) * (gst ** 3) * 0.06
+    loops["amb_wind"] = seamless(band * gst * 1.2 + lowpass(noise(m_, 2), 4500) * gst ** 2 * 0.25 + whistle)
     # cave: a low rumble and water dripping into pools
     x = seamless(bed(160, 3, 0.8, 0.03))
-    for k in range(18): put(x, drop(rnd.uniform(900, 2200)) * rnd.uniform(0.15, 0.35), rnd.uniform(0, L))
+    for k in range(18):   # 1.1.6: lower, rounder drops (the high ones chirped like birds); same random draws as before
+        f_ = rnd.uniform(900, 2200) * 0.42; a_ = rnd.uniform(0.15, 0.35); at_ = rnd.uniform(0, L)
+        if k % 3 != 2: put(x, lowpass(drop(f_, 0.3), 1500) * a_ * 1.6, at_)
     loops["amb_cave"] = x
     # swamp: a wet bed, frogs croaking, a mosquito whine now and then
     x = seamless(bed(700, 5, 0.5, 0.09))
@@ -434,13 +461,54 @@ def ambient():
     tt = t(n + int(2 * SR)); breath = 0.5 + 0.5 * np.sin(2 * math.pi * (1 / 8.0) * tt)
     x = seamless((np.sin(2 * math.pi * 55 * tt) + np.sin(2 * math.pi * 55.6 * tt) + 0.4 * np.sin(2 * math.pi * 82.5 * tt)) * 0.25 * breath + bed(2500, 13, 0.15, 0.3))
     loops["amb_rift"] = x
+    # ---- 1.1.6 (#28): loops for places the first set didn't fit (own random streams, so the ones above stay the same)
+    r2 = np.random.RandomState(616)
+    # crypt: still, heavy air - a deep hum, a slow low moan through the halls, grit falling from old stone. No drips, no chirps.
+    tt = t(n + int(2 * SR)); moan = np.sin(2 * math.pi * (98 + 6 * np.sin(2 * math.pi * 0.045 * tt)) * tt) * (0.5 + 0.5 * np.sin(2 * math.pi * (1 / 12.0) * tt)) ** 2
+    x = seamless(bed(120, 31, 0.9, 0.02) + moan * 0.07 + lowpass(noise(len(tt), 32), 300) * 0.15)
+    for k in range(7):
+        kk = int(r2.uniform(0.3, 0.8) * SR); gr = lowpass(noise(kk, 40 + k) * (r2.uniform(0, 1, kk) < 0.08), 1800) * env(kk, 0.01, 0.3, 0.3, 0.2)
+        put(x, gr * 1.5, r2.uniform(0, L))
+    loops["amb_crypt"] = x
+    # storm: the rain loop's hiss, heavier, with thunder rolling in the distance
+    x = seamless(bed(4000, 7, 0.65, 0.13) + bed(900, 8, 0.55, 0.05) + bed(250, 33, 0.35, 0.03))
+    for k in range(3):
+        kk = int(r2.uniform(3.0, 4.5) * SR); tk = t(kk); rumble = lowpass(lowpass(noise(kk, 50 + k), 140), 140)
+        shape = (1 - np.exp(-tk * r2.uniform(3, 9))) * np.exp(-tk * 0.9) * (0.75 + 0.25 * np.sin(2 * math.pi * 1.7 * tk))
+        put(x, rumble * shape * r2.uniform(5.0, 8.0), k * 8.0 + r2.uniform(0.5, 4.0))
+    loops["amb_storm"] = x
+    # forest / fields by day: leaves in a light breeze and birdsong (only on maps that are woods or farmland)
+    m_ = n + int(2 * SR); gst = gusts(60, m_); nz = noise(m_, 61)
+    x = seamless((lowpass(nz, 5000) - lowpass(nz, 1500)) * gst * 0.30)
+    for k in range(16):
+        at = r2.uniform(0, L); base = r2.uniform(2600, 4200); kind = r2.randint(0, 3)
+        for j in range(r2.randint(2, 6)):
+            kk = int(r2.uniform(0.05, 0.11) * SR); tk = t(kk)
+            if kind == 0: fr = base * (1 + 0.25 * tk / tk[-1])            # rising chirp
+            elif kind == 1: fr = base * (1.2 - 0.3 * tk / tk[-1])         # falling note
+            else: fr = base * (1 + 0.08 * np.sin(2 * math.pi * 40 * tk))  # trill
+            put(x, sine(fr, kk) * np.sin(math.pi * tk / tk[-1]) ** 2 * r2.uniform(0.04, 0.08), at + j * r2.uniform(0.11, 0.2))
+    loops["amb_forest"] = x
+    # fire: a campfire or hearth - a soft roar and crackles
+    x = seamless(bed(350, 70, 0.45, 0.4) + bed(1200, 71, 0.12, 0.6))
+    for k in range(150):
+        kk = int(r2.uniform(0.002, 0.008) * SR); put(x, noise(kk, 200 + k) * env(kk, 0.0003, 0.004) * r2.uniform(0.1, 0.5), r2.uniform(0, L))
+    for k in range(10):
+        kk = int(0.09 * SR); put(x, lowpass(noise(kk, 400 + k), 2500) * np.exp(-t(kk) * 40) * r2.uniform(0.3, 0.6), r2.uniform(0, L))
+    loops["amb_fire"] = x
+    # sea: surf on a shore - long swells breaking and drawing back (for coasts; no base-game map uses it)
+    tt = t(n + int(2 * SR)); P = 8.0   # 3 waves per 24 s loop, so it stays seamless
+    ph = (tt % P) / P; swell = np.where(ph < 0.35, (ph / 0.35) ** 2, np.exp(-(ph - 0.35) * 5.0))
+    nz = noise(len(tt), 80); x = seamless((lowpass(nz, 700) * 1.0 + (lowpass(nz, 3500) - lowpass(nz, 900)) * 0.7) * (0.12 + swell))
+    loops["amb_sea"] = x
+    only = os.environ.get("AMBIENT")   # 1.1.6: AMBIENT=amb_wind,amb_cave writes just those
+    if only: loops = {k: v for k, v in loops.items() if k in only.split(",")}
     os.makedirs(os.path.join(OUT, "ambient"), exist_ok=True)
     for name, x in loops.items():
         x = norm(x, 0.7); wavp = os.path.join(OUT, "ambient", name + ".wav"); oggp = wavp[:-4] + ".ogg"
         with wave.open(wavp, "wb") as w:
             w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(x, -1, 1) * 32767).astype("<i2").tobytes())
-        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wavp, "-c:a", "libvorbis", "-q:a", "1", oggp])
-        if r.returncode == 0: os.remove(wavp)
+        if to_ogg(wavp, x, 1): os.remove(wavp)
         print("ambient", name)
     return list(loops)
 

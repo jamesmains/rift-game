@@ -7,6 +7,7 @@ dark=1
 light=3
 bg=0,0,0
 music=tech
+ambient=amb_machine
 
 [legend]
 # = wall_concrete

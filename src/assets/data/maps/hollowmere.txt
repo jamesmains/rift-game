@@ -2,6 +2,7 @@
 id=hollowmere
 name=Hollowmere
 kind=town
+ambient=amb_town
 spawn=20,29
 bg=0,0,0
 

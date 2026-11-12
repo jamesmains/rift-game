@@ -561,17 +561,17 @@ desc=the epilogue and credits
 volume=75
 
 # ---- 1.0: ambient loops under the music (they follow Settings > Ambience volume). A map header can pick one with ambient=<id>
-# (or ambient=none); otherwise the game picks by place, weather and time of day.
+# (or ambient=none). 1.1.6: outdoors, rain/storm/snow replace the map's loop, and town/forest loops turn to night insects at night.
 [ambient]
 id=amb_wind
 file=ambient/amb_wind.ogg
-desc=wind (overworld, snow)
+desc=wind: gusts and a faint whistle (overworld, snow, ruins, desert)
 volume=30
 
 [ambient]
 id=amb_cave
 file=ambient/amb_cave.ogg
-desc=caves and crypts: drips
+desc=caves and mines: a low rumble, water dripping
 volume=45
 
 [ambient]
@@ -583,13 +583,13 @@ volume=45
 [ambient]
 id=amb_rain
 file=ambient/amb_rain.ogg
-desc=rain and storms outdoors
+desc=rain (plays outdoors while it rains)
 volume=30
 
 [ambient]
 id=amb_town
 file=ambient/amb_town.ogg
-desc=towns by day
+desc=towns by day: voices, a smith's hammer
 volume=35
 
 [ambient]
@@ -601,7 +601,7 @@ volume=35
 [ambient]
 id=amb_night
 file=ambient/amb_night.ogg
-desc=outdoors at night: crickets
+desc=night insects (town and forest loops at night)
 volume=45
 
 [ambient]
@@ -610,3 +610,32 @@ file=ambient/amb_rift.ogg
 desc=the Scar
 volume=35
 
+[ambient]
+id=amb_crypt
+file=ambient/amb_crypt.ogg
+desc=crypts and barrows: still air, a low moan, falling grit
+volume=50
+
+[ambient]
+id=amb_storm
+file=ambient/amb_storm.ogg
+desc=storm: heavy rain, distant thunder (plays outdoors in a storm)
+volume=35
+
+[ambient]
+id=amb_forest
+file=ambient/amb_forest.ogg
+desc=woods and farmland by day: leaves, birdsong
+volume=40
+
+[ambient]
+id=amb_fire
+file=ambient/amb_fire.ogg
+desc=a campfire or hearth: crackling
+volume=55
+
+[ambient]
+id=amb_sea
+file=ambient/amb_sea.ogg
+desc=a shore: waves breaking (coasts only)
+volume=35

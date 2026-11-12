@@ -58,7 +58,7 @@ void Editor::setCampaignStart(const std::string& mapId, int x, int y) {
 void Editor::drawCampaign(InputState& in) {
     int x = 4, y = gEdTop + 4, w = W - 8, h = H - gEdTop - TOP_BAR_BOTTOM - 8;
     ui.panel(x, y, w, h);
-    ui.header(x, y, w, "Campaign settings - " + camp.path + (camp.dirty ? "  (unsaved)" : "")); helpBtn(x + w - 16, y + 1, "tab.campaign");
+    listHeader(x, y, w, "Campaign settings - " + camp.path + (camp.dirty ? "  (unsaved)" : ""), IMP_CAMP); helpBtn(x + w - 16, y + 1, "tab.campaign");
     int lx = x + 10, fx = x + 150, fw = 420, ry = y + 26, row = 24;
     auto field = [&](const char* label, std::string& v, const char* tip, const char* key) { ui.label(lx, ry + 3, label); helpBtn(fx - 18, ry + 2, std::string("campaign.") + key, "tab.campaign"); if (ui.textField(fx, ry, fw, v, 400)) camp.dirty = true; if (tip && ui.hover(lx, ry, 140, 18)) ui.tip(tip); ry += row; };
     field("Name", camp.name, "Shown under the desktop icon and in the New Game window.", "name");

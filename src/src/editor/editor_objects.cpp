@@ -213,7 +213,7 @@ void Editor::drawPlacedObjects(int x, int y, int w, int h, InputState& in) {
     { bool v = poThisTmpl; std::string lbl = tid.empty() ? "copies of the selected template" : tsel->name == "type" ? "only every " + tid : "only copies of '" + tid + "'"; while (font->width(lbl) > w - 160 && lbl.size() > 4) lbl.pop_back();
       if (ui.checkbox(x + 140, cy + 2, lbl, v) && tsel) { poThisTmpl = v; poSel = -1; } }
     cy += 20;
-    ui.label(x + 6, cy + 2, "find"); if (ui.textField(x + 40, cy, w - 112, poFilter, 60)) poSel = -1;
+    ui.label(x + 6, cy + 2, "find"); if (ui.searchField(x + 40, cy, w - 112, poFilter, "id, name, map, any value...")) poSel = -1;
     if (ui.hover(x + 40, cy, w - 112, 16)) ui.tip("Words that must all appear: map id, type, key=value (e.g. \"iron_ore\" or \"goblin_cave chest\")");
     if (ui.button(x + w - 66, cy, 60, 16, "Rescan")) { poNeedScan = true; poSel = -1; }
     if (ui.hover(x + w - 66, cy, 60, 16)) ui.tip("Read every map again (after saving maps elsewhere)");

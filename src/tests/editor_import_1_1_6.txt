@@ -1,0 +1,63 @@
+# 1.1.6 (#29, #30): a new campaign starts empty; Import copies entries / maps / dialogue / tile kinds / settings in from
+# other campaigns; the data tabs' search looks at every value and the Filter picks key = value.
+# Writes a campaign folder: run it from a copy of assets (see README).
+frames 5
+editor
+frames 5
+newcampaign Test Isle
+frames 4
+expect asset:campaigns/test_isle/campaign.txt == 1
+expect asset:campaigns/test_isle/items.txt == 0
+expect asset:campaigns/test_isle/classes.txt == 0
+expect edcount:0 == 0
+expect edcount:1 == 0
+expect edcount:3 == 0
+tab 3
+frames 3
+shot import_empty_items.png
+# a few items, then all the classes; data entries arrive unsaved
+edimport gen 0 triffall iron_dagger,potion_red
+expect edcount:0 == 2
+expect asset:campaigns/test_isle/items.txt == 0
+edsave 0
+expect asset:campaigns/test_isle/items.txt == 1
+edimport gen 3 triffall all
+expect edcount:3 == 5
+# importing the same id again replaces it instead of adding a second
+edimport gen 0 triffall iron_dagger
+expect edcount:0 == 2
+# files: a map from the base game, a dialogue from the tutorial
+edimport maps 0 triffall hollowmere_home
+expect asset:campaigns/test_isle/maps/hollowmere_home.txt == 1
+edimport dlg 0 tutorial tut_intro
+expect asset:campaigns/test_isle/dialogue/tut_intro.txt == 1
+edimport camp 0 triffall start,gold
+# search and filter over every item
+edimport gen 0 triffall all
+expect edcount:0 == 222
+edsearch 0 iron
+expect edshown:0 > 2
+expect edshown:0 < 222
+edsearch 0 zzzz_nothing
+expect edshown:0 == 0
+edfilter 0 type weapon
+expect edshown:0 == 40
+edsearch 0
+expect edshown:0 == 222
+# the Import window itself
+tab 0
+frames 3
+shot import_maps_tab.png
+click 140 60
+frames 4
+shot import_window.png
+key ESCAPE
+frames 3
+# a brand-new empty campaign can still be started (no classes, no maps: a placeholder room, no crash)
+newcampaign Blank
+frames 2
+campaign blank
+newgame Lia warrior 1
+frames 60
+expect running == 1
+expect campaign == blank

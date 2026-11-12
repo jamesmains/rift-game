@@ -7,6 +7,7 @@ dark=1
 light=3
 bg=0,0,0
 music=swamp
+ambient=amb_swamp
 
 [legend]
 # = wall_brick

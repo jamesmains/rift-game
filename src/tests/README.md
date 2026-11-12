@@ -94,3 +94,9 @@ panel's text), `fav:N` (the hero's favorite slot N); op `lacks` (the opposite of
 
 1.1.5: `facing_1_1_5` (stepping up/down keeps the party's left/right look; expect key `faceright` 0/1).
 `music_ambient` now expects no ambient loop anywhere (#28: only a map header / dungeons.txt `ambient=` plays one).
+
+1.1.6: `music_ambient` expects each map's own loop again, rain/storm replacing it outdoors and night insects in towns.
+`editor_import_1_1_6` (run from a copy of assets: it writes campaign folders): a new campaign is empty, Import copies
+entries / maps / dialogue / settings, search and Filter counts, an empty campaign can be started. Commands:
+`newcampaign NAME`, `edimport gen|maps|dlg|kinds|camp|flags GEN SOURCE all|id,id`, `edsearch GEN [words]`,
+`edfilter GEN KEY [VALUE]`, `edsave GEN`; expect keys `edcount:GEN`, `edshown:GEN`, `asset:<path under assets>`.

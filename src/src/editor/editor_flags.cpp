@@ -207,14 +207,14 @@ std::string Editor::flagSetSummary(const std::string& f) {
 void Editor::drawFlags(InputState& in) {
     ensureIndex();
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 280;
-    ui.panel(x, y, lw, h); ui.header(x, y, lw, fmt("Flags (%d)", (int)flagIndex.size())); helpBtn(x + lw - 16, y + 1, "tab.flags");
-    ui.textField(x + 4, y + 20, lw - 8, flagFilter, 40);
-    std::vector<std::string> names; std::string f = toLower(flagFilter);
+    ui.panel(x, y, lw, h); listHeader(x, y, lw, fmt("Flags (%d)", (int)flagIndex.size()), IMP_FLAGS); helpBtn(x + lw - 16, y + 1, "tab.flags");
+    ui.searchField(x + 4, y + 20, lw - 8, flagFilter, "search flags and notes...");
+    std::vector<std::string> names;
     int hiddenN = 0;
     for (auto& kv : flagIndex) {
-        if (!(f.empty() || toLower(kv.first).find(f) != std::string::npos || (flagDocs.count(kv.first) && toLower(flagDocs[kv.first]).find(f) != std::string::npos))) continue;
+        if (!edMatch(kv.first + " " + (flagDocs.count(kv.first) ? flagDocs[kv.first] : std::string()), flagFilter)) continue;
         // "story flags": hide the bookkeeping flags of chests / enemy groups / obstacles that nothing ever checks
-        if (flagStoryOnly && f.empty() && !kv.second.empty() && !flagDocs.count(kv.first)) { bool book = true; for (auto& u : kv.second) if (!u.set || u.tab != 0) book = false; if (book) { hiddenN++; continue; } }
+        if (flagStoryOnly && flagFilter.empty() && !kv.second.empty() && !flagDocs.count(kv.first)) { bool book = true; for (auto& u : kv.second) if (!u.set || u.tab != 0) book = false; if (book) { hiddenN++; continue; } }
         names.push_back(kv.first);
     }
     // problem flags first: checked but never set

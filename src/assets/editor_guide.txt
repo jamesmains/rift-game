@@ -5,7 +5,7 @@
 # ASCII only.
 
 == start | Getting started
-see: editor.guide, editor.shortcuts, editor.check, editor.undo, editor.usedby, concepts.files, concepts.campaigns, tab.maps, maps.play
+see: editor.guide, editor.shortcuts, editor.check, editor.undo, editor.usedby, editor.search, editor.import, concepts.files, concepts.campaigns, tab.maps, maps.play
 
 Editor is the content editor for Triffall. Everything the game shows -
 maps, people, monsters, items, spells, quests, dialogue, sounds - lives in
@@ -434,6 +434,40 @@ migrations.txt and old saves follow the rename when they load:
 An item id that no longer exists (and has no rename) is dropped with a line in
 the message log; the rest of the save loads normally.
 
+== editor.import | Import from another campaign
+see: concepts.campaigns, editor.search, editor.check
+
+Every tab that holds campaign content has an Import button at the top of its
+list (Maps, Tiles, World, Items, Creatures, Spells, Classes, Shops, Encounters,
+Quests, Dungeons, Dialogue, Recipes, Affixes, Banter, Achiev., Campaign, Flags,
+Bounties, Factions, Objects, Resources). Sounds and the Tileset are shared by
+every campaign, so there is nothing to import there.
+
+The window lists the other campaigns on the left (the base game first). Pick
+one, tick what you want (the find box narrows the list, "Tick shown" ticks
+everything it shows) and press Import.
+- Entries (items, creatures, quests...) arrive unsaved: Save the tab to keep them, Revert drops them.
+- Maps and dialogue files are copied into the campaign's folders at once.
+- Something you already have with the same id is marked "replaces it" and is replaced.
+- Only what you tick comes along: an imported creature's spells or loot, a map's dialogue and NPC items stay behind. Check all lists anything missing.
+
+== editor.search | Search and filters
+see: editor.import, start
+
+Every list has a search box at the top. Type one or more words: an entry is
+shown when every word appears somewhere in it. In the data tabs that means any
+field (id, name, type, loot, faction, description...), in Dialogue the file
+names and the text, in Tiles the name, biome and "water" / "blocked".
+
+The Filter button next to the search box (data tabs) picks a field, then one of
+its values with a count of how many entries have it - type = weapon, faction =
+undead, station = forge. Lists like loot=a,b,c or materials=ore:2 offer each
+id. "(any value)" shows entries that have the field at all, "(missing or
+empty)" the ones that don't. The filter shows under the search box; its x
+clears it. The list header says how many entries are shown.
+
+The pickers (the v buttons) have the same search box: just start typing.
+
 == concepts.campaigns | Campaigns
 see: tab.campaign, concepts.files, campaign.start, campaign.worldmap
 
@@ -443,7 +477,8 @@ remember which campaign they belong to.
 
 To make one:
 - 1. Click the Campaign button in the header and choose "+ New campaign...". Type a name.
-- 2. Editor creates the folder with a starter map, an intro dialogue, a quest and a starter shop, and copies the base game's classes, spells, items, monsters, recipes and affixes so it is playable at once. Those copies belong to the campaign now - edit or delete freely.
+- 2. Editor creates an empty folder: just campaign.txt with the name. Every tab starts empty (since 1.1.6).
+- 2b. Fill it in: each tab's list has an Import button (see editor.import) that copies items, monsters, classes, maps, dialogue, tile kinds... in from the base game or another campaign. Or make your own with New. The first map you make with New becomes the start.
 - 3. Open the Campaign tab: set the name, description, icon, intro lines, opening dialogue and starting gold/items/flags.
 - 4. Paint maps in the Maps tab. New games start on the yellow START tile; press B over a tile to move it.
 - 5. Press "Play from the start" to try it as a player would.
@@ -460,17 +495,22 @@ one copies it into the campaign.
 see: tab.sounds, maps.header
 
 A map can play a quiet background loop under its music (it follows the
-Ambience volume): wind, crickets at night, rain, a town murmur, cave drips,
-frogs, a machine hum, breathing in the Scar. sounds.txt lists them as [ambient]
-entries (the Sounds tab shows them as [ambient]; the kind button cycles sfx /
-music / ambient).
+Ambience volume): wind, a town murmur, birdsong in woods and fields, cave
+drips, a still crypt, frogs, a machine hum, a crackling fire, the sea on a
+shore, breathing in the Scar. sounds.txt lists them as [ambient] entries (the
+Sounds tab shows them as [ambient]; the kind button cycles sfx / music /
+ambient).
 
-Nothing plays unless the map asks for one (since 1.1.5 the game no longer picks
-a loop by place, weather or time - it often did not fit, like crickets in a
-crypt). Pick one with the ambient field on the second header row of the Maps
-tab (the v button lists every [ambient] entry), or write ambient=amb_swamp in
-the map header. Generated dungeons take ambient= from their dungeons.txt entry.
-Empty or ambient=none means silence.
+Each map names its own loop: the ambient field on the second header row of the
+Maps tab (the v button lists every [ambient] entry), or ambient=amb_swamp in the
+map header. Nothing is guessed from the place, so no waves or birds where they
+don't belong. Generated dungeons take ambient= from their dungeons.txt entry
+(without one: cave/mine = amb_cave, crypt = amb_crypt, tech/ship = amb_machine).
+
+On top of the map's loop, outdoors (not dark, not an interior):
+  rain = amb_rain, storm = amb_storm, snow = amb_wind
+  amb_town / amb_forest at night = amb_night (insects)
+Empty = no loop of its own; ambient=none = silence, weather included.
 
 == tab.maps | Maps tab
 see: maps.tools, maps.objects, maps.select, maps.header, maps.check, maps.play, maps.arrival, maps.start, maps.resize
@@ -1219,8 +1259,8 @@ The background loop played under the music on this map (wind, drips, frogs,
 rain, a town murmur...). It is on the second header row of the Maps tab; the v
 button next to it lists every [ambient] entry of the Sounds tab.
 
-Format: the id of an [ambient] entry, or none. Default: empty = no loop (since
-1.1.5 nothing is chosen automatically).
+Format: the id of an [ambient] entry, or none. Default: empty = no loop of its
+own (outdoors, rain / storm / snow still play their loop; none = always silent).
 
   ambient=amb_cave
 
@@ -4721,7 +4761,8 @@ see: map.ambient, concepts.ambient, tab.sounds
 
 The background loop played under the music in the generated dungeon.
 
-Format: an [ambient] id (picker), or none. Default: empty = no loop.
+Format: an [ambient] id (picker), or none. Default: empty = by style (cave and
+mine: amb_cave, crypt: amb_crypt, tech and ship: amb_machine, others: none).
 
   ambient=amb_cave
 

@@ -187,9 +187,9 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
 void Editor::drawSounds(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 250;
     ui.panel(x, y, lw, h); ui.header(x, y, lw, fmt("Sounds & music (%d)", (int)gAudio.order.size())); helpBtn(x + lw - 16, y + 1, "tab.sounds");
-    ui.textField(x + 4, y + 20, lw - 8, sndFilter, 40);
-    std::vector<int> idx; std::vector<std::string> labels; std::string f = toLower(sndFilter);
-    for (size_t i = 0; i < gAudio.order.size(); i++) { auto it = gAudio.defs.find(gAudio.order[i]); if (it == gAudio.defs.end()) continue; if (f.empty() || toLower(it->first + " " + it->second.desc).find(f) != std::string::npos) { idx.push_back((int)i); labels.push_back((it->second.kind == "music" ? "[music] " : it->second.kind == "ambient" ? "[ambient] " : "") + it->first); } }
+    ui.searchField(x + 4, y + 20, lw - 8, sndFilter, "search: music, ambient, a name...");
+    std::vector<int> idx; std::vector<std::string> labels;
+    for (size_t i = 0; i < gAudio.order.size(); i++) { auto it = gAudio.defs.find(gAudio.order[i]); if (it == gAudio.defs.end()) continue; if (edMatch(it->first + " " + it->second.kind + " " + it->second.desc, sndFilter)) { idx.push_back((int)i); labels.push_back((it->second.kind == "music" ? "[music] " : it->second.kind == "ambient" ? "[ambient] " : "") + it->first); } }
     int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == sndSel) lsel = (int)i;
     int hit = ui.listBox(x + 4, y + 40, lw - 8, h - 124, labels, lsel, sndScroll);
     if (hit >= 0) { sndSel = idx[hit]; ui.blur(); }

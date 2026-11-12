@@ -150,6 +150,10 @@ std::vector<std::string> Audio::availableFiles(const std::string& sub) const {
 static int ambDefaultVolume(const std::string& id) {
     if (id == "amb_wind" || id == "amb_rain") return 30;
     if (id == "amb_machine" || id == "amb_rift" || id == "amb_town") return 35;
+    if (id == "amb_storm" || id == "amb_sea") return 35;
+    if (id == "amb_forest") return 40;
+    if (id == "amb_crypt") return 50;
+    if (id == "amb_fire") return 55;
     return 45;   // cave drips, swamp frogs, night insects are quieter recordings
 }
 
@@ -190,7 +194,9 @@ std::string Audio::defaultDefsText() {
     for (auto& e : mus) { s += fmt("[music]\nid=%s\nfile=%s\ndesc=%s\n", e.id, e.file, e.desc); if (e.vol != 100) s += fmt("volume=%d\n", e.vol); if (!e.pv) s += "loop=0\n"; s += "\n"; }
     static const char* amb[][3] = {{"amb_wind", "ambient/amb_wind.ogg", "wind (overworld, snow)"}, {"amb_cave", "ambient/amb_cave.ogg", "caves and crypts: drips"}, {"amb_swamp", "ambient/amb_swamp.ogg", "the marsh: frogs"},
         {"amb_rain", "ambient/amb_rain.ogg", "rain and storms outdoors"}, {"amb_town", "ambient/amb_town.ogg", "towns by day"}, {"amb_machine", "ambient/amb_machine.ogg", "tech ruins: hum"},
-        {"amb_night", "ambient/amb_night.ogg", "outdoors at night: crickets"}, {"amb_rift", "ambient/amb_rift.ogg", "the Scar"}};
+        {"amb_night", "ambient/amb_night.ogg", "night insects"}, {"amb_rift", "ambient/amb_rift.ogg", "the Scar"},
+        {"amb_crypt", "ambient/amb_crypt.ogg", "crypts and barrows"}, {"amb_storm", "ambient/amb_storm.ogg", "storm outdoors"}, {"amb_forest", "ambient/amb_forest.ogg", "woods and farmland by day"},
+        {"amb_fire", "ambient/amb_fire.ogg", "a campfire or hearth"}, {"amb_sea", "ambient/amb_sea.ogg", "a shore: waves"}};
     for (auto& e : amb) s += fmt("[ambient]\nid=%s\nfile=%s\ndesc=%s\nvolume=%d\n\n", e[0], e[1], e[2], ambDefaultVolume(e[0]));
     return s;
 }

@@ -6,6 +6,7 @@ spawn=30,41
 bg=0,0,0
 encounter=0
 music=ashfall
+ambient=amb_wind
 
 [legend]
 ! = building4

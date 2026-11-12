@@ -393,7 +393,7 @@ public:
     void draw(Canvas& cv, InputState& in);
     bool canSaveHere() const;
     std::string musicWanted() const;            // which music track fits the current mode/map
-    std::string ambientWanted() const;          // which ambient loop fits (map header ambient=, else by place, weather, time)
+    std::string ambientWanted() const;          // the map's ambient= loop; outdoors rain/storm/snow and night replace it (1.1.6)
     std::string weaponSound(const Character& ch) const;
     std::string spellSound(const SpellDef& s) const;
     std::string serialize() const;

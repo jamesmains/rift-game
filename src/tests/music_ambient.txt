@@ -1,34 +1,61 @@
 # 1.0: a theme for every town and kind of dungeon, the night overworld.
-# 1.1.5 (#28): no ambient loop is chosen by place/weather/time any more - only a map header or dungeons.txt ambient= plays one.
+# 1.1.6 (#28): each map's header names its ambient loop; outdoors rain/storm/snow replace it, town/forest loops turn to
+# night insects at night, and ambient=none is silent.
 newgame Lia warrior 1
 teleport brasswick 30 40
+con weather clear
+con time 12:00
+frames 10
 audio
 expect music == brasswick
-expect ambient lacks amb_
+expect ambient == amb_town
+con weather rain
+frames 10
+audio
+expect ambient == amb_rain
+con weather storm
+frames 10
+audio
+expect ambient == amb_storm
+con weather clear
+con time 23:00
+frames 10
+audio
+expect ambient == amb_night
 teleport hollowmere 20 28
 con time 12:00
 frames 10
 audio
 expect music == town
+expect ambient == amb_town
+teleport hollowmere_home 3 3
+frames 10
+audio
+expect ambient lacks amb_
 teleport overworld 44 93
 con weather clear
 con time 23:00
 frames 10
 audio
 expect music == overworld_night
-expect ambient lacks amb_
+expect ambient == amb_wind
 teleport crypt 12 22
+con weather storm
 frames 10
 audio
 expect music == crypt
-expect ambient lacks amb_
+expect ambient == amb_crypt
 teleport marsh 11 4
 frames 10
 audio
 expect music == swamp
-expect ambient lacks amb_
+expect ambient == amb_swamp
 teleport lab 14 21
 frames 10
 audio
 expect music == tech
-expect ambient lacks amb_
+expect ambient == amb_machine
+teleport goblin_cave 5 5
+frames 10
+audio
+expect ambient == amb_cave

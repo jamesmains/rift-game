@@ -7,6 +7,7 @@ dark=1
 light=4
 bg=0,0,0
 music=dungeon
+ambient=amb_fire
 
 [legend]
 , = rock

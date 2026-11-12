@@ -2,6 +2,7 @@
 id=hermit_hut
 name=Hermit's Hut
 kind=town
+ambient=amb_forest
 spawn=11,18
 bg=0,0,0
 

@@ -1,0 +1,49 @@
+[map]
+id=the_lost_lighthouse_start
+name=The Lost Lighthouse
+kind=town
+spawn=6,9
+bg=20,40,20
+
+[legend]
+. = floor_grass
+T = tree|tree2
+r = road
+, = flower|floor_grass
+
+[rows]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTT
+T........,..........,......T
+T......,..........,........T
+T....,..........,..........T
+T..,..........,..........,.T
+T,..........,..........,...T
+T.........,..........,.....T
+T.......,..........,.......T
+T.....,..........,.........T
+Trrrrrrrrrrrrrrrrrrrrrrrrrrr
+T.,..........,..........,..T
+T..........,..........,....T
+T........,..........,......T
+T......,..........,........T
+T....,..........,..........T
+T..,..........,..........,.T
+T,..........,..........,...T
+TTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+[sign]
+x=10
+y=8
+text=Welcome to The Lost Lighthouse. Paint this map in the Editor (Maps tab), add NPCs and exits, then press Play >.
+
+[npc]
+id=guide
+name=Guide
+sprite=104,0
+x=13
+y=10
+dialogue=the_lost_lighthouse_intro
+
+[savepoint]
+x=7
+y=11

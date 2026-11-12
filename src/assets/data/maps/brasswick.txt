@@ -5,6 +5,7 @@ kind=town
 spawn=30,41
 bg=0,0,0
 music=brasswick
+ambient=amb_town
 
 [legend]
 . = floor_grass

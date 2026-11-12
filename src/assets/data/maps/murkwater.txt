@@ -5,6 +5,7 @@ kind=town
 spawn=20,28
 bg=0,0,0
 music=murkwater
+ambient=amb_swamp
 
 [legend]
 . = floor_grass
