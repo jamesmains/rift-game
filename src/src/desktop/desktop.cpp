@@ -460,7 +460,10 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     }
     for (size_t i = 0; i < windows.size(); i++) if (windows[i].wantClose) { windows.erase(windows.begin() + i); i--; gAudio.play("desktop_close"); }
     // desktop icons
-    hoverIcon = (startOpen || contextOpen) ? -1 : iconAt(in.mouseX, in.mouseY);   // nothing behind an open menu reacts to the pointer
+    // nothing behind an open menu, a window or the taskbar reacts to the pointer
+    bool overAnyWindow = false; for (const auto& w : windows) if (mouseInWindow(in, w)) { overAnyWindow = true; break; }
+    bool overTaskbar = in.mouseY >= UI::SCREEN_H - TASKBAR_H;
+    hoverIcon = (startOpen || contextOpen || overAnyWindow || overTaskbar) ? -1 : iconAt(in.mouseX, in.mouseY);
     if (iconPress >= 0 && !iconPressPad) {
         if (in.mouseDown[0]) {
             if (iconDrag < 0 && (abs(in.mouseX - iconPressX) > 4 || abs(in.mouseY - iconPressY) > 4)) {
@@ -739,15 +742,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         if (w.page == 2) {
             // ---- accessibility ----
             f.draw(cv, *ctx.ts, x, cy, "Reading", RGB(0, 0, 128)); cy += 16;
-            // font face: applies everywhere (desktop, game, editor) straight away; each button is written in its own face
-            f.draw(cv, *ctx.ts, x + 10, cy + 3, "Font:", DKSHADOW);
-            for (int fs = 0; fs < Font::STYLE_COUNT; fs++) {
-                int keep = f.style; f.style = fs;
-                if (win98Button(cv, in, x + 60 + fs * 94, cy, 90, 20, Font::styleName(fs), true, s.fontStyle == fs, active)) { s.fontStyle = fs; keep = fs; }
-                f.style = keep;
-            }
-            cy += 24;
-            f.draw(cv, *ctx.ts, x + 28, cy, "The quick brown fox jumps over the lazy dog. 0123456789", RGB(0, 0, 128)); cy += 18;
+            // 1.1.1: the clear font is the only text face (the owner's call); the tileset's letters stay only in the logo
             checkbox(cv, in, x + 10, cy, "Large text (dialogue, messages, hints, story)", s.largeText, active); cy += 18;
             { static const char* ts[] = {"Text speed: slow", "Text speed: normal", "Text speed: fast", "Text speed: instant"}; if (win98Button(cv, in, x + 10, cy, 190, 18, ts[clampi(s.textSpeed, 0, 3)], true, false, active)) s.textSpeed = (s.textSpeed + 1) % 4; cy += 26; }
             f.draw(cv, *ctx.ts, x, cy, "Colour", RGB(0, 0, 128)); cy += 16;
@@ -881,8 +876,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
 #endif
             (void)c0; (void)c3; cy += 8;
             f.bold = true; f.draw(cv, *ctx.ts, tx, cy, "How do you like to play?", DKSHADOW); f.bold = false; cy += 18;
-            checkbox(cv, in, tx, cy, "Large text", s.largeText, active);
-            { bool clearFont = s.fontStyle == Font::STYLE_CLEAR; if (checkbox(cv, in, tx + 110, cy, "Easy-to-read font", clearFont, active)) s.fontStyle = clearFont ? Font::STYLE_CLEAR : Font::STYLE_CLASSIC; } cy += 18;
+            checkbox(cv, in, tx, cy, "Large text", s.largeText, active); cy += 18;
             f.draw(cv, *ctx.ts, tx, cy + 2, "(all can be changed in Settings > Access)", SHADOW);
             if (back()) w.page = 0;
             if (next("Next >")) { w.page = 2; w.timer = 0; s.save(saveDir + "/settings.ini"); gAudio.play("ui_click"); }
@@ -1047,66 +1041,26 @@ void Desktop::draw(Canvas& cv, InputState& in) {
     if (in.mouseInWindow || in.gamepadActive) drawCursor(cv, cursorX, cursorY);
 }
 
-// Boot: the BIOS lines, then the Triffall logo splash (the sky tears, the letters fall into place), then the desktop.
+// Boot (1.1.1: one screen, the owner's call): a DOS / BIOS start-up with the Triffall title at its top, the way a
+// 1998 PC showed its maker's logo above the memory test. The lines come in one by one, then the desktop.
 // App::frame moves on after BOOT_SECONDS or on any key / click.
 void Desktop::drawBoot(Canvas& cv, float t) {
     cv.clear(C::Black);
     Font& f = *ctx.font;
-    const float BIOS = 2.0f;
-    if (t < BIOS) {
-        const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: Pentium II 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Starting Triffall..."};
-        int n = sizeof(lines) / sizeof(lines[0]);
-        int show = std::min(n, (int)(t / 0.18f));
-        for (int i = 0; i < show; i++) f.draw(cv, *ctx.ts, 16, 16 + i * 14, lines[i], RGB(200, 200, 200));
-        if (((int)(t * 2)) % 2 == 0 && show < n) f.draw(cv, *ctx.ts, 16, 16 + show * 14, "_", RGB(200, 200, 200));
-        return;
-    }
-    drawLogoSplash(cv, t - BIOS);
-}
-
-void Desktop::drawLogoSplash(Canvas& cv, float t) {
-    Font& f = *ctx.font;
-    int W = cv.w, H = cv.h;
-    // night sky: deep blue to violet near the horizon, a few stars
-    for (int y = 0; y < H; y++) { float k = (float)y / H; cv.fillRect(0, y, W, 1, RGB((uint8_t)(8 + 30 * k), (uint8_t)(8 + 10 * k), (uint8_t)(30 + 50 * k))); }
-    for (int i = 0; i < 70; i++) { uint32_t h = (uint32_t)i * 2654435761u; int sx = (int)(h % (uint32_t)W), sy = (int)((h >> 11) % (uint32_t)(H * 2 / 3)); uint8_t b = (uint8_t)(90 + (h >> 21) % 140); if (((int)(t * 3) + i) % 7 == 0) b = (uint8_t)(b / 2); cv.put(sx, sy, RGB(b, b, (uint8_t)std::min(255, b + 40))); }
-    // the Rift: a jagged violet crack that tears down from the top of the sky
-    float open = std::min(1.0f, t / 0.7f);
-    int cx = W / 2, len = (int)(170 * open), px = cx, py = 0;
-    for (int y = 0; y < len; y += 6) {
-        uint32_t h = (uint32_t)(y * 7919 + 13); int nx = cx + (int)((h % 23) - 11) + (y > 120 ? (int)((h % 9) - 4) : 0);
-        for (int g = 3; g >= 0; g--) { Color8 c = g == 0 ? RGB(255, 230, 255) : RGB((uint8_t)(150 + g * 20), (uint8_t)(40 + g * 10), 255, (uint8_t)(200 - g * 45)); cv.line(px - g, py, nx - g, y + 6, c); cv.line(px + g, py, nx + g, y + 6, c); }
-        px = nx; py = y + 6;
-    }
-    if (t > 0.5f) { int r = (int)(20 + 6 * sinf(t * 5)); for (int k = r; k > 0; k -= 4) cv.rect(px - k, py - k / 2, k * 2, k, RGB(200, 120, 255, (uint8_t)(30 + (r - k) * 3))); }
-    // the name: letters fall out of the crack and land one by one
-    const std::string name = "TRIFFALL"; int scale = 5; f.bold = true; int keepStyle = f.style; f.style = Font::STYLE_CLASSIC;   // the logo keeps the game's own letters
-    int total = f.width(name, scale), x0 = (W - total) / 2, baseY = 190;
-    int x = x0;
-    for (size_t i = 0; i < name.size(); i++) {
-        std::string ch(1, name[i]); int cw = f.width(ch, scale);
-        float lt = t - 0.6f - i * 0.09f;
-        if (lt > 0) {
-            float k = std::min(1.0f, lt / 0.35f); float bounce = k < 1 ? (1 - k) * (1 - k) : 0;
-            int y = baseY - (int)(bounce * 120);
-            f.draw(cv, *ctx.ts, x + 4, y + 4, ch, RGB(30, 0, 60), scale);
-            f.draw(cv, *ctx.ts, x, y, ch, k < 1 ? RGB(230, 180, 255) : RGB(255, 205, 90), scale);
-        }
-        x += cw;
-    }
-    f.bold = false; f.style = keepStyle;
-    if (t > 1.6f) {
-        std::string sub = "an old-school RPG"; int sw = f.width(sub, 2);
-        f.draw(cv, *ctx.ts, (W - sw) / 2, baseY + 74, sub, RGB(200, 190, 230), 2);
-    }
-    // a Win98-style progress bar at the bottom
-    int bw = 240, bx = (W - bw) / 2, by = H - 70;
-    cv.rect(bx - 2, by - 2, bw + 4, 14, RGB(160, 160, 190));
-    int fill = (int)(bw * std::min(1.0f, t / 2.6f));
-    for (int k = 0; k + 8 <= fill; k += 10) cv.fillRect(bx + k, by, 8, 10, RGB(80, 110, 230));
-    const char* steps[] = {"Waking the elder...", "Scattering three shards...", "Restocking the Weary Goat...", "Loading Aldmoor..."};
-    std::string st = steps[std::min(3, (int)(t / 0.7f))]; f.draw(cv, *ctx.ts, (W - f.width(st)) / 2, by + 18, st, RGB(170, 170, 200));
-    f.draw(cv, *ctx.ts, W - 8 - f.width(TRIFFALL_VERSION_LABEL), H - 16, TRIFFALL_VERSION_LABEL, RGB(90, 90, 120));
+    const Color8 GREY = RGB(200, 200, 200), DIMG = RGB(120, 120, 120), AMBER = RGB(255, 205, 90);
+    // the title, in the game's own letters (the logo keeps them)
+    { int keep = f.style; f.style = Font::STYLE_CLASSIC; f.bold = true;
+      f.draw(cv, *ctx.ts, 19, 19, "TRIFFALL", RGB(90, 50, 0), 4); f.draw(cv, *ctx.ts, 16, 16, "TRIFFALL", AMBER, 4);
+      f.bold = false; f.style = keep; }
+    f.draw(cv, *ctx.ts, 18, 70, "an old-school RPG", RGB(200, 190, 150));
+    f.draw(cv, *ctx.ts, cv.w - 16 - f.width(TRIFFALL_VERSION_LABEL), 20, TRIFFALL_VERSION_LABEL, DIMG);
+    cv.hline(16, 90, cv.w - 32, RGB(70, 70, 70));
+    const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: Pentium II 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Loading Aldmoor...", "Starting Triffall..."};
+    int n = sizeof(lines) / sizeof(lines[0]);
+    int show = std::min(n, (int)(t / 0.2f));
+    for (int i = 0; i < show; i++) f.draw(cv, *ctx.ts, 16, 104 + i * 14, lines[i], GREY);
+    if (((int)(t * 3)) % 2 == 0) f.draw(cv, *ctx.ts, 16, 104 + std::min(show, n) * 14, "_", GREY);
+    f.draw(cv, *ctx.ts, 16, cv.h - 24, "Press any key to continue", DIMG);
 }
 
 bool Desktop::snapCursor(int dx, int dy) {

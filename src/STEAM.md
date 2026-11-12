@@ -105,7 +105,7 @@ a demo" on the main app page) with its own App ID, depot and store page that han
 1. Build it: `build_windows.bat mingw demo` (or `cmake -DTRIFFALL_DEMO=ON`). The demo has no editor; the base
    campaign is limited to the maps in `assets/data/demo.txt` (Hollowmere, Millbrook, Greywood Cave, Hesk's Barrow,
    the hermit and Brasswick); anything further shows the "the road on is closed" message; when the Mayor sends you to
-   Dunmarrow the demo's own ending plays and the player can keep exploring the demo area. Gullwatch plays in full.
+   Dunmarrow the demo's own ending plays and the player can keep exploring the demo area. Other campaigns play in full.
 2. Put the full game's store URL in `store=` in `assets/data/demo.txt` (the Wishlist icon on the demo's desktop opens it).
 3. Saves are the full game's saves - a demo player's save loads in the full game, so ask Steam Cloud for the same
    paths on both apps.

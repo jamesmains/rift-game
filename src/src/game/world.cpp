@@ -194,6 +194,26 @@ bool Map::findFree(int cx, int cy, int radius, int& ox, int& oy, Rng& rng) const
     return false;
 }
 
+// ---------------- object looks (1.1.1) ----------------
+using ObjKv = std::vector<std::pair<std::string, std::string>>;
+static const std::string* kvFind(const ObjKv& kv, const char* k) { for (auto& p : kv) if (p.first == k) return &p.second; return nullptr; }
+static std::string kvStr(const ObjKv& kv, const char* k) { const std::string* v = kvFind(kv, k); return v ? *v : std::string(); }
+static void kvTile(const ObjKv& kv, const char* k, Tile& t) { std::string v = trim(kvStr(kv, k)); if (!v.empty()) { Tile p = parseTile(v); if (p.valid()) t = p; } }
+static void kvColor(const ObjKv& kv, const char* k, bool& has, Color8& c) { std::string v = trim(kvStr(kv, k)); if (!v.empty()) { has = true; c = parseColor(v); } }
+static void kvText(const ObjKv& kv, const char* k, std::string& s) { std::string v = kvStr(kv, k); if (!trim(v).empty()) s = v; }
+static void readSavePoint(SavePoint& s, const ObjKv& kv) {
+    kvTile(kv, "sprite", s.sprite); kvColor(kv, "color", s.hasColor, s.color);
+    std::string sp = trim(kvStr(kv, "sparkle")); if (!sp.empty()) s.sparkle = sp != "0";
+    bool hs = false; kvColor(kv, "sparklecolor", hs, s.sparkleColor);
+    kvText(kv, "text", s.text); kvText(kv, "sound", s.sound); kvText(kv, "onuse", s.onUse);
+}
+static void readChestLook(Chest& c, const ObjKv& kv) {
+    kvTile(kv, "sprite", c.sprite); kvTile(kv, "opensprite", c.openSprite); kvColor(kv, "color", c.hasColor, c.color);
+    kvText(kv, "sound", c.sound); kvText(kv, "onuse", c.onUse);
+}
+void applyTypeLook(SavePoint& s) { if (const ObjTemplate* t = objectType("savepoint")) readSavePoint(s, t->kv); }
+void applyTypeLook(Chest& c) { if (const ObjTemplate* t = objectType("chest")) readChestLook(c, t->kv); }
+
 // ---------------- ASCII map loading ----------------
 bool loadMapFile(const std::string& path, Map& m, Rng& rng, std::string& err) {
     std::string text;
@@ -268,6 +288,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
         } else if (type == "chest") {
             Chest c; c.x = geti(kv, "x", 0); c.y = geti(kv, "y", 0); c.flag = gets(kv, "flag"); c.gold = geti(kv, "gold", 0); c.locked = gets(kv, "locked");
             for (auto& s : split(gets(kv, "items"), ',')) { auto p = split(trim(s), ':'); if (p.empty() || trim(p[0]).empty()) continue; c.items.push_back({trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1}); }
+            readChestLook(c, kv);
             m.chests.push_back(c);
         } else if (type == "exit") {
             Exit e; e.x = geti(kv, "x", 0); e.y = geti(kv, "y", 0); e.w = geti(kv, "w", 1); e.h = geti(kv, "h", 1); e.to = gets(kv, "to"); e.tx = geti(kv, "tx", 0); e.ty = geti(kv, "ty", 0);
@@ -277,15 +298,19 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             Trigger t; t.x = geti(kv, "x", 0); t.y = geti(kv, "y", 0); t.w = geti(kv, "w", 1); t.h = geti(kv, "h", 1); t.script = gets(kv, "script"); t.flag = gets(kv, "flag"); t.once = geti(kv, "once", 1) != 0; t.requireFlag = gets(kv, "require");
             m.triggers.push_back(t);
         } else if (type == "sign") {
-            SignPost s; s.x = geti(kv, "x", 0); s.y = geti(kv, "y", 0); s.text = gets(kv, "text"); m.signs.push_back(s);
+            SignPost s; s.x = geti(kv, "x", 0); s.y = geti(kv, "y", 0); s.text = gets(kv, "text");
+            kvTile(kv, "sprite", s.sprite); kvColor(kv, "color", s.hasColor, s.color); kvText(kv, "title", s.title); kvText(kv, "sound", s.sound); kvText(kv, "onuse", s.onUse);
+            m.signs.push_back(s);
             if (m.inBounds(s.x, s.y)) m.at(s.x, s.y).walkable = false;
         } else if (type == "door") {
             Door d; d.x = geti(kv, "x", 0); d.y = geti(kv, "y", 0); d.key = gets(kv, "key"); d.flag = gets(kv, "flag"); d.openIf = gets(kv, "openif"); d.require = gets(kv, "require"); d.lockedMsg = gets(kv, "locked");
             d.closedTile = m.inBounds(d.x, d.y) ? m.at(d.x, d.y).prop : DOOR_WOOD; d.openTile = gets(kv, "metal") == "1" ? DOOR_METAL : DOOR_OPEN;
+            { Tile sp; kvTile(kv, "sprite", sp); if (sp.valid()) { d.closedTile = sp; if (m.inBounds(d.x, d.y)) m.at(d.x, d.y).prop = sp; } }   // 1.1.1: sprite = the closed door's picture
+            kvTile(kv, "opensprite", d.openTile); kvText(kv, "sound", d.sound); kvText(kv, "text", d.msg); kvText(kv, "onuse", d.onUse);
             if (m.inBounds(d.x, d.y)) { m.at(d.x, d.y).walkable = false; m.at(d.x, d.y).blocksSight = true; }
             m.doors.push_back(d);
         } else if (type == "savepoint") {
-            SavePoint s; s.x = geti(kv, "x", 0); s.y = geti(kv, "y", 0); m.savepoints.push_back(s);
+            SavePoint s; s.x = geti(kv, "x", 0); s.y = geti(kv, "y", 0); readSavePoint(s, kv); m.savepoints.push_back(s);
         } else if (type == "obstacle") {
             Obstacle o; o.x = geti(kv, "x", 0); o.y = geti(kv, "y", 0); o.w = geti(kv, "w", 1); o.h = geti(kv, "h", 1); o.name = gets(kv, "name", "Rubble");
             o.kind = gets(kv, "kind"); o.clearKind = gets(kv, "clear"); o.needs = gets(kv, "needs", "rubble"); o.flag = gets(kv, "flag"); o.msg = gets(kv, "text"); o.onClear = gets(kv, "onclear");
@@ -295,6 +320,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             m.obstacles.push_back(o);
         } else if (type == "lever") {
             Lever l; l.x = geti(kv, "x", 0); l.y = geti(kv, "y", 0); l.flag = gets(kv, "flag"); l.msg = gets(kv, "text"); l.name = gets(kv, "name", "Lever"); l.toggle = geti(kv, "toggle", 1) != 0;
+            kvTile(kv, "sprite", l.sprite); kvTile(kv, "onsprite", l.onSprite); kvText(kv, "sound", l.sound); kvText(kv, "onuse", l.onUse);
             if (m.inBounds(l.x, l.y)) { m.set(l.x, l.y, "lever_off", rng); }
             m.levers.push_back(l);
         } else if (type == "change") {
@@ -359,22 +385,28 @@ Color8 gatherGuessColor(const std::string& item) {
     if (id.find("crystal") != std::string::npos || id.find("gem") != std::string::npos || id.find("circuit") != std::string::npos || id.find("core") != std::string::npos || id.find("rift") != std::string::npos) return RGB(90, 220, 255);
     return RGB(255, 215, 90);
 }
+static std::vector<ObjTemplate> gObjTypes;   // 1.1.1: [type] sections, id = the object type
 void setObjectTemplates(const std::vector<ConfigSection>& secs) {
-    gObjTemplates.clear();
+    gObjTemplates.clear(); gObjTypes.clear();
     for (auto& sec : secs) {
-        if (sec.name != "template" || sec.get("id").empty()) continue;
-        ObjTemplate t; t.id = sec.get("id"); t.type = sec.get("type");
-        for (auto& kv : sec.kv) if (kv.first != "id" && kv.first != "type" && kv.first != "x" && kv.first != "y") t.kv.push_back(kv);
-        bool dup = false; for (auto& o : gObjTemplates) if (o.id == t.id) { o = t; dup = true; } if (!dup) gObjTemplates.push_back(t);
+        if ((sec.name != "template" && sec.name != "type") || sec.get("id").empty()) continue;
+        ObjTemplate t; t.id = sec.get("id"); t.type = sec.name == "type" ? t.id : sec.get("type");
+        for (auto& kv : sec.kv) if (kv.first != "id" && kv.first != "type" && kv.first != "x" && kv.first != "y" && kv.first != "template") {
+            if (sec.name == "type" && trim(kv.second).empty()) continue;   // an empty value in a type = the built-in default
+            t.kv.push_back(kv);
+        }
+        auto& list = sec.name == "type" ? gObjTypes : gObjTemplates;
+        bool dup = false; for (auto& o : list) if (o.id == t.id) { o = t; dup = true; } if (!dup) list.push_back(t);
     }
 }
 const ObjTemplate* objectTemplate(const std::string& id) { for (auto& t : gObjTemplates) if (t.id == id) return &t; return nullptr; }
+const ObjTemplate* objectType(const std::string& type) { for (auto& t : gObjTypes) if (t.id == type) return &t; return nullptr; }
 void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv) {
+    auto fill = [&](const ObjTemplate& t) { for (auto& tk : t.kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { have = true; break; } if (!have) kv.push_back(tk); } };
     std::string id; for (auto& p : kv) if (p.first == "template") id = p.second;
-    if (id.empty()) return;
-    const ObjTemplate* t = objectTemplate(id); if (!t) return;
-    if (!t->type.empty()) type = t->type;
-    for (auto& tk : t->kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { have = true; break; } if (!have) kv.push_back(tk); }
+    if (!id.empty()) if (const ObjTemplate* t = objectTemplate(id)) { if (!t->type.empty()) type = t->type; fill(*t); }
+    // then what every object of its type uses (an empty value on the object or its template counts as not set)
+    if (const ObjTemplate* ty = objectType(type)) for (auto& tk : ty->kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { if (trim(p.second).empty()) p.second = tk.second; have = true; } if (!have) kv.push_back(tk); }
 }
 
 // ---------------- LOS & pathfinding ----------------

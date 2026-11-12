@@ -80,8 +80,7 @@ public:
     void update(InputState& in, float dt, Canvas& cv);
     void draw(Canvas& cv, InputState& in);
     void drawBoot(Canvas& cv, float t);
-    void drawLogoSplash(Canvas& cv, float t);   // the Triffall logo moment after the BIOS lines
-    static constexpr float BOOT_SECONDS = 5.0f;
+    static constexpr float BOOT_SECONDS = 3.2f;   // 1.1.1: one boot screen (the logo splash is gone)
     bool firstRun() const;
     bool loadFile(const std::string& path);   // load any save file into the game and switch to it
     void offerCrashRecovery();                // the last session ended in a crash: offer its recovery save

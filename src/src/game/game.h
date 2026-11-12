@@ -145,7 +145,7 @@ struct GameSettings {
     bool colorblind = false;        // blue / orange instead of green / red for sides, hit chances and cover
     int textSpeed = 1;              // dialogue text: 0 slow, 1 normal, 2 fast, 3 instant
     bool reduceFlashing = false;    // no lightning flashes, softer hit flashes
-    int fontStyle = 0;              // Font::STYLE_CLASSIC (the tileset's letters) or Font::STYLE_CLEAR (plainer, easier to read)
+    int fontStyle = 1;              // always Font::STYLE_CLEAR since 1.1.1 (the font setting was removed)
     std::string discord;            // settings.ini discord=: where the desktop's Discord icon points (empty = the built-in invite)
     void save(const std::string& path) const;   // also writes the keybinds
     bool load(const std::string& path);
@@ -323,6 +323,8 @@ public:
     // dialogue runtime
     std::string dlgId, dlgNode; int dlgSel = 0; std::string dlgSpeakerOverride; Tile dlgPortrait; bool dlgPortraitRecolor = false; Color8 dlgPortraitColor;
     int dlgTextShown = 0; float dlgCharTimer = 0; NPC* dlgNpc = nullptr;
+    float dlgOptT = 0; bool dlgOptArmed = false;   // 1.1.1: time the answers have been shown; armed = they take a press
+    static constexpr float DLG_ARM_SECONDS = 0.35f;
 
     // menu runtime
     int menuTab = 0, menuSel = 0, menuSub = 0, menuMember = 0, menuScroll = 0; bool menuSubFocus = false; int spellCol = 0; std::string menuPrompt;

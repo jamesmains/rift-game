@@ -112,7 +112,7 @@ cost=1
 recolor=1
 [kind]
 name=sand
-ground=18,34|5,13||
+ground=18,34|5,13
 prop=
 walk=1
 sight=0
@@ -314,7 +314,7 @@ cost=2
 under=1
 [kind]
 name=wasteland
-ground=0,5|17,5|9,5||
+ground=0,5|17,5|9,5
 prop=
 walk=1
 sight=0
@@ -361,7 +361,7 @@ under=1
 shift=4
 [kind]
 name=dirt
-ground=5,13|9,5|
+ground=5,13|9,5
 prop=
 walk=1
 sight=0
@@ -435,7 +435,7 @@ biome=snow
 cost=2
 [kind]
 name=riftscar
-ground=0,6|1,6|
+ground=0,6|1,6
 prop=
 walk=1
 sight=0
@@ -700,7 +700,7 @@ cost=1
 join=loc
 [kind]
 name=floor_grass
-ground=15,5|16,5|||
+ground=15,5|16,5
 prop=
 walk=1
 sight=0
@@ -714,7 +714,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_dirt
-ground=9,5|5,13||
+ground=9,5|5,13
 prop=
 walk=1
 sight=0
@@ -728,7 +728,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_sand
-ground=5,13|5,13|
+ground=5,13|5,13
 prop=
 walk=1
 sight=0
@@ -742,7 +742,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_snow
-ground=8,34|17,5|||
+ground=8,34|17,5
 prop=
 walk=1
 sight=0
@@ -890,7 +890,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_cave
-ground=0,7|1,7|2,7||
+ground=0,7|1,7|2,7
 prop=
 walk=1
 sight=0
@@ -974,7 +974,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_ice
-ground=20,5|17,5|||
+ground=20,5|17,5
 prop=
 walk=1
 sight=0
@@ -988,7 +988,7 @@ cost=1
 recolor=1
 [kind]
 name=floor_rift
-ground=0,6|1,6|0,7||
+ground=0,6|1,6|0,7
 prop=
 walk=1
 sight=0

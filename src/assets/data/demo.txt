@@ -1,5 +1,5 @@
 # The demo build (cmake -DTRIFFALL_DEMO=ON; see STEAM.md "Demo"). Only the base campaign is limited; other campaigns
-# (Gullwatch) play in full. maps= are the places the demo can go; when end= becomes true the demo's ending plays
+# (the Tutorial, campaigns made in the Editor) play in full. maps= are the places the demo can go; when end= becomes true the demo's ending plays
 # (the player can keep exploring the demo area afterwards). Saves are the full game's saves: they carry over.
 [demo]
 maps=hollowmere_home,hollowmere,millbrook,overworld,goblin_cave,barrow,brasswick,hermit_hut

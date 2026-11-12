@@ -54,7 +54,7 @@ void App::frame(InputState& in, float dt) {
     if (dt > 0.1f) dt = 0.1f;
     if (in.quitRequested) { quit = true; return; }
     gAudio.setVolumes(settings.masterVolume, settings.musicVolume, settings.sfxVolume, settings.ambientVolume);
-    font.style = settings.fontStyle;
+    font.style = Font::STYLE_CLEAR;   // 1.1.1: the only text face; the classic glyphs are kept for the logo
     gAudio.update(dt);
     if (shuttingDown) {
         shutdownT -= dt; canvas.fillRect(0, 0, canvas.w, canvas.h, C::Black);

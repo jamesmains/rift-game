@@ -170,9 +170,10 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("achievements.txt", "Achievements", "achievement", "id", {"id", "name", "desc", "cond", "tile", "hidden"});                   // gens[12]
     mk("bounties.txt", "Notice boards & bounties", "board", "id", {"id", "name", "map", "location", "offers", "kinds", "kill", "creatures", "fetch", "deliver", "reward"});   // gens[13]
     mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text"});                                          // gens[14]
-    mk("objects.txt", "Object templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
+    mk("objects.txt", "Object types & templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
     mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles"});   // gens[16] (1.1.0)
     gens[13].altSection = "bounty"; gens[13].altTemplateKeys = {"id", "board", "kind", "target", "need", "where", "reward", "xp", "title", "text", "require", "repeat"};
+    gens[15].altSection = "type"; gens[15].altTemplateKeys = {"id"};   // 1.1.1: [type] = what every object of a type uses
     loadGuide();
     return true;
 }
@@ -387,8 +388,8 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 }
 
 // ---------------- generic key/value editor ----------------
-static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite"; }
-static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent"; }
+static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite"; }
+static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent" || k == "sparklecolor"; }
 
 void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputState& in) {
     genUndo(g, in);
@@ -398,12 +399,25 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     ui.textField(x + 4, y + 20, lw - 8, g.filter, 40);
     auto idx = g.filtered(); std::vector<std::string> labels;
     for (auto& sc : g.secs) if (sc.inherited && sc.kv != sc.origKv) { sc.inherited = false; sc.origKv.clear(); g.dirty = true; say("Copied '" + sc.get(g.listKey) + "' into the campaign - Save to keep it."); }
-    for (int i : idx) { std::string l = g.secs[i].get(g.listKey); if (l.empty()) l = g.secs[i].get("name"); if (l.empty()) l = "(" + g.secs[i].name + ")"; if (g.secs[i].inherited) l += "  (base)"; if (!g.altSection.empty()) l = (g.secs[i].name == g.altSection ? "  notice: " : "board: ") + l; if (&g == &gens[5] && encounterUnused(g.secs[i].get("id"))) l += "  (unused)"; labels.push_back(l); }
+    bool objTab = &g == &gens[15];   // 1.1.1: Objects tab lists [type] entries ("every <type>") and templates
+    for (int i : idx) { std::string l = g.secs[i].get(g.listKey); if (l.empty()) l = g.secs[i].get("name"); if (l.empty()) l = "(" + g.secs[i].name + ")"; if (g.secs[i].inherited) l += "  (base)";
+        if (objTab) l = g.secs[i].name == "type" ? "every " + l : "template: " + l + (g.secs[i].get("type").empty() ? "" : "  (" + g.secs[i].get("type") + ")");
+        else if (!g.altSection.empty()) l = (g.secs[i].name == g.altSection ? "  notice: " : "board: ") + l;
+        if (&g == &gens[5] && encounterUnused(g.secs[i].get("id"))) l += "  (unused)"; labels.push_back(l); }
     int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == g.sel) lsel = (int)i;
     int hit = ui.listBox(x + 4, y + 40, lw - 8, h - (g.altSection.empty() ? 100 : 124), labels, lsel, g.scroll);
     if (hit >= 0) { g.sel = idx[hit]; g.fieldScroll = 0; ui.blur(); }
     int by = y + h - 56;
-    if (!g.altSection.empty() && ui.button(x + 4, by - 24, 222, 20, "New hand-written notice [" + g.altSection + "]")) { EdSection s; s.name = g.altSection; for (auto& k : g.altTemplateKeys) s.kv.push_back({k, k == g.listKey ? g.altSection + "_" + std::to_string(g.secs.size()) : ""}); g.secs.push_back(s); g.sel = (int)g.secs.size() - 1; g.dirty = true; g.filter.clear(); }
+    if (objTab) {   // a [type] entry: pick an object type that has none yet; it starts with every look / use key, empty = built-in
+        if (ui.button(x + 4, by - 24, 222, 20, "New object type entry [type]")) {
+            std::vector<std::string> opts; for (auto& t : edObjTypes()) { bool have = false; for (auto& sc : g.secs) if (sc.name == "type" && sc.get("id") == t) have = true; if (!have) opts.push_back(t); }
+            if (opts.empty()) say("Every object type already has an entry.");
+            else openListPicker("Object type: the entry sets what every object of it uses", opts, 0, [this, &g, opts](int i) { EdSection s; s.name = "type"; s.kv.push_back({"id", opts[i]}); for (auto& k : edObjLookKeys(opts[i])) s.kv.push_back({k, ""});
+                g.secs.push_back(s); g.sel = (int)g.secs.size() - 1; g.dirty = true; g.filter.clear(); });
+        }
+        if (ui.hover(x + 4, by - 24, 222, 20)) ui.tip("What EVERY object of a type uses (save points, chests, signs...) unless the object or its template sets the key itself");
+    }
+    else if (!g.altSection.empty() && ui.button(x + 4, by - 24, 222, 20, "New hand-written notice [" + g.altSection + "]")) { EdSection s; s.name = g.altSection; for (auto& k : g.altTemplateKeys) s.kv.push_back({k, k == g.listKey ? g.altSection + "_" + std::to_string(g.secs.size()) : ""}); g.secs.push_back(s); g.sel = (int)g.secs.size() - 1; g.dirty = true; g.filter.clear(); }
     if (ui.button(x + 4, by, 52, 20, "New")) { EdSection s; s.name = g.sectionName; for (auto& k : g.templateKeys) s.kv.push_back({k, k == g.listKey ? "new_" + std::to_string(g.secs.size()) : ""}); g.secs.push_back(s); g.sel = (int)g.secs.size() - 1; g.dirty = true; g.filter.clear(); }
     if (ui.button(x + 60, by, 70, 20, "Duplicate", g.sel >= 0)) { EdSection s = g.secs[g.sel]; s.inherited = false; s.origKv.clear(); s.set(g.listKey, s.get(g.listKey) + "_copy"); g.secs.insert(g.secs.begin() + g.sel + 1, s); g.sel++; g.dirty = true; }
     bool selInherited = g.sel >= 0 && g.sel < (int)g.secs.size() && g.secs[g.sel].inherited && !g.replaceWhole;
@@ -420,11 +434,11 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     ui.panel(fx, y, fw, h);
     if (g.sel < 0 || g.sel >= (int)g.secs.size()) { ui.text(fx + 10, y + 10, "Select an entry on the left, or press New.", DIM); return; }
     EdSection& s = g.secs[g.sel];
-    ui.header(fx, y, fw, "[" + s.name + "]  " + s.get(g.listKey) + "   " + s.get("name") + (s.inherited ? "   - from the base game; any edit makes it the campaign's own" : ""));
+    ui.header(fx, y, fw, (s.name == "type" && objTab ? "[type]  every " + s.get("id") + " on every map   (empty = built-in)" : "[" + s.name + "]  " + s.get(g.listKey) + "   " + s.get("name")) + (s.inherited ? "   - from the base game; any edit makes it the campaign's own" : ""));
     helpBtn(fx + fw - 58, y + 1, s.name, tabTopic());
     { Tile pv; if (s.has("sprite")) pv = parseTile(s.get("sprite")); else if (s.has("tile")) pv = parseTile(s.get("tile")); else if (s.has("spriterow")) pv = T(s.has("spritecol") ? atoi(s.get("spritecol").c_str()) : 104, atoi(s.get("spriterow").c_str()));
       int psz = s.get("size") == "2" ? 2 : 1;
-      if (pv.valid()) { ui.cv->fillRect(fx + fw - 40, y + 1, 36, 14, PANEL2); for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile t = T(pv.c + a, pv.r + b); if (s.has("color")) ts->drawRecolor(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1, parseColor(s.get("color"))); else ts->draw(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1); } } }
+      if (pv.valid()) { ui.cv->fillRect(fx + fw - 40, y + 1, 36, 14, PANEL2); for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile t = T(pv.c + a, pv.r + b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1, parseColor(s.get("color"))); else ts->draw(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1); } } }
     // items, creatures, spells, shops: a "Used by" box under the fields
     std::string useKey = &g == &gens[0] ? "item" : &g == &gens[1] ? "creature" : &g == &gens[2] ? "spell" : &g == &gens[4] ? "shop" : "";
     int usedH = useKey.empty() ? 0 : 130;
@@ -442,6 +456,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
         if (ry + 16 > fieldsBottom || ry < y + 18) { ui.idCounter += 3; continue; }
         ui.label(fx + 8, ry + 2, kv.first);
         if (s.name == "template") helpBtn(fx + keyW - 17, ry + 1, "obj." + s.get("type") + "." + kv.first, kv.first == "type" || kv.first == "id" ? "tab.objects" : "obj." + s.get("type"));
+        else if (s.name == "type" && objTab) helpBtn(fx + keyW - 17, ry + 1, kv.first == "id" ? "objtype" : "obj." + s.get("id") + "." + kv.first, "objtype");
         else helpBtn(fx + keyW - 17, ry + 1, s.name + "." + kv.first, s.name);
         fieldWidgets(g, s, kv, fx + keyW, ry, fw - keyW - 30);
         if (ui.button(fx + fw - 24, ry, 18, 16, "x", true, false, DANGER)) { s.kv.erase(s.kv.begin() + i); g.dirty = true; ui.blur(); break; }
@@ -459,6 +474,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     int qx = fx + 262;
     std::vector<std::string> quick = g.templateKeys;   // templates: the keys their object type reads
     if (s.name == "template") for (auto& k : edObjKeys(s.get("type"))) if (std::find(quick.begin(), quick.end(), k) == quick.end()) quick.push_back(k);
+    if (s.name == "type" && objTab) { quick.clear(); for (auto& k : edObjKeys(s.get("id"))) quick.push_back(k); }
     for (auto& k : quick) { if (s.has(k)) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
 }
 
@@ -523,7 +539,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (ui.textField(x, y, 90, v, 20)) g.dirty = true;
         { int psz = (k == "sprite" && s.get("size") == "2") ? 2 : 1;
           if (psz == 2) { ui.cv->fillRect(x + 98, y - 6, 52, 52, FIELD); ui.cv->rect(x + 98, y - 6, 52, 52, ACCENT2); }
-          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = T(t.c + a, t.r + b); if (s.has("color")) ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
+          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = T(t.c + a, t.r + b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
           if (psz == 2) ui.text(x + 154, y + 26, "size=2: the sprite is the 2x2 block starting at this tile (top-left)", DIM); }
         if (ui.button(x + 130, y, 50, 16, "pick...")) { EdSection* sp = &s; std::string key = k; openTilePicker(t, [sp, key, &g](Tile nt) { if (!nt.valid()) return; if (key == "spriterow" || key == "spritecol") { for (size_t i = 0; i < sp->kv.size(); i++) if (sp->kv[i].first == "spriterow" || sp->kv[i].first == "spritecol") { sp->kv.erase(sp->kv.begin() + i); i--; } sp->set("sprite", fmt("%d,%d", nt.c, nt.r)); } else sp->set(key, fmt("%d,%d", nt.c, nt.r)); g.dirty = true; }); }
         if (k == "sprite" && s.name == "creature") { ui.text(x + 190, y + 2, "character rows: col 104 + row = race; col 105 sword, 106 axe, 109 staff, 113 shield, 116 gun, 117 bow", DIM); }
@@ -550,7 +566,22 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     auto spellIds = [&]() { std::vector<std::string> o; o.push_back(""); for (auto& it : gd->spells) o.push_back(it.first); return o; };
     auto mapIds = [&]() { std::vector<std::string> o{"overworld"}; for (auto& m : mapFiles) o.push_back(m); for (auto& d : gens[7].secs) o.push_back(d.get("id")); return o; };
     // --- object templates (objects.txt) and resource nodes (resources.txt), 1.1.0 ---
-    if (s.name == "template" || s.name == "resource") {
+    if (s.name == "template" || s.name == "resource" || (s.name == "type" && &g == &gens[15])) {
+        if (k == "id" && s.name == "type") { ui.text(x, y + 2, v, ACCENT2); ui.text(x + font->width(v) + 10, y + 2, "(the object type; make another with New object type entry)", DIM); return; }
+        if (k == "onuse") {
+            if (ui.textField(x, y, w - 60, v, 300)) g.dirty = true;
+            if (ui.hover(x, y, w - 60, 16)) ui.tip("Script run when it is used: actions separated by ; e.g. heal;message:Rested|You feel better. (as a trigger's script=)");
+            if (ui.button(x + w - 56, y, 52, 16, "+ action")) { static const std::vector<std::string> acts = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2"};
+                openListPicker("Action (added with ;)", acts, 0, [&kvr, &g](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
+            return;
+        }
+        if (k == "sparkle") { bool b = v != "0"; if (ui.checkbox(x, y + 2, "twinkle above it", b)) { v = b ? "1" : "0"; g.dirty = true; } return; }
+        if ((k == "color" || k == "sparklecolor") && trim(v).empty()) {   // empty = its own colours: say so instead of showing 255,255,255
+            ui.text(x, y + 2, k == "color" ? "(its own colours)" : "(built-in)", DIM);
+            if (ui.button(x + 130, y, 70, 16, "set colour")) { v = k == "color" ? "255,255,255" : "0,220,220"; g.dirty = true; }
+            return;
+        }
+        if (k == "sound") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") o.push_back(id); singlePick("sound event (empty = the built-in one)", o); return; }
         if (k == "type" && s.name == "template") { if (ui.choice(x, y, 140, v.empty() ? "(pick a type)" : v)) { auto opts = edObjTypes(); int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("object type", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } return; }
         if (k == "item" || k == "tool" || k == "key") { singlePick("item", itemIds()); return; }
         if (k == "dialogue") { std::vector<std::string> o{""}; for (auto& d : dlgFiles) o.push_back(d); singlePick("dialogue", o); return; }
@@ -774,6 +805,9 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     if (!k) { ui.cv->fillRect(sx, sy, sz, sz, RGB(255, 0, 255)); return; }
     Tile g = k->ground.empty() ? Tile{} : k->ground[0]; Color8 bg = k->bg;
     for (auto& t : k->ground) if (t.valid()) { g = t; break; }
+    // 1.1.1: on the map, each cell shows one of the kind's ground pieces like the game does (which picks one at random
+    // per cell; an empty entry draws nothing), so a pattern list with gaps shows its gaps here too
+    if (mx >= 0 && k->ground.size() > 1) { uint32_t h = (uint32_t)mx * 73856093u ^ (uint32_t)my * 19349663u; h ^= h >> 13; h *= 0x5bd1e995u; h ^= h >> 15; g = k->ground[h % k->ground.size()]; }
     int mask = 0, corners = 0;
     if (mx >= 0 && (!k->edges.empty() || k->under))   // joined pieces (paths, shores, rivers...) as the game draws them
         tileKindLook(*k, [&](int dx, int dy) -> const TileKind* { int nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= em.w || ny >= em.h) return nullptr; return tileKind(trim(split(em.at(nx, ny), '|')[0])); }, g, bg, &mask, &corners);
@@ -802,13 +836,14 @@ const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
     if (t == "npc") return {"name", "sprite", "color", "dialogue", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
     if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link"};
-    if (t == "chest") return {"items", "gold", "locked", "flag"};
+    if (t == "chest") return {"items", "gold", "locked", "flag", "sprite", "opensprite", "color", "sound", "onuse"};
     if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
     if (t == "trigger") return {"w", "h", "script", "flag", "once", "require"};
-    if (t == "sign") return {"text"};
-    if (t == "door") return {"key", "flag", "openif", "require", "locked", "metal"};
+    if (t == "sign") return {"text", "sprite", "color", "title", "sound", "onuse"};
+    if (t == "door") return {"key", "flag", "openif", "require", "locked", "metal", "sprite", "opensprite", "sound", "text", "onuse"};
+    if (t == "savepoint") return {"sprite", "color", "sparkle", "sparklecolor", "text", "sound", "onuse"};
     if (t == "obstacle") return {"w", "h", "name", "kind", "clear", "needs", "flag", "text", "onclear"};
-    if (t == "lever") return {"name", "flag", "toggle", "text"};
+    if (t == "lever") return {"name", "flag", "toggle", "text", "sprite", "onsprite", "sound", "onuse"};
     if (t == "change") return {"w", "h", "kind", "if"};
     if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent"};
     return {};
@@ -870,7 +905,7 @@ void Editor::drawMaps(InputState& in) {
             ui.label(x + 4, ty + 2, "template:");
             if (ui.choice(x + 62, ty, lw - 66, !pt ? (gens[15].secs.empty() ? "(none - Objects tab)" : "(none)") : placeTmpl + " (" + pt->get("type") + ")")) {
                 std::vector<std::string> ids{""}, labels{"(none) - place the plain type above"};
-                for (auto& s : gens[15].secs) { ids.push_back(s.get("id")); labels.push_back(s.get("id") + "  (" + s.get("type") + ")" + (s.get("name").empty() ? "" : "  " + s.get("name"))); }
+                for (auto& s : gens[15].secs) if (s.name == "template") { ids.push_back(s.get("id")); labels.push_back(s.get("id") + "  (" + s.get("type") + ")" + (s.get("name").empty() ? "" : "  " + s.get("name"))); }
                 int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == placeTmpl) cur = (int)i;
                 openListPicker("Place copies of a template (make them in the Objects tab)", labels, cur, [this, ids](int i) { placeTmpl = ids[i]; });
             }
@@ -948,14 +983,11 @@ void Editor::drawMaps(InputState& in) {
             if (cd) for (int b = 0; b < sz; b++) for (int a = 0; a < sz; a++) { Tile t = T(cd->tile.c + a, cd->tile.r + b); if (cd->recolor) ts->drawRecolor(*ui.cv, t, sx + a * cell, sy + b * cell, zoom, cd->color); else ts->draw(*ui.cv, t, sx + a * cell, sy + b * cell, zoom); }
             if (sz == 2) { ow = oh = 2; ui.cv->rect(sx, sy, cell * 2, cell * 2, C::Orange); font->draw(*ui.cv, *ts, sx + 2, sy + cell * 2 - 11, "2x2", C::Orange); }
             col = C::Red; }
-        else if (o.type == "chest") { ts->draw(*ui.cv, TL::CHEST, sx, sy, zoom); col = C::Yellow; }
+        else if (o.type == "chest" || o.type == "sign" || o.type == "savepoint" || o.type == "lever") { drawObjectLook(o, sx, sy, zoom, false); col = o.type == "sign" ? C::Cream : o.type == "savepoint" ? C::Cyan : C::Yellow; }   // 1.1.1: as the game draws it
         else if (o.type == "exit") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(0, 200, 255, 90)); col = C::Cyan; }
         else if (o.type == "trigger") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(255, 200, 0, 80)); col = C::Yellow; }
-        else if (o.type == "sign") { ts->draw(*ui.cv, TL::SIGN, sx, sy, zoom); col = C::Cream; }
-        else if (o.type == "door") { ui.cv->rect(sx + 1, sy + 1, cell - 2, cell - 2, C::Orange); col = C::Orange; }
-        else if (o.type == "savepoint") { ts->draw(*ui.cv, TL::ALTAR, sx, sy, zoom); col = C::Cyan; }
+        else if (o.type == "door") { if (parseTile(o.get("sprite")).valid()) drawObjectLook(o, sx, sy, zoom, false); ui.cv->rect(sx + 1, sy + 1, cell - 2, cell - 2, C::Orange); col = C::Orange; }
         else if (o.type == "obstacle") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(150, 110, 60, 110)); ts->draw(*ui.cv, TL::ROCKS, sx, sy, zoom); col = C::Orange; }
-        else if (o.type == "lever") { ts->draw(*ui.cv, TL::LEVER, sx, sy, zoom); col = C::Yellow; }
         else if (o.type == "change") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(180, 80, 255, 70)); col = C::Purple; }
         else if (o.type == "gather") { if (ox >= 0 && oy >= 0 && ox < em.w && oy < em.h) drawGatherNode(o, sx, sy, zoom, em.at(ox, oy)); col = C::Green; }   // as the game draws it
         ui.cv->rect(sx, sy, ow * cell, oh * cell, (int)i == objSel ? C::White : Color8{col.r, col.g, col.b, 160});

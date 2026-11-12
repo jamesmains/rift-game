@@ -28,6 +28,27 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.1 object types, one boot screen, clearer caves
+
+* **Object types (Editor, Objects tab)**: the list now starts with "every savepoint", "every chest", "every sign",
+  "every door" and "every lever" (`[type]` entries in `objects.txt`). What you set there is used by every object of
+  that type on every map and in generated dungeons, unless the object or its template sets it itself: its picture
+  (`sprite=`, `opensprite=` once opened, `onsprite=` for a pulled lever), one colour (`color=`), the sound when used
+  (`sound=`), a script run when used (`onuse=`, the same actions as a trigger: `heal`, `item:ID:N`, `message:...`),
+  and for save shrines the twinkle and the step-on message, for signs the window title, for doors the open message.
+  A preview shows the object closed and opened and says what using it does. Pulled levers now show a pulled picture.
+* **Caves no longer look unlit**: cave, dirt, sand, snow, ice and rift floors had blank cells in their pattern list,
+  drawn as pure black, which read as darkness. Every walkable floor cell now shows its pattern. The Editor shows the
+  same mix of patterns as the game.
+* **Gem veins look like veins**: a gem vein is now a blue rock pile (like the orange iron vein), so it can't be mixed
+  up with the glowing crystal clusters, which are only scenery.
+* **One boot screen**: the DOS / BIOS start-up now carries the Triffall title; the second splash is gone.
+* **Clear font only**: the easy-to-read font is used everywhere and the font option was removed.
+* **Skipping text can't pick an answer**: a press while dialogue text is still typing only shows the rest. The answers
+  then appear dim and can't be chosen for a moment, and not before the key is let go.
+* Desktop icons no longer light up through an open window or the taskbar.
+* The sample campaign "The Gullwatch Light" was removed.
+
 ## 1.1.0 object templates and resource nodes
 
 * **Editor fix**: clicking in a map object's panel (the box on the right of the map view) now edits the panel. It used
@@ -527,12 +548,12 @@ opens New Game for that campaign, and saves remember which campaign they belong 
 The easiest way to make one is the Editor's **Campaign > New campaign**, then the **Campaign tab**. `campaign.txt`:
 
     [campaign]
-    name=The Gullwatch Light
+    name=The Lighthouse Keeper
     desc=A short adventure on the storm coast.
     icon=3,4            ; icons.png cell
-    start=gullwatch,12,20   ; where a new game begins: map,x,y (0,0 = that map's spawn) - B in the Maps tab sets it
+    start=lighthouse,12,20  ; where a new game begins: map,x,y (0,0 = that map's spawn) - B in the Maps tab sets it
     intro=...           ; opening cutscene, one line per screen ($hero = the hero's name)
-    dialogue=gull_intro ; dialogue that opens after the intro
+    dialogue=keeper_intro ; dialogue that opens after the intro
     items=torch_item:2,potion_red:2
     gold=40
     flags=some_flag
@@ -560,7 +581,7 @@ ends a campaign without the epilogue: closing lines, then the desktop with New G
 `order=` sorts the campaign icons (the Tutorial is 0) and `achievements=0` keeps achievements from unlocking.
 
 `assets/campaigns/tutorial` is the Tutorial, built only from these pieces (one map, five dialogues, a shop, a quest,
-`hints.txt`, one item and one tile kind). `assets/campaigns/gullwatch` is a small sample campaign. `triffall_headless bakeall` bakes every generated
+`hints.txt`, one item and one tile kind). `triffall_headless bakeall` bakes every generated
 dungeon/overworld to map files.
 
 ## Modding

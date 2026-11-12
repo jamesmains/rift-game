@@ -129,20 +129,24 @@ struct EnemyGroup {
     std::string link;             // groups sharing a link id always fight together
 };
 
+// 1.1.1: look and use keys every object type can take from its [type] entry in objects.txt (or its template, or set
+// itself): sprite / opensprite / onsprite pictures, color (drawn in one colour), sound played on use, onuse = a script
+// run when it is used (the same actions as a trigger's script=: heal, item:ID:N, flag:NAME, message:Title|Text...).
 struct Chest {
     int x = 0, y = 0; std::string flag; bool opened = false;
     std::vector<std::pair<std::string, int>> items; int gold = 0;
     std::string locked; // key item id
+    Tile sprite, openSprite; bool hasColor = false; Color8 color = C::White; std::string sound, onUse;
 };
 
 struct Exit { int x = 0, y = 0, w = 1, h = 1; std::string to; int tx = 0, ty = 0; std::string requireFlag, requireItem, lockedMsg; };
 struct Trigger { int x = 0, y = 0, w = 1, h = 1; std::string script; std::string flag; bool once = true; std::string requireFlag; };
-struct SignPost { int x = 0, y = 0; std::string text; };
-struct Door { int x = 0, y = 0; bool open = false; std::string key; std::string flag; Tile closedTile, openTile; std::string openIf, require, lockedMsg; };
+struct SignPost { int x = 0, y = 0; std::string text; Tile sprite; bool hasColor = false; Color8 color = C::White; std::string title, sound, onUse; };
+struct Door { int x = 0, y = 0; bool open = false; std::string key; std::string flag; Tile closedTile, openTile; std::string openIf, require, lockedMsg; std::string sound, msg, onUse; };
 // Something in the way that the right tool, spell or deed removes: rubble (shovel / blast), vines (fire), ice (fire), a boulder (STR)...
 struct Obstacle { int x = 0, y = 0, w = 1, h = 1; std::string name, kind, clearKind, needs, flag, msg, onClear; bool cleared = false; };
 // A lever or switch: toggles a flag; doors (openif=), changes and obstacles react to flags.
-struct Lever { int x = 0, y = 0; std::string flag, msg, name; bool toggle = true; };
+struct Lever { int x = 0, y = 0; std::string flag, msg, name; bool toggle = true; Tile sprite, onSprite; std::string sound, onUse; };
 // A part of the map that looks different while a condition holds (a bridge appears, a wall crumbles, water drains).
 struct WorldChange { int x = 0, y = 0, w = 1, h = 1; std::string kind, cond; std::vector<uint16_t> orig; bool applied = false; };
 // A resource you can harvest (ore vein, herb patch); it grows back after some days.
@@ -161,10 +165,16 @@ Color8 gatherGuessColor(const std::string& item);                // the colour a
 // 1.1.0: object templates (objects.txt): a placed object with template=<id> gets the template's type and every key it
 // doesn't set itself, so editing the template changes every copy on every map.
 struct ObjTemplate { std::string id, type; std::vector<std::pair<std::string, std::string>> kv; };
-void setObjectTemplates(const std::vector<ConfigSection>& secs);
+// 1.1.1: [type] entries in objects.txt (id = an object type: savepoint, chest, sign...) hold what every object of that
+// type uses unless it (or its template) sets the key itself. An empty value there means the built-in default.
+void setObjectTemplates(const std::vector<ConfigSection>& secs);   // reads both [template] and [type] sections
 const ObjTemplate* objectTemplate(const std::string& id);
-void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv);
-struct SavePoint { int x = 0, y = 0; };
+const ObjTemplate* objectType(const std::string& type);
+void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv);   // template, then type
+struct SavePoint { int x = 0, y = 0; Tile sprite; bool hasColor = false; Color8 color = C::White; bool sparkle = true; Color8 sparkleColor = C::Cyan; std::string text, sound, onUse; };
+// objects made by code (generated dungeons, the overworld, the console) take their type's look the same way
+void applyTypeLook(SavePoint& s);
+void applyTypeLook(Chest& c);
 struct ItemDrop { int x = 0, y = 0; std::string item; int count = 1; int gold = 0; };
 
 struct Map {

@@ -124,7 +124,7 @@ void Editor::buildFlagIndex() {
                 std::string d = std::string(ck) == "show" ? "only there while " : std::string(ck) == "hide" ? "gone while " : std::string(ck) == "moveif" ? "moves aside once " : std::string(ck) == "openif" ? "opens by itself once " : std::string(ck) == "if" ? "the tiles change while " : "locked until ";
                 addCond(c, where, std::string(ck) + "=: " + d + condEnglish(c), u); }
             for (auto& n : split(o.get("needs"), '|')) if (startsWith(trim(n), "flag:")) addCond(trim(n).substr(5), where, "needs=flag: can be cleared once " + condEnglish(trim(n).substr(5)), u);
-            for (const char* sk : {"script", "ondefeat", "onclear"}) { std::vector<std::pair<std::string, bool>> fs2; scriptFlags(o.get(sk), fs2); for (auto& p : fs2) add(p.first, true, where, std::string(sk) + "=" + o.get(sk) + (p.second ? "" : "  (clears it)"), u); }
+            for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) { std::vector<std::pair<std::string, bool>> fs2; scriptFlags(o.get(sk), fs2); for (auto& p : fs2) add(p.first, true, where, std::string(sk) + "=" + o.get(sk) + (p.second ? "" : "  (clears it)"), u); }
         }
     }
     // ---- quests, dungeons, locations, achievements, banter ----

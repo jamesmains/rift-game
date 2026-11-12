@@ -158,7 +158,7 @@ struct Bot {
                     auto opts = dialogueOptions();
                     // a node whose only way on is a single option, or whose options all just close it, is clicked through
                     bool closeOnly = !opts.empty(); for (int o : opts) if (G.dialogues[G.dlgId].nodes[G.dlgNode].options[o].target != "end") closeOnly = false;
-                    if (clickThrough && (opts.size() == 1 || closeOnly)) { G.dlgTextShown = 1 << 20; G.dlgSel = 0; tap(K_ENTER, 1); break; }
+                    if (clickThrough && (opts.size() == 1 || closeOnly)) { G.dlgTextShown = 1 << 20; G.dlgOptArmed = true; G.dlgSel = 0; tap(K_ENTER, 1); break; }
                     if (!opts.empty()) return true;
                     G.dlgTextShown = 1 << 20; tap(K_ENTER, 1); break;
                 }
@@ -187,7 +187,7 @@ struct Bot {
         auto opts = dialogueOptions(); std::string lw = toLower(want);
         for (size_t k = 0; k < opts.size(); k++) if (toLower(optionText(opts[k])).find(lw) != std::string::npos) {
             if (verbose) printf("  bot: %s > %s\n", G.dlgId.c_str(), optionText(opts[k]).c_str());
-            G.dlgTextShown = 1 << 20; G.dlgSel = (int)k; tap(K_ENTER, 1);
+            G.dlgTextShown = 1 << 20; G.dlgOptArmed = true; G.dlgSel = (int)k; tap(K_ENTER, 1);
             return settle(true);
         }
         std::string have; for (int o : opts) have += " [" + optionText(o) + "]";
@@ -279,7 +279,7 @@ struct Bot {
             auto opts = dialogueOptions(); int pick = 0;
             for (size_t k = 0; k < opts.size(); k++) if (G.dialogues[G.dlgId].nodes[G.dlgNode].options[opts[k]].target == "end") pick = (int)k;
             if (!opts.empty() && pick == 0 && G.dialogues[G.dlgId].nodes[G.dlgNode].options[opts[0]].target != "end") pick = (int)opts.size() - 1;
-            G.dlgTextShown = 1 << 20; G.dlgSel = pick; tap(K_ENTER, 1); settle();
+            G.dlgTextShown = 1 << 20; G.dlgOptArmed = true; G.dlgSel = pick; tap(K_ENTER, 1); settle();
         }
     }
     bool talk(const std::string& id) {
@@ -291,7 +291,7 @@ struct Bot {
         for (int tries = 0; tries < 5; tries++) {   // wandering NPCs move: re-aim a few times
             n->wanderTimer = 1 << 30;                 // (and a player would wait for them to stand still)
             auto r = walkTo({{n->x, n->y}}, "NPC " + id, true); if (r == W_FAILED) return false;
-            if (G.mode == GMode::DIALOGUE) { G.dlgTextShown = 1 << 20; return true; }   // the conversation is open: the script picks
+            if (G.mode == GMode::DIALOGUE) { G.dlgTextShown = 1 << 20; G.dlgOptArmed = true; return true; }   // the conversation is open: the script picks
             if (!settle(true)) return false;
             if (G.mode == GMode::DIALOGUE || G.mode == GMode::SHOP || G.mode == GMode::WORLDMAP || G.mode == GMode::BOUNTY || G.mode == GMode::CRAFT) return true;
         }

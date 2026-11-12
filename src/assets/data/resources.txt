@@ -8,6 +8,8 @@
 #   kind = the tile kind generated dungeons put under it
 #   styles = generated dungeon styles that scatter it: style[:weight[:count]], e.g. mine:2:2-4,cave
 #     (weight = lots in the draw, count = overrides count= in that style). The order of this file matters for the draw.
+# 1.1.1: veins are rock piles in the colour of what they give (iron orange, gems blue), so they never look like the
+# glowing crystal clusters that are only scenery.
 
 [resource]
 id=iron_ore
@@ -41,10 +43,10 @@ item=gem_rough
 count=1-1
 tool=pickaxe
 respawn=5
-sprite=
-color=90,220,255
+sprite=14,5
+color=110,160,255
 spent=85,85,85
-kind=crystal
+kind=rocks
 styles=mine
 
 [resource]

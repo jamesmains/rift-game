@@ -104,7 +104,7 @@ public:
     Image8 tilesInside;      // 1.0.15: only the black pixels not reachable from their cell's edge (drawBacking)
 };
 
-// Bitmap font. Two faces, chosen in Settings > Access > Font (GameSettings::fontStyle):
+// Bitmap font. Two faces; since 1.1.1 every text uses STYLE_CLEAR (no setting), STYLE_CLASSIC only draws the logo:
 //   STYLE_CLASSIC - the tileset's own glyphs (rows 44-49), the game's original look
 //   STYLE_CLEAR   - Spleen 6x12 (built in, src/core/font_spleen.h), plainer letterforms that are easier to read
 // Both are proportional, 12px line height, so every layout works with either.
@@ -118,7 +118,7 @@ public:
     struct ClearGlyph { int x0 = 0, x1 = 0; bool valid = false; };
     ClearGlyph clear[128];
     bool bold = false;
-    int style = STYLE_CLASSIC;
+    int style = STYLE_CLEAR;
     void build(const Tileset& ts);
     int width(const std::string& s, int scale = 1) const;
     int lineHeight(int scale = 1) const { return 12 * scale; }

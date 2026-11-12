@@ -52,6 +52,7 @@ struct EdObj { std::string type; std::vector<std::pair<std::string, std::string>
 // the 12 kinds of map object and the keys each one reads (editor.cpp)
 const std::vector<std::string>& edObjTypes();
 std::vector<std::string> edObjKeys(const std::string& type);
+std::vector<std::string> edObjLookKeys(const std::string& type);   // 1.1.1: the look / use keys a [type] entry starts with
 struct EdMap {
     std::string path, id;
     std::vector<std::pair<std::string, std::string>> header; // [map] keys
@@ -220,6 +221,9 @@ private:
     // ---- end dialogue node graph ----
     // ---- object templates and resource nodes (editor_objects.cpp): gens[15] = objects.txt, gens[16] = resources.txt ----
     const EdSection* templateSec(const std::string& id) const;
+    const EdSection* typeSec(const std::string& type) const;   // 1.1.1: objects.txt [type] entry for an object type
+    void drawObjectLook(const EdObj& resolved, int sx, int sy, int scale, bool used);   // a chest / sign / savepoint / lever / door as the game draws it
+    void drawObjectTypeInfo(int x, int y, int w, int h, InputState& in);   // Objects tab: preview of the selected [type] / template
     const EdSection* resourceSec(const std::string& node, const std::string& item) const;   // node= id, else the first one giving the item
     EdObj resolvedObj(const EdObj& o) const;   // the object as the game sees it: template type + keys, resource keys
     std::vector<std::pair<std::string, std::string>> inheritedKeys(const EdObj& o, std::string& from) const;   // keys it gets from its template / resource

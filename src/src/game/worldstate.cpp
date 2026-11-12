@@ -40,7 +40,8 @@ void Game::applyWorldState(Map& m) {
     auto ms = extra.find("mapset_" + m.id);
     if (ms != extra.end()) for (auto& e : split(ms->second, ';')) { auto p = split(e, ','); if (p.size() == 3 && m.inBounds(atoi(p[0].c_str()), atoi(p[1].c_str()))) m.set(atoi(p[0].c_str()), atoi(p[1].c_str()), trim(p[2]), rng); }
     // levers show their state
-    for (auto& l : m.levers) if (m.inBounds(l.x, l.y)) m.at(l.x, l.y).prop = TL::LEVER;
+    // 1.1.1: sprite = the lever's picture, onsprite = its picture while its flag is set (objects.txt [type] lever)
+    for (auto& l : m.levers) if (m.inBounds(l.x, l.y)) { Tile off = l.sprite.valid() ? l.sprite : TL::LEVER; m.at(l.x, l.y).prop = l.onSprite.valid() && !l.flag.empty() && hasFlag(l.flag) ? l.onSprite : off; }
     if (&m == map) { revealAround(); }
 }
 
@@ -172,9 +173,10 @@ void Game::pullLever(Lever& l) {
     bool on = hasFlag(l.flag);
     if (on && !l.toggle) { log("It's stuck in place."); return; }
     if (on) flags.erase(l.flag); else setFlag(l.flag);
-    gAudio.play("unlock"); shake = 0.05f;
+    gAudio.play(l.sound.empty() ? "unlock" : l.sound); shake = 0.05f;
     if (!l.msg.empty()) log(l.msg); else log(on ? "You push the lever back." : "You pull the lever. Somewhere, something grinds.");
     applyWorldState(*map);
+    if (!l.onUse.empty()) runScript(l.onUse);
 }
 
 void Game::gatherFrom(GatherNode& g) {

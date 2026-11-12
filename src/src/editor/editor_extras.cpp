@@ -84,7 +84,7 @@ void Editor::buildUseIndex() {
         if (o.type == "npc") { add("board", o.get("board"), where, "is the notice board", u); add("dialogue", o.get("dialogue"), where, "talks with it", u); add("shop", o.get("shop"), where, "sells from it", u); for (auto& c : idList(o.get("hostile"))) add("creature", c, where, "turns into it when attacked", u); }
         for (auto& n : split(o.get("needs"), '|')) if (startsWith(trim(n), "item:")) add("item", trim(n).substr(5), where, "clears the obstacle", u);
         for (const char* ck : {"show", "hide", "moveif", "openif", "require", "if"}) condRefs(o.get(ck), where, std::string(ck) + "= condition", u);
-        for (const char* sk : {"script", "ondefeat", "onclear"}) scriptRefs(o.get(sk), where, u);
+        for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) scriptRefs(o.get(sk), where, u);
     }
     auto gu = [](int gen, int sec, int tab) { FlagUse u; u.gen = gen; u.sec = sec; u.tab = tab; return u; };
     // data files
@@ -171,7 +171,7 @@ void Editor::renameFlag(const std::string& from, const std::string& to) {
     // maps
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue; bool ch = false;
-        for (auto& o : m.objs) for (auto& kv : o.kv) { if (kv.first == "flag" || kv.first == "show" || kv.first == "hide" || kv.first == "moveif" || kv.first == "openif" || kv.first == "require" || kv.first == "if" || kv.first == "needs" || kv.first == "script" || kv.first == "ondefeat" || kv.first == "onclear") {
+        for (auto& o : m.objs) for (auto& kv : o.kv) { if (kv.first == "flag" || kv.first == "show" || kv.first == "hide" || kv.first == "moveif" || kv.first == "openif" || kv.first == "require" || kv.first == "if" || kv.first == "needs" || kv.first == "script" || kv.first == "ondefeat" || kv.first == "onclear" || kv.first == "onuse") {
             std::string nv = kv.first == "flag" ? (kv.second == from ? to : kv.second) : renameWord(kv.second, from, to); if (nv != kv.second) { kv.second = nv; ch = true; n++; } } }
         if (ch) { m.path = dataRoot + "/maps/" + f + ".txt"; m.save(); }
     }
@@ -239,7 +239,9 @@ void Editor::runCampaignCheck() {
     // ---- flags ----
     for (auto& kv : flagIndex) { int s = 0, c = 0; for (auto& u : kv.second) (u.set ? s : c)++; if (s == 0 && c > 0) { FlagUse u; u.tab = 19; u.file = kv.first; addF(true, "flag '" + kv.first + "' is checked but nothing ever sets it", u); } }
     // ---- data files ----
-    for (size_t i = 0; i < gens[15].secs.size(); i++) { auto& s = gens[15].secs[i]; auto& ty = edObjTypes(); if (std::find(ty.begin(), ty.end(), s.get("type")) == ty.end()) addF(true, "object template " + s.get("id") + ": type '" + s.get("type") + "' is not an object type", gu(15, (int)i, 22)); }
+    for (size_t i = 0; i < gens[15].secs.size(); i++) { auto& s = gens[15].secs[i]; auto& ty = edObjTypes(); std::string tt = s.name == "type" ? s.get("id") : s.get("type");
+        if (std::find(ty.begin(), ty.end(), tt) == ty.end()) addF(true, (s.name == "type" ? "object type entry '" : "object template " + s.get("id") + ": type '") + tt + "' is not an object type", gu(15, (int)i, 22));
+        for (const char* tk : {"sprite", "opensprite", "onsprite"}) if (!trim(s.get(tk)).empty() && !parseTile(trim(s.get(tk))).valid()) addF(true, (s.name == "type" ? "object type " : "object template ") + s.get("id") + ": " + tk + "=" + s.get(tk) + " is not a tile (col,row)", gu(15, (int)i, 22)); }
     for (size_t i = 0; i < gens[16].secs.size(); i++) { auto& s = gens[16].secs[i]; std::string w = "resource node " + s.get("id");
         if (s.get("item").empty() || !item(s.get("item"))) addF(true, w + ": unknown item '" + s.get("item") + "'", gu(16, (int)i, 23));
         if (!item(s.get("tool"))) addF(true, w + ": unknown tool '" + s.get("tool") + "'", gu(16, (int)i, 23));

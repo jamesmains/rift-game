@@ -32,7 +32,7 @@ bool GameSettings::load(const std::string& path) {
         sfxVolume = sec.geti("sfx", sfxVolume); gamepad = sec.geti("gamepad", gamepad); screenShake = sec.geti("shake", screenShake); fastCombat = sec.geti("fastcombat", fastCombat);
         interactWhileMoving = sec.geti("interactmoving", interactWhileMoving);
         largeText = sec.geti("largetext", largeText) != 0; colorblind = sec.geti("colorblind", colorblind) != 0; textSpeed = clampi(sec.geti("textspeed", textSpeed), 0, 3); reduceFlashing = sec.geti("reduceflash", reduceFlashing) != 0;
-        ambientVolume = clampi(sec.geti("ambient", ambientVolume), 0, 100); fontStyle = clampi(sec.geti("font", fontStyle), 0, Font::STYLE_COUNT - 1);
+        ambientVolume = clampi(sec.geti("ambient", ambientVolume), 0, 100); fontStyle = Font::STYLE_CLEAR;   // 1.1.1: the clear font is the only text face (no setting any more)
     }
     return true;
 }
@@ -611,7 +611,7 @@ void Game::onStep() {
             return;
         }
     }
-    if (map->saveAt(px, py)) log("A save shrine. Press " + gKeys.label(A_INTERACT) + " or " + gKeys.label(A_QUICKSAVE) + " to save.");
+    if (SavePoint* sp = map->saveAt(px, py)) log((sp->text.empty() ? std::string("A save shrine.") : sp->text) + " Press " + gKeys.label(A_INTERACT) + " or " + gKeys.label(A_QUICKSAVE) + " to save.");
     if (GatherNode* g = map->gatherAt(px, py)) if (gatherReady(*g)) if (auto* it = gd->item(g->item)) log(it->name + " here. Press " + gKeys.label(A_INTERACT) + " to gather" + (g->tool.empty() ? "." : " (needs a " + (gd->item(g->tool) ? gd->item(g->tool)->name : g->tool) + ")."));
     // proximity combat (skipped for a few steps after fleeing)
     { auto fg = flags.find("_fleegrace"); if (fg != flags.end()) { if (--fg->second <= 0) flags.erase(fg); return; } }
@@ -681,10 +681,11 @@ void Game::interactAt(int x, int y) {
     if (Chest* c = map->chestAt(x, y)) {
         if (c->opened) { log("The chest is empty."); return; }
         if (!c->locked.empty() && !party.hasItem(c->locked)) { log("Locked. It needs a " + (gd->item(c->locked) ? gd->item(c->locked)->name : c->locked) + "."); gAudio.play("door_locked"); return; }
-        c->opened = true; if (!c->flag.empty()) setFlag(c->flag); gAudio.play("chest_open"); stats.chests++;
+        c->opened = true; if (!c->flag.empty()) setFlag(c->flag); gAudio.play(c->sound.empty() ? "chest_open" : c->sound); stats.chests++;
         if (c->gold > 0) { party.gold += c->gold; stats.goldEarned += c->gold; log(fmt("Found %d gold.", c->gold)); gAudio.play("gold"); }
         for (auto& it : c->items) { std::string id = it.first; if (auto* d = gd->item(id)) if (d->equippable()) id = makeAffixed(id, lootTierRoll(party.hero() ? party.hero()->level : 1)); giveItem(id, it.second); }
-        if (c->gold == 0 && c->items.empty()) log("The chest is empty.");
+        if (c->gold == 0 && c->items.empty() && c->onUse.empty()) log("The chest is empty.");
+        if (!c->onUse.empty()) runScript(c->onUse);
         return;
     }
     if (Door* d = map->doorAt(x, y)) {
@@ -692,13 +693,14 @@ void Game::interactAt(int x, int y) {
         if (!d->key.empty() && !party.hasItem(d->key)) { log("Locked. It needs a " + (gd->item(d->key) ? gd->item(d->key)->name : d->key) + "."); gAudio.play("door_locked"); return; }
         if (!d->require.empty() && !evalCond(d->require)) { log(d->lockedMsg.empty() ? "It won't open. Not yet." : d->lockedMsg); gAudio.play("door_locked"); return; }
         if (!d->openIf.empty() && !evalCond(d->openIf)) { log(d->lockedMsg.empty() ? "It won't open from this side. There must be a mechanism somewhere." : d->lockedMsg); gAudio.play("door_locked"); return; }
-        d->open = true; gAudio.play(d->key.empty() ? "door_open" : "unlock"); if (!d->flag.empty()) setFlag(d->flag);
+        d->open = true; gAudio.play(!d->sound.empty() ? d->sound : d->key.empty() ? "door_open" : "unlock"); if (!d->flag.empty()) setFlag(d->flag);
         map->at(d->x, d->y).walkable = true; map->at(d->x, d->y).blocksSight = false; map->at(d->x, d->y).prop = d->openTile;
-        log(d->key.empty() ? "The door opens." : "You unlock the door.");
+        log(!d->msg.empty() ? d->msg : d->key.empty() ? "The door opens." : "You unlock the door.");
         revealAround();
+        if (!d->onUse.empty()) runScript(d->onUse);
         return;
     }
-    if (SignPost* s = map->signAt(x, y)) { showMessage("Sign", s->text); addNote(map->name + " sign", s->text); return; }
+    if (SignPost* s = map->signAt(x, y)) { if (!s->sound.empty()) gAudio.play(s->sound); std::string title = s->title.empty() ? "Sign" : s->title; showMessage(title, s->text); addNote(map->name + " " + toLower(title), s->text); if (!s->onUse.empty()) runScript(s->onUse); return; }
     if (Obstacle* o = map->obstacleAt(x, y)) { obstacleMenu((int)(o - &map->obstacles[0])); return; }
     if (Lever* l = map->leverAt(x, y)) { pullLever(*l); return; }
     if (GatherNode* g = map->gatherAt(x, y)) { gatherFrom(*g); return; }
@@ -706,7 +708,7 @@ void Game::interactAt(int x, int y) {
         size_t idx = e - &map->enemies[0];
         startCombat(e->creatures, e->x, e->y, e->levelBonus, {(int)idx}, e->onDefeatScript); return;
     }
-    if (map->saveAt(x, y) && x == px && y == py) { openSaveLoad(true); return; }
+    if (SavePoint* sp = map->saveAt(x, y)) if (x == px && y == py) { if (!sp->sound.empty()) gAudio.play(sp->sound); if (!sp->onUse.empty()) runScript(sp->onUse); openSaveLoad(true); return; }
     if (Exit* e = map->exitAt(x, y)) { if (x == px && y == py) { onStep(); (void)e; } }
 }
 
@@ -826,7 +828,7 @@ void Game::showNode(const std::string& node) {
     Dialogue& d = dialogues[dlgId];
     auto it = d.nodes.find(node);
     if (node == "end" || it == d.nodes.end()) { if (mode == GMode::DIALOGUE) popMode(); return; }
-    dlgNode = node; dlgSel = 0; dlgTextShown = 0; dlgCharTimer = 0; gAudio.play("text_blip");
+    dlgNode = node; dlgSel = 0; dlgTextShown = 0; dlgCharTimer = 0; dlgOptT = 0; dlgOptArmed = false; gAudio.play("text_blip");
     // run actions
     GMode before = mode;
     for (auto& a : it->second.actions) runAction(a.first, a.second);
@@ -886,7 +888,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "approve") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2) continue; int d = atoi(p[1].c_str()); std::string cls = trim(p[0]); if (cls == "all") { for (size_t i = 1; i < party.members.size(); i++) approval[party.members[i].classId] += d; } else approval[cls] += d; for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == cls || cls == "all") notify(party.members[i].name + (d >= 0 ? " approves." : " disapproves.")); } }
     else if (k == "note") { auto p = split(v, '|'); addNote(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); notify("Added to journal."); }
     else if (k == "win") { if (mode == GMode::DIALOGUE) popMode(); std::vector<std::string> ls; for (auto& l : split(v, '|')) ls.push_back(endingText(l)); startCutscene(ls, [this]() { setFlag("game_won"); checkAchievements(true); startEnding(); }); }
-    else if (k == "savepoint") { if (map) { SavePoint s; s.x = px; s.y = py; map->savepoints.push_back(s); } }
+    else if (k == "savepoint") { if (map) { SavePoint s; s.x = px; s.y = py; applyTypeLook(s); map->savepoints.push_back(s); } }
     // finish:CAMPAIGN|line|line... - the end of a tutorial-style campaign: closing lines, then back to the desktop with New
     // Game open for CAMPAIGN (no epilogue or credits)
     else if (k == "finish") { if (mode == GMode::DIALOGUE) popMode(); auto p = split(v, '|'); std::string next = p.empty() ? "" : trim(p[0]); std::vector<std::string> ls; for (size_t i = 1; i < p.size(); i++) ls.push_back(endingText(p[i]));
@@ -917,13 +919,22 @@ void Game::updateDialogue(InputState& in, float dt) {
         if (in.mouseDX || in.mouseDY || in.mousePressed[0]) for (size_t i = 0; i < avail.size(); i++) if (in.mouseY >= oy + (int)i * oh && in.mouseY < oy + (int)i * oh + oh && in.mouseX > 20 && in.mouseX < SCREEN_W - 20) dlgSel = (int)i;
     }
     bool confirm = actP(in, A_CONFIRM) || actP(in, A_INTERACT) || in.mousePressed[0];
+    // 1.1.1: skipping is its own press and never picks an answer. Once the text is all there the answers are shown dim
+    // and take no press for a moment (DLG_ARM_SECONDS) and not before every confirm key / button has been let go, so
+    // mashing to skip text (or a press just as the text finishes) can't choose an option by accident.
+    if (textDone) {
+        dlgOptT += dt;
+        bool held = actD(in, A_CONFIRM) || actD(in, A_INTERACT) || in.mouseDown[0];
+        if (!dlgOptArmed && dlgOptT >= DLG_ARM_SECONDS && !held && !confirm) dlgOptArmed = true;
+    }
     if (confirm) {
-        if (!textDone) { dlgTextShown = (int)text.size(); return; }
+        if (!textDone) { dlgTextShown = (int)text.size(); dlgOptT = 0; dlgOptArmed = false; return; }
         if (avail.empty()) { if (!n.next.empty()) showNode(n.next); else popMode(); return; }
+        if (!dlgOptArmed) return;
         dlgSel = clampi(dlgSel, 0, (int)avail.size() - 1);
         showNode(n.options[avail[dlgSel]].target);
     }
-    if (actP(in, A_CANCEL)) { if (!textDone) dlgTextShown = (int)text.size(); else if (avail.empty()) { if (!n.next.empty()) showNode(n.next); else popMode(); } }
+    if (actP(in, A_CANCEL)) { if (!textDone) { dlgTextShown = (int)text.size(); dlgOptT = 0; dlgOptArmed = false; } else if (avail.empty()) { if (!n.next.empty()) showNode(n.next); else popMode(); } }
 }
 
 int Game::textScale() const { return settings && settings->largeText ? 2 : 1; }
@@ -959,15 +970,17 @@ void Game::drawDialogue(Canvas& cv, InputState& in) {
     int cy = by + (ts == 2 ? 36 : 26), remaining = shown;
     for (auto& l : lines) { int take = std::min((int)l.size(), remaining); if (take <= 0) break; UI::text(ctx, tx, cy, l.substr(0, take), C::White, ts); remaining -= (int)l.size() + 1; cy += lh; }
     bool textDone = dlgTextShown >= (int)text.size();
+    if (!textDone) textRight(ctx, SCREEN_W - 24, SCREEN_H - 22, "[" + gKeys.label(A_CONFIRM) + "] skip", C::Gray);   // 1.1.1: skipping is its own step
     if (textDone) {
         int oy = dialogueOptionsY((int)avail.size());
-        if (avail.empty()) { textRight(ctx, SCREEN_W - 24, SCREEN_H - 22, "[Enter] continue", C::Gray); }
+        if (avail.empty()) { textRight(ctx, SCREEN_W - 24, SCREEN_H - 22, "[" + gKeys.label(A_CONFIRM) + "] continue", C::Gray); }
+        bool armed = dlgOptArmed;   // dim until the answers can be picked (see updateDialogue)
         for (size_t i = 0; i < avail.size(); i++) {
             bool sel = (int)i == dlgSel;
-            if (sel) cv.fillRect(20, oy + (int)i * oh - 1, SCREEN_W - 40, oh, RGB(70, 55, 20));
+            if (sel) cv.fillRect(20, oy + (int)i * oh - 1, SCREEN_W - 40, oh, armed ? RGB(70, 55, 20) : RGB(40, 34, 20));
             std::string label = (sel ? "> " : "  ") + n.options[avail[i]].text;
             if (ts == 2) while (label.size() > 4 && ctx.font->width(label, 2) > SCREEN_W - 52) label = label.substr(0, label.size() - 4) + "..";
-            UI::text(ctx, 26, oy + (int)i * oh, label, sel ? C::Yellow : C::LtGray, ts);
+            UI::text(ctx, 26, oy + (int)i * oh, label, !armed ? C::Gray : sel ? C::Yellow : C::LtGray, ts);
         }
     }
     (void)in;
@@ -1234,15 +1247,19 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         bool detect = detectSteps > 0 && !ch.opened;
         if (!detect && !visible(ch.x, ch.y) && !(map->dark && map->at(ch.x, ch.y).explored)) continue;
         if (detect && (ctx.frame / 10) % 2) cv.rect(ch.x * TILE - cx - 1, ch.y * TILE - cy - 1, TILE + 2, TILE + 2, C::Yellow);
-        ctx.ts->drawBacking(cv, ch.opened ? TL::CHEST_OPEN : TL::CHEST, ch.x * TILE - cx, ch.y * TILE - cy, 2);
-        ctx.ts->draw(cv, ch.opened ? TL::CHEST_OPEN : TL::CHEST, ch.x * TILE - cx, ch.y * TILE - cy, 2);
+        // 1.1.1: pictures and colour from the chest's type / template / own keys (objects.txt), else the built-in chest
+        Tile pic = ch.opened ? (ch.openSprite.valid() ? ch.openSprite : ch.sprite.valid() ? ch.sprite : TL::CHEST_OPEN) : (ch.sprite.valid() ? ch.sprite : TL::CHEST);
+        ctx.ts->drawBacking(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2);
+        if (ch.hasColor) ctx.ts->drawRecolor(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2, ch.color); else ctx.ts->draw(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2);
     }
-    for (auto& s : map->signs) if (visible(s.x, s.y)) { ctx.ts->drawBacking(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2); ctx.ts->draw(cv, TL::SIGN, s.x * TILE - cx, s.y * TILE - cy, 2); }
+    for (auto& s : map->signs) if (visible(s.x, s.y)) { Tile pic = s.sprite.valid() ? s.sprite : TL::SIGN; ctx.ts->drawBacking(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2);
+        if (s.hasColor) ctx.ts->drawRecolor(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2, s.color); else ctx.ts->draw(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2); }
     for (auto& s : map->savepoints) {
         if (!visible(s.x, s.y)) continue;
         int sx = s.x * TILE - cx, sy = s.y * TILE - cy;
-        ctx.ts->draw(cv, TL::ALTAR, sx, sy, 2);
-        if ((ctx.frame / 12) % 2) ctx.ts->draw(cv, TL::SPARKLE, sx, sy - 8, 2, C::Cyan);
+        Tile pic = s.sprite.valid() ? s.sprite : TL::ALTAR;
+        if (s.hasColor) { ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, s.color); } else ctx.ts->draw(cv, pic, sx, sy, 2);
+        if (s.sparkle && (ctx.frame / 12) % 2) ctx.ts->draw(cv, TL::SPARKLE, sx, sy - 8, 2, s.sparkleColor);
     }
     for (auto& g : map->gathers) {
         if (!visible(g.x, g.y) || !map->at(g.x, g.y).explored) continue;

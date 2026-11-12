@@ -38,7 +38,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At 1.1.0 boot_and_setup, tutorial, sprites_1010,
+  (outdir must exist; see `src\tests\README.md`). At 1.1.1 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min) and the editor_* tests pass.
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
@@ -93,7 +93,7 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   generated dungeons came out the same); the built-in table is only a fallback when no type has styles.
 - A node with `sprite=` replaces its cell's picture in `Game::drawWorld` (skips ground + prop); without one the cell's
   prop/ground is recoloured as before. All base-game `[gather]` objects were migrated to `node=` at 1.1.0 (only keys
-  equal to the type's were dropped). Gullwatch is standalone (no resources.txt) and keeps the old behaviour.
+  equal to the type's were dropped).
 - Editor: `editor_objects.cpp` (Objects tab 22 = gens[15], Resources tab 23 = gens[16]); `Editor::resolvedObj` mirrors
   the game's resolution; `mapScan` holds `objs` (resolved, used by the indexes/checks) and `raw` (as written).
   Bulk edits (`bulkObjects`) save every changed map; the open map is only saved if it had no unsaved changes.
@@ -101,9 +101,33 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   no longer reach the map. The tab bar now wraps into as many rows as needed (`gEdTop` = 28/50/72; 24 tabs fit in two).
 - Tests: `tests/editor_objects_1_1.txt` (panel click, both tabs), `tests/resource_nodes_1_1.txt` (harvest a linked node).
 
+## 1.1.1 changes worth knowing
+- Object types: `objects.txt` `[type]` sections (id = an object type) are defaults for every object of that type:
+  placed object > template > type > built-in. Empty values = built-in (skipped in the type; an empty value on the
+  object/template is filled from the type). Game: `setObjectTemplates` reads both, `applyObjectTemplate` fills template
+  then type; look/use keys parsed in `loadMapText` (world.cpp): savepoint sprite/color/sparkle/sparklecolor/text/sound/
+  onuse, chest sprite/opensprite/color/sound/onuse, sign sprite/color/title/sound/onuse, door sprite/opensprite/sound/
+  text/onuse, lever sprite/onsprite/sound/onuse. Objects made by code (worldgen chests/save points, console) call
+  `applyTypeLook`. Drawn in `Game::drawWorld`, used in `Game::interactAt` / `pullLever`. Editor: gens[15] altSection
+  "type" (list shows "every X"), `typeSec`, `resolvedObj` mirrors the order, `drawObjectLook` + `drawObjectTypeInfo`
+  (preview panel above Placed objects), `edObjLookKeys`. Guide topic `objtype`. Saving objects.txt from the Editor
+  drops its comments (all GenericEditor files do).
+- Walkable ground kinds have no empty entries in `ground=` any more (an empty cell on black reads as unlit void; the
+  owner reported it as a sight bug). Only grass/snow tufts, ford and crops keep them. The Editor map now picks each
+  cell's ground piece by a cell hash, like the game picks one at random (it used to show ground[0] everywhere).
+- Gem veins: resources.txt gem_rough is `sprite=14,5` (rock pile) in blue on `kind=rocks`, never the crystal picture.
+- Boot: one screen (`Desktop::drawBoot`, title over the BIOS lines, BOOT_SECONDS 3.2); drawLogoSplash is gone.
+- Font: always `Font::STYLE_CLEAR` (app.cpp; settings ignore font=). STYLE_CLASSIC only draws the TRIFFALL logo.
+- Dialogue answers are "armed" only DLG_ARM_SECONDS (0.35 s) after the text is complete and all confirm keys are up
+  (`dlgOptArmed`). Test scripts that press ENTER on an answer need ~25 frames after the answers appear; the bot sets
+  `dlgOptArmed` itself. The skip press never picks an answer.
+- Desktop icons ignore the pointer over a window or the taskbar (`hoverIcon` in `Desktop::update`).
+- Gotcha: a hung `cl.exe` from an earlier build held `game.h` open (writes failed with EPERM) until it was ended.
+
 ## Where things live
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,
-  quests, dialogue, ASCII maps...). Campaigns: `src\assets\campaigns\` (tutorial, gullwatch).
+  quests, dialogue, ASCII maps...). Campaigns: `src\assets\campaigns\` (tutorial only; the
+  Gullwatch sample campaign was removed at 1.1.1 by the owner).
 - Art: `src\assets\tiles.png` is the Urizen 1-bit sheet by vurmux (CC0), `icons.png` the desktop icons
   (Cute Desktop Icons by Mayke-Arth). Sound and music are generated by `src\tools\mksounds.py`.
 - `assets\tilesheets\` - the original Urizen sheets (`urizen_onebit_tileset__v2d0.png` = same file as tiles.png;

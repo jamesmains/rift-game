@@ -7,3 +7,53 @@
 #   name=Town guard
 #   sprite=105,2
 #   dialogue=guard
+#
+# 1.1.1: [type] entries (id = an object type) hold what EVERY object of that type uses unless the object or its
+# template sets the key itself: placed object > its template > its type > the built-in default (an empty value).
+#   sprite = its picture (tile col,row)   opensprite / onsprite = its picture once opened / while its lever flag is set
+#   color = draw the picture in this one colour (empty = its own colours)   sound = sound played when it is used
+#   onuse = script run when it is used, the same actions as a trigger's script= (heal; item:ID:N; flag:NAME; gold:N;
+#           message:Title|Text; ... separated by ;)
+#   savepoint: sparkle = 1/0 the twinkle above it, sparklecolor, text = what the log says when you step on it
+#   sign: title = the message window's title          door: text = what the log says when it opens
+
+[type]
+id=savepoint
+sprite=38,25
+color=
+sparkle=1
+sparklecolor=0,220,220
+text=A save shrine.
+sound=
+onuse=
+
+[type]
+id=sign
+sprite=26,20
+color=
+title=Sign
+sound=
+onuse=
+
+[type]
+id=chest
+sprite=26,19
+opensprite=27,19
+color=
+sound=chest_open
+onuse=
+
+[type]
+id=door
+sprite=
+opensprite=
+sound=
+text=
+onuse=
+
+[type]
+id=lever
+sprite=57,17
+onsprite=56,17
+sound=unlock
+onuse=

@@ -1651,7 +1651,7 @@ Groups without a link still join if they are close (4 tiles) or can see the
 fight.
 
 == obj.chest | Chest object
-see: obj.chest.flag, obj.chest.items, obj.chest.gold, obj.chest.locked
+see: obj.chest.flag, obj.chest.items, obj.chest.gold, obj.chest.locked, objtype
 
 A chest the party opens by walking into it or pressing E next to it. It gives
 its gold and items once. Equipment inside can roll random affixes (uncommon or
@@ -1950,7 +1950,7 @@ Combine with flag + once for "the first time the party gets here after
 talking to the Elder".
 
 == obj.sign | Sign object
-see: obj.sign.text, obj.npc
+see: obj.sign.text, obj.npc, objtype
 
 A readable sign. Bump into it or press E next to it to show its text; the
 text is also copied into the journal's Notes.
@@ -1977,7 +1977,7 @@ Signs are a cheap way to add flavour, directions and hints. The journal note
 is titled "<map name> sign", so give the map a name.
 
 == obj.door | Door object
-see: obj.door.key, obj.door.require, obj.door.openif, obj.door.flag, obj.door.locked, obj.door.metal
+see: obj.door.key, obj.door.require, obj.door.openif, obj.door.flag, obj.door.locked, obj.door.metal, objtype
 
 A door that blocks movement and sight until opened. Bump into it or press E
 to open it. Doors can need a key item, a condition (require=), or open by
@@ -2076,7 +2076,7 @@ The closed look still comes from the tile painted under the door; paint
 door_metal there for a matching pair.
 
 == obj.savepoint | Save point object
-see: obj.npc, dlg.actions
+see: obj.npc, dlg.actions, objtype
 
 A save shrine: the party saves the game by stepping onto it and pressing E,
 or with F5 (quick save) while standing on it. Saving is only possible on
@@ -2242,7 +2242,7 @@ Format: actions key:value separated by ;. Default: empty.
   onclear=set:q_mine=2;message:Behind the rocks|A skeleton still clutches a lantern.
 
 == obj.lever | Lever object
-see: obj.lever.flag, obj.lever.toggle, obj.door.openif, obj.change, obj.change.if
+see: obj.lever.flag, obj.lever.toggle, obj.door.openif, obj.change, obj.change.if, objtype
 
 A lever the party pulls by bumping into it or pressing E. Pulling sets its
 flag; pulling again clears it (unless toggle=0). Doors with openif=, changes
@@ -5330,7 +5330,7 @@ Campaign button and in "Thank you for playing <name>".
 
 Format: any text. Default: the folder id.
 
-  name=The Gullwatch Light
+  name=The Lighthouse Keeper
 
 Keep it under about 16 characters if you want it to fit under the desktop icon.
 
@@ -5388,7 +5388,7 @@ x and y. In the Maps tab, B over a tile sets it.
 
 Format: map,x,y. With 0,0 the party appears on the map's spawn point.
 
-  start=gullwatch,12,20
+  start=lighthouse,12,20
 
 "Show in Maps tab" opens that map at the START tile.
 
@@ -5812,8 +5812,12 @@ lesson's condition is met.
 
 The base game has no hints (the old one-time tips were replaced by the Tutorial).
 
-== tab.objects | Objects tab (templates and every placed object)
-see: maps.objects, objects.placed, template, tab.resources
+== tab.objects | Objects tab (object types, templates and every placed object)
+see: objtype, maps.objects, objects.placed, template, tab.resources
+
+1.1.1: the list starts with the object types ("every savepoint", "every
+chest"...): what every object of that type looks like and does when used. See
+objtype.
 
 Left and middle: object templates (objects.txt). A template is a reusable map
 object: an id, a type (npc, enemy, chest, exit, trigger, sign, door, savepoint,
@@ -5865,6 +5869,145 @@ says how many objects on how many maps first):
 
 If the map open in the Maps tab has unsaved changes, it is changed but left
 unsaved: save it there. Rescan re-reads the maps.
+
+== objtype | Object types: what every object of a type uses
+see: tab.objects, template, obj.savepoint, obj.chest, obj.sign, obj.door, obj.lever
+
+The "every savepoint", "every chest", "every sign", "every door" and "every
+lever" entries at the top of the Objects tab list are object types ([type] in
+objects.txt). What you set there is used by EVERY object of that type on every
+map, in generated dungeons too, unless the object (or its template) sets the
+key itself:
+
+  placed object  >  its template  >  its type  >  the built-in default
+
+An empty value means the built-in default. The panel on the right shows the
+object as the game draws it (closed and opened, off and pulled) and what using
+it does. Save the tab (Ctrl+S) for the game to use it.
+
+The look and use keys:
+- sprite: its picture (tile col,row; "pick..." opens the tileset).
+- opensprite (chest, door): the picture once it is open. onsprite (lever): the picture while its flag is set.
+- color: draw the picture in this one colour (empty = its own colours). Chests, signs and save points.
+- sound: the sound event played when it is used (Sounds tab).
+- onuse: a script run when it is used, the same actions as a trigger's script=, separated by ; (heal, item:ID:N, gold:N, flag:NAME, message:Title|Text, dialogue:ID ...). "+ action" adds one.
+- savepoint: sparkle (the twinkle above it), sparklecolor, text (what the log says when you step on it).
+- sign: title (the message window's title). door: text (what the log says when it opens).
+
+Example: every save shrine as a glowing tombstone that heals the party when
+used:
+
+  [type]
+  id=savepoint
+  sprite=35,25
+  color=150,220,255
+  onuse=heal
+
+"New object type entry" makes an entry for a type that has none yet.
+
+== obj.savepoint.sprite | Save point picture
+see: objtype
+The save shrine's picture (tile col,row). Empty = the built-in altar (38,25). Usually set once on "every savepoint" in the Objects tab.
+
+== obj.savepoint.color | Save point colour
+see: objtype
+Draws the shrine's picture in this one colour (r,g,b). Empty = its own colours.
+
+== obj.savepoint.sparkle | Save point twinkle
+see: objtype
+1 = a sparkle twinkles above the shrine (the default), 0 = none. sparklecolor sets its colour.
+
+== obj.savepoint.sparklecolor | Save point twinkle colour
+see: objtype
+The colour of the twinkle above the shrine (r,g,b). Empty = cyan.
+
+== obj.savepoint.text | Save point message
+see: objtype
+What the log says when the party steps onto the shrine, before "Press E or F5 to save." Empty = "A save shrine."
+
+== obj.savepoint.sound | Save point sound
+see: objtype
+Sound event played when the party uses the shrine (E). Empty = none.
+
+== obj.savepoint.onuse | Save point script
+see: objtype, obj.trigger.script
+Script run when the party uses the shrine (E), before the save window opens. For example onuse=heal rests the party.
+
+== obj.chest.sprite | Chest picture
+see: objtype
+The closed chest's picture (tile col,row). Empty = the built-in chest.
+
+== obj.chest.opensprite | Opened chest picture
+see: objtype
+The chest's picture once opened. Empty = the built-in open chest (or sprite= when only that is set).
+
+== obj.chest.color | Chest colour
+see: objtype
+Draws the chest in this one colour (r,g,b). Empty = its own colours.
+
+== obj.chest.sound | Chest sound
+see: objtype
+Sound event played when it opens. Empty = chest_open.
+
+== obj.chest.onuse | Chest script
+see: objtype, obj.trigger.script
+Script run after the chest is opened and emptied (the first time only).
+
+== obj.sign.sprite | Sign picture
+see: objtype
+The sign's picture (tile col,row). Empty = the built-in signpost.
+
+== obj.sign.color | Sign colour
+see: objtype
+Draws the sign in this one colour (r,g,b). Empty = its own colours.
+
+== obj.sign.title | Sign window title
+see: objtype
+The title of the window that shows the sign's text (and of the note it leaves in the journal). Empty = "Sign".
+
+== obj.sign.sound | Sign sound
+see: objtype
+Sound event played when the sign is read. Empty = none.
+
+== obj.sign.onuse | Sign script
+see: objtype, obj.trigger.script
+Script run after the sign is read.
+
+== obj.door.sprite | Door picture
+see: objtype
+The closed door's picture (tile col,row). Empty = the map tile the door stands on (a door tile kind).
+
+== obj.door.opensprite | Open door picture
+see: objtype
+The door's picture once open. Empty = the built-in open door (metal=1: the open metal door).
+
+== obj.door.sound | Door sound
+see: objtype
+Sound event played when it opens. Empty = door_open (unlock when a key opened it).
+
+== obj.door.text | Door message
+see: objtype
+What the log says when it opens. Empty = "The door opens." / "You unlock the door."
+
+== obj.door.onuse | Door script
+see: objtype, obj.trigger.script
+Script run after the door opens.
+
+== obj.lever.sprite | Lever picture
+see: objtype
+The lever's picture (tile col,row). Empty = the built-in lever (57,17).
+
+== obj.lever.onsprite | Pulled lever picture
+see: objtype
+The lever's picture while its flag is set (pulled). Empty = the same as sprite=.
+
+== obj.lever.sound | Lever sound
+see: objtype
+Sound event played when it is pulled. Empty = unlock.
+
+== obj.lever.onuse | Lever script
+see: objtype, obj.trigger.script
+Script run after the lever is pulled (either way).
 
 == tab.resources | Resources tab (gather node types)
 see: obj.gather, obj.gather.node, resource, tab.recipes

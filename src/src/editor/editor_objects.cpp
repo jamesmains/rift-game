@@ -4,6 +4,7 @@
 // takes the keys it doesn't set from its resource type (node=, else the type giving its item). The game does the same
 // in loadMapText (world.cpp), so what the Editor shows here is what the game builds.
 #include "editor.h"
+#include "../game/tiles.h"
 #include <filesystem>
 #include <algorithm>
 
@@ -20,6 +21,20 @@ const EdSection* Editor::templateSec(const std::string& id) const {
     for (auto& s : gens[15].secs) if (s.name == "template" && s.get("id") == id) out = &s;   // a later one wins, as in the game
     return out;
 }
+const EdSection* Editor::typeSec(const std::string& type) const {
+    const EdSection* out = nullptr; if (type.empty()) return out;
+    for (auto& s : gens[15].secs) if (s.name == "type" && s.get("id") == type) out = &s;
+    return out;
+}
+// 1.1.1: the look / use keys each object type reads besides its own data (world.cpp loadMapText, Game::drawWorld)
+std::vector<std::string> edObjLookKeys(const std::string& t) {
+    if (t == "savepoint") return {"sprite", "color", "sparkle", "sparklecolor", "text", "sound", "onuse"};
+    if (t == "chest") return {"sprite", "opensprite", "color", "sound", "onuse"};
+    if (t == "sign") return {"sprite", "color", "title", "sound", "onuse"};
+    if (t == "door") return {"sprite", "opensprite", "sound", "text", "onuse"};
+    if (t == "lever") return {"sprite", "onsprite", "sound", "onuse"};
+    return edObjKeys(t);   // the rest: any of the keys the type reads can get a default here
+}
 const EdSection* Editor::resourceSec(const std::string& node, const std::string& item) const {
     if (!node.empty()) { const EdSection* out = nullptr; for (auto& s : gens[16].secs) if (s.name == "resource" && s.get("id") == node) out = &s; return out; }
     if (!item.empty()) for (auto& s : gens[16].secs) if (s.name == "resource" && s.get("item") == item) return &s;
@@ -31,6 +46,9 @@ EdObj Editor::resolvedObj(const EdObj& o) const {
         std::string ty = t->get("type"); if (!ty.empty()) r.type = ty;
         for (auto& kv : t->kv) if (kv.first != "id" && kv.first != "type" && kv.first != "x" && kv.first != "y" && !r.has(kv.first)) r.kv.push_back(kv);
     }
+    // 1.1.1: then its type's entry; an empty value (in the type, or on the object) counts as not set, as in the game
+    if (const EdSection* ty = typeSec(r.type)) for (auto& kv : ty->kv) { if (kv.first == "id" || kv.first == "x" || kv.first == "y" || kv.first == "template" || trim(kv.second).empty()) continue;
+        if (!r.has(kv.first)) r.kv.push_back(kv); else if (trim(r.get(kv.first)).empty()) r.set(kv.first, kv.second); }
     if (r.type == "gather") if (const EdSection* rs = resourceSec(r.get("node"), r.get("item"))) {
         if (!r.has("node")) r.kv.push_back({"node", rs->get("id")});
         for (auto& kv : rs->kv) if (nodeKey(kv.first) && !r.has(kv.first)) r.kv.push_back(kv);
@@ -40,9 +58,10 @@ EdObj Editor::resolvedObj(const EdObj& o) const {
 std::vector<std::pair<std::string, std::string>> Editor::inheritedKeys(const EdObj& o, std::string& from) const {
     std::vector<std::pair<std::string, std::string>> out;
     EdObj r = resolvedObj(o);
-    for (auto& kv : r.kv) if (!o.has(kv.first)) out.push_back(kv);
+    for (auto& kv : r.kv) if (!o.has(kv.first) || (trim(o.get(kv.first)).empty() && !trim(kv.second).empty())) out.push_back(kv);
     from.clear();
     if (templateSec(o.get("template"))) from = "template " + o.get("template");
+    if (const EdSection* ty = typeSec(r.type)) { bool any = false; for (auto& kv : ty->kv) if (kv.first != "id" && !trim(kv.second).empty()) any = true; if (any) from += (from.empty() ? "" : " + ") + std::string("type ") + r.type; }
     if (r.type == "gather") if (const EdSection* rs = resourceSec(r.get("node"), r.get("item"))) from += (from.empty() ? "" : " + ") + std::string("resource ") + rs->get("id");
     return out;
 }
@@ -63,7 +82,8 @@ void Editor::drawGatherNode(const EdObj& o, int sx, int sy, int scale, const std
 bool Editor::placedMatch(const std::string& mapId, const EdObj& raw) const {
     EdObj r = resolvedObj(raw);
     if (poType > 0 && poType <= (int)edObjTypes().size() && r.type != edObjTypes()[poType - 1]) return false;
-    if (poThisTmpl) { auto& g = gens[15]; std::string id = g.sel >= 0 && g.sel < (int)g.secs.size() ? g.secs[g.sel].get("id") : ""; if (id.empty() || raw.get("template") != id) return false; }
+    if (poThisTmpl) { auto& g = gens[15]; const EdSection* ss = g.sel >= 0 && g.sel < (int)g.secs.size() ? &g.secs[g.sel] : nullptr; std::string id = ss ? ss->get("id") : "";
+        if (id.empty()) return false; if (ss->name == "type" ? r.type != id : raw.get("template") != id) return false; }   // 1.1.1: a [type] entry picks every object of its type
     if (!trim(poFilter).empty()) {
         std::string hay = toLower(mapId + " " + r.type); for (auto& kv : r.kv) hay += " " + toLower(kv.first + "=" + kv.second);
         for (auto& w : split(toLower(poFilter), ' ')) if (!trim(w).empty() && hay.find(trim(w)) == std::string::npos) return false;
@@ -114,10 +134,68 @@ void Editor::templateFromObject(const EdObj& o0, const std::string& mapId, int o
     });
 }
 
+// 1.1.1: a chest, sign, save point, lever or door drawn the way the game draws it (Game::drawWorld): its sprite= (else
+// the built-in picture), color= recolours it; used = opened / pulled. Other types have no picture of their own.
+void Editor::drawObjectLook(const EdObj& o, int sx, int sy, int scale, bool used) {
+    auto t = [&](const char* k) { return parseTile(trim(o.get(k))); };
+    std::string cs = trim(o.get("color")); bool rec = !cs.empty(); Color8 col = rec ? parseColor(cs) : C::White;
+    Tile pic;
+    if (o.type == "chest") pic = used ? (t("opensprite").valid() ? t("opensprite") : t("sprite").valid() ? t("sprite") : TL::CHEST_OPEN) : (t("sprite").valid() ? t("sprite") : TL::CHEST);
+    else if (o.type == "sign") pic = t("sprite").valid() ? t("sprite") : TL::SIGN;
+    else if (o.type == "savepoint") pic = t("sprite").valid() ? t("sprite") : TL::ALTAR;
+    else if (o.type == "lever") { rec = false; Tile off = t("sprite").valid() ? t("sprite") : TL::LEVER; pic = used && t("onsprite").valid() ? t("onsprite") : off; }
+    else if (o.type == "door") { rec = false; pic = used ? (t("opensprite").valid() ? t("opensprite") : o.get("metal") == "1" ? TL::DOOR_METAL : TL::DOOR_OPEN) : (t("sprite").valid() ? t("sprite") : TL::DOOR_WOOD); }
+    if (!pic.valid()) return;
+    ts->drawBacking(*ui.cv, pic, sx, sy, scale);
+    if (rec) ts->drawRecolor(*ui.cv, pic, sx, sy, scale, col); else ts->draw(*ui.cv, pic, sx, sy, scale);
+    if (o.type == "savepoint" && trim(o.get("sparkle")) != "0") { std::string sc = trim(o.get("sparklecolor")); ts->draw(*ui.cv, TL::SPARKLE, sx, sy - 4 * scale, scale, sc.empty() ? C::Cyan : parseColor(sc)); }
+}
+
 void Editor::drawObjectsTab(InputState& in) {
-    int uw = 350, h = H - gEdTop - BOTTOM_BAR - 8;
+    int uw = 350, h = H - gEdTop - BOTTOM_BAR - 8, infoH = 170;
     drawGeneric(gens[15], 4, gEdTop + 4, W - 8 - uw - 6, h, in);
-    drawPlacedObjects(W - 4 - uw, gEdTop + 4, uw, h, in);
+    drawObjectTypeInfo(W - 4 - uw, gEdTop + 4, uw, infoH, in);
+    drawPlacedObjects(W - 4 - uw, gEdTop + 4 + infoH + 4, uw, h - infoH - 4, in);
+}
+
+// the selected [type] entry or template: how its objects look (as placed / used) and what using one does
+void Editor::drawObjectTypeInfo(int x, int y, int w, int h, InputState& in) {
+    (void)in;
+    GenericEditor& g = gens[15];
+    ui.panel(x, y, w, h); ui.header(x, y, w, "How it looks and what it does"); helpBtn(x + w - 16, y + 1, "objtype", "tab.objects");
+    const EdSection* s = g.sel >= 0 && g.sel < (int)g.secs.size() ? &g.secs[g.sel] : nullptr;
+    if (!s) { font->drawWrapped(*ui.cv, *ts, x + 8, y + 24, w - 16, "Pick an entry on the left. The \"every savepoint\", \"every chest\"... entries set what all objects of that type use (picture, colour, sound, what happens on use); templates are reusable objects you place yourself.", DIM); return; }
+    EdObj probe;
+    if (s->name == "type") { probe.type = s->get("id"); for (auto& kv : s->kv) if (kv.first != "id" && !trim(kv.second).empty()) probe.kv.push_back(kv); }
+    else { probe.type = s->get("type"); probe.set("template", s->get("id")); probe = resolvedObj(probe); }
+    std::string ty = probe.type;
+    bool hasLook = ty == "chest" || ty == "sign" || ty == "savepoint" || ty == "lever" || ty == "door";
+    int cy = y + 24;
+    if (hasLook) {
+        bool two = ty == "chest" || ty == "lever" || ty == "door";
+        for (int u = 0; u < (two ? 2 : 1); u++) {
+            int px = x + 12 + u * 150; ui.cv->fillRect(px - 2, cy - 2, 52, 52, BORDER);
+            drawMapCell(px, cy, "floor_stone", 4);
+            drawObjectLook(probe, px, cy, 4, u == 1);
+            ui.text(px + 56, cy + 16, u == 0 ? (ty == "lever" ? "off" : ty == "door" ? "closed" : "as placed") : (ty == "lever" ? "pulled" : "opened"), u ? DIM : OK);
+        }
+        cy += 56;
+    } else if (ty == "npc" || ty == "enemy" || ty == "gather") { ui.text(x + 8, cy, ty == "gather" ? "Looks: set by its resource type (Resources tab)." : ty == "npc" ? "Looks: its own sprite= and color= keys." : "Looks: its creatures' pictures.", DIM); cy += 16; }
+    else { ui.text(x + 8, cy, "No picture: an invisible area on the map.", DIM); cy += 16; }
+    auto val = [&](const char* k, const char* def) { std::string v = trim(probe.get(k)); return v.empty() ? std::string(def) : v; };
+    std::string onuse = trim(probe.get("onuse")), use;
+    if (ty == "savepoint") use = "Step on it: \"" + val("text", "A save shrine.") + " Press E or F5 to save.\"  E: " + (trim(probe.get("sound")).empty() ? "" : "sound " + trim(probe.get("sound")) + ", ") + (onuse.empty() ? "" : "runs " + onuse + ", ") + "opens the save window.";
+    else if (ty == "chest") use = "Opened: sound " + val("sound", "chest_open") + ", gives its items and gold" + (onuse.empty() ? "" : ", then runs " + onuse) + ".";
+    else if (ty == "sign") use = "Read: a \"" + val("title", "Sign") + "\" window with its text" + (onuse.empty() ? "" : ", then runs " + onuse) + ".";
+    else if (ty == "door") use = "Opened: sound " + val("sound", "door_open (unlock with a key)") + ", log \"" + val("text", "The door opens.") + "\"" + (onuse.empty() ? "" : ", then runs " + onuse) + ". No sprite= = the map tile.";
+    else if (ty == "lever") use = "Pulled: sound " + val("sound", "unlock") + ", toggles its flag" + (onuse.empty() ? "" : ", then runs " + onuse) + ".";
+    else use = "Every key set here is the default for every " + ty + " that doesn't set it itself.";
+    for (auto& wl : font->wrap(use, w - 16)) { if (cy > y + h - 30) break; font->draw(*ui.cv, *ts, x + 8, cy, wl, TEXT); cy += 13; }
+    // how many placed objects follow it
+    if (poNeedScan || mapScan.empty()) { scanMaps(); poNeedScan = false; }
+    int n = 0; std::set<std::string> maps;
+    for (auto& ms : mapScan) for (auto& raw : ms.raw) { bool hit = s->name == "type" ? resolvedObj(raw).type == ty : raw.get("template") == s->get("id"); if (hit) { n++; maps.insert(ms.id); } }
+    ui.text(x + 8, y + h - 16, fmt("%d placed on %d map(s)", n, (int)maps.size()) + (s->name == "type" && (ty == "chest" || ty == "savepoint") ? " (+ generated ones)" : "") + (g.dirty ? " - Save (Ctrl+S) to use it" : ""), g.dirty ? ACCENT2 : DIM);
 }
 
 void Editor::drawPlacedObjects(int x, int y, int w, int h, InputState& in) {
@@ -132,7 +210,7 @@ void Editor::drawPlacedObjects(int x, int y, int w, int h, InputState& in) {
     poType = clampi(poType, 0, (int)types.size() - 1);
     if (ui.choice(x + 40, cy, 90, types[poType])) openListPicker("Object type", types, poType, [this](int i) { poType = i; poSel = -1; });
     if (!tsel) poThisTmpl = false;
-    { bool v = poThisTmpl; std::string lbl = tid.empty() ? "copies of the selected template" : "only copies of '" + tid + "'"; while (font->width(lbl) > w - 160 && lbl.size() > 4) lbl.pop_back();
+    { bool v = poThisTmpl; std::string lbl = tid.empty() ? "copies of the selected template" : tsel->name == "type" ? "only every " + tid : "only copies of '" + tid + "'"; while (font->width(lbl) > w - 160 && lbl.size() > 4) lbl.pop_back();
       if (ui.checkbox(x + 140, cy + 2, lbl, v) && tsel) { poThisTmpl = v; poSel = -1; } }
     cy += 20;
     ui.label(x + 6, cy + 2, "find"); if (ui.textField(x + 40, cy, w - 112, poFilter, 60)) poSel = -1;
@@ -182,8 +260,8 @@ void Editor::drawPlacedObjects(int x, int y, int w, int h, InputState& in) {
     if (ui.button(x + 122, cy, 110, 18, "Remove key", keyOk && n > 0)) { std::string kk = k; run("Remove " + kk, [kk](EdObj& o) { if (!o.has(kk)) return false; o.erase(kk); return true; }); }
     if (ui.hover(x + 122, cy, 110, 18)) ui.tip("Take the key off every listed object (template copies then use the template's value again)");
     cy += 22;
-    bool canLink = tsel && !tid.empty() && n > 0;
-    if (ui.button(x + 6, cy, 170, 18, tid.empty() ? "Link to template" : "Link to '" + tid.substr(0, 14) + "'", canLink)) {
+    bool canLink = tsel && tsel->name == "template" && !tid.empty() && n > 0;
+    if (ui.button(x + 6, cy, 170, 18, tid.empty() || tsel->name == "type" ? "Link to template" : "Link to '" + tid.substr(0, 14) + "'", canLink)) {
         EdSection t = *tsel; std::string tt = t.get("type");
         run("Make every listed " + (tt.empty() ? std::string("object") : tt) + " a copy of template '" + tid + "' (keys with the template's value are dropped, others stay as each copy's own)",
             [this, t, tt, tid](EdObj& o) { if (resolvedObj(o).type != tt || o.get("template") == tid) return false;

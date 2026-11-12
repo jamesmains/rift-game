@@ -192,7 +192,7 @@ static void generateOverworldLocs(Map& m, int seed, const std::vector<Location>&
         Chest c; c.x = x; c.y = y; c.flag = fmt("ow_chest_%d", i); c.gold = rng.range(4, 25);
         std::vector<std::string> pool = {"potion_red", "potion_red", "potion_blue", "antidote", "bread", "scroll_fire", "iron_dagger", "leather_cap", "ammo_pistol", "grenade", "ring_dex"};
         c.items.push_back({rng.pick(pool), 1}); if (rng.chance(40)) c.items.push_back({rng.pick(pool), 1});
-        m.chests.push_back(c);
+        applyTypeLook(c); m.chests.push_back(c);
     }
     // spawn = first location
     if (!locs.empty()) { m.spawnX = locs[0].x; m.spawnY = locs[0].y + 1; }
@@ -278,7 +278,7 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
     Exit e; e.x = ex; e.y = ey; e.to = exitTo; e.tx = exitX; e.ty = exitY; m.exits.push_back(e);
     m.spawnX = ex + 1; m.spawnY = ey; if (!m.walkable(m.spawnX, m.spawnY)) { int ox, oy; if (m.findFree(ex, ey, 3, ox, oy, rng)) { m.spawnX = ox; m.spawnY = oy; } }
     // save shrine near entrance
-    for (int attempt = 0; attempt < 12; attempt++) { int ox, oy; if (!m.findFree(ex + rng.range(-2, 2), ey + rng.range(-2, 2), 2, ox, oy, rng)) continue; if ((ox == ex && oy == ey) || (ox == m.spawnX && oy == m.spawnY)) continue; SavePoint s; s.x = ox; s.y = oy; m.savepoints.push_back(s); break; }
+    for (int attempt = 0; attempt < 12; attempt++) { int ox, oy; if (!m.findFree(ex + rng.range(-2, 2), ey + rng.range(-2, 2), 2, ox, oy, rng)) continue; if ((ox == ex && oy == ey) || (ox == m.spawnX && oy == m.spawnY)) continue; SavePoint s; s.x = ox; s.y = oy; applyTypeLook(s); m.savepoints.push_back(s); break; }
     int far = 0, farD = -1;
     for (size_t i = 1; i < rooms.size(); i++) { int d = manhattan(ex, ey, rooms[i].cx(), rooms[i].cy()); if (d > farD) { farD = d; far = (int)i; } }
     // monsters
@@ -299,7 +299,7 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
         g.aggro = 6; g.flag = bossFlag; g.levelBonus = std::max(0, level - 1);
         m.enemies.push_back(g);
         // boss treasure
-        Chest c; if (m.findFree(br.cx(), br.cy(), 3, c.x, c.y, rng)) { c.flag = id + "_boss_chest"; c.gold = 30 + level * 20; c.items.push_back({"potion_red2", 2}); c.items.push_back({lootTable == "tech" ? "cell_pack" : lootTable == "rare" ? "elixir" : "potion_blue", 1}); m.chests.push_back(c); }
+        Chest c; if (m.findFree(br.cx(), br.cy(), 3, c.x, c.y, rng)) { c.flag = id + "_boss_chest"; c.gold = 30 + level * 20; c.items.push_back({"potion_red2", 2}); c.items.push_back({lootTable == "tech" ? "cell_pack" : lootTable == "rare" ? "elixir" : "potion_blue", 1}); applyTypeLook(c); m.chests.push_back(c); }
     }
     // chests
     std::vector<std::string> common = {"potion_red", "potion_blue", "antidote", "bread", "bandage", "scroll_fire", "ammo_pistol", "torch_item", "torch_item", "flare", "gem_rough", "iron_ore", "iron_ore", "ember_cap", "slime_gel", "oil_fire"};
@@ -313,7 +313,7 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
         if (m.exitAt(c.x, c.y) || m.saveAt(c.x, c.y)) continue;
         c.flag = fmt("%s_chest_%d", id.c_str(), i); c.gold = rng.range(2, 10) * level + 3;
         c.items.push_back({rng.pick(ltab), 1}); if (rng.chance(20)) c.items.push_back({rng.pick(rare), 1});
-        m.chests.push_back(c);
+        applyTypeLook(c); m.chests.push_back(c);
     }
     // things to harvest: ore veins and ember caps in caves and mines, scrap heaps in tech ruins, moonleaf and gel in sewers
     {
@@ -323,7 +323,7 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
         // the built-in table below is only used when no resource type is set up for dungeons at all
         bool fromData = false; for (auto& r : resourceDefs()) if (!r.styles.empty()) fromData = true;
         if (fromData) { for (auto& r : resourceDefs()) for (auto& st : r.styles) if (st.style == style) for (int k = 0; k < st.weight; k++) opts.push_back({r.item, r.tool, r.kind, st.lo >= 0 ? st.lo : r.lo, st.lo >= 0 ? st.hi : r.hi, &r}); }
-        else if (style == "mine") opts = {{"iron_ore", "pickaxe", "rocks", 2, 4}, {"iron_ore", "pickaxe", "rocks", 2, 4}, {"ember_cap", "", "mushroom2", 1, 3}, {"gem_rough", "pickaxe", "crystal", 1, 1}};
+        else if (style == "mine") opts = {{"iron_ore", "pickaxe", "rocks", 2, 4}, {"iron_ore", "pickaxe", "rocks", 2, 4}, {"ember_cap", "", "mushroom2", 1, 3}, {"gem_rough", "pickaxe", "rocks", 1, 1}};
         else if (style == "cave") opts = {{"iron_ore", "pickaxe", "rocks", 1, 3}, {"ember_cap", "", "mushroom2", 1, 2}, {"ember_cap", "", "mushroom2", 1, 2}};
         else if (style == "tech" || style == "ship") opts = {{"scrap", "", "box", 2, 4}, {"circuit", "", "terminal2", 1, 1}};
         else if (style == "sewer") opts = {{"herb_moon", "", "mushroom", 1, 2}, {"slime_gel", "", "mire", 1, 2}};

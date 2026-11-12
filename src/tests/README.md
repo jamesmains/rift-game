@@ -31,7 +31,7 @@ generated dungeon and the overworld into map files.
 
 0.8 scenario scripts: `darkness_combat`, `shop_stacks`, `levelup_multiclass`, `fog_and_crafting`,
 `keep_seal_guard` (NPC moves when the Mayor's Seal flag is set), `world_obstacles` (dig/blast/levers),
-`campaign_start`, `editor_campaign_switch`, `overworld_map_file`. Use `con auto 1` to let the AI fight for
+`editor_campaign_switch`, `overworld_map_file`. Use `con auto 1` to let the AI fight for
 the party when checking balance.
 
 0.8.1 scripts: `save_keeps_explored` (uses `saveload`, a save/load round trip), `spells_tab_nav`, `shop_mouse_pad`,
