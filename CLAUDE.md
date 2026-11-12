@@ -130,11 +130,11 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   writes into that copy's `assets\`, which every build / install used to replace - the edits were lost.
 - `tools\pull-editor-edits.ps1` (run first by build.ps1 and install.ps1, or by hand) compares each copy with its
   `assets-manifest.txt` (SHA-256 per asset file, written by build.ps1 and shipped in releases; a copy without one is
-  compared with `releases\<version.txt>ssets`). Changed files go into `srcssets` when src still has the old
+  compared with `releases\<version.txt>\assets`). Changed files go into `src\assets` when src still has the old
   version; if src changed the file too, the copy's version is saved to `editor-edits\<time>\<copy>\` (git-ignored)
   and reported - **if `editor-edits\` exists, merge those files by hand and delete it**. Deletions are only reported.
   install.ps1 also puts edits back into the new install when the release didn't change that file.
-- **Start of every session: run `.	ools\pull-editor-edits.ps1`** and commit what it pulls with the next version
+- **Start of every session: run `.\tools\pull-editor-edits.ps1`** and commit what it pulls with the next version
   (build.ps1 does it anyway, but look at the diff: Editor saves rewrite maps' legends).
 - GenericEditor files keep their comments now (`EdSection::lead` = comment lines above a section, `GenericEditor::tail`).
   Map files saved by the Editor still lose their comments and get a new legend lettering (harmless).
@@ -155,7 +155,8 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Item details: `Game::drawItemDetails` (menus.cpp) draws tags, a two-column stat grid and the description under a
   rule; used by the pack's Items tab, shops and the equip picker (its panel grew by up to 104 px for it).
 - `unique=1` (ItemDef::unique): `makeAffixed` returns the base id, crafting skips the quality roll, enchanting
-  refuses. Editor Items tab has a checkbox for it.
+  refuses. Editor Items tab has a checkbox for it. Owner's call: unique items can still be reinforced (+1..+3) -
+  reinforcing isn't an affix.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
