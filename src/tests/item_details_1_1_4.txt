@@ -1,0 +1,74 @@
+# 1.1.4 (#25): item details - stat boosts and resists on separate lines, values lined up per column.
+newgame Kai warrior 1
+god
+teleport hollowmere 20 20
+frames 120
+give the_two_ring
+give reactor_plate
+give lichbane
+give rift_heart
+give shadowsilk_cloak
+give power_armor
+give crystal_staff
+give oathkeeper
+key TAB
+frames 3
+key PGDN
+frames 3
+expect mode == MENU
+shot details_0.png
+key DOWN
+frames 3
+shot details_1.png
+key DOWN
+frames 3
+shot details_2.png
+key DOWN
+frames 3
+shot details_3.png
+key DOWN
+frames 3
+shot details_4.png
+key DOWN
+frames 3
+shot details_5.png
+key DOWN
+frames 3
+shot details_6.png
+key DOWN
+frames 3
+shot details_7.png
+key DOWN
+frames 3
+shot details_8.png
+key DOWN
+frames 3
+shot details_9.png
+key DOWN
+frames 3
+shot details_10.png
+key DOWN
+frames 3
+shot details_11.png
+# the actions list and the Who? list moved down with the taller panel; a click on them still lands
+key HOME
+frames 3
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+key UP
+frames 3
+key ENTER
+frames 30
+shot details_actions.png
+click 400 250
+frames 30
+shot details_who.png
+expect mode == MENU

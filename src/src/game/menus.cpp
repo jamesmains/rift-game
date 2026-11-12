@@ -8,6 +8,7 @@ using namespace UI;
 
 static const char* TABS[] = {"Party", "Items", "Spells", "Quests"};
 static const int NTABS = 4;
+static const int INV_ACT_Y = 242, INV_WHO_Y = 324;   // pack tab: the item actions list and the "Who?" list under the details panel (1.1.4: 26 px lower)
 
 // ---------------- item categories, filters and sorting (inventory + shop) ----------------
 static const char* SORT_NAMES[] = {"as found", "name", "value", "category"};
@@ -195,8 +196,8 @@ void Game::updateMenu(InputState& in, float dt) {
                 int na = (int)acts.size();
                 if (actP(in, A_UP)) menuSub = (menuSub + na - 1) % na;
                 if (actP(in, A_DOWN)) menuSub = (menuSub + 1) % na;
-                for (int i = 0; i < na; i++) if (in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= 216 + i * 18 && in.mouseY < 234 + i * 18) { if (in.mouseDX || in.mouseDY) menuSub = i; }
-                if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= 216 && in.mouseY < 216 + na * 18)) {
+                for (int i = 0; i < na; i++) if (in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= INV_ACT_Y + i * 18 && in.mouseY < INV_ACT_Y + 18 + i * 18) { if (in.mouseDX || in.mouseDY) menuSub = i; }
+                if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= INV_ACT_Y && in.mouseY < INV_ACT_Y + na * 18)) {
                     std::string a = acts[clampi(menuSub, 0, na - 1)];
                     if (a == "Quest item - can't drop") { log(d->name + " is needed for a quest. You keep it."); gAudio.play("ui_error"); }
                     else if (a == "Drop") { log("Dropped " + d->name + "."); party.removeItem(d->id, 1); menuSubFocus = false; menuSel = clampi(menuSel, 0, std::max(0, (int)invView().size() - 1)); }
@@ -205,8 +206,8 @@ void Game::updateMenu(InputState& in, float dt) {
             } else {
                 if (actP(in, A_UP)) menuMember = (menuMember + nMembers - 1) % nMembers;
                 if (actP(in, A_DOWN)) menuMember = (menuMember + 1) % nMembers;
-                for (int i = 0; i < nMembers; i++) if (in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= 316 + i * 18 && in.mouseY < 334 + i * 18) { if (in.mouseDX || in.mouseDY) menuMember = i; }
-                if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= 316 && in.mouseY < 316 + nMembers * 18)) {
+                for (int i = 0; i < nMembers; i++) if (in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= INV_WHO_Y + 18 + i * 18 && in.mouseY < INV_WHO_Y + 36 + i * 18) { if (in.mouseDX || in.mouseDY) menuMember = i; }
+                if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= INV_WHO_Y + 18 && in.mouseY < INV_WHO_Y + 18 + nMembers * 18)) {
                     std::string id = d->id;
                     if (menuPrompt == "use") useItemOn(id, party.members[menuMember], false); else equipItem(menuMember, id);
                     menuPrompt.clear(); menuSubFocus = false; menuSel = clampi(menuSel, 0, std::max(0, (int)invView().size() - 1));
@@ -316,20 +317,20 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
         if (n > 20) UI::text(ctx, 20, 50 + 20 * 16, fmt("(%d more - scroll)", n - 20 - menuScroll), C::Gray);
         if (n > 0 && menuSel < n) {
             const ItemDef* d = gd->item(party.inventory[view[menuSel]].id);
-            panel(ctx, 320, 60, 300, 150, RGB(30, 30, 44));
+            panel(ctx, 320, 60, 300, INV_ACT_Y - 66, RGB(30, 30, 44));   // 1.1.4: 26 px taller, room for the grouped details
             ctx.ts->draw(cv, d->tile, 330, 70, 2);
             ctx.font->bold = true; UI::text(ctx, 362, 70, d->name, C::Gold); ctx.font->bold = false;
-            drawItemDetails(cv, *d, 330, 94, 280, 194);
-            UI::text(ctx, 330, 196, itemCategory(*d), C::Gray);
+            drawItemDetails(cv, *d, 330, 94, 280, INV_ACT_Y - 22);
+            UI::text(ctx, 330, INV_ACT_Y - 20, itemCategory(*d), C::Gray);
             if (menuSubFocus) {
                 std::vector<std::string> acts;
                 if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
                 if (d->equippable()) acts.push_back("Equip on...");
                 acts.push_back(d->quest ? "Quest item - can't drop" : "Drop");
-                for (size_t i = 0; i < acts.size(); i++) { bool sel = (int)i == menuSub && menuPrompt.empty(); listRow(ctx, in, 330, 216 + (int)i * 18, 270, 18, sel); UI::text(ctx, 340, 219 + (int)i * 18, acts[i], sel ? C::Yellow : C::White); }
+                for (size_t i = 0; i < acts.size(); i++) { bool sel = (int)i == menuSub && menuPrompt.empty(); listRow(ctx, in, 330, INV_ACT_Y + (int)i * 18, 270, 18, sel); UI::text(ctx, 340, INV_ACT_Y + 3 + (int)i * 18, acts[i], sel ? C::Yellow : C::White); }
                 if (!menuPrompt.empty()) {
-                    UI::text(ctx, 330, 298, "Who?", C::Gold);
-                    for (int i = 0; i < nMembers; i++) { bool sel = i == menuMember; listRow(ctx, in, 330, 316 + i * 18, 270, 18, sel); auto& m = party.members[i]; UI::text(ctx, 340, 319 + i * 18, fmt("%s  %d/%d", m.name.c_str(), m.hp, m.maxHP(*gd)), sel ? C::Yellow : (m.alive ? C::White : C::Red)); }
+                    UI::text(ctx, 330, INV_WHO_Y, "Who?", C::Gold);
+                    for (int i = 0; i < nMembers; i++) { bool sel = i == menuMember; listRow(ctx, in, 330, INV_WHO_Y + 18 + i * 18, 270, 18, sel); auto& m = party.members[i]; UI::text(ctx, 340, INV_WHO_Y + 21 + i * 18, fmt("%s  %d/%d", m.name.c_str(), m.hp, m.maxHP(*gd)), sel ? C::Yellow : (m.alive ? C::White : C::Red)); }
                 }
             }
         }
@@ -551,16 +552,19 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     { int kx = keyHint(ctx, 20, SCREEN_H - 44, gKeys.label(A_CATPREV) + "/" + gKeys.label(A_CATNEXT), "category"); keyHint(ctx, kx, SCREEN_H - 44, gKeys.label(A_SORT), "sort"); }
 }
 
-// ---------------- item details (1.1.3) ----------------
+// ---------------- item details (1.1.3, layout 1.1.4) ----------------
 // One look for an item's breakdown everywhere (pack, shop, equip picker): tags, a two-column grid of "label value"
 // rows (gains green, losses red; equal resists to every damage type fold into "All resists"), then the description
 // on its own, in a softer colour under a rule. Whatever does not fit above maxY is left out (the description before any stat).
+// 1.1.4 (owner's #25): rows come in groups (weapon / defense + stat boosts / resists / use) and a group always starts
+// on a new line, so boosts and resists never share one; every value in a column starts at the same x.
 int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY) {
     const Color8 UP = RGB(120, 215, 120), DOWN = RGB(235, 105, 95), LABEL = RGB(150, 150, 165);
-    struct Row { std::string label, value; Color8 col; bool full; };
+    struct Row { std::string label, value; Color8 col; bool full; int group; };
     std::vector<Row> rows;
-    auto num = [&](const std::string& label, int v, const char* suffix) { rows.push_back({label, fmt("%+d%s", v, suffix), v > 0 ? UP : DOWN, false}); };
-    auto txt = [&](const std::string& label, const std::string& v, Color8 c, bool full) { rows.push_back({label, v, c, full}); };
+    int group = 0;
+    auto num = [&](const std::string& label, int v, const char* suffix) { rows.push_back({label, fmt("%+d%s", v, suffix), v > 0 ? UP : DOWN, false, group}); };
+    auto txt = [&](const std::string& label, const std::string& v, Color8 c, bool full) { rows.push_back({label, v, c, full, group}); };
     std::string tags;
     auto tag = [&](const char* t) { tags += std::string(tags.empty() ? "" : "  -  ") + t; };
     if (d.quest) tag("Quest item");
@@ -574,6 +578,7 @@ int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int
         if (d.crit) num("Crit", d.crit, "%");
         if (!d.ammo.empty() && gd->item(d.ammo)) txt("Ammo", gd->item(d.ammo)->name, C::White, true);
     }
+    group = 1;
     if (d.def) num("Defense", d.def, "");
     if (d.evasion) num("Evasion", d.evasion, "");
     for (int b = 0; b < ST_COUNT; b++) if (d.bonus[b]) num(statName(b), d.bonus[b], "");
@@ -581,31 +586,53 @@ int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int
     if (d.bonusMP) num("Max MP", d.bonusMP, "");
     if (d.bonusAP) num("AP", d.bonusAP, "");
     if (d.bonusMove) num("Move", d.bonusMove, "");
+    group = 2;
     {
         bool allSame = d.res[0] != 0; for (int r = 1; r < DT_COUNT; r++) if (d.res[r] != d.res[0]) allSame = false;
         if (allSame) num("All resists", d.res[0], "%");
         else for (int r = 0; r < DT_COUNT; r++) if (d.res[r]) { std::string n = dmgTypeName(r); if (!n.empty()) n[0] = (char)toupper((unsigned char)n[0]); num(n + " res.", d.res[r], "%"); }
     }
+    group = 3;
     if (d.heal) txt("Heals", fmt("%d HP", d.heal), UP, false);
     if (d.mana) txt("Restores", fmt("%d MP", d.mana), UP, false);
     if (!d.effect.empty()) { std::string e = d.effect; for (auto& ch : e) if (ch == '_') ch = ' '; txt("Effect", e, C::Cream, true); }
     if (!d.useSpell.empty()) { const SpellDef* sp = gd->spell(d.useSpell); txt("Casts", sp ? sp->name : d.useSpell, C::Cream, true); }
     if (d.light) txt("Light", fmt("radius %d", d.light), C::White, false);
-    const int lh = 13, colW = w / 2;
+    const int lh = 13, colW = w / 2, gap = 8, groupGap = 3;
     int cy = y;
     if (!tags.empty() && cy + lh <= maxY) { UI::text(ctx, x, cy, tags, C::Gold); cy += lh + 2; }
-    // two columns; a full-width row (or one too long for half the width) gets a line of its own
-    int col = 0;
-    for (auto& r : rows) {
-        bool full = r.full || ctx.font->width(r.label) + ctx.font->width(r.value) + 14 > colW;
-        if (full && col == 1) { col = 0; cy += lh; }
-        if (cy + lh > maxY) break;
-        int cx = x + col * colW, vx = cx + std::max(full ? 64 : 58, ctx.font->width(r.label) + 8);
-        UI::text(ctx, cx, cy, r.label, LABEL);
-        UI::text(ctx, vx, cy, r.value, r.col);
-        if (full) { cy += lh; col = 0; } else if (++col == 2) { col = 0; cy += lh; }
+    // Lay out: two columns, a group always starts a new line (a little apart from the one before), a full-width row (or
+    // one too long for half the width) gets a line of its own. Each column's values start one gap after its widest label;
+    // a row whose value would then run past its column moves to a line of its own and the layout is redone.
+    struct Cell { int col, y; bool full; };
+    std::vector<Cell> pos(rows.size());
+    std::vector<bool> own(rows.size());
+    for (size_t i = 0; i < rows.size(); i++) own[i] = rows[i].full || ctx.font->width(rows[i].label) + gap + ctx.font->width(rows[i].value) > colW - 6;
+    int vx[2] = {0, 0}, endY = cy;
+    for (int pass = 0; pass < 8; pass++) {
+        int ly = cy, col = 0, lastGroup = -1;
+        for (size_t i = 0; i < rows.size(); i++) {
+            if (col == 1 && (own[i] || rows[i].group != lastGroup)) { col = 0; ly += lh; }
+            if (col == 0 && lastGroup >= 0 && rows[i].group != lastGroup) ly += groupGap;
+            pos[i] = {col, ly, (bool)own[i]}; lastGroup = rows[i].group;
+            if (own[i]) ly += lh; else if (++col == 2) { col = 0; ly += lh; }
+        }
+        endY = col == 1 ? ly + lh : ly;
+        vx[0] = vx[1] = 0;
+        for (size_t i = 0; i < rows.size(); i++) if (!own[i]) vx[pos[i].col] = std::max(vx[pos[i].col], ctx.font->width(rows[i].label) + gap);
+        bool moved = false;
+        for (size_t i = 0; i < rows.size(); i++) if (!own[i] && vx[pos[i].col] + ctx.font->width(rows[i].value) > colW - 6) { own[i] = true; moved = true; break; }
+        if (!moved) break;
     }
-    if (col == 1) cy += lh;
+    for (size_t i = 0; i < rows.size(); i++) {
+        const Row& r = rows[i]; const Cell& p = pos[i];
+        if (p.y + lh > maxY) { endY = p.y; break; }
+        int cx = x + p.col * colW;
+        int off = p.full ? std::max(vx[0], ctx.font->width(r.label) + gap) : vx[p.col];
+        UI::text(ctx, cx, p.y, r.label, LABEL);
+        UI::text(ctx, cx + off, p.y, r.value, r.col);
+    }
+    cy = endY;
     if (!trim(d.desc).empty() && cy + lh <= maxY) {
         if (cy > y) { cy += 3; cv.fillRect(x, cy, w, 1, RGB(70, 70, 90)); cy += 5; }
         for (auto& l : ctx.font->wrap(d.desc, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, RGB(200, 195, 175)); cy += lh; }

@@ -41,7 +41,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass.
+  editor_* tests pass (1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass).
   Run tests that save files (Editor bulk edits, templates) from a copy of `src\assets` in another folder (the
   headless exe reads `assets\` from its working folder). `desktop_persist` expects
   an `editor` icon at 0,0 (already so in the 1.0.10 source).
@@ -157,6 +157,13 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - `unique=1` (ItemDef::unique): `makeAffixed` returns the base id, crafting skips the quality roll, enchanting
   refuses. Editor Items tab has a checkbox for it. Owner's call: unique items can still be reinforced (+1..+3) -
   reinforcing isn't an affix.
+
+## 1.1.4 item details layout (owner's #25)
+- `Game::drawItemDetails` (menus.cpp): rows carry a group (0 weapon, 1 defense + stat boosts, 2 resists, 3 use/light);
+  a new group always starts a new line (+3 px), so boosts and resists never share a line. Values in each column start
+  at that column's widest label + 8 (full-width rows at least the left column's); a row whose value would overflow
+  its column gets its own line. Pack panel is 26 px taller: `INV_ACT_Y`/`INV_WHO_Y` (top of menus.cpp) place the
+  actions and "Who?" lists, used by both the drawing and the mouse code. Test: `tests/item_details_1_1_4.txt`.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

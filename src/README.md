@@ -28,6 +28,14 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.4 item details line up
+
+* **Item details line up.** In the pack, shops and the equip picker, every value in a column of an item's stats now
+  starts at the same place, and the stats come in groups that each start a new line: weapon stats, then defense and
+  stat boosts, then resists, then what it does when used. A stat boost and a resist no longer share a line.
+* The pack's item panel is a little taller, so more of the description fits under the stats.
+* The Editor changes made in the installed game (The 2 Ring's resists, the crypt map) are part of the game now.
+
 ## 1.1.3 pause in a fight, back to the Editor, tidier item details
 
 * **Pause during combat.** Esc (or the new **Menu** button at the right end of the combat bar) opens the pause menu at

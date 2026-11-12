@@ -1836,7 +1836,6 @@ stat=str
 value=380
 desc=A wight's sword, cold enough to frost your breath.
 
-
 [item]
 id=wardens_lantern
 name=Warden's Lantern
@@ -2280,7 +2279,8 @@ type=accessory
 tile=11,43
 value=25
 desc=Stronger than the 1 ring... weaker than the 3 ring...
-res=physical:2,fire:2,cold:2,shock:2,poison:2,magic:2
+res=physical:2,fire:2,cold:2,shock:2,magic:2
 bonus=con:2
 category=Accessories
 unique=1
+
