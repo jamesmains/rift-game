@@ -11,7 +11,7 @@ using namespace UI;
 static const char* ACTIONS[] = {"Attack", "Aimed", "Spell", "Item", "Defend", "Overwatch", "End Turn", "Flee"};
 static const int NACTIONS = 8;
 static const int ACTION_KEYS[NACTIONS] = {A_ATTACKMODE, A_ATTACKMODE, A_SPELLS, A_ITEMS, A_DEFEND, A_OVERWATCH, A_ENDTURN, A_FLEE};
-static const int HOTBAR_Y = UI::SCREEN_H - 72 - 30;
+#define HOTBAR_Y (UI::SCREEN_H - 72 - 30)   // 1.2.2: the screen height can change (#39)
 static const int TURN_STRIP_Y = 40;   // the turn-order strip on the right; its TURN header sits just under the top bar (1.1.3: was 30, under the Menu button)
 // The action bar: each button carries the key that does the same thing, drawn like the key hints in shops and menus
 // (a controller's button glyph when a pad is in use). Aimed is the attack key pressed twice, so it shows that key twice.

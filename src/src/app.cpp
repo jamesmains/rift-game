@@ -53,9 +53,50 @@ bool App::startPlaytest() {
 }
 #endif
 
+void App::screenSizeFor(int sw, int sh, bool classic43, bool integer, int& w, int& h, int baseW, int baseH) {
+    w = baseW; h = baseH;
+    if (classic43 || sw <= 0 || sh <= 0) return;
+    if ((long long)sw * baseH >= (long long)sh * baseW) {   // 4:3 or wider: baseH (480) high, as wide as the screen's shape
+        int k = sh / baseH;
+        if (integer && k >= 1 && sh / k <= baseH * 5 / 4 && sw / k >= baseW) { w = sw / k; h = sh / k; }   // up to 600 high when that is exactly k screen pixels per canvas pixel
+        else { h = baseH; w = (int)((long long)sw * baseH / sh); }
+    } else {                                                  // narrower than 4:3 (a 5:4 or portrait screen): baseW (640) wide, taller
+        int k = sw / baseW;
+        if (integer && k >= 1 && sw / k <= baseW * 5 / 4 && sh / k >= baseH) { w = sw / k; h = sh / k; }
+        else { w = baseW; h = (int)((long long)sh * baseW / sw); }
+    }
+    w = clampi(w, baseW, baseW * 4); h = clampi(h, baseH, baseH * 3);
+}
+void App::editorSizeFor(int sw, int sh, bool classic43, bool integer, int& w, int& h) {
+#ifndef TRIFFALL_NO_EDITOR
+    screenSizeFor(sw, sh, classic43, integer, w, h, Editor::BASE_W, Editor::BASE_H);
+#else
+    (void)sw; (void)sh; (void)classic43; (void)integer; w = 960; h = 720;
+#endif
+}
+void App::setEditorScreen(int w, int h) {
+#ifndef TRIFFALL_NO_EDITOR
+    Editor::W = w; Editor::H = h;   // the Editor re-makes its canvas when the size changes (Editor::update)
+#else
+    (void)w; (void)h;
+#endif
+}
+
+void App::setScreen(int w, int h) {
+    w = std::max(w, (int)UI::BASE_W); h = std::max(h, (int)UI::BASE_H);
+    screenW = w; screenH = h;
+    if (screenSet && UI::SCREEN_W == w && UI::SCREEN_H == h && (state == AppState::EDITOR || (canvas.w == w && canvas.h == h))) return;
+    screenSet = true;
+    UI::SCREEN_W = w; UI::SCREEN_H = h;
+    if (state != AppState::EDITOR) canvas.init(w, h);
+    desktop.screenChanged();
+    game.screenChanged();
+}
+
 void App::frame(InputState& in, float dt) {
     if (dt > 0.1f) dt = 0.1f;
     if (in.quitRequested) { quit = true; return; }
+    if (!screenSet) setScreen(screenW, screenH);   // the platform sets the size before the first frame; headless stays 640x480
     gAudio.setVolumes(settings.masterVolume, settings.musicVolume, settings.sfxVolume, settings.ambientVolume);
     font.style = Font::STYLE_CLEAR;   // 1.1.1: the only text face; the classic glyphs are kept for the logo
     gAudio.update(dt);
@@ -117,7 +158,7 @@ void App::frame(InputState& in, float dt) {
             if (!editor.previewingMusic) gAudio.music("");
             editor.update(in, dt, canvas);
             if (editor.wantsClose) {
-                editor.wantsClose = false; state = AppState::DESKTOP; canvas.init(UI::SCREEN_W, UI::SCREEN_H); req.canvasW = UI::SCREEN_W; req.canvasH = UI::SCREEN_H;
+                editor.wantsClose = false; state = AppState::DESKTOP; canvas.init(UI::SCREEN_W, UI::SCREEN_H); req.canvasW = -1; req.canvasH = -1;   // -1: the game's screen size (1.2.2)
                 gAudio.loadDefs(); editor.previewingMusic = false;
                 if (editor.changed) { editor.changed = false; game.reloadContent(); desktop.showToast("Game data reloaded."); }
                 desktop.refreshCampaignIcons();

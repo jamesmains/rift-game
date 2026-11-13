@@ -41,7 +41,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass (1.2.0: sprite_sheets_1_2_0, every editor_* test, boot_and_setup, sprites_1010, tutorial,
+  editor_* tests pass (1.2.2: every test but main_quest and fuzz_all_maps (not run), 8 at a time from a copy; 1.2.0: sprite_sheets_1_2_0, every editor_* test, boot_and_setup, sprites_1010, tutorial,
   item_color_1_1_8, npcs_1_1_9, scripts_1_1_10, text_edit_1_1_11, facing, item_details, resource_nodes, fight_to_victory,
   standing_1_1_2, story_choices; 1.1.11: text_edit_1_1_11, every editor_* test, scripts_1_1_10, npcs_1_1_9, boot_and_setup,
   new_game_name_focus, tutorial; 1.1.10: scripts_1_1_10 plus the 1.1.9 list; 1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
@@ -377,6 +377,27 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   off the monitor), then `rl_show_window`. Used at start, leaving fullscreen, the Settings scale buttons and canvas
   changes. settings.fullscreen is applied right after the window shows. The saved scale is not lowered.
 - Checked on this PC's 1920x1080 monitor with scale=3: opens 1280x960 (2x), whole window on screen.
+
+## 1.2.2 the game fills the screen (owner's #39; "the square aspect ratio can remain as an option")
+- `UI::SCREEN_W/SCREEN_H` (ui.h) are runtime ints now (`UI::BASE_W/BASE_H` = 640x480 constexpr). Never cache them in
+  a `static const` (HOTBAR_Y / HB_X became macros). `App::screenSizeFor(sw, sh, classic43, integer)`: canvas = the
+  output area's shape, 480 high (up to 600 when that gives an exact whole-number scale with integer scaling), at least
+  640 wide; narrower than 4:3 -> 640 wide and taller. 1920x1080 -> 960x540 at 2x; 2560x1440 -> 853x480 at 3x.
+  `App::setScreen` re-inits the canvas and calls `Desktop::screenChanged` (clamps icons/windows/pointer) and
+  `Game::screenChanged` (camera, weather). The Editor likewise: `Editor::W/H` are `static inline` (BASE 960x720),
+  `App::editorSizeFor` / `setEditorScreen`; Editor::update re-makes its canvas on a size change.
+- main_raylib computes the size every frame from the window's inside (fullscreen = the monitor) and calls setScreen
+  (or setEditorScreen in the Editor). `placeWindow(scale, center)` sizes a windowed window in the monitor's shape (or
+  640x480 / 960x720 in Classic 4:3). `req.canvasW = -1` = back to the game's size after the Editor.
+- Setting `classic43` (settings.ini `classic43=`, Settings > Display "Classic 4:3 screen", next to Fullscreen): the old
+  fixed 640x480 / 960x720 with bars.
+- Sub-view: `Game::subViewMode` (MENU, SHOP, CRAFT, JOURNAL, BOUNTY, LEVELUP, WORLDMAP - the screens that cover the
+  whole 640x480) are drawn by `Game::drawModeUI` into `subCv` (640x480, SCREEN_W/H temporarily 640x480, mouse moved)
+  and copied to the middle; the margins get the screen's own dim (`subViewDim`). Game::update moves the mouse the
+  same way for those modes. Everything else (world, HUD, combat, dialogue, pause, save/load, cutscenes, desktop)
+  lays out against SCREEN_W/H. Outdoor reveal radius grows with the screen (`revealAround`).
+- Headless always runs 640x480 (tests unchanged); `screen W H` / `edscreen W H` set another size. Test
+  `tests/screen_fill_1_2_2.txt`. The web build (main_web.cpp) wasn't changed (no Emscripten here): still 640x480.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

@@ -127,6 +127,7 @@ private:
     void drawAchievementsWindow(Canvas& cv, DeskWindow& w, InputState& in, bool active);
 public:
     void drawScreensaver(Canvas& cv, float dt);
+    void screenChanged();   // 1.2.2: the screen size changed (App::setScreen)
 private:
     int iconAt(int x, int y) const;
     bool snapIconCursor(int dx, int dy);

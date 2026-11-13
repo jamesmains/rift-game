@@ -16,7 +16,11 @@ struct Ctx {
 };
 
 namespace UI {
-constexpr int SCREEN_W = 640, SCREEN_H = 480;
+// 1.2.2 (#39): the screen's size in canvas pixels follows the monitor / window shape (App::setScreen), so the game
+// fills a wide screen. 480 high (or a little more for crisp whole-number scaling), 640 wide or more. BASE_W x BASE_H is
+// the classic 4:3 size the menu screens are laid out for (Game::subViewMode draws those centred).
+constexpr int BASE_W = 640, BASE_H = 480;
+inline int SCREEN_W = BASE_W, SCREEN_H = BASE_H;
 constexpr int TILE = 24; // 12px tiles drawn at 2x in the world view
 
 void panel(Ctx& c, int x, int y, int w, int h, Color8 fill = C::Panel, Color8 border = C::Gold);

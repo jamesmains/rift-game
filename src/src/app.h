@@ -37,4 +37,14 @@ public:
     bool startPlaytest();                   // editor "Play here" (not compiled with TRIFFALL_NO_EDITOR): start or move the running game to editor.playMap at playX/playY
     void frame(InputState& in, float dt);   // update + draw into canvas
     bool wantsQuit() const { return quit; }
+    // 1.2.2 (#39): the canvas the game and desktop draw into for an output area of sw x sh pixels (a window's inside or
+    // the monitor): the area's shape, 480 high (up to 600 when that makes a whole-number scale with integer scaling),
+    // at least 640 wide (taller than 480 on a screen narrower than 4:3). classic43 = always 640x480 (bars).
+    static void screenSizeFor(int sw, int sh, bool classic43, bool integer, int& w, int& h, int baseW = UI::BASE_W, int baseH = UI::BASE_H);
+    static void editorSizeFor(int sw, int sh, bool classic43, bool integer, int& w, int& h);   // the same for the Editor (960x720 base)
+    // Make the game/desktop canvas w x h (UI::SCREEN_W/H). The Editor keeps its own canvas; it takes the size on return.
+    void setScreen(int w, int h);
+    void setEditorScreen(int w, int h);   // the Editor's canvas (Editor::W/H)
+    int screenW = UI::BASE_W, screenH = UI::BASE_H;   // the size the game/desktop canvas should be
+    bool screenSet = false;
 };

@@ -351,7 +351,7 @@ void Editor::drawPopup(InputState& in) {
 
 // ---------------- main ----------------
 void Editor::update(InputState& in, float dt, Canvas& cv) {
-    if (cv.w != W) cv.init(W, H);
+    if (cv.w != W || cv.h != H) cv.init(W, H);
     frameNo++;
     ui.begin(&cv, ts, font, &in, dt);
     ui.modal = pop != P_NONE;

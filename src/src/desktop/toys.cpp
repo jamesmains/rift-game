@@ -252,7 +252,7 @@ void Desktop::drawScreensaver(Canvas& cv, float dt) {
     cv.clear(C::Black);
     for (auto& s : stars) {
         s[2] -= dt * 0.35f; if (s[2] <= 0.02f) { Rng r((uint64_t)(ctx.time * 1000)); s[0] = (float)r.range(-320, 320); s[1] = (float)r.range(-240, 240); s[2] = 1.0f; }
-        float k = 1.0f / s[2]; int x = (int)(320 + s[0] * k * 0.5f), y = (int)(240 + s[1] * k * 0.5f);
+        float k = 1.0f / s[2], sx = cv.w / 640.0f, sy = cv.h / 480.0f; int x = (int)(cv.w / 2 + s[0] * sx * k * 0.5f), y = (int)(cv.h / 2 + s[1] * sy * k * 0.5f);   // 1.2.2: from the middle of any screen
         uint8_t b = (uint8_t)clampi((int)(255 * (1.0f - s[2])), 40, 255); int sz = s[2] < 0.3f ? 2 : 1;
         if (x >= 0 && y >= 0 && x < cv.w && y < cv.h) cv.fillRect(x, y, sz, sz, RGB(b, b, b));
     }

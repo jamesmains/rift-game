@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
             if (cmd == "sheetcopy") { std::string err; bool ok = app.editor.copyBaseSheets(err); printf("sheetcopy ok=%d %s\n", ok ? 1 : 0, err.c_str()); step(2); return true; }
             if (cmd == "edsetcampaign") { app.editor.setCampaign(p[1]); step(2); return true; }
 #endif
+            if (cmd == "screen") { app.setScreen(atoi(p[1].c_str()), atoi(p[2].c_str())); step(2); printf("screen %dx%d\n", app.canvas.w, app.canvas.h); return true; }   // 1.2.2: screen W H (a wide / tall screen)
+            if (cmd == "edscreen") { app.setEditorScreen(atoi(p[1].c_str()), atoi(p[2].c_str())); step(2); return true; }   // 1.2.2: the Editor's canvas size
             if (cmd == "alt") { in.down[K_ALT] = true; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_ALT] = false; step(1);  return true; }
             if (cmd == "shiftclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(2); in.down[K_SHIFT] = true; in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); in.down[K_SHIFT] = false; step(2);  return true; }
             if (cmd == "ctrlclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(2); in.down[K_CTRL] = true; in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); in.down[K_CTRL] = false; step(2);  return true; }   // 1.2.0

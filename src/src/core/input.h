@@ -100,6 +100,6 @@ struct PlatformRequests {
     bool setVsync = false; bool vsyncValue = true;
     int setScale = 0;
     bool setIntegerScaling = false; bool integerScalingValue = true;
-    int canvasW = 0, canvasH = 0;  // non-zero: the app's canvas changed size (editor)
+    int canvasW = 0, canvasH = 0;  // non-zero: the app's canvas changed size (editor); -1 = back to the game's screen size (1.2.2)
     std::string setClipboard; bool hasClipboardOut = false;
 };

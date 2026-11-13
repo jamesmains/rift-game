@@ -52,8 +52,16 @@ int main(int argc, char** argv) {
         if (mw > 0 && mh > 0) while (sc > 1 && (cw * sc > mw - 80 || ch * sc > mh - 120)) sc--;
         rl_place_window(cw * sc, ch * sc, center ? 1 : 0);
     };
+    // 1.2.2 (#39): a window shaped like the monitor (the game then fills it, and fills the monitor in fullscreen);
+    // Classic 4:3 = 640x480 as before. The Editor likewise (960x720 in Classic 4:3).
+    auto placeWindow = [&](int want, bool center) {
+        int w = UI::BASE_W, h = UI::BASE_H;
+        if (app.state == AppState::EDITOR) App::editorSizeFor(rl_monitor_w(), rl_monitor_h(), app.settings.classic43, false, w, h);
+        else App::screenSizeFor(rl_monitor_w(), rl_monitor_h(), app.settings.classic43, false, w, h);
+        fitWindow(w, h, want, center);
+    };
     rl_init(UI::SCREEN_W, UI::SCREEN_H, "Triffall", app.settings.vsync ? 1 : 0);   // hidden until sized
-    fitWindow(UI::SCREEN_W, UI::SCREEN_H, scale, true);
+    placeWindow(scale, true);
     rl_show_window();
     bool fullscreen = false;
     // the fullscreen setting applies from the first frame (it used to wait for the end of the boot screen)
@@ -79,6 +87,12 @@ int main(int argc, char** argv) {
         if (raw.gamepadActive) in.gamepadActive = true;
         bool mouseMoved = fabsf(raw.mouseDX) + fabsf(raw.mouseDY) >= 3.0f;
         if ((anyKey && !raw.gamepadActive) || mouseMoved || raw.mousePressed[0] || raw.mousePressed[2] || raw.wheel != 0) in.gamepadActive = false;
+        // 1.2.2 (#39): the game and desktop canvas take the window's (or the monitor's) shape; not while minimized
+        if (raw.screenW >= 64 && raw.screenH >= 64) {
+            int w, h;
+            if (app.state != AppState::EDITOR) { App::screenSizeFor(raw.screenW, raw.screenH, app.settings.classic43, integer, w, h); app.setScreen(w, h); }
+            else { App::editorSizeFor(raw.screenW, raw.screenH, app.settings.classic43, integer, w, h); app.setEditorScreen(w, h); }
+        }
         // mouse → framebuffer coordinates
         int sw = raw.screenW, sh = raw.screenH, cw = app.canvas.w, chh = app.canvas.h;
         // same rule as rl_present: integer scaling only when 2x or more fits, otherwise fit the screen
@@ -107,13 +121,13 @@ int main(int argc, char** argv) {
         if (app.wantsQuit()) break;
 
         PlatformRequests& r = app.req;
-        if (r.setFullscreen) { r.setFullscreen = false; bool was = fullscreen; if (r.fullscreenValue != fullscreen) { rl_toggle_borderless(); fullscreen = r.fullscreenValue; } if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, app.settings.scale, was); }
-        if (r.toggleFullscreen) { r.toggleFullscreen = false; rl_toggle_borderless(); fullscreen = !fullscreen; if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, app.settings.scale, true); }
-        if (r.setScale) { int s = r.setScale; r.setScale = 0; if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, s, false); }
+        if (r.setFullscreen) { r.setFullscreen = false; bool was = fullscreen; if (r.fullscreenValue != fullscreen) { rl_toggle_borderless(); fullscreen = r.fullscreenValue; } if (!fullscreen) placeWindow(app.settings.scale, was); }
+        if (r.toggleFullscreen) { r.toggleFullscreen = false; rl_toggle_borderless(); fullscreen = !fullscreen; if (!fullscreen) placeWindow(app.settings.scale, true); }
+        if (r.setScale) { int s = r.setScale; r.setScale = 0; if (!fullscreen) placeWindow(s, false); }
         if (r.setIntegerScaling) { r.setIntegerScaling = false; integer = r.integerScalingValue; }
         if (r.setVsync) { r.setVsync = false; rl_set_target_fps(r.vsyncValue ? 0 : 60); }
         if (!r.openURL.empty()) { rl_open_url(r.openURL.c_str()); r.openURL.clear(); }
-        if (r.canvasW) { if (!fullscreen) fitWindow(r.canvasW, r.canvasH, app.settings.scale, false); r.canvasW = r.canvasH = 0; }
+        if (r.canvasW) { if (!fullscreen) placeWindow(app.settings.scale, false); r.canvasW = r.canvasH = 0; }   // Editor <-> game: that canvas's shape
 
         rl_present(app.canvas.px.data(), app.canvas.w, app.canvas.h, integer ? 1 : 0, app.settings.crt ? 1 : 0);
     }

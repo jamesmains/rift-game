@@ -146,6 +146,7 @@ struct GameSettings {
     bool vsync = true;
     bool integerScaling = true;
     bool crt = false;
+    bool classic43 = false;         // 1.2.2 (#39): the old 640x480 picture with bars at the sides; off = the game fills the screen
     int masterVolume = 80, musicVolume = 70, sfxVolume = 80;
     int ambientVolume = 60;         // wind, rain, waves, town bustle... under the music (its own slider since 1.0.7)
     bool gamepad = true;
@@ -417,6 +418,12 @@ public:
     void uiRect(int x, int y, int w, int h) { uiRects.push_back({x, y, w, h}); }
     void camCenterOn(int tx, int ty, bool snap = false);
     void camClamp();
+    void screenChanged();   // 1.2.2 (#39): App::setScreen changed SCREEN_W/H
+    // 1.2.2: screens laid out for 640x480 (party menu, shop, crafting, journal, notice board, level up, world map) are
+    // drawn into subCv and put in the middle of a larger screen; their update sees the mouse in those coordinates.
+    static bool subViewMode(GMode m);
+    void drawModeUI(Canvas& cv, InputState& in);   // the open screen, hotbar, hints and notifications (Game::draw)
+    Canvas subCv;
     bool spellUsableOutside(const SpellDef& s) const;
     bool spellUsableInCombat(const SpellDef& s) const { return s.dmgMax > 0 || s.heal > 0 || !s.effect.empty() || s.utility == "light"; }
     bool castUtility(int member, const std::string& spellId, int target);

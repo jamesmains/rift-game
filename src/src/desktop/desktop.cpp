@@ -85,6 +85,13 @@ void Desktop::setIconPosition(int index, int x, int y) {
     iconPositions[index] = {clampi(x, 0, UI::SCREEN_W - 76), clampi(y, 0, UI::SCREEN_H - TASKBAR_H - 54)};
 }
 
+// 1.2.2 (#39): the screen changed size (window resized, fullscreen, Classic 4:3): keep icons, windows and the pointer on it
+void Desktop::screenChanged() {
+    for (auto& p : iconPositions) if (p[0] >= 0) { p[0] = clampi(p[0], 0, UI::SCREEN_W - 76); p[1] = clampi(p[1], 0, UI::SCREEN_H - TASKBAR_H - 54); }
+    for (auto& w : windows) { w.x = clampi(w.x, 0, std::max(0, UI::SCREEN_W - w.w)); w.y = clampi(w.y, 0, std::max(0, UI::SCREEN_H - TASKBAR_H - w.h)); }
+    cursorX = clampi(cursorX, 0, UI::SCREEN_W - 1); cursorY = clampi(cursorY, 0, UI::SCREEN_H - 1);
+}
+
 void Desktop::arrangeIcons() {
     for (size_t i = 0; i < iconPositions.size(); i++) iconPositions[i] = {16 + (int)(i / 8) * 84, 8 + (int)(i % 8) * 54};
     saveDesktopSettings(); showToast("Icons arranged.");
@@ -281,7 +288,7 @@ void Desktop::refreshCampaignIcons() {
     for (auto& c : listCampaigns(assetDir)) if (c.id != "triffall") { IconDef d{c.name, c.iconC, c.iconR, "campaign:" + c.id}; d.dc = d.ic; d.dr = d.ir; iconDefs.push_back(d); }
     for (auto& d : iconDefs) { auto it = customIcon.find(d.action); if (it != customIcon.end()) { d.ic = it->second[0]; d.ir = it->second[1]; } else { d.ic = d.dc; d.ir = d.dr; } }
     iconPositions.assign(iconDefs.size(), {-1, -1});
-    for (size_t i = 0; i < iconDefs.size(); i++) { auto it = now.find(iconDefs[i].action); if (it != now.end()) iconPositions[i] = {clampi(it->second[0], 0, UI::SCREEN_W - 76), clampi(it->second[1], 0, UI::SCREEN_H - TASKBAR_H - 54)}; }
+    for (size_t i = 0; i < iconDefs.size(); i++) { auto it = now.find(iconDefs[i].action); if (it != now.end()) iconPositions[i] = {std::max(0, it->second[0]), std::max(0, it->second[1])}; }   // 1.2.2: kept where they were (a wide screen may show them); screenChanged pulls them into view
     for (size_t i = 0; i < iconDefs.size(); i++) {
         if (iconPositions[i][0] >= 0) continue;
         for (int slot = 0; slot < 64; slot++) {
@@ -791,7 +798,9 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             return;
         }
         f.draw(cv, *ctx.ts, x, cy, "Display", RGB(0, 0, 128)); cy += 16;
-        if (checkbox(cv, in, x + 10, cy, "Fullscreen (F11)", s.fullscreen, active)) { if (req) { req->setFullscreen = true; req->fullscreenValue = s.fullscreen; } } cy += 18;
+        if (checkbox(cv, in, x + 10, cy, "Fullscreen (F11)", s.fullscreen, active)) { if (req) { req->setFullscreen = true; req->fullscreenValue = s.fullscreen; } }
+        // 1.2.2 (#39): the game fills the screen; this brings back the 640x480 picture with bars at the sides
+        if (checkbox(cv, in, x + 190, cy, "Classic 4:3 screen", s.classic43, active)) { if (req) req->setScale = std::max(1, s.scale); } cy += 18;
         if (checkbox(cv, in, x + 10, cy, "Pixel-perfect integer scaling", s.integerScaling, active)) { if (req) { req->setIntegerScaling = true; req->integerScalingValue = s.integerScaling; } } cy += 18;
         checkbox(cv, in, x + 10, cy, "CRT display effect", s.crt, active); cy += 18;
         if (checkbox(cv, in, x + 10, cy, "V-Sync", s.vsync, active)) { if (req) { req->setVsync = true; req->vsyncValue = s.vsync; } } cy += 18;

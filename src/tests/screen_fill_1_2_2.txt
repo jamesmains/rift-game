@@ -1,0 +1,56 @@
+# 1.2.2 (#39): the game fills a screen of any shape. `screen W H` sets the canvas the way the platform does for a
+# window or monitor (App::setScreen). Wide: the world, HUD and combat use the whole width; the 640x480 screens
+# (party menu, journal, world map...) are drawn in the middle with the rest darkened, and the mouse still hits them.
+frames 5
+screen 960 540
+frames 5
+shot fill_desktop_960.png
+newgame Arin warrior
+frames 120
+expect mode == EXPLORE
+shot fill_explore_960.png
+key TAB
+frames 10
+expect mode == MENU
+shot fill_menu_960.png
+# the party menu's tabs are at x 20.. in its own 640x480: on a 960x540 screen it sits at 160,30
+click 290 54
+frames 5
+shot fill_menu_tab_960.png
+key ESC
+frames 5
+key J
+frames 5
+shot fill_journal_960.png
+key ESC
+frames 5
+key M
+frames 10
+shot fill_worldmap_960.png
+key ESC
+frames 5
+key ESC
+frames 10
+shot fill_pause_960.png
+key ESC
+frames 5
+combat rat
+frames 300
+shot fill_combat_960.png
+screen 1146 480
+frames 10
+shot fill_combat_1146.png
+forceflee
+frames 200
+screen 640 800
+frames 120
+shot fill_explore_tall.png
+key TAB
+frames 10
+shot fill_menu_tall.png
+key ESC
+frames 5
+screen 640 480
+frames 120
+shot fill_explore_640.png
+expect mode == EXPLORE

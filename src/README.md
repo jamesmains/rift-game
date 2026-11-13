@@ -28,6 +28,15 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.2.2 the game fills the whole screen
+
+* The game now fills any screen, wide or narrow: on a 16:9 or ultrawide monitor you see more of the world left and
+  right, the party bar, hotbar and combat bar stretch to the edges, and the desktop gets wider. The party menu, shop,
+  crafting, journal, notice board, level-up and world map screens stay their usual size in the middle of the screen.
+* The window takes the monitor's shape too, and the picture follows when you resize it. The Editor fills the screen
+  the same way.
+* **Settings > Classic 4:3 screen** brings back the old 640x480 picture with bars at the sides.
+
 ## 1.2.1 the window fits the screen
 
 * The game window opens at the biggest size that fits your monitor (a 3x window picked on a big screen no longer

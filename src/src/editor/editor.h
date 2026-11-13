@@ -110,7 +110,9 @@ struct MapClip { int w = 0, h = 0; std::vector<std::string> cells; std::vector<E
 
 class Editor {
 public:
-    static constexpr int W = 960, H = 720;
+    // 1.2.2 (#39): the Editor's canvas follows the screen's shape too (App::setScreen); 960x720 = Classic 4:3
+    static constexpr int BASE_W = 960, BASE_H = 720;
+    static inline int W = BASE_W, H = BASE_H;
     bool wantsClose = false, changed = false, requestNewGame = false;
     int tab = 0;
     // playtest request ("Play here"): the app starts/moves the game to this spot after the editor closes

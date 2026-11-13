@@ -15,7 +15,7 @@ using namespace UI;
 void GameSettings::save(const std::string& path) const {
     std::string s = "[settings]\n";
     s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\n\n",
-             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle);
+             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, classic43);
     if (!discord.empty()) s += "[links]\ndiscord=" + discord + "\n\n";
     s += gKeys.serialize();
     writeFile(path, s);
@@ -28,7 +28,7 @@ bool GameSettings::load(const std::string& path) {
         if (sec.name != "settings") continue;
         edgeScroll = sec.geti("edgescroll", edgeScroll); banter = clampi(sec.geti("banter", banter), 0, 3);
         fullscreen = sec.geti("fullscreen", fullscreen); scale = sec.geti("scale", scale); vsync = sec.geti("vsync", vsync);
-        integerScaling = sec.geti("integer", integerScaling); crt = sec.geti("crt", crt); masterVolume = sec.geti("master", masterVolume); musicVolume = sec.geti("music", musicVolume);
+        integerScaling = sec.geti("integer", integerScaling); classic43 = sec.geti("classic43", classic43) != 0; crt = sec.geti("crt", crt); masterVolume = sec.geti("master", masterVolume); musicVolume = sec.geti("music", musicVolume);
         sfxVolume = sec.geti("sfx", sfxVolume); gamepad = sec.geti("gamepad", gamepad); screenShake = sec.geti("shake", screenShake); fastCombat = sec.geti("fastcombat", fastCombat);
         interactWhileMoving = sec.geti("interactmoving", interactWhileMoving);
         largeText = sec.geti("largetext", largeText) != 0; colorblind = sec.geti("colorblind", colorblind) != 0; textSpeed = clampi(sec.geti("textspeed", textSpeed), 0, 3); reduceFlashing = sec.geti("reduceflash", reduceFlashing) != 0;
@@ -410,7 +410,9 @@ void Game::revealAround() {
             }
         }
     } else {
-        for (auto& e : eyes) for (int y = e.second - 12; y <= e.second + 12; y++) for (int x = e.first - 16; x <= e.first + 16; x++) if (map->inBounds(x, y)) map->at(x, y).explored = true;
+        // 1.2.2: what the screen shows around the party (16 x 12 tiles each way on the classic 640x480 screen)
+        int rx = std::max(16, SCREEN_W / TILE / 2 + 3), ry = std::max(12, (SCREEN_H - 72) / TILE / 2 + 3);
+        for (auto& e : eyes) for (int y = e.second - ry; y <= e.second + ry; y++) for (int x = e.first - rx; x <= e.first + rx; x++) if (map->inBounds(x, y)) map->at(x, y).explored = true;
     }
 }
 
@@ -453,6 +455,13 @@ void Game::updateCameraInput(InputState& in, float dt) {
     if (fabsf(camTX - camFX) < 1.0f) camFX = (float)camTX; if (fabsf(camTY - camFY) < 1.0f) camFY = (float)camTY;
     camX = (int)camFX; camY = (int)camFY;
 }
+// 1.2.2 (#39): the screen changed size: keep the camera inside the map and the weather on the screen
+void Game::screenChanged() {
+    precip.clear();
+    if (!map) return;
+    if (!camFree && !inCombat()) camCenterOn(px, py, true);
+    else { camClamp(); camFX = (float)camTX; camFY = (float)camTY; camX = camTX; camY = camTY; }
+}
 bool Game::mouseOverUI(const InputState& in) const {
     for (auto& r : uiRectsPrev) if (r.contains(in.mouseX, in.mouseY)) return true;
     return false;
@@ -478,6 +487,12 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     if (kDevConsole && running && actP(in, A_CONSOLE) && (mode == GMode::EXPLORE || mode == GMode::COMBAT || mode == GMode::MENU || mode == GMode::JOURNAL)) { pushMode(GMode::CONSOLE); in.eatKeys(); }
     if (banterT > 0) banterT -= dt;
     checkAchievements(); updateHints(dt);
+    // 1.2.2 (#39): a 640x480 screen drawn in the middle of a larger one sees the mouse and SCREEN_W/H as if the
+    // screen were 640x480 (the same numbers as Game::draw uses for it)
+    const int fullW = SCREEN_W, fullH = SCREEN_H;
+    const bool sv = subViewMode(mode) && (fullW != BASE_W || fullH != BASE_H);
+    const int svX = sv ? (fullW - BASE_W) / 2 : 0, svY = sv ? (fullH - BASE_H) / 2 : 0;
+    if (sv) { SCREEN_W = BASE_W; SCREEN_H = BASE_H; in.mouseX -= svX; in.mouseY -= svY; }
     switch (mode) {
         case GMode::EXPLORE: updateExplore(in, dt); break;
         case GMode::DIALOGUE: updateDialogue(in, dt); break;
@@ -504,6 +519,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
             if (transition >= 2.0f) { transition = 0; popMode(); }
         } break;
     }
+    if (sv) { SCREEN_W = fullW; SCREEN_H = fullH; in.mouseX += svX; in.mouseY += svY; }
     if (mode == GMode::EXPLORE && !levelUpQueue.empty()) pushMode(GMode::LEVELUP);
     if (mode == GMode::EXPLORE && modeStack.empty() && demoMode && campaignId == "triffall" && !demoEnd.empty() && !extra.count("demo_end_shown") && evalCond(demoEnd)) startDemoEnd();
     if (mode == GMode::EXPLORE && !pendingOnEnter.empty()) { std::string s = pendingOnEnter; pendingOnEnter.clear(); runScript(s); }   // 1.1.10: map onenter= once the party stands on it
@@ -1430,7 +1446,8 @@ void Game::drawHUD(Canvas& cv, InputState& in) {
     (void)in;
 }
 
-static const int HB_SLOT = 28, HB_X = UI::SCREEN_W - 8 * HB_SLOT - 8;
+static const int HB_SLOT = 28;
+#define HB_X (UI::SCREEN_W - 8 * HB_SLOT - 8)   // 1.2.2: the screen width can change (#39)
 void Game::drawLog(Canvas& cv) {
     int shown = 0;
     for (int i = (int)msgLog.size() - 1; i >= 0 && shown < 4; i--) {
@@ -1462,6 +1479,39 @@ void Game::draw(Canvas& cv, InputState& in) {
     drawBanter(cv);
     drawHUD(cv, in);
     drawLog(cv);
+    drawModeUI(cv, in);
+    if (fadeIn > 0) cv.dim(0, 0, SCREEN_W, SCREEN_H, (uint8_t)(std::min(1.0f, fadeIn / 0.6f) * 255));
+    // mouse cursor (the platform hides the OS cursor)
+    if (!in.gamepadActive && in.mouseInWindow) {
+        int mx = in.mouseX, my = in.mouseY;
+        static const char* cur[] = {"X........", "XX.......", "XOX......", "XOOX.....", "XOOOX....", "XOOOOX...", "XOOOOOX..", "XOOOOOOX.", "XOOOOXXXX", "XOXXOX...", "XX.XOOX..", "...XOOX..", "....XX..."};
+        for (int y = 0; y < 13; y++) for (int x = 0; x < 9; x++) { char ch = cur[y][x]; if (ch == 'X') cv.put(mx + x, my + y, C::Black); else if (ch == 'O') cv.put(mx + x, my + y, mode == GMode::COMBAT ? C::Yellow : C::White); }
+    }
+}
+
+// 1.2.2 (#39): the screens laid out for the classic 640x480 screen that cover it whole. On a larger screen they are
+// drawn into subCv (with SCREEN_W/H = 640x480 and the mouse moved to match), put in the middle, and the rest of the
+// screen is darkened the way the screen darkens the world behind it.
+bool Game::subViewMode(GMode m) {
+    return m == GMode::MENU || m == GMode::SHOP || m == GMode::CRAFT || m == GMode::JOURNAL || m == GMode::BOUNTY || m == GMode::LEVELUP || m == GMode::WORLDMAP;
+}
+static uint8_t subViewDim(GMode m) { return m == GMode::WORLDMAP ? 200 : m == GMode::JOURNAL ? 160 : m == GMode::LEVELUP ? 140 : 150; }   // each screen's own cv.dim
+
+void Game::drawModeUI(Canvas& full, InputState& fullIn) {
+    const int fullW = SCREEN_W, fullH = SCREEN_H;
+    const bool sv = subViewMode(mode) && (fullW != BASE_W || fullH != BASE_H);
+    const int svX = sv ? (fullW - BASE_W) / 2 : 0, svY = sv ? (fullH - BASE_H) / 2 : 0;
+    const GMode drawnMode = mode; const size_t rects0 = uiRects.size();
+    InputState subIn;
+    if (sv) {
+        if (subCv.w != BASE_W || subCv.h != BASE_H) subCv.init(BASE_W, BASE_H);
+        for (int y = 0; y < BASE_H; y++) std::copy_n(&full.px[(size_t)(y + svY) * full.w + svX], BASE_W, &subCv.px[(size_t)y * BASE_W]);
+        subCv.resetClip();
+        SCREEN_W = BASE_W; SCREEN_H = BASE_H; ctx.cv = &subCv;
+        subIn = fullIn; subIn.mouseX -= svX; subIn.mouseY -= svY;
+    }
+    Canvas& cv = sv ? subCv : full;
+    InputState& in = sv ? subIn : fullIn;
     switch (mode) {
         case GMode::DIALOGUE: drawDialogue(cv, in); break;
         case GMode::MENU: drawMenu(cv, in); break;
@@ -1493,12 +1543,13 @@ void Game::draw(Canvas& cv, InputState& in) {
         cv.fillRect(SCREEN_W / 2 - w / 2, ny + (int)i * 18, w, 16, RGB(0, 0, 0, (uint8_t)(160 * a)));
         ctx.font->draw(cv, *ctx.ts, SCREEN_W / 2 - w / 2 + 10, ny + 2 + (int)i * 18, notifications[i], c);
     }
-    if (fadeIn > 0) cv.dim(0, 0, SCREEN_W, SCREEN_H, (uint8_t)(std::min(1.0f, fadeIn / 0.6f) * 255));
-    // mouse cursor (the platform hides the OS cursor)
-    if (!in.gamepadActive && in.mouseInWindow) {
-        int mx = in.mouseX, my = in.mouseY;
-        static const char* cur[] = {"X........", "XX.......", "XOX......", "XOOX.....", "XOOOX....", "XOOOOX...", "XOOOOOX..", "XOOOOOOX.", "XOOOOXXXX", "XOXXOX...", "XX.XOOX..", "...XOOX..", "....XX..."};
-        for (int y = 0; y < 13; y++) for (int x = 0; x < 9; x++) { char ch = cur[y][x]; if (ch == 'X') cv.put(mx + x, my + y, C::Black); else if (ch == 'O') cv.put(mx + x, my + y, mode == GMode::COMBAT ? C::Yellow : C::White); }
+    if (sv) {
+        for (int y = 0; y < BASE_H; y++) std::copy_n(&subCv.px[(size_t)y * BASE_W], BASE_W, &full.px[(size_t)(y + svY) * full.w + svX]);
+        SCREEN_W = fullW; SCREEN_H = fullH; ctx.cv = &full;
+        for (size_t i = rects0; i < uiRects.size(); i++) { uiRects[i].x += svX; uiRects[i].y += svY; }
+        uint8_t a = subViewDim(drawnMode);
+        full.dim(0, 0, fullW, svY, a); full.dim(0, svY + BASE_H, fullW, fullH - svY - BASE_H, a);
+        full.dim(0, svY, svX, BASE_H, a); full.dim(svX + BASE_W, svY, fullW - svX - BASE_W, BASE_H, a);
     }
 }
 
