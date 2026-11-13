@@ -1141,7 +1141,7 @@ left, resize, then Select everything (Ctrl+A), cut and paste it further down.
 Resize can be undone with Ctrl+Z.
 
 == maps.header | Map header fields
-see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.table, map.bg, map.worldmap, map.ambient
+see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.table, map.bg, map.worldmap, map.ambient, map.touch
 
 The two rows above the map view edit the [map] header of the file:
 
@@ -1364,6 +1364,30 @@ dungeon level in an otherwise overworld campaign.
 
 Gotchas: a map id that does not exist is reported by Check all. Coach travel
 still only works from the overworld world map.
+
+== map.touch | Fights start by touch
+see: obj.enemy, obj.enemy.aggro, obj.enemy.link, dungeon.touch, maps.header
+
+When ticked, the enemy groups placed on this map only start a fight by
+touching the party: a group (or the party) has to step right next to the
+other, diagonals included. Seeing the party from afar is not enough. Groups
+still notice the party within their aggro range and walk up to it, so you can
+outrun them or step around them. It is the "touch" box on the second header
+row of the Maps tab; mainly meant for overworld maps, but any map can use it.
+
+Format: 1 or empty. Default: empty = groups attack when the party comes within
+their aggro= range in line of sight.
+
+  touch=1
+
+Who joins: only the other groups that are touching the party too, and groups
+sharing a link= with the one that started it. During the fight, a group joins
+only when a fighter ends up right next to it (or it is linked), instead of
+everything within earshot coming running.
+
+Gotchas: random encounters (encounter= and the tile kinds' weights) are not
+affected - set encounter=0 if the map should have only the placed groups. The
+Stealth spell still stops groups from closing in.
 
 == obj.npc | NPC object (a placement of an NPC)
 see: tab.npcs, obj.npc.npc, obj.npc.id, obj.npc.dialogue, obj.npc.sprite, obj.npc.show, obj.npc.hide, obj.npc.shop, obj.npc.moveif, maps.objects
@@ -1718,6 +1742,10 @@ Format: whole number. Default: 5.
 
 Small values (2-3) let the party sneak past or choose the moment; large values
 (6-8) make a guard post that spots you across a room.
+
+Gotchas: on a map with touch=1 (map.touch) the fight only starts when the group
+is right next to the party; aggro is then just how far away it notices you and
+starts walking over.
 
 == obj.enemy.flag | Enemy defeated flag
 see: obj.enemy, concepts.flags, obj.enemy.ondefeat
@@ -4873,6 +4901,17 @@ Format: an [ambient] id (picker), or none. Default: empty = by style (cave and
 mine: amb_cave, crypt: amb_crypt, tech and ship: amb_machine, others: none).
 
   ambient=amb_cave
+
+== dungeon.touch | Dungeon fights start by touch
+see: map.touch, obj.enemy.aggro
+
+Ticked: the monster groups in this generated dungeon only start a fight by
+touching the party, as map.touch does for a map. Baking the dungeon copies it
+into the map header.
+
+Format: 1 or empty. Default: empty (groups attack on sight within aggro range).
+
+  touch=1
 
 == dungeon.table | Dungeon encounter table
 see: map.table, concepts.encounters, table.usedby

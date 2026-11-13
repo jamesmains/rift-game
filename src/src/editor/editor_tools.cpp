@@ -51,6 +51,7 @@ bool Editor::bakeDungeon(const EdSection& sec, std::string& err) {
     e.header = {{"id", id}, {"name", sec.get("name", id)}, {"kind", "dungeon"}, {"spawn", fmt("%d,%d", m.spawnX, m.spawnY)}, {"dark", m.dark ? "1" : "0"}, {"light", std::to_string(m.lightRadius)}, {"bg", "0,0,0"},
                 {"music", sec.get("music", style == "tech" || style == "ship" ? "tech" : "dungeon")}};
     if (!sec.get("table").empty()) e.header.push_back({"table", sec.get("table")});
+    if (atoi(sec.get("touch").c_str()) != 0) e.header.push_back({"touch", "1"});   // 1.2.3 (#40)
     mapToEd(m, e, id, false);
     if (!e.save()) { err = "could not write " + e.path; return false; }
     refreshFiles();

@@ -168,7 +168,7 @@ void Game::combatJoinGroups() {
         for (auto& u : cb.units) {
             if (!u.ch.alive || !u.friendly()) continue;
             int d = chebyshev(u.x, u.y, g.x, g.y);
-            if (d <= (boss ? 3 : 4) || (!boss && d <= g.aggro + 2 && lineOfSight(*map, u.x, u.y, g.x, g.y))) { hears = true; break; }
+            if (map->touchCombat ? d <= 1 : (d <= (boss ? 3 : 4) || (!boss && d <= g.aggro + 2 && lineOfSight(*map, u.x, u.y, g.x, g.y)))) { hears = true; break; }   // 1.2.3 (#40) touch=1: only a group touching a fighter joins
         }
         // linked groups (same link= id) always come together
         if (!hears && !g.link.empty()) for (int o : cb.defeatedGroups) if (o >= 0 && o < (int)map->enemies.size() && map->enemies[o].link == g.link) hears = true;

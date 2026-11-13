@@ -399,6 +399,16 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Headless always runs 640x480 (tests unchanged); `screen W H` / `edscreen W H` set another size. Test
   `tests/screen_fill_1_2_2.txt`. The web build (main_web.cpp) wasn't changed (no Emscripten here): still 640x480.
 
+## 1.2.3 fights by touch (owner's #40: "mainly for overworld maps, but give the option to all maps")
+- Map header `touch=1` (`Map::touchCombat`, world.h; dungeons.txt `touch=` too, copied by Bake): in `Game::onStep`
+  the proximity check uses range 1 (any of the 8 neighbours) instead of aggro; extra groups join only if they touch
+  the party too or share link=; mid-fight reinforcements (`combatJoinGroups`) only if next to a fighter or linked.
+  Groups still walk over within aggro+3 (updateNpcs). Random encounters unaffected. Not set on any base map (owner's
+  choice to tick it). Editor: "touch" checkbox on Maps header row 2 (right-click = guide `map.touch`; unticked
+  removes the key); row 2 fields were narrowed so Play fits at 960 wide. Guide `map.touch`, `dungeon.touch`.
+- Console `touch [0|1]` (this visit). Test `tests/touch_combat_1_2_3.txt`. Headless `expect mode` values are upper
+  case (EXPLORE, COMBAT).
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).

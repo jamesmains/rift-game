@@ -28,6 +28,13 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.2.3 fights by touch
+
+* Maps can now say that monsters only attack when they touch you: with **touch** ticked on a map (Editor > Maps,
+  second header row; `touch=1` in the map file, or in a dungeon's entry), a monster group that spots you walks over,
+  and the fight starts only once it is right next to the party, so you can outpace it or step around it. Only groups
+  touching the party join in. Meant mainly for overworld maps, but every map and generated dungeon can use it.
+
 ## 1.2.2 the game fills the whole screen
 
 * The game now fills any screen, wide or narrow: on a 16:9 or ultrawide monitor you see more of the world left and

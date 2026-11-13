@@ -209,7 +209,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
     mk("encounters.txt", "Encounter tables", "table", "id", {"id", "level", "group"});
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
-    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "ambient", "table"});
+    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "ambient", "table", "touch"});
     mk("overworld.txt", "Overworld locations", "location", "id", {"id", "name", "x", "y", "kind", "map", "tx", "ty", "clear", "road", "require", "locked", "reveal"});
     mk("recipes.txt", "Recipes", "recipe", "id", {"id", "name", "result", "count", "station", "materials", "gold", "level", "difficulty", "skill", "known", "reveal"});          // gens[9]
     mk("affixes.txt", "Affixes", "affix", "id", {"id", "name", "pos", "tier", "types", "mods", "dmgtype", "value"});                   // gens[10]
@@ -790,6 +790,11 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (v.empty()) ui.text(x + 280, y + 2, def ? "(default for type=key)" : "(default)", DIM);
         return;
     }
+    if (s.name == "dungeon" && k == "touch") {   // 1.2.3 (#40)
+        bool on = atoi(v.c_str()) != 0;
+        if (ui.checkbox(x, y + 2, on ? "fights start only when a monster group touches the party" : "monster groups attack when they see the party (aggro range)", on)) { v = on ? "1" : ""; g.dirty = true; }
+        return;
+    }
     if (s.name == "item" && k == "unique") {   // 1.1.3
         bool on = atoi(v.c_str()) != 0;
         if (ui.checkbox(x, y + 2, on ? "unique - never gets affixes (loot, crafting, enchanting)" : "can get random affixes", on)) { v = on ? "1" : ""; g.dirty = true; }
@@ -1101,16 +1106,21 @@ void Editor::drawMaps(InputState& in) {
               em.hset("onenter", ids[i]); mapDirty = true; }); }
       if (ui.hover(cx - 4, hy, bw, 16)) ui.tip(oe.empty() ? "Nothing runs when the party arrives. Click to run a script (Scripts tab) each time they do." : "On arrival: " + oe); }
     hy += 20; cx = vx + 22;
-    hfield("table", cx, 70);
+    hfield("table", cx, 56);
     if (ui.button(cx - 8, hy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& e : gens[5].secs) ids.push_back(e.get("id")); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == em.hget("table")) cur = (int)i; openListPicker("Encounter table (used where a tile kind has no biome table)", ids, cur, [this, ids](int i) { em.hset("table", i == 0 ? "" : ids[i]); mapDirty = true; }); }
-    cx += 10; hfield("bg", cx, 54); hfield("worldmap", cx, 60);
+    cx += 10; hfield("bg", cx, 54); hfield("worldmap", cx, 46);
     // 1.1.5 (#28): the map's background loop - nothing plays unless a map picks one here (the list = [ambient] entries in the Sounds tab)
     hfield("ambient", cx, 64);
     if (ui.button(cx - 8, hy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}, labels{"(none)"}; for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "ambient") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
         int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == em.hget("ambient")) cur = (int)i;
         openListPicker("Background loop (plays under the music on this map)", labels, cur, [this, ids](int i) { em.hset("ambient", i == 0 ? "" : ids[i]); mapDirty = true; }); }
     cx += 10;
-    ui.label(cx, hy + 2, "size"); cx += 30; ui.intField(cx, hy, 56, resizeW, 4, 300); cx += 58; ui.intField(cx, hy, 56, resizeH, 4, 300); cx += 60;
+    // 1.2.3 (#40): touch=1 - map enemy groups start a fight only by touching the party (the overworld's usual choice)
+    { bool on = atoi(em.hget("touch").c_str()) != 0; int lw2 = font->width("touch");
+      if (ui.checkbox(cx, hy + 2, "touch", on)) { if (on) em.hset("touch", "1"); else em.header.erase(std::remove_if(em.header.begin(), em.header.end(), [](const std::pair<std::string, std::string>& kv) { return kv.first == "touch"; }), em.header.end()); mapDirty = true; }
+      if (ui.hover(cx, hy, 16 + lw2, 16)) { ui.tip(on ? "touch=1: enemy groups start a fight only by touching the party (right next to it). Right-click: guide" : "Enemy groups attack when the party comes within their aggro range. Tick: only by touching it. Right-click: guide"); if (in.mousePressed[1]) openGuide("map.touch"); }
+      cx += 16 + lw2 + 6; }
+    ui.label(cx, hy + 2, "size"); cx += 30; ui.intField(cx, hy, 50, resizeW, 4, 300); cx += 52; ui.intField(cx, hy, 50, resizeH, 4, 300); cx += 54;
     if (ui.button(cx, hy, 50, 16, "Resize", resizeW != em.w || resizeH != em.h)) { mapPushUndo(); em.resize(resizeW, resizeH, brush); mapDirty = true; } cx += 56;
     if (ui.button(cx, hy, 60, 16, "Play >", true, false, OK)) { auto sp = split(em.hget("spawn"), ','); requestPlay(sp.size() == 2 ? atoi(sp[0].c_str()) : 0, sp.size() == 2 ? atoi(sp[1].c_str()) : 0); } if (ui.hover(cx, hy, 60, 16)) ui.tip("Saves everything and starts the game here at the spawn point (P over a tile: play there; N over a tile: overworld arrival point)");
     // view

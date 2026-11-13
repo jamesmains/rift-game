@@ -249,6 +249,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             else if (k == "ambient") m.ambient = v;
             else if (k == "worldmap") m.worldMap = v;
             else if (k == "onenter") m.onEnter = v;
+            else if (k == "touch") m.touchCombat = atoi(v.c_str()) != 0;
             else if (k == "bg") m.bg = parseColor(v);
         } else if (section == "legend") {
             if (!k.empty()) legend[k[0]] = v;

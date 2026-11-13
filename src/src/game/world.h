@@ -223,6 +223,7 @@ struct Map {
     std::string ambient;         // header ambient=: the ambient loop (sounds.txt [ambient]); "none" = silence; empty = chosen by place
     std::string worldMap;        // header worldmap=: what M shows while on this map (overrides the campaign): off | self | overworld | <map id>
     std::string onEnter;         // 1.1.10 header onenter=: actions (script:<id>...) run each time the party arrives (not on loading a save)
+    bool touchCombat = false;    // 1.2.3 (#40) header touch=1: map enemy groups only start a fight by touching the party (next to it), not by seeing it
     Color8 bg = C::Black;
     bool generated = false;      // procedurally generated (not saved in full)
 

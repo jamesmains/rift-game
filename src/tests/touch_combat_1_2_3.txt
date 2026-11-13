@@ -1,0 +1,29 @@
+# 1.2.3 (#40): map header touch=1 - a placed enemy group only starts a fight by touching the party.
+# Console `touch 1` sets it for this visit (the header key is read the same way when a map loads).
+newgame Kai warrior 1 7
+teleport hollowmere 20 20
+frames 120
+expect mode == EXPLORE
+# touch on: a group 5 tiles away in plain sight does not start a fight when the party steps
+con touch 1
+con run spawn:goblin,25,19
+key LEFT
+frames 4
+expect mode == EXPLORE
+shot touch_seen_no_fight.png
+# ...but it walks over, and the fight starts once it is next to the party
+frames 600
+expect mode == COMBAT
+shot touch_fight.png
+partywipe
+frames 400
+# touch off (the default): the same group starts the fight from its aggro range on the next step
+newgame Kai warrior 1 7
+teleport hollowmere 20 20
+frames 120
+expect mode == EXPLORE
+con touch 0
+con run spawn:goblin,25,19
+key LEFT
+frames 4
+expect mode == COMBAT

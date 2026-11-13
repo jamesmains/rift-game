@@ -162,6 +162,7 @@ Map* Game::loadMap(const std::string& id) {
                                 pool, sec.get("boss"), sec.get("bossflag"), sec.get("loot", "common"));
                 m->name = sec.get("name", id); m->encounterTable = sec.get("table");
                 std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient", st == "cave" || st == "mine" ? "amb_cave" : st == "crypt" ? "amb_crypt" : st == "tech" || st == "ship" ? "amb_machine" : "");
+                m->touchCombat = sec.geti("touch", 0) != 0;   // 1.2.3 (#40)
                 if (sec.has("bossdefeat")) for (auto& e : m->enemies) if (e.flag == sec.get("bossflag")) e.onDefeatScript = sec.get("bossdefeat");
                 ok = true; break;
             }
@@ -646,6 +647,7 @@ void Game::onStep() {
         if (!e.showFlag.empty() && !evalCond(e.showFlag)) continue;
         if (!e.hideFlag.empty() && evalCond(e.hideFlag)) continue;
         int aggro = stealthSteps > 0 ? std::max(1, e.aggro / 3) : e.aggro;
+        if (map->touchCombat) aggro = 1;   // 1.2.3 (#40) touch=1: only a group right next to the party starts a fight
         if (chebyshev(e.x, e.y, px, py) <= aggro && lineOfSight(*map, px, py, e.x, e.y)) {
             // everyone who would notice joins from the start: groups close to the party, groups that can see the group that
             // spotted you, and groups linked to it (link= in the map file). The rest may still come running once the noise starts.
@@ -657,6 +659,7 @@ void Game::onStep() {
                 if (!e2.hideFlag.empty() && evalCond(e2.hideFlag)) continue;
                 int dp = chebyshev(e2.x, e2.y, px, py), dg = chebyshev(e2.x, e2.y, e.x, e.y);
                 bool joins = dp <= 4 || (dp <= 7 && lineOfSight(*map, px, py, e2.x, e2.y)) || (dg <= 7 && lineOfSight(*map, e.x, e.y, e2.x, e2.y)) || (!e.link.empty() && e2.link == e.link);
+                if (map->touchCombat) joins = dp <= 1 || (!e.link.empty() && e2.link == e.link);   // touch=1: only groups touching the party too (or linked)
                 if (groupHasBoss(e2) && dp > 3 && !(!e.link.empty() && e2.link == e.link)) joins = false;   // bosses stay in their lair
                 if (joins) combatExtraGroups.push_back((int)j);
             }

@@ -111,3 +111,5 @@ on purpose (campaign `defeat=`). New: expect key `cond:CONDITION` (any game cond
 `partywipe` (in a fight: the party loses at once). `editor_import_1_1_6` imports the Tutorial's `tut_arrive` dialogue
 and `editor_playstate_export` expects `tutorial_2.0.zip` (the Tutorial is version 2.0).
 1.1.8: `item_color_1_1_8` (Items tab Look card: a palette colour sets color=, saved, the pack draws it; run from a copy of assets).
+1.2.3: `touch_combat_1_2_3` (map header `touch=1`: a placed group in sight does not attack until it is next to the party;
+without it the same group attacks from its aggro range). Console `touch [0|1]` sets it for the current visit.
