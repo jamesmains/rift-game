@@ -11,8 +11,18 @@ key LEFT
 frames 4
 expect mode == EXPLORE
 shot touch_seen_no_fight.png
-# ...but it walks over, and the fight starts once it is next to the party
+# ...it only moves when the party moves (1.2.4, #41): standing still, no fight
 frames 600
+expect mode == EXPLORE
+# walking up to it: the fight starts once it is next to the party
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
 expect mode == COMBAT
 shot touch_fight.png
 partywipe

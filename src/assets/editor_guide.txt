@@ -356,14 +356,20 @@ and dungeon tile kinds have weight 0 by default: to get random fights in a cave
 you must give its floor kind a weight (or make a copy of the kind just for that
 map).
 
+On a map with touch=1 (map.touch) a random fight doesn't start at once: the
+group appears 5 to 8 steps away and chases the party step for step, so it
+can be fought or outrun. One such group at a time; it goes away once it has
+lost the party.
+
 Coach ambush: travelling by coach rolls once per 12 tiles of distance (at least
 once), 22% each, 11% with stealth active. On an ambush the party arrives next
 to the destination on the overworld and a fight starts at once, using the biome
-under them (plains if that is a loc tile). This forced fight ignores the map
-rate and tile weight.
+under them (plains if that is a loc tile) - also on a touch=1 map. This forced
+fight ignores the map rate and tile weight.
 
 Placed enemy groups ([enemy] objects) are not random encounters: they fight
-when the party comes within their aggro range.
+when the party comes within their aggro range (on a touch=1 map, when they
+touch it).
 
 == concepts.worldmap | The world map (M)
 see: campaign.worldmap, map.worldmap, item.effect, location.reveal, dlg.actions, quest.stage.pin, tab.world
@@ -1366,14 +1372,27 @@ Gotchas: a map id that does not exist is reported by Check all. Coach travel
 still only works from the overworld world map.
 
 == map.touch | Fights start by touch
-see: obj.enemy, obj.enemy.aggro, obj.enemy.link, dungeon.touch, maps.header
+see: obj.enemy, obj.enemy.aggro, obj.enemy.leash, obj.enemy.link, dungeon.touch, maps.header, concepts.encounters
 
 When ticked, the enemy groups placed on this map only start a fight by
 touching the party: a group (or the party) has to step right next to the
-other, diagonals included. Seeing the party from afar is not enough. Groups
-still notice the party within their aggro range and walk up to it, so you can
-outrun them or step around them. It is the "touch" box on the second header
-row of the Maps tab; mainly meant for overworld maps, but any map can use it.
+other, diagonals included. Seeing the party from afar is not enough. It is
+the "touch" box on the second header row of the Maps tab; mainly meant for
+overworld maps, but any map can use it.
+
+Chases: a group that notices the party (within its aggro range, in line of
+sight) chases it - one step for every step the party takes, never on its own.
+Stand still and so do they; walk away and they keep the same distance; walk
+towards them or get cornered and they catch you. Each group has a leash point
+(where it was placed) and a leash range (obj.enemy.leash): once the party is
+further than that from the leash point, the group gives up and walks back.
+
+Random ambushes (encounter= and the tile kinds' weights, and the encounter
+action) don't jump the party here: the group appears 5 to 8 steps away, in
+sight when there is room, and chases from there (leash point = where the
+party stood, range 12). Only one such group roams at a time. The coach's
+ambush still starts the fight at once (the coachman script uses
+encounter now).
 
 Format: 1 or empty. Default: empty = groups attack when the party comes within
 their aggro= range in line of sight.
@@ -1385,9 +1404,10 @@ sharing a link= with the one that started it. During the fight, a group joins
 only when a fighter ends up right next to it (or it is linked), instead of
 everything within earshot coming running.
 
-Gotchas: random encounters (encounter= and the tile kinds' weights) are not
-affected - set encounter=0 if the map should have only the placed groups. The
-Stealth spell still stops groups from closing in.
+Gotchas: set encounter=0 if the map should have only the placed groups. The
+Stealth spell makes groups notice the party only from a third of their aggro
+range (one already chasing keeps chasing). After the party flees a fight the
+groups wait 8 steps before they chase again.
 
 == obj.npc | NPC object (a placement of an NPC)
 see: tab.npcs, obj.npc.npc, obj.npc.id, obj.npc.dialogue, obj.npc.sprite, obj.npc.show, obj.npc.hide, obj.npc.shop, obj.npc.moveif, maps.objects
@@ -1698,7 +1718,7 @@ Check warns when an NPC stands on a blocked tile.
 Together with x it places the NPC; moveif= can move it elsewhere later.
 
 == obj.enemy | Enemy group object
-see: obj.enemy.group, obj.enemy.aggro, obj.enemy.flag, obj.enemy.level, obj.enemy.ondefeat, obj.enemy.link, concepts.encounters
+see: obj.enemy.group, obj.enemy.aggro, obj.enemy.flag, obj.enemy.level, obj.enemy.ondefeat, obj.enemy.link, obj.enemy.leash, map.touch, concepts.encounters
 
 A group of monsters placed on the map. They roam within about 4 tiles of their
 spot and close in when they see the party. When the party comes within aggro
@@ -1745,7 +1765,7 @@ Small values (2-3) let the party sneak past or choose the moment; large values
 
 Gotchas: on a map with touch=1 (map.touch) the fight only starts when the group
 is right next to the party; aggro is then just how far away it notices you and
-starts walking over.
+starts chasing (step for step, within its leash - obj.enemy.leash).
 
 == obj.enemy.flag | Enemy defeated flag
 see: obj.enemy, concepts.flags, obj.enemy.ondefeat
@@ -1829,6 +1849,21 @@ Format: any id. Default: empty.
 Use it for a chief and his bodyguards, or a whole camp that reacts as one.
 Groups without a link still join if they are close (4 tiles) or can see the
 fight.
+
+== obj.enemy.leash | Enemy leash range
+see: obj.enemy, obj.enemy.aggro, map.touch
+
+Only on maps with touch=1 (map.touch). How far (in tiles) from its leash
+point - the spot where the group is placed - the party may be for the group
+to keep chasing it. Further than that and the group gives up and walks back.
+It never follows the party more than a step beyond its leash range.
+
+Format: whole number. Default: empty = aggro + 5 (at least 6).
+
+  leash=12
+
+Small values keep a guard near its post; large values make a pack that
+hounds the party across the map.
 
 == obj.chest | Chest object
 see: obj.chest.flag, obj.chest.items, obj.chest.gold, obj.chest.locked, objtype
@@ -6664,7 +6699,7 @@ the new map).
 
 New in 1.1.10, for scripts and dialogue nodes alike:
 - script=id[,value,...] - runs a script (dialogue: script=id; action lists: script:id).
-- time=minutes - time passes. sound=id - plays a sound. encounter - a random fight from the ground underfoot.
+- time=minutes - time passes. sound=id - plays a sound. encounter - a random fight from the ground underfoot. On a touch=1 map the group appears a few tiles away and chases the party (the script carries on at once); encounter now (action lists: encounter:now) starts the fight at once, as the coach's ambush does.
 - weather=new|clear|rain|storm|fog|snow. stat=travels:1 - counts towards a statistic (travels, kills, chests, crafted, bounties, fights).
 - teleport=map,x,y,text - the text shows while travelling.
 
@@ -6684,7 +6719,8 @@ The coach in every town is the script "coachman" (NPC coachman, script=
 coachman). It greets the party, lets them pick a place they have been to on
 the world map, works out the fare (8 gold + 6 per league), asks before
 taking the money, lets time pass, rolls for an ambush (less likely while
-sneaking), and teleports to the place.
+sneaking), and teleports to the place. An ambush uses "encounter now", so the
+fight starts at once even on a touch=1 map.
 
   say Where to? Coach fare is by the league.
   pick dest "Where should the coach take you?"

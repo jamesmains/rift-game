@@ -7,6 +7,7 @@ spawn=44,93
 encounter=4
 table=plains
 bg=0,0,0
+touch=1
 
 [legend]
 ! = loc_ruin
@@ -26,6 +27,7 @@ $ = loc_house
 7 = loc_temple
 8 = loc_citymod
 9 = loc_lab
+: = mire
 = = bridge
 ? = loc_mine
 F = forest2
@@ -52,7 +54,6 @@ w = shallows
 x = wasteland
 z = riftscar
 ~ = water
-m = mire
 
 [rows]
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~wwwssOOossww~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
@@ -79,8 +80,8 @@ WWWWWWWWWWWWWWWWWWWW~~~~~~~wssssOooooooooOoooooo..oOooOOoOoOoOoooOOoooooooOOoooo
 WWWWWWWWWWWWWWWWWWWW~~~~wwwsssssOoooOooOOoo.o.ooooOoooOOoooOOoooooooooooooooOoOoO.......,.".......xztxxzxxxTtxtxxsww~~~~~~~wwwww=ww_sss___~~~~WWWWWW~~~~~~~~~~WW
 WWWWWWWWWWWWWWWWWWWW~~~~wsssssssoOooooooOooo..7.ooOOooOooooOoooooooooooOoOoOOooo..,....."s..,.,..xxxxzxxxTxxxztxxxssww~~~wwwwwww=wssxzxsw~~~~~~~~~~~~~wwwww~~~~W
 WWWWWWWWWWWWWWWWWWWW~~~~wssssssooOooooOoooO...+oo.ooooooOOOOooOOoOoooooooOOoooop..b".....s."..,.,xtxtxxxxzxzzttxxtsswww~wwwssss+=ssxxxTsww~~~~~~~~~~~wwwwww~~~~W
-WWWWWWWWWWWWWWWWWWW~~~~wwsssoOooOooOooooooooo.+.oooOoooooooooooOoooOoooOooOoOOfpf....b...........txxTZzxxxxxxtzxxxxssswwwwsssss+ssxxxxzzsw~~~~~~~~~~~~ww~~~~~WWW
-WWWWWWWWWWWWWWWWWW~~~wwwsssOoooooooooOOoOooooo+oo.OoooooooooOoooOoOooooOOooOOO.f..f...,...ss.."b,.zxTZxzxxxtxxxztxxssswwwwsssX+XXsxxxxxTtw~~~~wwww~~w~~~~~~WWWWW
+WWWWWWWWWWWWWWWWWWW~~~~wwsssoOooO.oOo.o.ooooo.+.oooOoooooooooooOoooOoooOooOoOOfpf....b...........txxTZzxxxxxxtzxxxxssswwwwsssss+ssxxxxzzsw~~~~~~~~~~~~ww~~~~~WWW
+WWWWWWWWWWWWWWWWWW~~~wwwsssOoooooooo.OOoOooooo+oo.OoooooooooOoooOoOooooOOooOOO.f..f...,...ss.."b,.zxTZxzxxxtxxxztxxssswwwwsssX+XXsxxxxxTtw~~~~wwww~~w~~~~~~WWWWW
 WWWWWWWWWWWWWWWWWW~~wwssOOoOoOoOooooOOoOOooooo+oooooOooOOoooooOooOooOooooOooof..ffffb.psssss,......xxtxxxZtxxxxxxxzsssww~wwXXXXXsstxzxtxtw~~~~wwwwwwwww~~~~WWWWW
 WWWWWWWWWWWWWWWWW~~~wssooooooooooooOoOoooOoooo++ooOOooooOoooooooooOooOoooooooFpfpff.p.ssssssp,b...bxZzztxxxxtzZtxxxsssw~~~~XXXXsssxxxzxtxs~~~~~wwwwwsssw~~~~WWWW
 WWWWWWWWWWWWWWWWW~~~wsooooOOooOoOooo___ooOOooOo++++oooooooOooooooOooooOooOooOfFF..ffppswwwwws.......xttxssssTtxssZssssw~~~~XXX0ssxxxxzxzZZw~~~wwsssssxxsw~~~WWWW
@@ -146,36 +147,36 @@ WWW~~~~~~wssb...."...b.HHHhhhh"b.____....."...,+ff..rbPF..FPfPpfpfffp++FFfFpFF.b
 ~~~~~~wws...,..""...Hh^^^^hHhHh".."b"...b,._.+...ffbrfpFFpfFf++++++++fffppffpfff++".,,..b."b.,.b.+++++sssss.b....",sswwwwsssww~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 ~~~~~wwss......",,..H^^^^^hhhHh...."...".b._++.,fff.rFpbf+++++HhHHFPPFppppfppPf.+.f".b...,......,sss.+sssss.b..,.%%%swwwwssssw~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 ~~~~~~wwss......b,..Hh^^^^HhHhH...."b"..".._+...f.ffrrppF+fPpHhhhFfPfFFFfFFPPfpf+pff...".b.,b...$ssss+ssss..".,%%%t%sswwwsssww~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-~~~~~~~~ws..bb",....hhHH^^HhhHh...b."".b,.,.+++++++++=++++fPfhhfpFFFfppffpffffpp+....,b.,,..,...b..sw=wss."..%%smt%%%swwwwswww~~~~WWWWWW~~~~WWWWWWWWWWWWWWWWWWWW
+~~~~~~~~ws..bb",....hhHH^^HhhHh...b."".b,.,.+++++++++=++++fPfhhfpFFFfppffpffffpp+....,b.,,..,...b..sw=wss."..%%s:t%%%swwwwswww~~~~WWWWWW~~~~WWWWWWWWWWWWWWWWWWWW
 ~~~~~~~~ws,.......b..HhHhhhHhH.....b..b..,++1++++++++=++++++FpffPPpfFfpPpPPPFp+++fbb.f..b.b,..""..bsw=ss...".%%s%%%%%sswwwwwww~~~~~~WWWW~~~~WWWWWWWWWWWWWWWWWWWW
-~~~WWW~~ws..".........hHhhHHHH,b,.b.......+...b.fbp..r..f..++...FfPFPPfFPPfffp+Pp.bpf........."ss."ss+...b"%%%%%m%m%%sssw~~~~~~~~~~~~WW~~~~~WWWWWWWWWWWWWWWWWWWW
-WWWWWWW~s.b.b..,....,.b.HhHHhh......"b.,.++...,.b.ffbrfff...+...pfpFFFpfFFfpPP+FFfp.fp........ssss...+.....~tt%m%mss%mssw~~~~~~~~~~~~~W~~~~~WWWWWWWWWWWWWWWWWWWW
+~~~WWW~~ws..".........hHhhHHHH,b,.b.......+...b.fbp..r..f..++...FfPFPPfFPPfffp+Pp.bpf........."ss."ss+...b"%%%%%:%:%%sssw~~~~~~~~~~~~WW~~~~~WWWWWWWWWWWWWWWWWWWW
+WWWWWWW~s.b.b..,....,.b.HhHHhh......"b.,.++...,.b.ffbrfff...+...pfpFFFpfFFfpPP+FFfp.fp........ssss...+.....~tt%:%:ss%:ssw~~~~~~~~~~~~~W~~~~~WWWWWWWWWWWWWWWWWWWW
 WWWWWW~~s........,.....ssds.........b....+.bb...."ff.rfpp.b.+...FFfPfpFFfFFPPf+FP.pf..p,.b....ssss"."++b".t~%%%%%%ss%%t%sw~~~~~~~~~~~~W~~~~WWWWWWWWWWWWWWWWWWWWW
-WWWWWW~wb......,....,."dsssss...,,b..b,..+..ss.....pbrp.b...&...ffFPFfffffP++++PF..ffffb.....ssss.....+...%~%t%m%%st%%tm%swwwwww~~~~~~~~~~~~WWWWWWWWWWWWWWWWWWWW
-WWWW~~~s..........b"..sssssssdssssss.....+b.sss....b.rb.pbb.....ppFppPfffff+fPppfp.p.ff"b.."b.ss..""".+++++t%t%sm%m%t%m%%%sssssswww~~~~~~~~~WWWWWWWWWWWWWWWWWWWW
-WWWW~ws,"."...".....dsssdssssssssdssdcs.++..ssss,..pfr.b........fFpfFFPpfPf+.pfPfppf.bp...,..."....b..".b.+++%sss%%%%%%%%m%t%%%mssww~~~~~~~WWWWWWWWWWWWWWWWWWWWW
-WWW~~s......".,....sdscsssssscsdssssssss+..bssss,,..rrpfb..b....FPpFFFFfpF.+.pFFfF.f.f.f...,"...b...""b"""ts++++%%%%%t%%%t%%m%%%sswww~~~~WWWWWWWWWWWWWWWWWWWWWWW
+WWWWWW~wb......,....,."dsssss...,,b..b,..+..ss.....pbrp.b...&...ffFPFfffffP++++PF..ffffb.....ssss.....+...%~%t%:%%st%%t:%swwwwww~~~~~~~~~~~~WWWWWWWWWWWWWWWWWWWW
+WWWW~~~s..........b"..sssssssdssssss.....+b.sss....b.rb.pbb.....ppFppPfffff+fPppfp.p.ff"b.."b.ss..""".+++++t%t%s:%:%t%:%%%sssssswww~~~~~~~~~WWWWWWWWWWWWWWWWWWWW
+WWWW~ws,"."...".....dsssdssssssssdssdcs.++..ssss,..pfr.b........fFpfFFPpfPf+.pfPfppf.bp...,..."....b..".b.+++%sss%%%%%%%%:%t%%%:ssww~~~~~~~WWWWWWWWWWWWWWWWWWWWW
+WWW~~s......".,....sdscsssssscsdssssssss+..bssss,,..rrpfb..b....FPpFFFFfpF.+.pFFfF.f.f.f...,"...b...""b"""ts++++%%%%%t%%%t%%:%%%sswww~~~~WWWWWWWWWWWWWWWWWWWWWWW
 WWW~ws.....b."..sssdsssssddssssssscdsscs+,,"..ss..pfrfpf.ff..bPPppffff....++.fFffPf.f.f...,"."..."".bb."..%%s%~=%%%%%t%%%tt%%%tt%ssww~~~~WWWWWWWWWWWWWWWWWWWWWWW
-WWW~ws.,......,.sssssddsssssdsssssssddsd+scsssss..ffr.fbbp.fffffFpfffp...++fb.ffpffp.b.p."b.b..."....."".%%%tm%+%%%m%t%%%m%%%%m%tsssww~~~~WWWWWWWWWWWWWWWWWWWWWW
-WWW~w..........ssssss_sssdsssscssdsssdsc+sssdsss...rrppbb.bbfffpffPfff..5+..fp....ffpffp"...b.....""".b..%%m%%%=+t%%%%%~~%%%%%%ttmssw~~~~~~~WWWWWWWWWWWWWWWWWWWW
-WWW~wss.......ddsssd__ss_dcsssssdssssss++sssdssssssr.,,p.bpb.pfpPpfPPP.....bb..ff..p..f...,,"".b.b....".%t%%~~~%++%%%%%%%%m%t%%t%%%sw~~~~~~~~WWWWWWWWWWWWWWWWWWW
-WWW~~sddss...ssssdssss?_ssssssddsssddss+ssdsssssrrrr.b.pp.p.f.fffFPFpf.....b..p......fb...............b.mt%%%%tm%++m%t%%tt%%t%%t%%%sswwww~~~~WWWWWWWWWWWWWWWWWWW
-WWWW~wssssssdsddsssssss++ssssdsscssss+++ssdsssswrssf....p.b.ssPppffpFPpPFP...ff.fb.f.p,......,.......""%t%%%%%%%m%++......%%m%%%%%%%sswwsw~~~WWWWWWWWWWWWWWWWWWW
-WWWW~wssssdsssssddss_sss_+csssssssss++ssssssssssrsss...f..bsswsfffFfpFf.f.bbf.....pb...."...b....b...%%%t%%t%%t%%%m++.....%m%%%%%%%%sswssw~~~WWWWWWWWWWWWWWWWWWW
-WWW~~wsdsdssdscsssssssssd+sscdssscss+sdsssssssssrsssss,pfsswwwwsFpPFFpfpffpf.bf.pp......b,...bb....%%t%tm%%%m%%t%%t.+++...%%~%%%%tmsswwwww~~~WWWWWWWWWWWWWWWWWWW
+WWW~ws.,......,.sssssddsssssdsssssssddsd+scsssss..ffr.fbbp.fffffFpfffp...++fb.ffpffp.b.p."b.b..."....."".%%%t:%+%%%:%t%%%:%%%%:%tsssww~~~~WWWWWWWWWWWWWWWWWWWWWW
+WWW~w..........ssssss_sssdsssscssdsssdsc+sssdsss...rrppbb.bbfffpffPfff..5+..fp....ffpffp"...b.....""".b..%%:%%%=+t%%%%%~~%%%%%%tt:ssw~~~~~~~WWWWWWWWWWWWWWWWWWWW
+WWW~wss.......ddsssd__ss_dcsssssdssssss++sssdssssssr.,,p.bpb.pfpPpfPPP.....bb..ff..p..f...,,"".b.b....".%t%%~~~%++%%%%%%%%:%t%%t%%%sw~~~~~~~~WWWWWWWWWWWWWWWWWWW
+WWW~~sddss...ssssdssss?_ssssssddsssddss+ssdsssssrrrr.b.pp.p.f.fffFPFpf.....b..p......fb...............b.:t%%%%t:%++:%t%%tt%%t%%t%%%sswwww~~~~WWWWWWWWWWWWWWWWWWW
+WWWW~wssssssdsddsssssss++ssssdsscssss+++ssdsssswrssf....p.b.ssPppffpFPpPFP...ff.fb.f.p,......,.......""%t%%%%%%%:%++......%%:%%%%%%%sswwsw~~~WWWWWWWWWWWWWWWWWWW
+WWWW~wssssdsssssddss_sss_+csssssssss++ssssssssssrsss...f..bsswsfffFfpFf.f.bbf.....pb...."...b....b...%%%t%%t%%t%%%:++.....%:%%%%%%%%sswssw~~~WWWWWWWWWWWWWWWWWWW
+WWW~~wsdsdssdscsssssssssd+sscdssscss+sdsssssssssrsssss,pfsswwwwsFpPFFpfpffpf.bf.pp......b,...bb....%%t%t:%%%:%%t%%t.+++...%%~%%%%t:sswwwww~~~WWWWWWWWWWWWWWWWWWW
 WW~~~~wscssssssdssssssssd+++sddsd++++cdssssssssdrsswwwsbssw~~~~wwsfFfs..p.ffb.b."...,......,.,..%%%%%%%%%%%%%%%%%%%...1...%%~%%%sssswwwwwww~~~WWWWWWWWWWWWWWWWWW
-WW~~~~wsssdssssdsdsssdsssss++++dd+sdssssdsdssscsrsswwwsssww~~~~wwwsssss.bpf.f.fbb......".....%HH%tm%%mhhh%%%%%~%%%%...++..%m%%%swwswww~~~~~~~WWWWWWWWWWWWWWWWWWW
-WW~~~wsdssdsssdssssssssdssssss+sd+ssssssssssssssrsssssssswww~~wwwwwwwwws.bffpf..b......,%t%%%%%m%%t%%%HhHHhHh%~~%%m....++.%%%%%swwssw~~~~~~~WWWWWWWWWWWWWWWWWWWW
-WWW~~wsssddssdsssssssdsdsdsssd+dd+sssdssssssdsddrsssssssswww~~wwwww~wwws..f........b...%%%%%m%%%%%%%%%HhHhHhh%%%t%%.....+.t%~~sw~wssw~~~~~~WWWWWWWWWWWWWWWWWWWWW
-WWW~~~wssdsdsssssssscsssdscsds++s+sddddsscssssdsrddssssssww~~~wwww~~wwwsfff.,,........t%%mt%%%t%%%%%%thhhhHHh%t%%%%%t~~%++%%%%swwwwsw~~~~~~WWWWWWWWWWWWWWWWWWWWW
-WWWW~~~wsdsssssdsdsscsddsssdsss+++s.ssdsssddssssrssssswwww~~~~wwwwwwwwws,......."....tt%%%m%m%%%hhh%%%hHhtm%m%t%%~t%%%%%%++=+%swwwwww~~~~~~WWWWWWWWWWWWWWWWWWWWW
+WW~~~~wsssdssssdsdsssdsssss++++dd+sdssssdsdssscsrsswwwsssww~~~~wwwsssss.bpf.f.fbb......".....%HH%t:%%:hhh%%%%%~%%%%...++..%:%%%swwswww~~~~~~~WWWWWWWWWWWWWWWWWWW
+WW~~~wsdssdsssdssssssssdssssss+sd+ssssssssssssssrsssssssswww~~wwwwwwwwws.bffpf..b......,%t%%%%%:%%t%%%HhHHhHh%~~%%:....++.%%%%%swwssw~~~~~~~WWWWWWWWWWWWWWWWWWWW
+WWW~~wsssddssdsssssssdsdsdsssd+dd+sssdssssssdsddrsssssssswww~~wwwww~wwws..f........b...%%%%%:%%%%%%%%%HhHhHhh%%%t%%.....+.t%~~sw~wssw~~~~~~WWWWWWWWWWWWWWWWWWWWW
+WWW~~~wssdsdsssssssscsssdscsds++s+sddddsscssssdsrddssssssww~~~wwww~~wwwsfff.,,........t%%:t%%%t%%%%%%thhhhHHh%t%%%%%t~~%++%%%%swwwwsw~~~~~~WWWWWWWWWWWWWWWWWWWWW
+WWWW~~~wsdsssssdsdsscsddsssdsss+++s.ssdsssddssssrssssswwww~~~~wwwwwwwwws,......."....tt%%%:%:%%%hhh%%%hHht:%:%t%%~t%%%%%%++=+%swwwwww~~~~~~WWWWWWWWWWWWWWWWWWWWW
 WWWWW~~~sssdsdddscsccsssdsssssss++sssssssdssssssrsssssww~~~w~~wssssssssb....,...".,".%%%t%%~%%hHhh%~%%%%tt%t%~~t%~%%%%t%%%t%+%swwww~~~~~WWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWW~~wsssdsscsssdsdsdsscsssss++sssssssdsssddsrsddsww~~~wwwwss......b...b.,b.,.,...bttt%%~%thh%%%~t%%%m%%%%%%%%~t%%m%%%%%~++sw~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWW~~wscssdsdssdsssscdsddssss5+ssdsssssscsssdrsdssw~~~~wssss...".,,..........b,.....%m%%%%t%%%%~~%%%%%%%%%%%%t%%tt%%m%%%~~+_____~WWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWW~~sssssssdddscssdssssssss.sssddcdddssssssrssssw~~~wssss................b.b...b,.%%t%mtm%%m%%%mtm%%m%t%%%%%%%%%%%%%t%ssw_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWW~~wsssscsdssscssscssss.ss.ss.ssdsssdsdsscrsdssswwwwsss......b..""..,........,....t~t%t%%t%%%%%~%tm%%%%~%tt%%%%t%~ssww~~__4__WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWW~wssddsdssssssssddsss.sss.sssssdssddsdsdrsssssssscdsd,b..b.,.,...,b..,........,,.~%m%%%%%%%%%~%mt%sswwssswwssssw~~~~~~_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWW~~wsssssssssdssssssssdsddsscssssdssdsdssrdssssssdsdss........,..b...b....,...,..".m%%%%m%..%tt%ssww~~~~~~~~~~~~~~~~WWW_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWW~~wsssdsscsssdsdsdsscsssss++sssssssdsssddsrsddsww~~~wwwwss......b...b.,b.,.,...bttt%%~%thh%%%~t%%%:%%%%%%%%~t%%:%%%%%~++sw~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWW~~wscssdsdssdsssscdsddssss5+ssdsssssscsssdrsdssw~~~~wssss...".,,..........b,.....%:%%%%t%%%%~~%%%%%%%%%%%%t%%tt%%:%%%~~+_____~WWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWW~~sssssssdddscssdssssssss.sssddcdddssssssrssssw~~~wssss................b.b...b,.%%t%:t:%%:%%%:t:%%:%t%%%%%%%%%%%%%t%ssw_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWW~~wsssscsdssscssscssss.ss.ss.ssdsssdsdsscrsdssswwwwsss......b..""..,........,....t~t%t%%t%%%%%~%t:%%%%~%tt%%%%t%~ssww~~__4__WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWW~wssddsdssssssssddsss.sss.sssssdssddsdsdrsssssssscdsd,b..b.,.,...,b..,........,,.~%:%%%%%%%%%~%:t%sswwssswwssssw~~~~~~_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWW~~wsssssssssdssssssssdsddsscssssdssdsdssrdssssssdsdss........,..b...b....,...,..".:%%%%:%..%tt%ssww~~~~~~~~~~~~~~~~WWW_____WWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWW~~wssssdsdscsssssdsddsssssdssssssdsssssrsssdsssssss..b....b..........""........b..%%%.....sssww~~~~~~~~~~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWW~~wsssssdssssssssdsssssssssssscsdswwwwwwwwssssssdscbb.b.."..b....b.b....bb....."........sww~~~~WWWW~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWW~~wssssssdsssssssssdssssscssdsdsswwwwww~wssdssddsd,,.....b.......,...sssssssssws."b.ssw~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW

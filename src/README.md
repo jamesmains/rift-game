@@ -28,6 +28,15 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.2.4 chases and ambushes on touch maps
+
+* On maps with **touch** ticked (the overworld now has it), a monster group that spots you chases you one step for
+  every step you take - stand still and so do they, so you can always try to get away. Each group has a leash: get
+  far enough from where it lives (`leash=` on the group, else its aggro + 5 tiles) and it gives up and goes home.
+* Random ambushes on those maps no longer jump you: the monsters appear a few tiles away and give chase, so you can
+  fight or run. Only an ambush on a coach ride still starts the fight at once (scripts: `encounter now`).
+* The overworld's random encounters are back on (encounter=4).
+
 ## 1.2.3 fights by touch
 
 * Maps can now say that monsters only attack when they touch you: with **touch** ticked on a map (Editor > Maps,

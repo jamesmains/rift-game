@@ -210,6 +210,7 @@ void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     bool newPlace = id != mapId;
     Map* m = loadMap(id);
     map = m; mapId = id;
+    for (auto& e : m->enemies) { e.chasing = false; if (e.temp) e.defeated = true; }   // 1.2.4 (#41): chases end when the party leaves
     if (x == 0 && y == 0) { x = m->spawnX; y = m->spawnY; }
     if (!m->walkable(x, y)) { int ox, oy; if (m->findFree(x, y, 6, ox, oy, rng)) { x = ox; y = oy; } }
     px = x; py = y;
@@ -516,7 +517,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
         case GMode::GAMEOVER: if (actP(in, A_CONFIRM) || in.mousePressed[0]) { requestDesktop = true; } break;
         case GMode::TRANSITION: {
             transition += dt * 2.2f;
-            if (transition >= 1.0f && !transitionTo.empty()) { enterMap(transitionTo, transX, transY, false); transitionTo.clear(); if (map && !map->onEnter.empty()) pendingOnEnter = map->onEnter; if (extra.count("_ambush")) { extra.erase("_ambush"); transition = 0; popMode(); randomEncounter(true); break; } }
+            if (transition >= 1.0f && !transitionTo.empty()) { enterMap(transitionTo, transX, transY, false); transitionTo.clear(); if (map && !map->onEnter.empty()) pendingOnEnter = map->onEnter; if (extra.count("_ambush")) { extra.erase("_ambush"); transition = 0; popMode(); randomEncounter(true, true); break; } }
             if (transition >= 2.0f) { transition = 0; popMode(); }
         } break;
     }
@@ -617,6 +618,7 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     banterTrigger("idle");
     camFree = false;
     if (lightSteps > 0) lightSteps--; if (stealthSteps > 0) stealthSteps--; if (detectSteps > 0) detectSteps--;
+    touchChase();   // 1.2.4 (#41) touch=1: groups chasing the party take their step with it
     onStep();
 }
 
@@ -670,10 +672,11 @@ void Game::onStep() {
     if (map->encounterRate > 0) randomEncounter();
 }
 
-void Game::randomEncounter(bool force) {
+void Game::randomEncounter(bool force, bool now) {
     const Cell& c = map->at(px, py);
     const TileKind& k = allTileKinds()[c.kind];
     int chance = force ? 100 : map->encounterRate * k.encounter / 2;
+    if (!force && map->touchCombat) for (auto& e : map->enemies) if (e.temp && !e.defeated) return;   // 1.2.4: one roaming ambush at a time
     if (stealthSteps > 0) chance /= 4;
     if (nightAmount() > 0.5f) chance = chance * 3 / 2;
     if (weather == "rain" || weather == "storm") chance = chance * 3 / 4; else if (weather == "fog") chance = chance * 5 / 4;
@@ -690,8 +693,116 @@ void Game::randomEncounter(bool force) {
     if (cand.empty()) return;
     auto grp = rng.pick(cand);
     int lvlBonus = std::max(0, (heroLvl - it->second.minLevel) / 3);
+    // 1.2.4 (#41) touch=1: the ambushers show up a few tiles away and give chase, so the party can still get away.
+    // Only the coach's ambush (now) jumps the party at once. No room for them on this map: the old instant fight.
+    if (map->touchCombat && !now && spawnAmbushers(grp, lvlBonus)) return;
     log("Ambush!"); gAudio.play("ambush");
     startCombat(grp, px, py, lvlBonus, {}, "");
+}
+
+// ---------------- 1.2.4 (#41) touch=1 maps: leashes and chases ----------------
+// Every enemy group has a leash point (where it was placed; for an ambush, where the party was) and a leash range
+// (leash=, default aggro + 5). Once it notices the party (aggro range + line of sight, as before) it chases: one step
+// for every step the party takes, never on its own - stand still and so do they. If the party gets out of the leash
+// range, the group gives up and walks back (an ambush group goes away once it is out of sight).
+int Game::leashOf(const EnemyGroup& e) const { return e.leash > 0 ? e.leash : std::max(6, e.aggro + 5); }
+bool Game::groupShown(const EnemyGroup& e) const {
+    if (e.defeated) return false;
+    if (!e.showFlag.empty() && !evalCond(e.showFlag)) return false;
+    if (!e.hideFlag.empty() && evalCond(e.hideFlag)) return false;
+    return true;
+}
+
+// One 4-way step for the group toward (tx,ty), along the shortest walkable path (around walls, other groups and NPCs)
+// until it is within `reach` tiles of it. Cells further than `limit` from the group's leash point are off limits
+// (limit < 0: no limit). Falls back to a straight step when no path is found close by.
+bool Game::groupStepToward(EnemyGroup& e, int tx, int ty, int reach, int limit) {
+    if (chebyshev(e.x, e.y, tx, ty) <= reach) return false;
+    const int R = 14;   // search box around the group
+    int x0 = std::max(0, e.x - R), y0 = std::max(0, e.y - R), x1 = std::min(map->w - 1, e.x + R), y1 = std::min(map->h - 1, e.y + R);
+    int bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    std::vector<int> from((size_t)bw * bh, -2);   // -2 unseen, -1 start, else index of the cell it came from
+    std::vector<int> q; q.reserve((size_t)bw * bh);
+    auto idx = [&](int x, int y) { return (y - y0) * bw + (x - x0); };
+    from[idx(e.x, e.y)] = -1; q.push_back(idx(e.x, e.y));
+    int goal = -1;
+    static const int DX[4] = {1, -1, 0, 0}, DY[4] = {0, 0, 1, -1};
+    for (size_t h = 0; h < q.size() && goal < 0; h++) {
+        int cx = x0 + q[h] % bw, cy = y0 + q[h] / bw;
+        for (int d = 0; d < 4; d++) {
+            int nx = cx + DX[d], ny = cy + DY[d];
+            if (nx < x0 || ny < y0 || nx > x1 || ny > y1 || from[idx(nx, ny)] != -2) continue;
+            if (!map->walkable(nx, ny) || map->occupied(nx, ny) || (nx == px && ny == py)) continue;
+            if (limit >= 0 && chebyshev(nx, ny, e.homeX, e.homeY) > limit) continue;
+            from[idx(nx, ny)] = q[h]; q.push_back(idx(nx, ny));
+            if (chebyshev(nx, ny, tx, ty) <= reach) { goal = idx(nx, ny); break; }
+        }
+    }
+    int nx = e.x, ny = e.y;
+    if (goal >= 0) { int c = goal; while (from[c] >= 0 && from[c] != idx(e.x, e.y)) c = from[c]; nx = x0 + c % bw; ny = y0 + c / bw; }
+    else {   // nothing found within the box: a straight step if that cell is free
+        if (abs(tx - e.x) > abs(ty - e.y)) nx += tx > e.x ? 1 : -1; else ny += ty > e.y ? 1 : -1;
+        if (!map->walkable(nx, ny) || map->occupied(nx, ny) || (nx == px && ny == py) || (limit >= 0 && chebyshev(nx, ny, e.homeX, e.homeY) > limit)) return false;
+    }
+    if (nx == e.x && ny == e.y) return false;
+    e.x = nx; e.y = ny; return true;
+}
+
+void Game::touchChase() {
+    if (!map || !map->touchCombat) return;
+    if (flags.count("_fleegrace")) return;   // the party just got away: they need a moment to pick up the chase
+    for (auto& e : map->enemies) {
+        if (!groupShown(e)) continue;
+        int leash = leashOf(e);
+        bool inLeash = chebyshev(px, py, e.homeX, e.homeY) <= leash;
+        if (!e.chasing) {
+            int aggro = stealthSteps > 0 ? std::max(1, e.aggro / 3) : e.aggro;
+            if (!inLeash || chebyshev(e.x, e.y, px, py) > aggro || !lineOfSight(*map, px, py, e.x, e.y)) continue;
+            e.chasing = true;
+        } else if (!inLeash) {
+            e.chasing = false; e.wanderTimer = 400;
+            if (visible(e.x, e.y)) { const CreatureDef* cd = e.creatures.empty() ? nullptr : gd->creature(e.creatures[0]); log((cd ? cd->name : std::string("They")) + (e.creatures.size() > 1 ? " and the rest give" : " gives") + " up the chase."); }
+            continue;
+        }
+        groupStepToward(e, px, py, 1, leash + 1);
+    }
+}
+
+// A random ambush on a touch=1 map: the group appears 5-8 steps away (walking distance), in sight if it can be, and
+// comes straight for the party. Its leash point is where the party stood. False = no room (the caller fights at once).
+bool Game::spawnAmbushers(const std::vector<std::string>& creatures, int levelBonus) {
+    if (!map || creatures.empty()) return false;
+    const int R = 10;
+    int x0 = std::max(0, px - R), y0 = std::max(0, py - R), x1 = std::min(map->w - 1, px + R), y1 = std::min(map->h - 1, py + R);
+    int bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    std::vector<int> dist((size_t)bw * bh, -1), q;
+    auto idx = [&](int x, int y) { return (y - y0) * bw + (x - x0); };
+    dist[idx(px, py)] = 0; q.push_back(idx(px, py));
+    static const int DX[4] = {1, -1, 0, 0}, DY[4] = {0, 0, 1, -1};
+    std::vector<std::pair<int, int>> seen, hidden, close;
+    for (size_t h = 0; h < q.size(); h++) {
+        int cx = x0 + q[h] % bw, cy = y0 + q[h] / bw, cd = dist[q[h]];
+        if (cd >= 3 && chebyshev(cx, cy, px, py) >= 3 && !map->occupied(cx, cy) && !map->exitAt(cx, cy)) {
+            if (cd >= 5 && cd <= 8 && chebyshev(cx, cy, px, py) >= 4) (lineOfSight(*map, px, py, cx, cy) ? seen : hidden).push_back({cx, cy});
+            else if (cd <= 4) close.push_back({cx, cy});
+        }
+        if (cd >= 8) continue;
+        for (int d = 0; d < 4; d++) {
+            int nx = cx + DX[d], ny = cy + DY[d];
+            if (nx < x0 || ny < y0 || nx > x1 || ny > y1 || dist[idx(nx, ny)] >= 0) continue;
+            if (!map->walkable(nx, ny)) continue;
+            dist[idx(nx, ny)] = cd + 1; q.push_back(idx(nx, ny));
+        }
+    }
+    auto& pool = !seen.empty() ? seen : !hidden.empty() ? hidden : close;
+    if (pool.empty()) return false;
+    auto at = rng.pick(pool);
+    EnemyGroup g; g.creatures = creatures; g.levelBonus = levelBonus; g.x = at.first; g.y = at.second;
+    g.homeX = px; g.homeY = py; g.aggro = 8; g.leash = 12; g.chasing = true; g.temp = true; g.wanderTimer = 1000;
+    map->enemies.push_back(g);
+    std::string who; { const CreatureDef* cd = gd->creature(creatures[0]); who = cd ? cd->name : creatures[0]; if (creatures.size() > 1) who += fmt(" and %d more", (int)creatures.size() - 1); }
+    log("Ambush! " + who + " coming at you - fight or run."); gAudio.play("ambush"); notify("Ambush!");
+    return true;
 }
 
 void Game::interactAt(int x, int y) {
@@ -753,6 +864,32 @@ void Game::updateNpcs(float dt) {
             int d = rng.range(0, 3); int nx = n.x + (d == 0) - (d == 1), ny = n.y + (d == 2) - (d == 3);
             if (map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py) && chebyshev(nx, ny, n.homeX, n.homeY) <= 3 && !map->exitAt(nx, ny)) { n.x = nx; n.y = ny; }
         }
+    }
+    if (map->touchCombat) {   // 1.2.4 (#41): chasers only move when the party does (touchChase); the rest wander home
+        if (mode == GMode::EXPLORE && !inCombat())   // ambush groups that are gone (beaten or lost) leave the list
+            map->enemies.erase(std::remove_if(map->enemies.begin(), map->enemies.end(), [](const EnemyGroup& e) { return e.temp && e.defeated; }), map->enemies.end());
+        for (auto& e : map->enemies) {
+            if (e.defeated || e.chasing) continue;
+            e.wanderTimer -= (int)(dt * 1000);
+            if (e.wanderTimer > 0) continue;
+            int away = chebyshev(e.x, e.y, e.homeX, e.homeY);
+            if (e.temp) {   // lost the party: walks off and is gone once out of sight (or off the screen)
+                auto seen = [&]() { const int T = UI::TILE; return visible(e.x, e.y) && e.x * T + T > camX && e.x * T < camX + UI::SCREEN_W && e.y * T + T > camY && e.y * T < camY + UI::SCREEN_H; };
+                if (!seen() || chebyshev(e.x, e.y, px, py) > leashOf(e) + 6) { e.defeated = true; continue; }
+                e.wanderTimer = rng.range(300, 500);
+                if (!groupStepToward(e, e.x + (e.x >= px ? 8 : -8), e.y + (e.y >= py ? 8 : -8), 0, -1)) e.wanderTimer = 1500;   // boxed in: it waits (gone once the party walks off)
+                continue;
+            }
+            int ox = e.x, oy = e.y;
+            if (away > 4) { e.wanderTimer = rng.range(300, 500); groupStepToward(e, e.homeX, e.homeY, 0, -1); }   // back to the leash point
+            else {
+                e.wanderTimer = rng.range(600, 2000);
+                int d = rng.range(0, 5); int nx = e.x + (d == 0) - (d == 1), ny = e.y + (d == 2) - (d == 3);
+                if ((nx != e.x || ny != e.y) && chebyshev(nx, ny, e.homeX, e.homeY) <= 4 && map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py)) { e.x = nx; e.y = ny; }
+            }
+            if (chebyshev(e.x, e.y, px, py) <= 1) { e.x = ox; e.y = oy; }   // never walks into the party on its own
+        }
+        return;
     }
     for (auto& e : map->enemies) {
         if (e.defeated) continue;
@@ -950,7 +1087,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "script") { auto p = split(v, ','); std::string id = trim(p[0]); std::vector<SVal> args; for (size_t i = 1; i < p.size(); i++) args.push_back(SVal::parse(trim(p[i]))); if (!id.empty()) startScript(id, args, dlgNpc); }
     else if (k == "time") { int m = atoi(v.c_str()); if (m > 0) advanceClock(m); }   // minutes pass
     else if (k == "sound") { if (!trim(v).empty()) gAudio.play(trim(v)); }
-    else if (k == "encounter") { if (mode == GMode::DIALOGUE) popMode(); if (mode == GMode::EXPLORE) randomEncounter(true); }   // a random fight from the ground the party stands on
+    else if (k == "encounter") { if (mode == GMode::DIALOGUE) popMode(); if (mode == GMode::EXPLORE) randomEncounter(true, toLower(trim(v)) == "now"); }   // a random fight from the ground the party stands on (1.2.4: on a touch=1 map the group appears a few tiles away; encounter:now = at once, the coach's ambush)
     else if (k == "weather") { std::string w = toLower(trim(v)); if (w.empty() || w == "new") weatherSteps = 0; else { weather = w; weatherSteps = 900; precip.clear(); } }
     else if (k == "stat") { auto p = split(v, ':'); std::string sn = toLower(trim(p[0])); int d = p.size() > 1 ? atoi(p[1].c_str()) : 1;
         int* f = sn == "travels" ? &stats.travels : sn == "kills" ? &stats.kills : sn == "chests" ? &stats.chests : sn == "crafted" ? &stats.crafted : sn == "bounties" ? &stats.bounties : sn == "fights" ? &stats.fightsWon : nullptr;

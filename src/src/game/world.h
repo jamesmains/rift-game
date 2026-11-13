@@ -129,6 +129,10 @@ struct EnemyGroup {
     std::string showFlag, hideFlag;
     int wanderTimer = 0; int homeX = 0, homeY = 0;
     std::string link;             // groups sharing a link id always fight together
+    // 1.2.4 (#41) touch=1 maps: the group chases the party one step per party step while the party is within leash
+    // tiles of its leash point (homeX/homeY); leash=0 = aggro + 5. temp = a random ambush made on the spot (it goes away
+    // once it has lost the party). Not saved: a loaded game starts with nobody chasing.
+    int leash = 0; bool chasing = false, temp = false;
 };
 
 // 1.1.1: look and use keys every object type can take from its [type] entry in objects.txt (or its template, or set
@@ -223,7 +227,8 @@ struct Map {
     std::string ambient;         // header ambient=: the ambient loop (sounds.txt [ambient]); "none" = silence; empty = chosen by place
     std::string worldMap;        // header worldmap=: what M shows while on this map (overrides the campaign): off | self | overworld | <map id>
     std::string onEnter;         // 1.1.10 header onenter=: actions (script:<id>...) run each time the party arrives (not on loading a save)
-    bool touchCombat = false;    // 1.2.3 (#40) header touch=1: map enemy groups only start a fight by touching the party (next to it), not by seeing it
+    bool touchCombat = false;    // 1.2.3 (#40) header touch=1: map enemy groups only start a fight by touching the party (next to it), not by seeing it;
+                                 // 1.2.4 (#41) they chase it step for step inside their leash, random ambushes appear a few tiles away (coach ambushes still fight at once)
     Color8 bg = C::Black;
     bool generated = false;      // procedurally generated (not saved in full)
 

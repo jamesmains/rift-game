@@ -971,7 +971,7 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
 const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
     if (t == "npc") return {"npc", "name", "sprite", "color", "dialogue", "script", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
-    if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link"};
+    if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link", "leash"};
     if (t == "chest") return {"items", "gold", "locked", "flag", "sprite", "opensprite", "color", "sound", "onuse"};
     if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
     if (t == "trigger") return {"w", "h", "script", "flag", "once", "require"};

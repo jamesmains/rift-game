@@ -409,6 +409,25 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Console `touch [0|1]` (this visit). Test `tests/touch_combat_1_2_3.txt`. Headless `expect mode` values are upper
   case (EXPLORE, COMBAT).
 
+## 1.2.4 chases and ambushes on touch maps (owner's #41)
+- On touch=1 maps every group has a leash point (homeX/homeY: placed spot; ambush = where the party stood) and range
+  (`leash=` on the [enemy], default `max(6, aggro + 5)`, `Game::leashOf`). `Game::touchChase` (called by tryMove just
+  before onStep) makes groups notice (aggro + LOS, stealth / 3, party inside the leash) and then step once per party
+  step (`groupStepToward`: BFS in a 14-tile box, 4-way, may not leave leash + 1). Party out of the leash -> gives up,
+  walks home on a timer. On touch maps updateNpcs never moves a group toward / next to the party; chasers don't move
+  by timer at all ("they don't move if you don't move" - owner). No chase during `_fleegrace`.
+- Random encounters (`randomEncounter`) on touch maps call `spawnAmbushers`: a temp group (`EnemyGroup::temp`,
+  chasing, leash 12) 5-8 walking steps away (in sight first, else hidden, else 3-4 steps, else the old instant fight).
+  One temp group at a time for step rolls. Temp groups that lose the party walk off and vanish out of sight; beaten /
+  gone ones are erased in updateNpcs (only outside combat: cb uses group indexes). enterMap ends chases and temp groups.
+- Instant only for the coach (owner): `randomEncounter(force, now)`; fastTravel's `_ambush` passes now, the action
+  `encounter now` / `encounter:now` too (coachman.txt uses it). Plain `encounter` on a touch map spawns at a distance.
+- chasing/temp aren't saved. Headless expects `groups`, `enemydist` (in the edExpect lambda). Test touch_chase_1_2_4;
+  touch_combat_1_2_3 changed (standing still no longer leads to a fight). Guide topic obj.enemy.leash; map.touch,
+  concepts.encounters, scripting actions updated.
+- The owner's installed copy had overworld `touch=1` + `encounter=0` (pulled at 1.2.4); encounter was put back to 4
+  since #41 asks for ambushes that spawn at a distance there.
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).

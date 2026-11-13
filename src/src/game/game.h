@@ -501,7 +501,13 @@ private:
     void drawLog(Canvas& cv);
     bool visible(int x, int y) const;
     void revealAround();
-    void randomEncounter(bool force = false);
+    void randomEncounter(bool force = false, bool now = false);
+    // 1.2.4 (#41) touch=1 maps: leash chase and ambushes that appear a few tiles away
+    int leashOf(const EnemyGroup& e) const;
+    bool groupShown(const EnemyGroup& e) const;
+    bool groupStepToward(EnemyGroup& e, int tx, int ty, int reach, int limit);
+    void touchChase();
+    bool spawnAmbushers(const std::vector<std::string>& creatures, int levelBonus);
     // dialogue
     void updateDialogue(InputState& in, float dt);
     void drawDialogue(Canvas& cv, InputState& in);

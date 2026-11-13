@@ -1,0 +1,83 @@
+# 1.2.4 (#41): on a touch=1 map a group that notices the party chases it one step per party step, inside its leash
+# (leash point = where it was placed, range = leash= or aggro + 5); random ambushes appear a few tiles away and chase;
+# "encounter now" (the coach's ambush) still starts the fight at once.
+newgame Kai warrior 1 7
+teleport hollowmere 20 20
+frames 120
+con touch 1
+# a goblin group (aggro 6, leash 11 around 23,20); the party's step makes it notice and chase
+con run spawn:goblin,23,20
+key LEFT
+frames 12
+expect x == 19
+expect groups contains ,c
+expect enemydist <= 4
+# standing still: nobody moves, no fight
+frames 300
+expect mode == EXPLORE
+expect enemydist <= 4
+expect enemydist >= 2
+# walking away: it keeps up, step for step
+key LEFT
+frames 12
+key LEFT
+frames 12
+expect x == 17
+expect groups contains ,c
+expect enemydist >= 2
+# out of its leash (more than 11 from 23,20): it gives up and goes home
+key LEFT
+frames 12
+key LEFT
+frames 12
+key LEFT
+frames 12
+key LEFT
+frames 12
+key LEFT
+frames 12
+key LEFT
+frames 12
+expect x == 11
+expect mode == EXPLORE
+expect groups lacks ,c
+expect log contains gives up the chase
+frames 600
+expect groups lacks ,c
+# walking back in: it notices again and the fight starts once it touches the party
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+key RIGHT
+frames 12
+expect mode == COMBAT
+partywipe
+frames 400
+# the overworld has touch=1: a random ambush shows up a few tiles away and chases (t = an ambush group)
+newgame Kai warrior 1 7
+teleport overworld 0 0
+frames 120
+con run encounter
+frames 4
+expect mode == EXPLORE
+expect groups contains ,c,t
+expect enemydist >= 4
+expect log contains coming at you
+frames 300
+expect mode == EXPLORE
+expect enemydist >= 4
+# the coach's ambush (encounter now): the fight starts at once
+con run encounter:now
+frames 4
+expect mode == COMBAT

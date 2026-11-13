@@ -44,5 +44,7 @@ sound travel
 teleport overworld,{placex(dest)},{placey(dest) + 1},Travelling to {placename(dest)} ({leagues(dest)} leagues)...
 if ambushed
   log Ambushed on the road!
-  encounter
+  # "now": the fight starts at once, even on a map with touch=1 (there a plain
+  # encounter sends the group at the party from a few tiles away)
+  encounter now
 end

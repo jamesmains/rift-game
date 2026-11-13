@@ -287,6 +287,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             EnemyGroup e; e.flag = gets(kv, "flag"); e.x = e.homeX = geti(kv, "x", 0); e.y = e.homeY = geti(kv, "y", 0); e.aggro = geti(kv, "aggro", 5);
             for (auto& c : split(gets(kv, "group"), ',')) if (!trim(c).empty()) e.creatures.push_back(trim(c));
             e.levelBonus = geti(kv, "level", 0); e.onDefeatScript = gets(kv, "ondefeat"); e.showFlag = gets(kv, "show"); e.hideFlag = gets(kv, "hide"); e.link = gets(kv, "link");
+            e.leash = geti(kv, "leash", 0);   // 1.2.4 (#41)
             m.enemies.push_back(e);
         } else if (type == "chest") {
             Chest c; c.x = geti(kv, "x", 0); c.y = geti(kv, "y", 0); c.flag = gets(kv, "flag"); c.gold = geti(kv, "gold", 0); c.locked = gets(kv, "locked");
