@@ -1,0 +1,97 @@
+# 1.1.10 (owner's #34): scripts - data/scripts/<id>.txt. The language through the dev console's "script" command
+# (\n between statements), then the coachman, who is now a script (npcs.txt script=coachman).
+# expect var:NAME (a keep variable), scripterror (the last script error), scripts (how many are running), talk (the
+# text and answers in the talk box)
+newgame Kai warrior 1
+god
+frames 30
+# variables, maths, text, loops, conditions, flags
+con script let a = 2\nkeep b = a * 3 + 1\nkeep c = "x" + b\nfor i in 3\n  b += i\nend\nif b == 13 and not flag("nope")\n  set script_ok\nelse\n  set script_bad\nend
+frames 2
+expect var:b == 13
+expect var:c == x7
+expect flag:script_ok == 1
+expect flag:script_bad == 0
+con script keep n = 0\nwhile n < 100\n  n += 1\n  if n == 7\n    break\n  end\nend\nkeep l = add(add("", "red"), "blue")\nkeep m = count(l) + contains(l, "BLUE")
+frames 2
+expect var:n == 7
+expect var:m == 3
+# functions that look at the game, and actions with {values}
+con script keep g = gold\ngold {g * 2}\nkeep h = has("potion") >= 0\ngive potion:{1 + 1}\nkeep where = here
+frames 2
+expect var:where == hollowmere_home
+# say and ask: the talk box, answers stored in a variable
+con script say Hello {herename}.\noption "Red" -> 1\noption "Blue" -> 2\nask picked Which one?\nkeep chosen = picked
+frames 60
+expect mode == DIALOGUE
+expect talk contains Hello Kai.
+key ENTER
+frames 60
+expect talk contains Which one? | Red | Blue
+key DOWN
+frames 5
+key ENTER
+frames 10
+expect var:chosen == 2
+expect mode == EXPLORE
+expect scripts == 0
+# wait: seconds of play on the map
+con script wait 0.5\nkeep w = 1
+frames 10
+expect var:w != 1
+frames 40
+expect var:w == 1
+# errors are reported with the line, a script never hangs the game
+con script let x = (1 +
+frames 2
+expect scripterror contains line 1
+con script keep k = 0\nwhile 1\n  k += 1\nend
+frames 2
+expect scripterror contains endless loop
+expect scripts == 0
+# the coachman: pick a place you have been on the world map, pay the fare, travel
+teleport brasswick 20 20
+frames 10
+teleport hollowmere 12 11
+frames 120
+con gold 100
+frames 2
+key UP
+frames 60
+expect talk contains Coach fare is by the league
+shot coach_say.png
+key ENTER
+frames 10
+expect mode == WORLDMAP
+key DOWN
+frames 5
+shot coach_pick.png
+key ENTER
+frames 60
+expect talk contains Brasswick is 5 league(s)
+expect talk contains That's 38 gold
+shot coach_ask.png
+key ENTER
+frames 200
+expect map == overworld
+expect gold == 137
+shot coach_arrived.png
+checkall
+# the Editor's Scripts tab: the list, the text, Check, the cheat sheet pages and Used by
+editor
+frames 5
+tab 25
+frames 10
+click 60 100
+frames 10
+click 36 678
+frames 10
+shot editor_scripts_check.png
+click 106 678
+frames 10
+shot editor_scripts_checkall.png
+click 172 678
+frames 5
+click 745 62
+frames 5
+shot editor_scripts_values.png

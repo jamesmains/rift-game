@@ -182,6 +182,10 @@ int main(int argc, char** argv) {
                 else if (startsWith(key, "npc:")) { got = "none"; if (g.map) for (auto& n : g.map->npcs) if (n.id == key.substr(4)) got = n.name + ";" + fmt("%d,%d", n.tile.c, n.tile.r) + ";" + n.dialogue + ";" + n.def; }   // 1.1.9: a placement on this map
                 else if (startsWith(key, "member:")) { size_t i = (size_t)atoi(key.substr(7).c_str()); got = i < g.party.members.size() ? g.party.members[i].name + ";" + g.party.members[i].classId + ";" + fmt("%d,%d", g.party.members[i].tile.c, g.party.members[i].tile.r) + ";" + std::to_string(g.party.members[i].level) : "none"; }
                 else if (key == "hint") { int h = g.currentHint(); got = h >= 0 ? g.hintDefs[h].text : ""; }
+                else if (startsWith(key, "var:")) got = g.keptVar(key.substr(4));   // 1.1.10: a script's keep variable
+                else if (key == "scripterror") got = g.lastScriptError;
+                else if (key == "scripts") { int c = 0; for (auto& r : g.scriptRuns) if (!r->done) c++; got = std::to_string(c); }
+                else if (key == "talk") { got = ""; if (g.mode == GMode::DIALOGUE) { auto it = g.dialogues.find(g.dlgId); if (it != g.dialogues.end()) { auto nt = it->second.nodes.find(g.dlgNode); if (nt != it->second.nodes.end()) { got = nt->second.text; for (auto& o : nt->second.options) got += " | " + o.text; } } } }   // the text (and answers) in the talk box
                 else if (startsWith(key, "fav:")) { int f = atoi(key.substr(4).c_str()) - 1; got = g.party.members.empty() || f < 0 || f > 7 ? "" : g.party.members[0].favs[f]; }
                 else if (key == "window") got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().type;
                 else if (key == "log") { got = ""; for (auto& l : g.msgLog) got += l + "\n"; }

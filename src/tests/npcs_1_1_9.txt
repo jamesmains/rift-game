@@ -27,7 +27,7 @@ expect member:1 == Elowen;mage;109,17;1
 expect flag:joined_mage == 1
 con join nyx
 frames 5
-expect member:2 == Nyx;ranger;117,10;1
+expect member:2 == Nyx;ranger;151,23;1
 # the older join=class:Name:col,row still works
 con join cleric:Tester:104,26
 frames 5

@@ -67,8 +67,9 @@ void Game::revealMap(const std::string& id, int x, int y, int r) {
     for (int yy = 0; yy < m->h; yy++) for (int xx = 0; xx < m->w; xx++) if (r < 0 || (xx - x) * (xx - x) + (yy - y) * (yy - y) <= r * r) m->at(xx, yy).explored = true;
 }
 
-void Game::openWorldMap(bool travelMode) {
+void Game::openWorldMap(bool travelMode, bool pick) {
     if (!running || !map) return;
+    wmPick = pick; if (!pick) wmPickPrompt.clear();
     std::string src = travelMode ? std::string("overworld") : worldMapSource();   // the coach always works on the overworld
     if (src.empty()) { log("There is no map of this place."); gAudio.play("ui_error"); return; }
     wmTravel = travelMode; wmSource = src;
@@ -107,6 +108,10 @@ void Game::updateWorldMap(InputState& in, float dt) {
         bool here = l.mapId == mapId;
         if (!wmTravel) { log("To travel, hire the coach in any town square."); return; }
         if (here) { log("You are already there."); return; }
+        if (wmPick) {   // 1.1.10: a script's pick - the chosen place is handed back, the script does the rest
+            if (!visited.count(l.mapId)) { log("You have not been to " + l.name + " yet."); gAudio.play("ui_error"); return; }
+            wmPickResult = l.id; popMode(); return;
+        }
         if (!visited.count(l.mapId)) { log("You have not been to " + l.name + " yet. The coach only goes where you have been."); return; }
         int fare = travelFare(l); if (party.gold < fare) { log(fmt("The fare to %s is %d gold. You have %d.", l.name.c_str(), fare, party.gold)); gAudio.play("ui_error"); return; }
         party.gold -= fare; stats.goldSpent += fare; log(fmt("Paid %d gold for the coach to %s.", fare, l.name.c_str()));
@@ -142,7 +147,7 @@ void Game::drawWorldMap(Canvas& cv, InputState& in) {
     Map* ow = loadMap("overworld");
     const int S = 3, MX = 10, MY = 30;
     panel(ctx, 4, 4, SCREEN_W - 8, SCREEN_H - 8, RGB(60, 48, 30), RGB(180, 140, 70));
-    ctx.font->bold = true; UI::text(ctx, 12, 10, "Map of Aldmoor", C::Cream); ctx.font->bold = false;
+    ctx.font->bold = true; UI::text(ctx, 12, 10, wmPick && !wmPickPrompt.empty() ? wmPickPrompt : "Map of Aldmoor", C::Cream); ctx.font->bold = false;
     textRight(ctx, SCREEN_W - 12, 10, clockText() + "  " + weather, C::Cream);
     // terrain
     cv.fillRect(MX - 2, MY - 2, ow->w * S + 4, ow->h * S + 4, RGB(210, 190, 140)); cv.rect(MX - 2, MY - 2, ow->w * S + 4, ow->h * S + 4, RGB(90, 70, 40));
@@ -199,9 +204,10 @@ void Game::drawWorldMap(Canvas& cv, InputState& in) {
         UI::text(ctx, lx, dy + 14, fmt("%d league%s | %dh%02dm", leagues, leagues == 1 ? "" : "s", dist * 4 / 60, dist * 4 % 60), C::LtGray);
         for (auto& q : quests) if (questPin(q) == l.id && !questClosed(q)) UI::text(ctx, lx, dy + 28, "! " + q.name, C::Yellow);
         bool can = wmTravel && vis && l.mapId != mapId;
-        if (wmTravel) { int fare = travelFare(l); button(ctx, in, SCREEN_W - 150, SCREEN_H - 50, 140, 24, can ? fmt("Travel - %d gold", fare) : !vis ? "Not visited yet" : "You are here", can && party.gold >= fare, can); }
+        if (wmPick) button(ctx, in, SCREEN_W - 150, SCREEN_H - 50, 140, 24, can ? std::string("Choose") : !vis ? "Not visited yet" : "You are here", can, can);
+        else if (wmTravel) { int fare = travelFare(l); button(ctx, in, SCREEN_W - 150, SCREEN_H - 50, 140, 24, can ? fmt("Travel - %d gold", fare) : !vis ? "Not visited yet" : "You are here", can && party.gold >= fare, can); }
     }
-    UI::text(ctx, MX, SCREEN_H - 24, "Quests: yellow  Bounties: cyan  Coach: travel (time, ambush)  Esc: close", C::Cream);
+    UI::text(ctx, MX, SCREEN_H - 24, wmPick ? "Quests: yellow  Bounties: cyan  Enter: choose  Esc: none" : "Quests: yellow  Bounties: cyan  Coach: travel (time, ambush)  Esc: close", C::Cream);
 }
 
 // ---------------- a world map made from any other map (worldmap=<map id> or current) ----------------

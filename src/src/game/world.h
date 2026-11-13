@@ -115,6 +115,7 @@ struct NPC {
     std::string craft;           // crafting station this NPC offers (forge | workbench | alchemy | any)
     std::string board;           // notice board: town id whose bounties it posts
     bool travel = false;         // coachman / ferryman: opens the world map in travel mode (paid fast travel)
+    std::string script;          // 1.1.10 (#34): script=<id> - talking runs data/scripts/<id>.txt (before board / travel / dialogue)
     std::string moveIf; int moveX = -1, moveY = -1;   // world state: stands at moveX,moveY once moveIf is true (a guard steps aside...)
 };
 
@@ -221,6 +222,7 @@ struct Map {
     std::string music;
     std::string ambient;         // header ambient=: the ambient loop (sounds.txt [ambient]); "none" = silence; empty = chosen by place
     std::string worldMap;        // header worldmap=: what M shows while on this map (overrides the campaign): off | self | overworld | <map id>
+    std::string onEnter;         // 1.1.10 header onenter=: actions (script:<id>...) run each time the party arrives (not on loading a save)
     Color8 bg = C::Black;
     bool generated = false;      // procedurally generated (not saved in full)
 

@@ -80,6 +80,7 @@ bool Editor::saveAllDirty() {
     if (kindsDirty) { rebuildTileKindIndex(); if (saveTileKinds(kindsPath())) { kindsDirty = false; changed = true; } else ok = false; }
     for (auto& g : gens) if (g.dirty) { if (g.save()) changed = true; else ok = false; }
     if (te.dirty && !te.path.empty()) { if (te.save()) changed = true; else ok = false; }
+    if (ste.dirty && !ste.path.empty()) { if (ste.save()) changed = true; else ok = false; }   // 1.1.10 scripts
     if (sndDirty) { if (gAudio.saveDefs()) sndDirty = false; else ok = false; }
     if (flagDocsDirty && !saveFlagDocs()) ok = false;
     if (play.dirty && !savePlayState()) ok = false;

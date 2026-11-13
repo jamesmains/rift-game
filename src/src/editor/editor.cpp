@@ -8,8 +8,8 @@
 namespace fs = std::filesystem;
 using namespace ED;
 
-static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs"};
-static const int NTABS = 25;
+static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs", "Scripts"};
+static const int NTABS = 26;
 int gEdTop = 28;                      // tab bar height: 28 for one row of tabs, 50 when they need two rows
 #define TOP gEdTop
 static const int BOTTOM = 18;
@@ -232,6 +232,8 @@ void Editor::refreshFiles() {
         for (auto& e : fs::directory_iterator(root + "/maps", ec)) if (e.path().extension() == ".txt" && std::find(mapFiles.begin(), mapFiles.end(), e.path().stem().string()) == mapFiles.end()) mapFiles.push_back(e.path().stem().string());
         for (auto& e : fs::directory_iterator(root + "/dialogue", ec)) if (e.path().extension() == ".txt" && std::find(dlgFiles.begin(), dlgFiles.end(), e.path().stem().string()) == dlgFiles.end()) dlgFiles.push_back(e.path().stem().string());
     }
+    scriptFiles.clear(); for (auto& e : fs::directory_iterator(dataRoot + "/scripts", ec)) if (e.path().extension() == ".txt") scriptFiles.push_back(e.path().stem().string());   // 1.1.10
+    std::sort(scriptFiles.begin(), scriptFiles.end());
     // the campaign's own files first, then the ones it inherits from the base game
     auto ownFirst = [&](std::vector<std::string>& v, const std::string& sub) { std::sort(v.begin(), v.end()); if (dataRoot == baseRoot) return; std::stable_partition(v.begin(), v.end(), [&](const std::string& n) { return fileExists(dataRoot + "/" + sub + "/" + n + ".txt"); }); };
     ownFirst(mapFiles, "maps"); ownFirst(dlgFiles, "dialogue");
@@ -369,7 +371,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     for (int i = 0; i < NTABS; i++) {
         int tw = font->width(TABS[i]) + 8;
         if (tx + tw > W - 250) { trow++; tx = 4; }
-        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty) || (i == 24 && gens[17].dirty);
+        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty) || (i == 24 && gens[17].dirty) || (i == 25 && ste.dirty);
         if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (dirty ? "*" : ""), true, tab == i)) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; }
         tx += tw + 2;
     }
@@ -382,7 +384,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
             names.push_back("+ New campaign...");
             openListPicker("Campaign to edit", names, cur, [this, all](int i) {
                 if (i >= (int)all.size()) { openTextPrompt("Name of the new campaign (it starts empty)", "", [this](const std::string& nm) { newCampaign(nm); }); return; }
-                bool any = mapDirty || kindsDirty || te.dirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
+                bool any = mapDirty || kindsDirty || te.dirty || ste.dirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
                 std::string id = all[i].id;
                 if (any) openConfirm("Unsaved changes will be lost. Switch campaign anyway?", [this, id]() { setCampaign(id); }); else setCampaign(id);
             });
@@ -395,11 +397,11 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     if (ui.button(W - 70, TOP >= 50 ? 26 : 4, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
     if (ui.hover(W - 70, TOP >= 50 ? 26 : 4, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables...");
     if (ui.button(W - 70, 4, 64, 20, "Exit", true, false, DANGER) || (!ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE] && !mapPanning)) {
-        bool any = mapDirty || kindsDirty || te.dirty || sndDirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
+        bool any = mapDirty || kindsDirty || te.dirty || ste.dirty || sndDirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
         if (any) openConfirm("There are unsaved changes. Exit anyway? (Save each tab with its Save button.)", [this]() { wantsClose = true; });
         else wantsClose = true;
     }
-    if (tab != lastTab) { if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; }
+    if (tab != lastTab) { if (tab == 25) flagIndexDirty = true; if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; }
     switch (tab) {
         case 0: drawMaps(in); break;
         case 8: { int uw = 330; drawGeneric(gens[5], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawEncounterUsage(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
@@ -415,6 +417,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         case 22: drawObjectsTab(in); break;
         case 23: drawResourcesTab(in); break;
         case 24: drawGeneric(gens[17], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;   // 1.1.9: NPCs (the info box is drawn under the fields)
+        case 25: drawScripts(in); break;   // 1.1.10 (#34)
         case 14: case 15: case 16: case 17: drawGeneric(gens[tab - 5], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
         default: drawGeneric(gens[tab - 3], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
     }
@@ -591,11 +594,13 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
             if (ui.button(x + w - 56, y, 52, 16, "pick...")) { int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker(title, opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } };
         if (k == "id") { ui.text(x, y + 2, v, ACCENT2); ui.text(x + font->width(v) + 10, y + 2, "(Rename id... below changes it everywhere)", DIM); return; }
         if (k == "dialogue") { std::vector<std::string> o{""}; for (auto& d : dlgFiles) o.push_back(d); npcSingle("dialogue (what talking to it opens; [camp] = a companion's party talk)", o); return; }
+        if (k == "script") { std::vector<std::string> o{""}; for (auto& d : scriptFiles) o.push_back(d); npcSingle("script talking runs (Scripts tab; wins over dialogue, board, travel)", o);
+            if (!trim(v).empty() && ui.hover(x, y, w - 60, 16)) ui.tip("Talking runs scripts/" + trim(v) + ".txt (open it in the Scripts tab)"); return; }
         if (k == "shop") { std::vector<std::string> o{""}; for (auto& sh : gens[4].secs) o.push_back(sh.get("id")); npcSingle("shop (opened when it has no dialogue)", o); return; }
         if (k == "board") { std::vector<std::string> o{""}; for (auto& b : boardIds()) o.push_back(b); npcSingle("notice board of which town", o); return; }
         if (k == "companion") { std::vector<std::string> o{""}; for (auto& c : gd->classes) o.push_back(c.first); npcSingle("class it joins the party as (empty = not a companion)", o); return; }
         if (k == "craft") { if (ui.choice(x, y, 140, v.empty() ? "(none)" : v)) { std::vector<std::string> opts{"", "forge", "workbench", "alchemy", "any"}; int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("crafting station it offers (only without a dialogue)", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } return; }
-        if (k == "travel") { bool b = v == "1"; if (ui.checkbox(x, y + 2, b ? "coachman: talking opens coach travel" : "no coach travel", b)) { v = b ? "1" : ""; g.dirty = true; } return; }
+        if (k == "travel") { bool b = v == "1"; if (ui.checkbox(x, y + 2, b ? "talking opens coach travel (built in; the coachman now uses script=coachman)" : "no coach travel", b)) { v = b ? "1" : ""; g.dirty = true; } return; }
         if (k == "wander") { bool b = v == "1"; if (ui.checkbox(x, y + 2, b ? "wanders near its spot" : "stands still", b)) { v = b ? "1" : ""; g.dirty = true; } return; }
         if (k == "hostile") { if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true; if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> opts; for (auto& c : gd->creatures) opts.push_back(c.first); openListPicker("creature it turns into when talked to / attacked", opts, 0, [&kvr, opts, &g](int i) { kvr.second = trim(kvr.second).empty() ? opts[i] : kvr.second + "," + opts[i]; g.dirty = true; }); } return; }
         if (k == "gear") { if (ui.textField(x, y, w - 60, v, 300)) g.dirty = true; if (ui.hover(x, y, w - 60, 16)) ui.tip("Items they arrive with: weapons and armour are worn (in place of the class's), the rest go to the pack (id:count)");
@@ -648,6 +653,14 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (k == "sprite" && s.name == "creature") { ui.text(x + 190, y + 2, "character rows: col 104 + row = race; col 105 sword, 106 axe, 109 staff, 113 shield, 116 gun, 117 bow", DIM); }
         return;
     }
+    // 1.1.10: an item's effect can be script:<id> (or script:<id>:keep), so it is typed, with a list to pick from
+    if (k == "effect" && s.name == "item") {
+        if (ui.textField(x, y, w - 60, v, 80)) g.dirty = true;
+        if (ui.hover(x, y, w - 60, 16)) ui.tip("What using it does. script:<id> runs a script (the item is used up); script:<id>:keep runs it and keeps the item. Only consumables can be used.");
+        if (ui.button(x + w - 56, y, 52, 16, "pick...")) { std::vector<std::string> opts = choiceTable().at("effect"); for (const char* e : {"torch", "dig", "blast", "flare", "respec"}) opts.push_back(e); for (auto& sf : scriptFiles) { opts.push_back("script:" + sf); opts.push_back("script:" + sf + ":keep"); }
+            int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("effect", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); }
+        return;
+    }
     // --- fixed choices ---
     auto& ct = choiceTable();
     auto cit = ct.find(k);
@@ -674,8 +687,9 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (k == "onuse") {
             if (ui.textField(x, y, w - 60, v, 300)) g.dirty = true;
             if (ui.hover(x, y, w - 60, 16)) ui.tip("Script run when it is used: actions separated by ; e.g. heal;message:Rested|You feel better. (as a trigger's script=)");
-            if (ui.button(x + w - 56, y, 52, 16, "+ action")) { static const std::vector<std::string> acts = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2"};
-                openListPicker("Action (added with ;)", acts, 0, [&kvr, &g](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
+            if (ui.button(x + w - 56, y, 52, 16, "+ action")) { std::vector<std::string> acts = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2"};
+                for (auto& sf : scriptFiles) acts.push_back("script:" + sf);
+                openListPicker("Action (added with ;)", acts, 0, [&kvr, &g, acts](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
             return;
         }
         if (k == "sparkle") { bool b = v != "0"; if (ui.checkbox(x, y + 2, "twinkle above it", b)) { v = b ? "1" : "0"; g.dirty = true; } return; }
@@ -943,7 +957,7 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
 }
 const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
-    if (t == "npc") return {"npc", "name", "sprite", "color", "dialogue", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
+    if (t == "npc") return {"npc", "name", "sprite", "color", "dialogue", "script", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
     if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link"};
     if (t == "chest") return {"items", "gold", "locked", "flag", "sprite", "opensprite", "color", "sound", "onuse"};
     if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
@@ -1068,7 +1082,16 @@ void Editor::drawMaps(InputState& in) {
         std::string v = em.hget(key); cx += lw2 + 4; if (ui.textField(cx, hy, w, v, 60)) { em.hset(key, v); mapDirty = true; } cx += w + 8; };
     helpBtn(vx + 5, hy + 1, "maps.header", "tab.maps");
     int cx = vx + 22;
-    hfield("name", cx, 120); hfield("kind", cx, 70); hfield("spawn", cx, 50); hfield("dark", cx, 24); hfield("light", cx, 24); hfield("encounter", cx, 24); hfield("music", cx, 70);
+    hfield("name", cx, 100); hfield("kind", cx, 70); hfield("spawn", cx, 50); hfield("dark", cx, 24); hfield("light", cx, 24); hfield("encounter", cx, 24); hfield("music", cx, 70);
+    // 1.1.10 (#34): onenter= - actions run each time the party arrives (usually script:<id>)
+    { std::string oe = em.hget("onenter"); int bw = std::min(76, vx + vw - 6 - cx);
+      if (ui.button(cx - 4, hy, bw, 16, oe.empty() ? "on enter" : "on enter *", true, !oe.empty())) {
+          std::vector<std::string> ids{"", "(type actions...)"}, labels{"(nothing)", "Type actions (key:value;key:value)..."}; for (auto& sf : scriptFiles) { ids.push_back("script:" + sf); labels.push_back("run script " + sf); }
+          int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == oe) cur = (int)i;
+          openListPicker("When the party arrives on this map (not when a save is loaded)", labels, cur, [this, ids](int i) {
+              if (i == 1) { openTextPrompt("Actions run on arrival, e.g. script:town_events or log:You smell smoke.", em.hget("onenter"), [this](const std::string& v) { em.hset("onenter", trim(v)); mapDirty = true; }); return; }
+              em.hset("onenter", ids[i]); mapDirty = true; }); }
+      if (ui.hover(cx - 4, hy, bw, 16)) ui.tip(oe.empty() ? "Nothing runs when the party arrives. Click to run a script (Scripts tab) each time they do." : "On arrival: " + oe); }
     hy += 20; cx = vx + 22;
     hfield("table", cx, 70);
     if (ui.button(cx - 8, hy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& e : gens[5].secs) ids.push_back(e.get("id")); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == em.hget("table")) cur = (int)i; openListPicker("Encounter table (used where a tile kind has no biome table)", ids, cur, [this, ids](int i) { em.hset("table", i == 0 ? "" : ids[i]); mapDirty = true; }); }
@@ -1392,7 +1415,7 @@ void Editor::drawWorld(InputState& in) {
 }
 
 // ---------------- dialogue ----------------
-void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in) {
+void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in, int syntax) {
     int id = ui.nextId();
     bool f = ui.focus == id;
     ui.cv->fillRect(x, y, w, h, FIELD); ui.cv->rect(x, y, w, h, f ? ACCENT : BORDER);
@@ -1443,7 +1466,13 @@ void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState&
         int i = t.scroll + r; int ry = y + 2 + r * rowH; const std::string& L = t.lines[i];
         if (i == t.cy && f) ui.cv->fillRect(x + 1, ry - 1, w - 2, rowH, RGB(40, 44, 56));
         Color8 col = TEXT; std::string tl = trim(L);
-        if (!tl.empty() && tl[0] == '[') col = ACCENT2; else if (!tl.empty() && tl[0] == '#') col = DIM; else if (startsWith(tl, "option=")) col = RGB(150, 220, 150); else if (startsWith(tl, "text=")) col = C::White; else if (startsWith(tl, "speaker=")) col = ACCENT;
+        if (syntax == 1) {   // 1.1.10 scripts: control words, talk, variables, actions
+            std::string w0; for (char ch : tl) { if (isalnum((unsigned char)ch) || ch == '_') w0 += (char)tolower((unsigned char)ch); else break; }
+            static const std::set<std::string> ctl = {"if", "elif", "elseif", "else", "end", "endif", "endwhile", "endfor", "while", "for", "break", "continue", "stop", "return", "call", "start", "wait"};
+            static const std::set<std::string> talk = {"say", "speaker", "option", "ask", "pick"};
+            if (!tl.empty() && tl[0] == '#') col = DIM; else if (ctl.count(w0)) col = ACCENT2; else if (talk.count(w0)) col = RGB(150, 220, 150); else if (w0 == "let" || w0 == "keep") col = ACCENT; else if (isScriptAction(w0)) col = C::White;
+        }
+        else if (!tl.empty() && tl[0] == '[') col = ACCENT2; else if (!tl.empty() && tl[0] == '#') col = DIM; else if (startsWith(tl, "option=")) col = RGB(150, 220, 150); else if (startsWith(tl, "text=")) col = C::White; else if (startsWith(tl, "speaker=")) col = ACCENT;
         ui.cv->setClip({x + gutter, y + 1, w - gutter - 1, h - 2});
         if (sy0 >= 0 && i >= sy0 && i <= sy1) { int a = i == sy0 ? sx0 : 0, b = i == sy1 ? sx1 : (int)L.size(); int xa = x + gutter - hoff + font->width(L.substr(0, a)), xb = x + gutter - hoff + font->width(L.substr(0, b)) + (i != sy1 ? 6 : 0); ui.cv->fillRect(xa, ry - 1, std::max(2, xb - xa), rowH, SEL); }
         font->draw(*ui.cv, *ts, x + gutter - hoff, ry, L, col);
@@ -1513,8 +1542,8 @@ void Editor::drawDialogue(InputState& in) {
     }
     if (!te.path.empty()) drawUsedBy("dialogue:" + fs::path(te.path).stem().string(), rx + 2, y + h - 150, rw - 4, 146, in);
     ui.header(rx, y, rw, "Syntax"); helpBtn(rx + rw - 64, y + 1, "dlg.nodes", "tab.dialogue"); helpBtn(rx + rw - 48, y + 1, "dlg.options", "tab.dialogue"); helpBtn(rx + rw - 32, y + 1, "concepts.conditions", "tab.dialogue"); helpBtn(rx + rw - 16, y + 1, "dlg.actions", "tab.dialogue");
-    static const char* ref[] = {"[node]  (first node is 'start')", "speaker=Name   ($hero = hero's name)", "text=Line  (repeat for more lines)", "option=Label|target|condition", "  target 'end' closes the dialogue", "[camp] = companion talk (Party menu, T)", "  conditions (join with &): flag, !flag,", "  item:id, gold:n, level:n, party:class,", "  flag>=n, kills:creature:n, itemn:id:n,", "  approval:class:n", "next=node  (auto-advance, no options)", "", "Actions (run when the node shows):", "set=flag=1,other    flag=name    inc=name", "clear=flag   give=item:n   take=item:n", "gold=n (negative = pay)   xp=n", "heal=1 (free full heal)   rest=1 (inn)", "healer=1 (paid healer services)", "respec=1   shop=shop_id", "join=class:Name:col,row   leave=class", "combat=creature,creature", "teleport=map,x,y   message=Title|Text", "cutscene=line|line   dialogue=other_id", "spawn=creature,x,y   hidenpc=id  shownpc=id", "notify=text   quest=Name   win=line|line", "revealmap=map  or  map,x,y,radius", "approve=class:n   craft=forge|alchemy|workbench", "rep=faction:n  (town reputation, + or -)", "  condition rep:faction:n = at least n", "board=town_id (notice board)", "", "Hook a file to an NPC with dialogue=<file>", "in the Maps tab (object panel)."};
-    for (size_t i = 0; i < sizeof(ref) / sizeof(ref[0]); i++) font->draw(*ui.cv, *ts, rx + 6, y + 22 + (int)i * 13, ref[i], i == 10 ? ACCENT2 : (ref[i][0] == ' ' ? DIM : TEXT));
+    static const char* ref[] = {"script=id  (runs a script, Scripts tab)", "[node]  (first node is 'start')", "speaker=Name   ($hero = hero's name)", "text=Line  (repeat for more lines)", "option=Label|target|condition", "  target 'end' closes the dialogue", "[camp] = companion talk (Party menu, T)", "  conditions (join with &): flag, !flag,", "  item:id, gold:n, level:n, party:class,", "  flag>=n, kills:creature:n, itemn:id:n,", "  approval:class:n", "next=node  (auto-advance, no options)", "", "Actions (run when the node shows):", "set=flag=1,other    flag=name    inc=name", "clear=flag   give=item:n   take=item:n", "gold=n (negative = pay)   xp=n", "heal=1 (free full heal)   rest=1 (inn)", "healer=1 (paid healer services)", "respec=1   shop=shop_id", "join=class:Name:col,row   leave=class", "combat=creature,creature", "teleport=map,x,y   message=Title|Text", "cutscene=line|line   dialogue=other_id", "spawn=creature,x,y   hidenpc=id  shownpc=id", "notify=text   quest=Name   win=line|line", "revealmap=map  or  map,x,y,radius", "approve=class:n   craft=forge|alchemy|workbench", "rep=faction:n  (town reputation, + or -)", "  condition rep:faction:n = at least n", "board=town_id (notice board)", "", "Hook a file to an NPC with dialogue=<file>", "in the Maps tab (object panel)."};
+    for (size_t i = 0; i < sizeof(ref) / sizeof(ref[0]); i++) font->draw(*ui.cv, *ts, rx + 6, y + 22 + (int)i * 13, ref[i], i == 11 ? ACCENT2 : (ref[i][0] == ' ' ? DIM : TEXT));
 }
 
 // ---------------- tileset browser ----------------

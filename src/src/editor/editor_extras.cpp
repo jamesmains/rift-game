@@ -48,7 +48,8 @@ void Editor::buildUseIndex() {
     auto scriptRefs = [&](const std::string& script, const std::string& where, FlagUse u) {
         for (auto& a : split(script, ';')) { std::string t = trim(a); size_t p = t.find(':'); if (p == std::string::npos) continue; std::string k = trim(t.substr(0, p)), v = trim(t.substr(p + 1));
             if (k == "dialogue") add("dialogue", v, where, "script " + t, u); else if (k == "combat") for (auto& c : idList(v)) add("creature", c, where, "script " + t, u);
-            else if (k == "item" || k == "give" || k == "take") for (auto& c : idList(v)) add("item", c, where, "script " + t, u); else if (k == "shop") add("shop", v, where, "script " + t, u); }
+            else if (k == "item" || k == "give" || k == "take") for (auto& c : idList(v)) add("item", c, where, "script " + t, u); else if (k == "shop") add("shop", v, where, "script " + t, u);
+            else if (k == "script") add("script", split(v, ',')[0], where, "runs it: " + t, u); }
     };
     // dialogue
     std::string text;
@@ -67,6 +68,7 @@ void Editor::buildUseIndex() {
             else if (k == "spawn") add("creature", split(v, ',')[0], where, k + "=" + v, u);
             else if (k == "shop") add("shop", v, where, k + "=" + v, u);
             else if (k == "dialogue") add("dialogue", v, where, k + "=" + v, u);
+            else if (k == "script") add("script", split(v, ',')[0], where, "script=" + v, u);
             else if (k == "board") add("board", v, where, "board=" + v + " opens the notice board", u);
             else if (k == "rep") for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); add("faction", p[0], where, "rep=" + trim(part), u); }
             else if (k == "option") { auto p = split(v, '|'); if (p.size() > 2) condRefs(p[2], where, "option '" + trim(p[0]) + "' condition", u); }
@@ -81,12 +83,30 @@ void Editor::buildUseIndex() {
         if (o.type == "door") add("item", o.get("key"), where, "key", u);
         if (o.type == "exit") add("item", o.get("item"), where, "needed to pass", u);
         if (o.type == "enemy") for (auto& c : idList(o.get("group"))) add("creature", c, where, "in the group", u);
+        if (o.type == "npc") add("script", o.get("script"), where, "talking runs it", u);
         if (o.type == "npc") { add("board", o.get("board"), where, "is the notice board", u); add("dialogue", o.get("dialogue"), where, "talks with it", u); add("shop", o.get("shop"), where, "sells from it", u); for (auto& c : idList(o.get("hostile"))) add("creature", c, where, "turns into it when attacked", u); }
         for (auto& n : split(o.get("needs"), '|')) if (startsWith(trim(n), "item:")) add("item", trim(n).substr(5), where, "clears the obstacle", u);
         for (const char* ck : {"show", "hide", "moveif", "openif", "require", "if"}) condRefs(o.get(ck), where, std::string(ck) + "= condition", u);
         for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) scriptRefs(o.get(sk), where, u);
     }
+    for (auto& ms : mapScan) for (auto& kv : ms.header) if (kv.first == "onenter") { FlagUse u; u.tab = 0; u.file = ms.id; scriptRefs(kv.second, "map " + ms.id + " onenter=", u); }
     auto gu = [](int gen, int sec, int tab) { FlagUse u; u.gen = gen; u.sec = sec; u.tab = tab; return u; };
+    // 1.1.10 (#34): scripts - who runs them, and what they use
+    for (size_t i = 0; i < gens[17].secs.size(); i++) add("script", gens[17].secs[i].get("script"), "NPC " + gens[17].secs[i].get("id"), "talking runs it", gu(17, (int)i, 24));
+    for (size_t i = 0; i < gens[0].secs.size(); i++) { std::string ef = gens[0].secs[i].get("effect"); if (startsWith(ef, "script:")) add("script", split(ef.substr(7), ':')[0], "item " + gens[0].secs[i].get("id"), "using it runs it", gu(0, (int)i, 3)); }
+    for (auto& sf : scriptFiles) {
+        std::string body; if (!ste.path.empty() && fs::path(ste.path).stem().string() == sf) body = ste.text(); else if (!readFile(readPath("scripts/" + sf + ".txt"), body)) continue;
+        ScriptProg p = compileScript(sf, body);
+        for (auto& r : p.refs) { FlagUse u; u.tab = 25; u.file = sf; u.line = r.line; std::string where = "script " + sf + " line " + std::to_string(r.line + 1); std::string v = trim(r.value);
+            if (v.find('{') != std::string::npos) continue;
+            if (r.key == "call") add("script", v, where, "calls it", u);
+            else if (r.key == "give" || r.key == "take" || r.key == "item") for (auto& c : idList(v)) add("item", c, where, r.key + " " + v, u);
+            else if (r.key == "combat") for (auto& c : idList(v)) add("creature", c, where, "combat " + v, u);
+            else if (r.key == "spawn") add("creature", split(v, ',')[0], where, "spawn " + v, u);
+            else if (r.key == "dialogue") add("dialogue", v, where, "dialogue " + v, u);
+            else if (r.key == "shop") add("shop", v, where, "shop " + v, u);
+            else if (r.key == "board") add("board", v, where, "board " + v, u); }
+    }
     // data files
     for (size_t i = 0; i < gens[2].secs.size(); i++) { std::string sm = gens[2].secs[i].get("summon"); if (!sm.empty() && sm != "0" && sm != "1") add("creature", split(sm, ':')[0], "spell " + gens[2].secs[i].get("id"), "summoned by it", gu(2, (int)i, 5)); }
     for (size_t i = 0; i < gens[4].secs.size(); i++) add("faction", gens[4].secs[i].get("faction"), "shop " + gens[4].secs[i].get("id"), "prices follow this reputation", gu(4, (int)i, 7));
@@ -208,6 +228,12 @@ void Editor::runCampaignCheck() {
       if (!camp.dialogue.empty() && std::find(dlgFiles.begin(), dlgFiles.end(), camp.dialogue) == dlgFiles.end()) addF(true, "Campaign: the opening dialogue '" + camp.dialogue + "' does not exist", u);
       std::string wm = toLower(camp.worldMap); if (!wm.empty() && wm != "overworld" && wm != "off" && wm != "current" && !isMap(camp.worldMap)) addF(true, "Campaign: worldmap= names a map that does not exist ('" + camp.worldMap + "')", u);
       for (auto& c : ids(camp.items)) if (!item(c)) addF(true, "Campaign: starting item '" + c + "' does not exist", u); }
+    // ---- scripts (1.1.10) ----
+    auto scriptOk = [&](const std::string& id) { return id.empty() || fileExists(readPath("scripts/" + trim(split(id, ',')[0]) + ".txt")); };
+    auto actRefs = [&](const std::string& acts, const std::string& at, FlagUse u) { for (auto& a : split(acts, ';')) { std::string t = trim(a); if (startsWith(t, "script:") && !scriptOk(t.substr(7))) addF(true, at + " runs missing script '" + trim(split(t.substr(7), ',')[0]) + "'", u); } };
+    for (auto& sf : scriptFiles) { std::string body; if (!readFile(readPath("scripts/" + sf + ".txt"), body)) continue;
+        for (auto& it : lintScript(body, sf)) { FlagUse u; u.tab = 25; u.file = sf; u.line = it.line; addF(!it.warn, "script " + sf + (it.line >= 0 ? fmt(" line %d", it.line + 1) : std::string()) + ": " + it.msg, u); } }
+    for (size_t i = 0; i < gens[0].secs.size(); i++) { std::string ef = gens[0].secs[i].get("effect"); if (startsWith(ef, "script:") && !scriptOk(split(ef.substr(7), ':')[0])) addF(true, "item " + gens[0].secs[i].get("id") + ": effect runs missing script '" + split(ef.substr(7), ':')[0] + "'", gu(0, (int)i, 3)); }
     // ---- NPCs (1.1.9) ----
     for (size_t i = 0; i < gens[17].secs.size(); i++) { auto& sc = gens[17].secs[i]; if (sc.name != "npc") continue;
         std::vector<std::pair<bool, std::string>> pr; npcProblems(sc, pr);
@@ -229,6 +255,8 @@ void Editor::runCampaignCheck() {
             if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) addF(true, at + " uses missing dialogue '" + o.get("dialogue") + "'", u);
             if (o.type == "npc" && !o.get("shop").empty()) { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == o.get("shop")) ok = true; if (!ok) addF(true, at + " uses unknown shop '" + o.get("shop") + "'", u); }
             if (o.type == "exit" && !isMap(o.get("to"))) addF(true, at + " leads to unknown map '" + o.get("to") + "'", u);
+            if (o.type == "npc" && !scriptOk(o.get("script"))) addF(true, at + " runs missing script '" + o.get("script") + "'", u);
+            for (const char* sk : {"script", "onuse", "ondefeat", "onclear"}) actRefs(o.get(sk), at, u);
             if (o.type == "enemy") for (auto& c : ids(o.get("group"))) if (!crea(c)) addF(true, at + " has unknown creature '" + c + "'", u);
             if (o.type == "chest") for (auto& c : ids(o.get("items"))) if (!item(c)) addF(true, at + " holds unknown item '" + c + "'", u);
             if (o.type == "gather" && (o.get("item").empty() || !item(o.get("item")))) addF(true, at + " gathers unknown item '" + o.get("item") + "'", u);
@@ -236,6 +264,7 @@ void Editor::runCampaignCheck() {
             if (o.type == "door" && !item(o.get("key"))) addF(true, at + " needs unknown key '" + o.get("key") + "'", u);
         }
         FlagUse u; u.tab = 0; u.file = f;
+        actRefs(m.hget("onenter"), "map " + f + ": onenter=", u);
         auto sp = split(m.hget("spawn"), ','); if (sp.size() == 2 && !walk(atoi(sp[0].c_str()), atoi(sp[1].c_str()))) addF(false, "map " + f + ": the spawn point is on a blocked tile", u);
         for (auto& c : m.cells) if (!tileKind(trim(split(c, '|')[0]))) { addF(true, "map " + f + ": unknown tile kind '" + c + "'", u); break; }
         if (!m.hget("table").empty()) { bool ok = false; for (auto& e : gens[5].secs) if (e.get("id") == m.hget("table")) ok = true; if (!ok) addF(true, "map " + f + ": table= names a missing encounter table '" + m.hget("table") + "'", u); }

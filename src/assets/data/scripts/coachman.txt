@@ -1,0 +1,48 @@
+# The coachman (npcs.txt: script=coachman). Talking to him runs this script.
+# Paid travel to any place on the overworld the party has already been to:
+# 8 gold plus 6 for every league, 4 minutes on the road per tile, and a chance
+# of being ambushed (one roll per 12 tiles; less likely while sneaking).
+
+say Where to? Coach fare is by the league.
+pick dest "Where should the coach take you?"
+if dest == ""
+  say Suit yourself. I'll be here.
+  stop
+end
+
+let miles = distance(dest)
+let fare = 8 + leagues(dest) * 6
+option "Pay {fare} gold" -> "go"
+option "Never mind" -> "no"
+ask answer {placename(dest)} is {leagues(dest)} league(s) down the road. That's {fare} gold.
+if answer != "go"
+  stop
+end
+if gold < fare
+  say That's {fare} gold, friend, and you've got {gold}. Come back when your purse is heavier.
+  stop
+end
+
+gold -{fare}
+time {miles * 4}
+stat travels:1
+weather new
+
+# ambush rolls
+let ambushed = 0
+let odds = 22
+if stealth
+  odds = 11
+end
+for roll in max(1, miles / 12)
+  if chance(odds)
+    ambushed = 1
+  end
+end
+
+sound travel
+teleport overworld,{placex(dest)},{placey(dest) + 1},Travelling to {placename(dest)} ({leagues(dest)} leagues)...
+if ambushed
+  log Ambushed on the road!
+  encounter
+end

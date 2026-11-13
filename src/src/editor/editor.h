@@ -208,7 +208,11 @@ private:
     std::vector<std::string> dlgFiles; int dlgSel = -1, dlgScroll = 0; TextEdit te;
     std::string dlgFilter, dlgFilterLast; size_t dlgFilterN = 0; std::set<std::string> dlgFilterHits;   // 1.1.6: dialogue search (names + text)
     void drawDialogue(InputState& in);
-    void textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in);
+    void textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in, int syntax = 0);   // syntax 1 = script colours
+    // ---- 1.1.10 (#34) scripts (editor_scripts.cpp): data/scripts/<id>.txt ----
+    std::vector<std::string> scriptFiles; int scriptSel = -1, scriptScroll = 0; TextEdit ste; std::string scriptFilter;
+    void drawScripts(InputState& in);
+    void openScript(const std::string& id, int line = -1);
     // ---- dialogue node graph (editor_graph.cpp): a view of te.lines that edits through the text ----
     struct DlgGOpt { std::string label, target, cond; int line = -1; bool hasPipe = true; };
     struct DlgGNode { std::string id, speaker, next; std::vector<std::string> text, acts; std::vector<DlgGOpt> opts; std::string jumpFile;
@@ -268,7 +272,7 @@ private:
     int drawLookCard(GenericEditor& g, EdSection& s, int x, int y, int w, bool npc);
     // ---- import from another campaign (editor_import.cpp, 1.1.6 #29): every tab can copy entries in ----
 public:
-    enum ImpKind { IMP_GEN, IMP_MAPS, IMP_DLG, IMP_KINDS, IMP_CAMP, IMP_FLAGS };
+    enum ImpKind { IMP_GEN, IMP_MAPS, IMP_DLG, IMP_KINDS, IMP_CAMP, IMP_FLAGS, IMP_SCRIPTS };
     struct ImpEntry { std::string id, label, detail; bool have = false, on = false; EdSection sec; };
     int impKind = IMP_GEN, impGen = -1, impSrc = -1, impSrcScroll = 0, impScroll = 0; std::string impFilter, impTitle;
     std::vector<CampaignInfo> impSrcs; std::vector<ImpEntry> impEntries;
@@ -300,6 +304,8 @@ private:
     struct LintItem { int line; std::string msg; bool warn; };
     std::vector<LintItem> lintDialogue(const std::string& text, const std::string& id);
     std::vector<LintItem> lint; bool lintShown = false; int lintScroll = 0; std::string lintTitle;
+    std::vector<LintItem> lintScript(const std::string& text, const std::string& id);
+    std::vector<LintItem> sLint; bool sLintShown = false; int sLintScroll = 0; std::string sLintTitle; int scriptRefTab = 0;
     std::set<std::string> knownFlags();
     // ---- sounds ----
     int sndSel = 0, sndScroll = 0; std::string sndFilter; bool sndDirty = false;

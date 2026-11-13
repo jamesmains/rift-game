@@ -127,7 +127,9 @@ void Game::newGame(const std::string& hn, const std::string& classId, int diff) 
     party.gold = campaign.gold;
     for (auto& it : split(campaign.startItems, ',')) { auto p = split(trim(it), ':'); if (!trim(p[0]).empty()) party.addItem(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1, *gd); }
     for (auto& f : split(campaign.startFlags, ',')) if (!trim(f).empty()) { auto p = split(trim(f), '='); setFlag(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1); }
+    scriptRuns.clear(); scriptDlgOwner = 0; lastFightWon = false;
     enterMap(campaign.startMap, campaign.startX, campaign.startY, false);
+    pendingOnEnter = map ? map->onEnter : "";
     fadeIn = 1.0f;
     std::vector<std::string> lines;
     for (auto l : campaign.intro) { size_t pos; while ((pos = l.find("$hero")) != std::string::npos) l.replace(pos, 5, hn); lines.push_back(l); }
@@ -497,12 +499,14 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
         case GMode::GAMEOVER: if (actP(in, A_CONFIRM) || in.mousePressed[0]) { requestDesktop = true; } break;
         case GMode::TRANSITION: {
             transition += dt * 2.2f;
-            if (transition >= 1.0f && !transitionTo.empty()) { enterMap(transitionTo, transX, transY, false); transitionTo.clear(); if (extra.count("_ambush")) { extra.erase("_ambush"); transition = 0; popMode(); randomEncounter(true); break; } }
+            if (transition >= 1.0f && !transitionTo.empty()) { enterMap(transitionTo, transX, transY, false); transitionTo.clear(); if (map && !map->onEnter.empty()) pendingOnEnter = map->onEnter; if (extra.count("_ambush")) { extra.erase("_ambush"); transition = 0; popMode(); randomEncounter(true); break; } }
             if (transition >= 2.0f) { transition = 0; popMode(); }
         } break;
     }
     if (mode == GMode::EXPLORE && !levelUpQueue.empty()) pushMode(GMode::LEVELUP);
     if (mode == GMode::EXPLORE && modeStack.empty() && demoMode && campaignId == "triffall" && !demoEnd.empty() && !extra.count("demo_end_shown") && evalCond(demoEnd)) startDemoEnd();
+    if (mode == GMode::EXPLORE && !pendingOnEnter.empty()) { std::string s = pendingOnEnter; pendingOnEnter.clear(); runScript(s); }   // 1.1.10: map onenter= once the party stands on it
+    if (mode == GMode::EXPLORE && !scriptRuns.empty()) tickScripts(dt);   // 1.1.10: scripts waiting for the map (after a fight, shop, teleport, wait...)
     // A click or key that opened/closed a screen must not also reach whatever is now underneath it.
     if (mode != modeBefore || modeStack.size() != stackBefore) {
         in.eatMouse(); in.eatKeys();
@@ -674,6 +678,7 @@ void Game::interactAt(int x, int y) {
     if (NPC* n = map->npcAt(x, y)) {
         facing = x < px ? 0 : x > px ? 1 : y < py ? 2 : 3; if (x != px) faceRight = x > px;
         if (!n->hostileCreature.empty()) { startCombat(split(n->hostileCreature, ','), n->x, n->y, 0, {}, ""); hideNpcForGood(*n); return; }
+        if (!n->script.empty()) { startScript(n->script, {}, n); return; }   // 1.1.10 (#34): script=<id> - talking runs a script (the coachman)
         if (!n->board.empty()) { openBoard(n->board); return; }
         if (n->travel) { log(n->name + ": \"Where to? Coach fare is by the league.\""); openWorldMap(true); return; }
         if (!n->craft.empty() && n->dialogue.empty()) { openCraft(n->craft); return; }
@@ -790,6 +795,7 @@ void Game::runScript(const std::string& script) {
 
 // ---------------- dialogue ----------------
 bool Game::loadDialogues() {
+    scriptCache.clear();   // 1.1.10: scripts are read again with the rest of the campaign
     std::vector<std::string> files;
     std::error_code ec;
     bool base = campaignDir.empty() || campaign.inherit;
@@ -834,7 +840,7 @@ void Game::showNode(const std::string& node) {
     Dialogue& d = dialogues[dlgId];
     auto it = d.nodes.find(node);
     if (node == "end" || it == d.nodes.end()) { if (mode == GMode::DIALOGUE) popMode(); return; }
-    dlgNode = node; dlgSel = 0; dlgTextShown = 0; dlgCharTimer = 0; dlgOptT = 0; dlgOptArmed = false; gAudio.play("text_blip");
+    dlgNode = node; dlgSel = 0; dlgOptFirst = 0; dlgTextShown = 0; dlgCharTimer = 0; dlgOptT = 0; dlgOptArmed = false; gAudio.play("text_blip");
     // run actions
     GMode before = mode;
     for (auto& a : it->second.actions) runAction(a.first, a.second);
@@ -890,7 +896,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     }
     else if (k == "leave") { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == v) { log(party.members[i].name + " left the party."); party.members.erase(party.members.begin() + i); break; } }
     else if (k == "combat") { std::vector<std::string> cs; for (auto& c : split(v, ',')) if (!trim(c).empty()) cs.push_back(trim(c)); if (mode == GMode::DIALOGUE) popMode(); int cx = dlgNpc ? dlgNpc->x : px, cy = dlgNpc ? dlgNpc->y : py; if (dlgNpc) hideNpcForGood(*dlgNpc); startCombat(cs, cx, cy, 0, {}, ""); }
-    else if (k == "teleport") { auto p = split(v, ','); if (p.size() >= 3) { if (mode == GMode::DIALOGUE) popMode(); startTransition(trim(p[0]), atoi(p[1].c_str()), atoi(p[2].c_str())); } }
+    else if (k == "teleport") { auto p = split(v, ','); if (p.size() >= 3) { if (mode == GMode::DIALOGUE) popMode(); std::string msg; for (size_t i = 3; i < p.size(); i++) msg += (i > 3 ? "," : "") + p[i]; startTransition(trim(p[0]), atoi(p[1].c_str()), atoi(p[2].c_str()), trim(msg)); } }   // 1.1.10: teleport=map,x,y,text shown while travelling
     else if (k == "message") { auto p = split(v, '|'); showMessage(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); if (p.size() > 1) addNote(p[0], p[1]); }
     else if (k == "dialogue") { startDialogue(v, dlgNpc); }
     else if (k == "cutscene") { std::vector<std::string> ls; for (auto& l : split(v, '|')) ls.push_back(l); startCutscene(ls, nullptr); }
@@ -920,6 +926,15 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
         auto done = [this, next]() { setFlag("campaign_finished"); desktopAction = next.empty() ? "" : "campaign:" + next; requestDesktop = true; };
         if (ls.empty()) done(); else startCutscene(ls, done); }
     else if (k == "respec") { if (mode == GMode::DIALOGUE) popMode(); menuTab = 0; menuMember = 0; menuSel = 0; menuSubFocus = false; menuPrompt = "respec"; respecFree = v == "free"; pushMode(GMode::MENU); }
+    // 1.1.10 (#34) actions, for scripts and dialogue alike
+    else if (k == "script") { auto p = split(v, ','); std::string id = trim(p[0]); std::vector<SVal> args; for (size_t i = 1; i < p.size(); i++) args.push_back(SVal::parse(trim(p[i]))); if (!id.empty()) startScript(id, args, dlgNpc); }
+    else if (k == "time") { int m = atoi(v.c_str()); if (m > 0) advanceClock(m); }   // minutes pass
+    else if (k == "sound") { if (!trim(v).empty()) gAudio.play(trim(v)); }
+    else if (k == "encounter") { if (mode == GMode::DIALOGUE) popMode(); if (mode == GMode::EXPLORE) randomEncounter(true); }   // a random fight from the ground the party stands on
+    else if (k == "weather") { std::string w = toLower(trim(v)); if (w.empty() || w == "new") weatherSteps = 0; else { weather = w; weatherSteps = 900; precip.clear(); } }
+    else if (k == "stat") { auto p = split(v, ':'); std::string sn = toLower(trim(p[0])); int d = p.size() > 1 ? atoi(p[1].c_str()) : 1;
+        int* f = sn == "travels" ? &stats.travels : sn == "kills" ? &stats.kills : sn == "chests" ? &stats.chests : sn == "crafted" ? &stats.crafted : sn == "bounties" ? &stats.bounties : sn == "fights" ? &stats.fightsWon : nullptr;
+        if (f) *f += d; }
     else if (k == "rest") { for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; }
 }
 
@@ -938,10 +953,14 @@ void Game::updateDialogue(InputState& in, float dt) {
     bool textDone = dlgTextShown >= (int)text.size();
     if (actP(in, A_UP) && textDone) dlgSel = (dlgSel + (int)avail.size() - 1) % std::max(1, (int)avail.size());
     if (actP(in, A_DOWN) && textDone) dlgSel = (dlgSel + 1) % std::max(1, (int)avail.size());
+    int vis = dialogueOptionsVisible((int)avail.size());   // 1.1.10: more answers than fit scroll (a script's ask can list many)
+    if (textDone && in.wheel && (int)avail.size() > vis) dlgSel = clampi(dlgSel - in.wheel, 0, (int)avail.size() - 1);
+    if (dlgSel < dlgOptFirst) dlgOptFirst = dlgSel; if (dlgSel >= dlgOptFirst + vis) dlgOptFirst = dlgSel - vis + 1;
+    dlgOptFirst = clampi(dlgOptFirst, 0, std::max(0, (int)avail.size() - vis));
     // mouse hover over options
     if (textDone && !avail.empty()) {
-        int oh = dialogueOptionH(), oy = dialogueOptionsY((int)avail.size());
-        if (in.mouseDX || in.mouseDY || in.mousePressed[0]) for (size_t i = 0; i < avail.size(); i++) if (in.mouseY >= oy + (int)i * oh && in.mouseY < oy + (int)i * oh + oh && in.mouseX > 20 && in.mouseX < SCREEN_W - 20) dlgSel = (int)i;
+        int oh = dialogueOptionH(), oy = dialogueOptionsY(vis);
+        if (in.mouseDX || in.mouseDY || in.mousePressed[0]) for (int i = 0; i < vis; i++) if (in.mouseY >= oy + i * oh && in.mouseY < oy + i * oh + oh && in.mouseX > 20 && in.mouseX < SCREEN_W - 20) dlgSel = dlgOptFirst + i;
     }
     bool confirm = actP(in, A_CONFIRM) || actP(in, A_INTERACT) || in.mousePressed[0];
     // 1.1.1: skipping is its own press and never picks an answer. Once the text is all there the answers are shown dim
@@ -954,12 +973,13 @@ void Game::updateDialogue(InputState& in, float dt) {
     }
     if (confirm) {
         if (!textDone) { dlgTextShown = (int)text.size(); dlgOptT = 0; dlgOptArmed = false; return; }
-        if (avail.empty()) { if (!n.next.empty()) showNode(n.next); else popMode(); return; }
+        if (avail.empty()) { if (dlgId == "__script") { scriptDialogueDone(-1); return; } if (!n.next.empty()) showNode(n.next); else popMode(); return; }
         if (!dlgOptArmed) return;
         dlgSel = clampi(dlgSel, 0, (int)avail.size() - 1);
+        if (dlgId == "__script") { scriptDialogueDone(avail[dlgSel]); return; }   // 1.1.10: a script's say / ask (script.cpp)
         showNode(n.options[avail[dlgSel]].target);
     }
-    if (actP(in, A_CANCEL)) { if (!textDone) { dlgTextShown = (int)text.size(); dlgOptT = 0; dlgOptArmed = false; } else if (avail.empty()) { if (!n.next.empty()) showNode(n.next); else popMode(); } }
+    if (actP(in, A_CANCEL)) { if (!textDone) { dlgTextShown = (int)text.size(); dlgOptT = 0; dlgOptArmed = false; } else if (avail.empty()) { if (dlgId == "__script") { scriptDialogueDone(-1); return; } if (!n.next.empty()) showNode(n.next); else popMode(); } }
 }
 
 int Game::textScale() const { return settings && settings->largeText ? 2 : 1; }
@@ -979,8 +999,9 @@ void Game::drawDialogue(Canvas& cv, InputState& in) {
     text = keyText(text);   // {journal}, {menu}... name the keys of the device in use
     int tx = dlgPortrait.valid() ? 80 : 20;
     auto lines = ctx.font->wrap(text, SCREEN_W - 40 - (tx - 20), ts);
-    int boxH = 130 + (int)avail.size() * 14;
-    if (ts == 2) boxH = std::max(150, 34 + (int)lines.size() * lh + 12 + (int)avail.size() * oh + (avail.empty() ? 24 : 18));
+    int vis = dialogueOptionsVisible((int)avail.size()), first = clampi(dlgOptFirst, 0, std::max(0, (int)avail.size() - vis));
+    int boxH = 130 + vis * 14;
+    if (ts == 2) boxH = std::max(150, 34 + (int)lines.size() * lh + 12 + vis * oh + (avail.empty() ? 24 : 18));
     boxH = std::min(boxH, SCREEN_H - 8);
     int by = SCREEN_H - boxH - 4;
     uiRect(0, 0, SCREEN_W, SCREEN_H);
@@ -997,15 +1018,19 @@ void Game::drawDialogue(Canvas& cv, InputState& in) {
     bool textDone = dlgTextShown >= (int)text.size();
     if (!textDone) textRight(ctx, SCREEN_W - 24, SCREEN_H - 22, "[" + gKeys.label(A_CONFIRM) + "] skip", C::Gray);   // 1.1.1: skipping is its own step
     if (textDone) {
-        int oy = dialogueOptionsY((int)avail.size());
+        int oy = dialogueOptionsY(vis);
         if (avail.empty()) { textRight(ctx, SCREEN_W - 24, SCREEN_H - 22, "[" + gKeys.label(A_CONFIRM) + "] continue", C::Gray); }
         bool armed = dlgOptArmed;   // dim until the answers can be picked (see updateDialogue)
-        for (size_t i = 0; i < avail.size(); i++) {
-            bool sel = (int)i == dlgSel;
-            if (sel) cv.fillRect(20, oy + (int)i * oh - 1, SCREEN_W - 40, oh, armed ? RGB(70, 55, 20) : RGB(40, 34, 20));
+        for (int r = 0; r < vis; r++) {
+            int i = first + r; bool sel = i == dlgSel;
+            if (sel) cv.fillRect(20, oy + r * oh - 1, SCREEN_W - 40, oh, armed ? RGB(70, 55, 20) : RGB(40, 34, 20));
             std::string label = (sel ? "> " : "  ") + n.options[avail[i]].text;
             if (ts == 2) while (label.size() > 4 && ctx.font->width(label, 2) > SCREEN_W - 52) label = label.substr(0, label.size() - 4) + "..";
-            UI::text(ctx, 26, oy + (int)i * oh, label, !armed ? C::Gray : sel ? C::Yellow : C::LtGray, ts);
+            UI::text(ctx, 26, oy + r * oh, label, !armed ? C::Gray : sel ? C::Yellow : C::LtGray, ts);
+        }
+        if ((int)avail.size() > vis) {   // more answers above / below
+            if (first > 0) textRight(ctx, SCREEN_W - 26, oy, fmt("%d more ^", first), C::Gray);
+            if (first + vis < (int)avail.size()) textRight(ctx, SCREEN_W - 26, oy + (vis - 1) * oh, fmt("%d more v", (int)avail.size() - first - vis), C::Gray);
         }
     }
     (void)in;
@@ -1215,6 +1240,7 @@ void Game::useFavorite(int mi, int slot) {
     } else {
         const ItemDef* d = gd->item(id); if (!d) return;
         if (!party.hasItem(id)) { log("You have no " + d->name + " left."); return; }
+        if (startsWith(d->effect, "script:")) { useItemOn(id, m, false); return; }   // 1.1.10: an item that runs a script needs no "who uses it"
         if (d->type != IT_CONSUMABLE || d->dmgMax > 0 || !d->useSpell.empty()) { log(d->name + " can only be used in combat."); return; }
         menuTab = 1; menuSel = 0; for (size_t i = 0; i < party.inventory.size(); i++) if (party.inventory[i].id == id) menuSel = (int)i;
         menuSubFocus = true; menuSub = 0; menuPrompt = "use"; menuMember = 0; pushMode(GMode::MENU); log("Choose who uses " + d->name + ".");
@@ -1586,6 +1612,16 @@ bool Game::useItemOn(const std::string& itemId, Character& target, bool inCombat
     else if (d->effect == "aim") { target.addEffect("aim", 3, 25); log(target.name + " steadies their aim."); used = true; }
     else if (d->effect == "focus") { target.addEffect("focus", 5, 4); log(target.name + " focuses."); used = true; }
     else if (startsWith(d->effect, "learn:")) { learnRecipes(d->effect.substr(6), true); party.removeItem(itemId, 1); gAudio.play("quest"); return true; }
+    else if (startsWith(d->effect, "script:")) {   // 1.1.10 (#34): effect=script:<id> (used up) or script:<id>:keep (kept)
+        if (Game::inCombat()) { log("Not in the middle of a fight."); return false; }
+        auto p = split(d->effect.substr(7), ':'); std::string sid = trim(p[0]); bool keep = p.size() > 1 && trim(p[1]) == "keep";
+        if (!keep) party.removeItem(itemId, 1);
+        while (mode == GMode::MENU || mode == GMode::PAUSE) popMode();   // back to the map, so the script can talk and open screens
+        std::map<std::string, SVal> loc{{"useditem", SVal::text(itemId)}, {"user", SVal::text(target.name)}};
+        if (!d->sound.empty()) gAudio.play(d->sound);
+        startScript(sid, {}, nullptr, loc);
+        return true;
+    }
     else if (d->effect == "dig" || d->effect == "blast") {
         if (Game::inCombat() && d->effect == "dig") { log("Not in the middle of a fight."); return false; }
         for (int k = 0; k < 4; k++) { int nx = px + (k == 0) - (k == 1), ny = py + (k == 2) - (k == 3); if (Obstacle* o = map->obstacleAt(nx, ny)) { if (mode == GMode::MENU) popMode(); obstacleMenu((int)(o - &map->obstacles[0])); return false; } }
@@ -1668,6 +1704,7 @@ std::string Game::serialize() const {
 bool Game::deserialize(const std::string& text) {
     auto secs = parseConfig(text);
     if (secs.empty() || secs[0].name != "game") { loadError = "The save file is damaged."; return false; }
+    scriptRuns.clear(); scriptDlgOwner = 0; pendingOnEnter.clear();   // 1.1.10: running scripts aren't saved
     int format = secs[0].geti("version", 1);
     if (format > TRIFFALL_SAVE_FORMAT) { loadError = "This save was made by a newer version of Triffall (" + secs[0].get("gameversion", "?") + "). Update the game to load it."; return false; }
     migrateSave(secs, format);

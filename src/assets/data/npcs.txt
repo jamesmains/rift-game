@@ -4,8 +4,9 @@
 # the placement doesn't set, or leaves empty, comes from here - so one NPC can stand in several places, and a placement
 # can still give itself its own name= or dialogue= (Ilse in her cell, Old Wick at each stop of the Tutorial).
 #   name, sprite (col,row), color (draw it in one colour), dialogue, shop (talking opens it when there is no dialogue),
-#   craft (forge | workbench | alchemy | any), board (town id: a notice board), travel=1 (coachman), hostile (creatures
-#   it turns into when attacked), wander=1, notes (for you; the game ignores them)
+#   craft (forge | workbench | alchemy | any), board (town id: a notice board), travel=1 (opens coach travel), hostile (creatures
+#   it turns into when attacked), script (1.1.10: talking runs scripts/<id>.txt instead - the coachman uses script=coachman),
+#   wander=1, notes (for you; the game ignores them)
 # Companions: companion=<class id> makes the NPC one; the dialogue action join=<npc id> adds them to the party with
 #   partysprite (their picture in the party and in fights; default = sprite), level (empty = the hero's level),
 #   stats (str:12,dex:10,... instead of the class's), gear (items equipped on joining; others go to the pack),
@@ -50,7 +51,7 @@ name=Nyx
 sprite=156,23
 dialogue=nyx
 companion=ranger
-partysprite=117,10
+partysprite=151,23
 
 # ---- ashfall ----
 [npc]
@@ -203,7 +204,7 @@ id=coachman
 name=Coachman
 sprite=104,0
 color=200,160,90
-travel=1
+script=coachman
 
 [npc]
 id=sir_vael
@@ -446,3 +447,4 @@ id=quartermaster_unit
 name=Quartermaster Unit
 sprite=105,43
 dialogue=ship_vendor
+

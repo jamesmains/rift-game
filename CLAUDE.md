@@ -41,7 +41,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass (1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
+  editor_* tests pass (1.1.10: scripts_1_1_10 plus the 1.1.9 list; 1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
   facing_1_1_5, music_ambient; 1.1.6: those plus every editor_* test and editor_import_1_1_6; 1.1.7: all of those plus tutorial,
   tutorial_defeat_1_1_7, sprites_1010, fight_to_victory, standing_1_1_2, resource_nodes_1_1, story_choices,
   side_quests_1_0; 1.1.9: every editor_* test, main_quest, npcs_1_1_9, companion_and_menus, companion_quest,
@@ -274,6 +274,38 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   Test `tests/npcs_1_1_9.txt` (also clicks through the tab: tab 24, Bram row at 60,147).
 - At 1.1.9 the owner's installed edits were pulled: creatures (bear sprite, Vell sprite=203,17), item colours,
   brasswick map.
+
+## 1.1.10 scripting (owner's #34: "something for scripting ... robust ... the coachman as an example, not only NPCs")
+- Files: `data/scripts/<id>.txt` (campaign's own `scripts/` first, via dataPath). Language summary in
+  `src\src\game\script.h`; compiler `script_compile.cpp` (no game state - the Editor's Check uses it), runtime
+  `script.cpp` (Game methods). The owner's manual is the guide topics `tab.scripts`, `scripting.commands|values|
+  actions|hooks|coachman`, `obj.npc.script`, `map.onenter`. "concepts.scripts" (the old one-line `k:v;k:v` lists) was
+  retitled "Action lists" - keep the two words apart: a *script* is a file, an *action list* is `onuse=` etc.
+- Compiled to a flat statement list with jumps (if/elif/else/while/for/break/continue). Identifiers are lowercased;
+  lookup order local > keep var (`extra["var_NAME"]`, saved) > built-in > flag value > 0. `let`/`keep` refuse
+  built-in and action names. Action lines = any `scriptActionKeys()` word + value with `{expr}` interpolation, run
+  through `runAction`. Values are int64 or text; numeric text counts as a number.
+- Runs (`Game::scriptRuns`, not saved; cleared in newGame/deserialize): `startScript` runs at once until a wait.
+  Waits: say/ask = the hidden dialogue `__script` (updateDialogue calls `scriptDialogueDone`; consecutive says reuse
+  the box); pick = world map with `wmPick` (returns a location id in `wmPickResult`); wait = seconds on the map;
+  blocking actions (`isScriptBlockingAction`) wait until mode is EXPLORE (`tickScripts`, end of Game::update). A
+  blocking action first closes the run's own talk box. A run started from a regular dialogue's action takes that box
+  over if it says something. Limits: 200000 steps per resume (endless loop -> error), call depth 40, 64 runs.
+  Errors go to the message log and `lastScriptError`.
+- Hooks: NPC `script=` (interactAt, before board/travel/dialogue), action `script=id[,args]` (everywhere actions
+  run), map header `onenter=` (pendingOnEnter, run once in EXPLORE after a transition or new game; not on load),
+  item `effect=script:id[:keep]` (useItemOn; must be a consumable; hotbar skips the who-uses picker). New actions:
+  `time`, `sound`, `encounter`, `weather`, `stat`; `teleport` takes a 4th text. `lastFightWon` -> `won`.
+- Coachman: npcs.txt `coachman` has `script=coachman` instead of `travel=1` (travel=1 still works for other NPCs).
+  The script copies fastTravel's fare/time/ambush rules.
+- Dialogue answers scroll past 12 (6 with large text): `dialogueOptionsVisible`, `dlgOptFirst`.
+- Editor: tab 25 "Scripts" (`editor_scripts.cpp`, `ste` TextEdit, `scriptFiles`, `lintScript`, `openScript`,
+  textEditWidget syntax 1), Import kind IMP_SCRIPTS, Used by key `script:<id>` and flag index scan scripts
+  (FlagUse tab 25 = script file + line), Check all lints scripts and missing `script:` refs, NPC `script` field,
+  item `effect` is a text field + picker, onuse "+ action" lists scripts, map header "on enter" button (row 1; the
+  name field shrank to 100 px).
+- Headless/console: `con script CODE` (`\n` between lines), `con scripts`; expect `var:NAME`, `scripterror`,
+  `scripts` (running count), `talk` (talk box text + answers). Test `tests/scripts_1_1_10.txt`.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

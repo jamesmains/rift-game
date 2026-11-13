@@ -30,7 +30,7 @@ std::vector<std::string> Editor::impFiles(const CampaignInfo& c, const std::stri
 void Editor::openImport(int kind, int gen) {
     impKind = kind; impGen = gen; impFilter.clear(); impScroll = impSrcScroll = 0; impEntries.clear(); impSrc = -1;
     impSrcs.clear(); for (auto& c : listCampaigns(assetDir)) if (c.id != campaignId) impSrcs.push_back(c);
-    std::string what = kind == IMP_MAPS ? "maps" : kind == IMP_DLG ? "dialogue files" : kind == IMP_KINDS ? "tile kinds" : kind == IMP_CAMP ? "campaign settings" : kind == IMP_FLAGS ? "flag notes" : (gen >= 0 && gen < (int)gens.size() ? toLower(gens[gen].title) : "entries");
+    std::string what = kind == IMP_MAPS ? "maps" : kind == IMP_DLG ? "dialogue files" : kind == IMP_SCRIPTS ? "scripts" : kind == IMP_KINDS ? "tile kinds" : kind == IMP_CAMP ? "campaign settings" : kind == IMP_FLAGS ? "flag notes" : (gen >= 0 && gen < (int)gens.size() ? toLower(gens[gen].title) : "entries");
     impTitle = "Import " + what + " from another campaign";
     if (!impSrcs.empty()) impSelectSource(0);
     popOpenedFrame = frameNo; pop = P_IMPORT; ui.modal = true; ui.blur();
@@ -54,8 +54,8 @@ void Editor::impSelectSource(int i) {
             for (auto& kv : sc.kv) if (kv.first != g.listKey) e.detail += kv.first + "=" + kv.second + " ";
             impEntries.push_back(e);
         }
-    } else if (impKind == IMP_MAPS || impKind == IMP_DLG) {
-        std::string sub = impKind == IMP_MAPS ? "maps" : "dialogue";
+    } else if (impKind == IMP_MAPS || impKind == IMP_DLG || impKind == IMP_SCRIPTS) {
+        std::string sub = impKind == IMP_MAPS ? "maps" : impKind == IMP_SCRIPTS ? "scripts" : "dialogue";
         for (auto& id : impFiles(c, sub)) {
             ImpEntry e; e.id = e.label = id; e.have = fileExists(dataRoot + "/" + sub + "/" + id + ".txt");
             if (impKind == IMP_MAPS) { std::string t; if (readFile(impReadPath(c, "maps/" + id + ".txt"), t)) for (auto& sc : parseConfig(t)) if (sc.name == "map") { std::string nm = sc.get("name"); if (!nm.empty() && nm != id) e.label += "  -  " + nm; e.detail = sc.get("kind"); break; } }
@@ -108,8 +108,8 @@ int Editor::doImport() {
         }
         if (n) { g.dirty = true; g.sel = last; g.filter.clear(); g.filterKey.clear(); g.filterVal.clear(); flagIndexDirty = true; if (impGen == 8) worldNeedsGen = true;
                  say(fmt("Imported %d from %s into %s (%d replaced) - Save the tab to keep them.", n, c.name.c_str(), g.title.c_str(), replaced)); }
-    } else if (impKind == IMP_MAPS || impKind == IMP_DLG) {
-        std::string sub = impKind == IMP_MAPS ? "maps" : "dialogue"; std::string first; std::error_code ec;
+    } else if (impKind == IMP_MAPS || impKind == IMP_DLG || impKind == IMP_SCRIPTS) {
+        std::string sub = impKind == IMP_MAPS ? "maps" : impKind == IMP_SCRIPTS ? "scripts" : "dialogue"; std::string first; std::error_code ec;
         fs::create_directories(dataRoot + "/" + sub, ec);
         for (auto& e : impEntries) {
             if (!e.on) continue;
@@ -119,6 +119,7 @@ int Editor::doImport() {
             if (e.have) replaced++; n++; if (first.empty()) first = e.id;
             if (impKind == IMP_MAPS && mapLoaded && em.id == e.id) loadMapFile(e.id);   // the open map was replaced
             if (impKind == IMP_DLG && te.path == dst) te.load(dst);
+            if (impKind == IMP_SCRIPTS && ste.path == dst) ste.load(dst);
         }
         if (n) {
             refreshFiles(); mapScan.clear(); flagIndexDirty = true; changed = true;
@@ -167,7 +168,7 @@ void Editor::drawImport(InputState& in, bool& close) {
     Canvas& cv = *ui.cv;
     int w = 760, h = 540, x = (W - w) / 2, y = (H - h) / 2;
     ui.panel(x, y, w, h); ui.header(x, y, w, impTitle);
-    ui.textRight(x + w - 8, y + 2, impKind == IMP_MAPS || impKind == IMP_DLG ? "copies the files straight in" : "arrives unsaved: Save the tab to keep it", DIM);
+    ui.textRight(x + w - 8, y + 2, impKind == IMP_MAPS || impKind == IMP_DLG || impKind == IMP_SCRIPTS ? "copies the files straight in" : "arrives unsaved: Save the tab to keep it", DIM);
     // sources
     int lw = 200;
     ui.label(x + 8, y + 22, "From:");
@@ -203,7 +204,7 @@ void Editor::drawImport(InputState& in, bool& close) {
     int by = y + h - 30;
     ui.text(ex, by + 4, fmt("%d of %d shown, %d ticked", (int)idx.size(), (int)impEntries.size(), on) + (rep ? fmt(" (%d replace yours)", rep) : ""), DIM);
     if (ui.button(x + w - 200, by, 110, 22, on ? fmt("Import %d", on) : "Import", on > 0, false, OK)) {
-        if (rep && (impKind == IMP_MAPS || impKind == IMP_DLG)) openConfirm(fmt("%d of the files replace this campaign's own. Copy anyway?", rep), [this]() { doImport(); });
+        if (rep && (impKind == IMP_MAPS || impKind == IMP_DLG || impKind == IMP_SCRIPTS)) openConfirm(fmt("%d of the files replace this campaign's own. Copy anyway?", rep), [this]() { doImport(); });
         else doImport();
         close = true;
     }

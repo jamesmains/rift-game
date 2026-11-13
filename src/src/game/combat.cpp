@@ -571,6 +571,7 @@ void Game::combatFinish() {
     for (auto& u : cb.units) if (u.partyIndex >= 0) { Character& m = party.members[u.partyIndex]; int keepX = u.x, keepY = u.y; u.ch.x = keepX; u.ch.y = keepY; m = u.ch; m.effects.erase(std::remove_if(m.effects.begin(), m.effects.end(), [](const StatusEffect& e) { return e.id == "defend" || e.id == "aim" || e.id == "stun" || e.id == "freeze"; }), m.effects.end()); }
     int mapLeader = activeLeader();
     for (auto& u : cb.units) if (u.partyIndex == mapLeader) { px = u.x; py = u.y; break; }
+    lastFightWon = cb.victory;   // 1.1.10: a script's "won" after a fight
     if (cb.victory) {
         for (auto& m : party.members) if (!m.alive) { m.alive = true; m.hp = 1; }
         for (int g : cb.defeatedGroups) if (g >= 0 && g < (int)map->enemies.size()) { map->enemies[g].defeated = true; if (!map->enemies[g].flag.empty()) setFlag(map->enemies[g].flag); }

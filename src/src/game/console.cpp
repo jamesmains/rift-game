@@ -66,6 +66,9 @@ void Game::runConsole(const std::string& line) {
     else if (c == "shop") { popMode(); runAction("shop", arg(1, "hollowmere_general")); }
     else if (c == "dialogue") { popMode(); startDialogue(arg(1), nullptr, arg(2, "start")); }
     else if (c == "run") { popMode(); runScript(cmd.substr(cmd.find(' ') + 1)); }
+    // 1.1.10: script CODE - a script on one line, \n between statements (tests); scripts - what is running; var NAME - a kept variable
+    else if (c == "script") { std::string code = cmd.find(' ') == std::string::npos ? "" : cmd.substr(cmd.find(' ') + 1); size_t pos; while ((pos = code.find("\\n")) != std::string::npos) code.replace(pos, 2, "\n"); popMode(); startScriptText(code); }
+    else if (c == "scripts") { std::string s; for (auto& r : scriptRuns) if (!r->done && !r->frames.empty()) s += r->frames.back().prog->id + fmt("(wait %d) ", r->wait); out(s.empty() ? "(none running)" : s); if (!lastScriptError.empty()) out("last error: " + lastScriptError); }
     else if (c == "maps") { std::string s; for (auto& l : locations) s += l.mapId + " "; out(s); }
     else if (c == "stats") { out(fmt("kills %d fights %d gold+ %d chests %d crits %d crafted %d bounties %d travels %d steps %d", stats.kills, stats.fightsWon, stats.goldEarned, stats.chests, stats.crits, stats.crafted, stats.bounties, stats.travels, stepCounter)); }
     else if (c == "reload") { reloadContent(); out("content reloaded"); pushMode(GMode::CONSOLE); }

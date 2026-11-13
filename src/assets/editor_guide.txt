@@ -261,8 +261,8 @@ Examples:
 There is no "equals" or "less than" except through !: q_main>=2&!q_main>=3
 means exactly 2. Spaces around & are fine. Flag names cannot contain & ! : or >=.
 
-== concepts.scripts | Scripts (script=, ondefeat=, onclear=, bossdefeat=)
-see: dlg.actions, obj.trigger.script, obj.enemy.ondefeat, obj.obstacle.onclear, dungeon.bossdefeat
+== concepts.scripts | Action lists (script=, onuse=, ondefeat=, onclear=, bossdefeat=)
+see: scripting.hooks, dlg.actions, obj.trigger.script, obj.enemy.ondefeat, obj.obstacle.onclear, dungeon.bossdefeat
 
 A script is a list of actions run in one go, written on a single line. Actions
 are separated by ; and each one is key:value - the same keys as dialogue
@@ -280,6 +280,9 @@ dialogue:<id> to open a whole conversation from a trigger or a kill.
 
 Used by: trigger script=, enemy ondefeat=, obstacle onclear=, dungeon
 bossdefeat=. The full action list is in the Dialogue actions topic.
+
+script:<id> runs a whole script (Scripts tab) - variables, talk with
+answers, loops. Use one when a line of actions isn't enough.
 
 Gotchas:
 - A ; always ends an action, so message and notify texts cannot contain one.
@@ -1533,7 +1536,9 @@ What the board posts (and where its courier letters may go) is set in the Bounti
 == obj.npc.travel | Coachman
 see: concepts.worldmap, obj.npc, dlg.actions
 
-travel=1 makes the NPC a coachman: talking opens the world map in travel mode,
+travel=1 opens the world map in travel mode when the NPC is talked to (the
+built-in coach; since 1.1.10 the base game's coachman uses script=coachman
+instead, which does the same as a script you can change),
 where the party can ride to any place it has visited for 8 gold + 6 per league.
 The trip takes game time and may be ambushed.
 
@@ -6336,3 +6341,187 @@ The tile kind a generated dungeon paints under the node (rocks, mushroom2, cryst
 see: tab.resources, tab.dungeons
 The generated dungeon styles that scatter this node: style[:weight[:count]], comma separated. weight = how many lots it gets in the draw (default 1), count overrides count= in that style. The order of the types in the list matters for the draw. Empty: never generated.
   styles=mine:2:2-4,cave
+
+== tab.scripts | Scripts tab
+see: scripting.commands, scripting.values, scripting.actions, scripting.hooks, scripting.coachman, editor.usedby
+
+The Scripts tab edits scripts: small programs in scripts/<id>.txt that the
+game runs. A script can talk with answers, work out prices and distances,
+keep counters that are saved with the game, loop, roll dice, and use every
+dialogue action (give items, take gold, start fights, teleport...).
+
+Left: the list, New (a commented starter script), Save, Delete, Check (this
+script) and Check all. Middle: the text, coloured - control words (if, end,
+call...) in yellow, talk (say, option, ask, pick) in green, variables in blue,
+actions in white, comments grey. Right: a cheat sheet in three pages
+(Commands, Values, Actions) and Used by - the NPCs, objects, maps, items,
+dialogues and other scripts that run it.
+
+Check uses the game's own reader, so a script that passes Check runs. It also
+reports scripts, dialogues, items, creatures, shops and maps that don't exist.
+Check all (top right) checks every script with the rest of the campaign.
+
+A script is attached by its id (the file name) - see "Where scripts run".
+The coachman in every town is a script: open "coachman" for a full example.
+
+Gotchas:
+- A script that breaks while running stops and writes the line and the reason in the message log.
+- Running scripts are not saved. Use keep variables for anything that must last.
+
+== scripting.commands | Script commands
+see: tab.scripts, scripting.values, scripting.actions
+
+One command per line. # starts a comment. Indenting is only for you.
+
+  let n = 5                 a variable for this run of the script
+  keep visits = visits + 1  a variable saved with the game
+  n = n * 2    n += 1    n -= 1
+
+keep variables live in the save: every script reads and changes them by
+name. A name that was never set reads as 0 (or as the flag of that name).
+
+  if gold >= 10 and not met_mara
+    say You look like you could use work.
+  elif level > 5
+    say Back again?
+  else
+    say Hm.
+  end
+
+  while n < 3          repeats while true
+    n += 1
+  end
+  for p in places()    once for each item of a list (text with commas)
+    log {placename(p)}
+  end
+  for i in 5           1, 2, 3, 4, 5
+  end
+
+break leaves a loop, continue starts its next round, stop ends the script.
+
+  call pay_toll 20     runs another script and waits for it; inside it the
+                       values are arg1, arg2... (args = how many)
+  return fare * 2      back to the caller, which gets it in result
+  start town_bells     runs another script alongside, without waiting
+
+Talking:
+
+  say Welcome to {mapname(here)}, {herename}.
+  speaker Old Tam      who speaks next ("" = nobody); default: the NPC
+  option "Buy a map (5 gold)" -> "map"
+  option Just looking
+  ask choice What'll it be?
+  pick dest Where to?
+  wait 2
+
+say shows a line and waits for the player. option lines collect answers;
+ask shows them under its question and puts the chosen answer's value (after
+->, else its text) into the variable. Long lists scroll. pick opens the world
+map: the player chooses a place they have been to and the variable gets its
+id ("" if they close the map). wait pauses for seconds of play on the map.
+
+Text: after say, option, speaker and actions, anything in {} is worked out.
+"Quoted text" works too, and can be joined with +.
+
+== scripting.values | Values and functions in scripts
+see: scripting.commands, concepts.conditions
+
+Values are whole numbers or text. + adds numbers and joins text; - * / %
+need numbers. Compare with == (or =), !=, <, <=, >, >=. Combine with and,
+or, not. Text compares without caring about capitals.
+
+Built-in values: gold, day, hour, minute, here (the map id), herename, x, y
+(the party), level (the hero's), partysize, night (1 at night), stealth (1
+while sneaking), weather, npc and npcname (the NPC the script was started
+from), won (1 if the last fight was won), true, false. In an item's script:
+useditem and user.
+
+Any other name is a variable, else a flag: "if met_mara" is true once the
+flag met_mara is set.
+
+Functions:
+- flag("name") - a flag's value. cond("item:key&!door_open") - any dialogue condition.
+- has(item) - how many the party carries and wears. visited(map). kills(creature).
+- inparty(class or name), rep(faction), approval(class).
+- random(1, 6), random(10) (1 to 10), chance(25) (1 a quarter of the time).
+- places() - the overworld places the party has been to. placename(p), placemap(p), placex(p), placey(p).
+- distance(p) - tiles from where the party is on the overworld; leagues(p) = distance / 10 + 1.
+- mapname(map), itemname(item).
+- Lists are text with commas: count(l), at(l, 2), contains(l, x), add(l, x).
+- len(t), upper(t), lower(t), find(t, part) (position, 0 = not there), min(a, b), max(a, b), abs(n), var("name").
+
+== scripting.actions | Actions in scripts
+see: dlg.actions, scripting.commands
+
+Every dialogue action is a script line: the action, a space, then its value.
+The value may hold {values}.
+
+  give potion:2
+  gold -{fare}
+  set q_toll=1
+  teleport overworld,{placex(dest)},{placey(dest) + 1},Riding north...
+  dialogue elder_mara
+  combat bandit,bandit
+  if won
+    say Not bad.
+  end
+
+Actions that open a screen - dialogue, shop, combat, teleport, message,
+cutscene, craft, board, travel, healer, respec, encounter - pause the script
+until the party is back on the map, then it carries on (after a teleport, on
+the new map).
+
+New in 1.1.10, for scripts and dialogue nodes alike:
+- script=id[,value,...] - runs a script (dialogue: script=id; action lists: script:id).
+- time=minutes - time passes. sound=id - plays a sound. encounter - a random fight from the ground underfoot.
+- weather=new|clear|rain|storm|fog|snow. stat=travels:1 - counts towards a statistic (travels, kills, chests, crafted, bounties, fights).
+- teleport=map,x,y,text - the text shows while travelling.
+
+== scripting.hooks | Where scripts run
+see: tab.scripts, obj.npc.script, map.onenter, concepts.scripts
+
+- An NPC: script=<id> in the NPCs tab (or on one placement). Talking runs it, before its board, travel or dialogue. say lines use the NPC's name and picture.
+- A dialogue node: script=<id>. If the script says something it takes the talk box over; otherwise the conversation carries on.
+- Any action list - a trigger's script=, an object's onuse=, an enemy's ondefeat=, an obstacle's onclear=, a dungeon's bossdefeat=, the campaign's defeat=: script:<id>.
+- A map: onenter= (the "on enter" button in the map header) runs each time the party arrives - by exit, teleport, coach or new game - but not when a save is loaded.
+- An item: effect=script:<id> (used up) or script:<id>:keep (kept). It must be a consumable.
+
+== scripting.coachman | Example: the coachman
+see: tab.scripts, scripting.commands
+
+The coach in every town is the script "coachman" (NPC coachman, script=
+coachman). It greets the party, lets them pick a place they have been to on
+the world map, works out the fare (8 gold + 6 per league), asks before
+taking the money, lets time pass, rolls for an ambush (less likely while
+sneaking), and teleports to the place.
+
+  say Where to? Coach fare is by the league.
+  pick dest "Where should the coach take you?"
+  if dest == ""
+    stop
+  end
+  let fare = 8 + leagues(dest) * 6
+  option "Pay {fare} gold" -> "go"
+  option "Never mind" -> "no"
+  ask answer {placename(dest)} is {leagues(dest)} league(s) away. {fare} gold.
+  ...
+
+Copy it (New, then paste) to make a ferryman with other prices, or a
+caravan that only goes to places with a flag set.
+
+== obj.npc.script | NPC script
+see: scripting.hooks, tab.scripts
+
+script=<id> runs scripts/<id>.txt when the party talks to the NPC. It wins
+over board=, travel= and dialogue=.
+
+  script=coachman
+
+== map.onenter | Map on enter
+see: scripting.hooks, concepts.scripts
+
+onenter= runs actions each time the party arrives on the map - usually
+script:<id>. It doesn't run when a save is loaded. Give it a keep variable
+or a flag if it should only do something once.
+
+  onenter=script:harbour_bells

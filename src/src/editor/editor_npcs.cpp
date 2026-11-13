@@ -18,7 +18,7 @@ std::string clipTo(Font* f, std::string s, int w) { if (f->width(s) <= w) return
 
 // every key an NPC can have, in the order the quick-add row offers them
 const std::vector<std::string>& edNpcKeys() {
-    static const std::vector<std::string> k = {"name", "sprite", "color", "dialogue", "shop", "craft", "board", "travel", "hostile", "wander", "notes", "companion", "partysprite", "level", "stats", "gear", "spells"};
+    static const std::vector<std::string> k = {"name", "sprite", "color", "dialogue", "script", "shop", "craft", "board", "travel", "hostile", "wander", "notes", "companion", "partysprite", "level", "stats", "gear", "spells"};
     return k;
 }
 
@@ -116,6 +116,7 @@ void Editor::npcProblems(const EdSection& s, std::vector<std::pair<bool, std::st
     int same = 0; for (auto& o : gens[17].secs) if (o.name == "npc" && trim(o.get("id")) == id) same++;
     if (same > 1) out.push_back({true, "the id is used by another NPC too (the later one wins)"});
     std::string dlg = trim(s.get("dialogue")); if (!dlg.empty() && !has(dlgFiles, dlg)) out.push_back({true, "dialogue '" + dlg + "' does not exist"});
+    std::string scr = trim(s.get("script")); if (!scr.empty() && !fileExists(readPath("scripts/" + scr + ".txt"))) out.push_back({true, "script '" + scr + "' does not exist (Scripts tab)"});
     std::string shop = trim(s.get("shop")); if (!shop.empty()) { bool ok = false; for (auto& sh : gens[4].secs) if (sh.get("id") == shop) ok = true; if (!ok) out.push_back({true, "shop '" + shop + "' does not exist"}); }
     std::string craft = trim(s.get("craft")); if (!craft.empty() && craft != "forge" && craft != "workbench" && craft != "alchemy" && craft != "any") out.push_back({true, "craft= should be forge, workbench, alchemy or any"});
     for (auto& c : split(s.get("hostile"), ',')) if (!trim(c).empty() && !gd->creature(trim(c))) out.push_back({true, "hostile= names unknown creature '" + trim(c) + "'"});

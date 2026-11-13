@@ -13,6 +13,7 @@
 #include "entity.h"
 #include "world.h"
 #include "ui.h"
+#include "script.h"
 
 // The dev console (~) only exists in debug builds: CMake -DTRIFFALL_DEV_CONSOLE=ON (build.ps1 -Dev), a Debug configuration,
 // and the headless test runner. Release builds (Full, No Editor, Demo) never open it.
@@ -255,7 +256,8 @@ public:
     void loadLocations();
     bool wmTravel = false;                        // opened by a coachman: travel allowed, for a fare
     int travelFare(const WorldLocation& l) const;
-    void openWorldMap(bool travelMode = false); void updateWorldMap(InputState& in, float dt); void drawWorldMap(Canvas& cv, InputState& in);
+    bool wmPick = false; std::string wmPickPrompt, wmPickResult;   // 1.1.10: a script's pick: choose a visited place, nothing else happens
+    void openWorldMap(bool travelMode = false, bool pick = false); void updateWorldMap(InputState& in, float dt); void drawWorldMap(Canvas& cv, InputState& in);
     void fastTravel(const WorldLocation& l);
     std::string worldMapSource() const;           // "" = this campaign has no world map; "overworld"; or a map id
     std::string wmSource;                         // what the open world map shows
@@ -435,6 +437,17 @@ public:
     void giveItem(const std::string& id, int n = 1, bool silent = false);
     void startDialogue(const std::string& id, NPC* npc = nullptr, const std::string& node = "start");
     void runScript(const std::string& script);
+    // 1.1.10 (#34) scripts (script.h / script.cpp): data/scripts/<id>.txt, run by script=<id> on NPCs, script:<id> in any
+    // action list (dialogue, onuse=, triggers, ondefeat=, defeat=), map onenter=, items effect=script:<id>
+    std::vector<std::shared_ptr<ScriptRun>> scriptRuns; std::map<std::string, std::shared_ptr<ScriptProg>> scriptCache;
+    std::string pendingOnEnter;   // the map's onenter=, run once the party stands on the map
+    int scriptNextId = 1, scriptDlgOwner = 0; bool scriptDlgShown = false; bool lastFightWon = false; std::string lastScriptError;
+    std::shared_ptr<ScriptProg> scriptProg(const std::string& id);
+    bool startScript(const std::string& id, const std::vector<SVal>& args = {}, NPC* npc = nullptr, const std::map<std::string, SVal>& locals = {});
+    bool startScriptText(const std::string& code, const std::string& name = "console");
+    void tickScripts(float dt);
+    void scriptDialogueDone(int option);
+    std::string keptVar(const std::string& name) const { auto it = extra.find("var_" + name); return it == extra.end() ? std::string() : it->second; }
     void startCombat(const std::vector<std::string>& creatureIds, int cx, int cy, int levelBonus, const std::vector<int>& groupIndices, const std::string& onDefeat = "");
     std::vector<int> combatExtraGroups;   // map groups that join the next startCombat from round one
     void applyDifficulty(Character& enemy) const;
@@ -488,10 +501,22 @@ private:
 public:
     int textScale() const;                       // 2 with Settings > Access > Large text
     int dialogueOptionH() const; int dialogueOptionsY(int n) const;
+    int dialogueOptionsVisible(int n) const { return std::min(n, textScale() == 2 ? 6 : 12); }   // 1.1.10: long answer lists scroll
+    int dlgOptFirst = 0;
 private:
     void showNode(const std::string& node);
     void runAction(const std::string& k, const std::string& v);
     void runActionInner(const std::string& k, const std::string& v);
+    void resumeScript(std::shared_ptr<ScriptRun> r);
+    bool scriptExec(ScriptRun& r);   // one statement; false = stop for now (waiting or finished)
+    void scriptFail(ScriptRun& r, const std::string& msg);
+    SVal scriptEval(ScriptRun& r, const SExpr& e, std::string& err);
+    SVal scriptValue(ScriptRun& r, const std::string& name);
+    SVal scriptFn(ScriptRun& r, const std::string& name, const std::vector<SVal>& a, std::string& err);
+    void scriptAssign(ScriptRun& r, const std::string& name, const SVal& v);
+    bool scriptShowTalk(ScriptRun& r, const std::string& text, bool withOptions);
+    NPC* scriptNpc(const ScriptRun& r);
+    const WorldLocation* scriptPlace(const std::string& id) const;
     bool loadDialogues();
     // combat (combat.cpp)
     void updateCombat(InputState& in, float dt);

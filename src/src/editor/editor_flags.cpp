@@ -6,6 +6,7 @@
 #include "editor.h"
 #include <filesystem>
 #include <algorithm>
+#include <cstring>
 
 namespace fs = std::filesystem;
 using namespace ED;
@@ -128,6 +129,19 @@ void Editor::buildFlagIndex() {
             for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) { std::vector<std::pair<std::string, bool>> fs2; scriptFlags(o.get(sk), fs2); for (auto& p : fs2) add(p.first, true, where, std::string(sk) + "=" + o.get(sk) + (p.second ? "" : "  (clears it)"), u); }
         }
     }
+    // ---- scripts (1.1.10): set / flag / inc / clear lines, and flag("x") / cond("...") reads ----
+    for (auto& sf : scriptFiles) {
+        std::string body; if (!ste.path.empty() && fs::path(ste.path).stem().string() == sf) body = ste.text(); else if (!readFile(readPath("scripts/" + sf + ".txt"), body)) continue;
+        ScriptProg p = compileScript(sf, body);
+        for (auto& r : p.refs) { FlagUse u; u.tab = 25; u.file = sf; u.line = r.line; std::string where = "script " + sf + " line " + std::to_string(r.line + 1); std::string v = trim(r.value);
+            if (v.find('{') != std::string::npos) continue;
+            if (r.key == "set") for (auto& n : setList(v)) add(n, true, where, "set " + v, u);
+            else if (r.key == "flag" || r.key == "inc") add(v, true, where, r.key + " " + v, u);
+            else if (r.key == "clear") for (auto& n : setList(v)) add(n, true, where, "clear " + v + "  (clears it)", u); }
+        auto ls = split(body, '\n');
+        for (size_t li = 0; li < ls.size(); li++) for (const char* fn : {"flag(\"", "cond(\""}) { size_t pos = 0; while ((pos = ls[li].find(fn, pos)) != std::string::npos) { size_t a = pos + strlen(fn), b = ls[li].find('"', a); if (b == std::string::npos) break;
+            FlagUse u; u.tab = 25; u.file = sf; u.line = (int)li; std::string arg = ls[li].substr(a, b - a); addCond(arg, "script " + sf + " line " + std::to_string(li + 1), std::string(fn).substr(0, 4) + "(\"" + arg + "\")", u); pos = b; } }
+    }
     // ---- quests, dungeons, locations, achievements, banter ----
     for (size_t i = 0; i < gens[6].secs.size(); i++) { auto& q = gens[6].secs[i]; int n = 0; for (auto& kv : q.kv) if (kv.first == "stage") { n++; FlagUse u; u.tab = 9; u.gen = 6; u.sec = (int)i; std::string c = trim(split(kv.second, '|')[0]); addCond(c, "quest " + q.get("id") + fmt(" stage %d", n), "the journal shows this stage when " + condEnglish(c), u); }
         for (auto& kv : q.kv) if (kv.first == "fail") { FlagUse u; u.tab = 9; u.gen = 6; u.sec = (int)i; std::string c = trim(split(kv.second, '|')[0]); addCond(c, "quest " + q.get("id") + " fail", "the quest FAILS when " + condEnglish(c), u); } }
@@ -164,6 +178,7 @@ bool Editor::saveFlagDocs() {
 
 // ---------------------------------------------------------------- jumping to a use
 void Editor::jumpToUse(const FlagUse& u) {
+    if (u.tab == 25) { openScript(u.file, u.line); return; }   // 1.1.10 scripts
     if (u.tab == 11) {
         for (size_t i = 0; i < dlgFiles.size(); i++) if (dlgFiles[i] == u.file) dlgSel = (int)i;
         auto go = [this, u]() { if (te.path.empty() || fs::path(te.path).stem().string() != u.file) { te.load(readPath("dialogue/" + u.file + ".txt")); te.path = dataRoot + "/dialogue/" + u.file + ".txt"; }

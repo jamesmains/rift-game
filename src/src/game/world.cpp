@@ -248,6 +248,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             else if (k == "music") m.music = v;
             else if (k == "ambient") m.ambient = v;
             else if (k == "worldmap") m.worldMap = v;
+            else if (k == "onenter") m.onEnter = v;
             else if (k == "bg") m.bg = parseColor(v);
         } else if (section == "legend") {
             if (!k.empty()) legend[k[0]] = v;
@@ -279,6 +280,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             if (!gets(kv, "color").empty()) { n.recolor = true; n.color = parseColor(gets(kv, "color")); }
             n.showFlag = gets(kv, "show"); n.hideFlag = gets(kv, "hide"); n.hostileCreature = gets(kv, "hostile"); n.craft = gets(kv, "craft"); n.board = gets(kv, "board"); n.travel = geti(kv, "travel", 0) != 0;
             n.moveIf = gets(kv, "moveif"); n.moveX = geti(kv, "movex", -1); n.moveY = geti(kv, "movey", -1);
+            n.script = trim(gets(kv, "script"));
             m.npcs.push_back(n);
         } else if (type == "enemy") {
             EnemyGroup e; e.flag = gets(kv, "flag"); e.x = e.homeX = geti(kv, "x", 0); e.y = e.homeY = geti(kv, "y", 0); e.aggro = geti(kv, "aggro", 5);

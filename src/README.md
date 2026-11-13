@@ -28,6 +28,26 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.10 scripting
+
+* **Scripts**: small programs in `data/scripts/<id>.txt` that the game runs - talk with answers, prices and distances
+  worked out on the spot, variables (`let` for one run, `keep` saved with the game), `if` / `elif` / `else`, `while`
+  and `for` loops, calling other scripts, random chances, and every dialogue action (`give`, `gold`, `teleport`,
+  `combat`...) with `{values}` in them. `pick` lets the player choose a visited place on the world map; `wait` pauses.
+  Screens (fights, shops, teleports) pause a script until the party is back on the map.
+* **Scripts run from anywhere**: an NPC's `script=<id>` (talking runs it), a dialogue node's `script=<id>`,
+  `script:<id>` in any action list (triggers, `onuse=`, `ondefeat=`, the campaign's `defeat=`), a map's `onenter=`
+  (each arrival) and items (`effect=script:<id>`, or `script:<id>:keep` to keep the item).
+* **The coachman is a script now** (`scripts/coachman.txt`): pick a place on the map, hear the fare, pay, ride - with
+  the same prices, travel time and ambush chance as before.
+* New actions for scripts and dialogue alike: `script`, `time` (minutes pass), `sound`, `encounter` (a random fight),
+  `weather`, `stat`; `teleport=map,x,y,text` shows the text while travelling. Dialogue answers that don't fit scroll.
+* **Editor: a Scripts tab** - the text with script colours, Check (the game's own reader plus missing scripts,
+  dialogue, items, creatures, shops and maps), a three-page cheat sheet and Used by. NPCs have a `script` field with a
+  picker, items' `effect` takes `script:<id>`, the map header has an **on enter** button, and Check all checks
+  every script. Guide topics: Scripts tab, Script commands, Values and functions, Actions, Where scripts run, and the
+  coachman example.
+
 ## 1.1.9 NPCs of their own
 
 * **NPCs are now entries of their own** (`data/npcs.txt`), made once and placed on maps. Every person and animal in the
@@ -519,6 +539,7 @@ Load/Save icons still work when no game is running.
 
 Double-click **Editor** on the desktop. It runs at 960x720 and edits the files under `assets/data`:
 
+* **Scripts** tab (1.1.10) - `scripts/<id>.txt` in a text editor with Check, a cheat sheet and Used by (see Modding).
 * **NPCs** tab (1.1.9) - every NPC once (`npcs.txt`): a Look card, pickers for each field, and a box with every map
   it stands on (click to open it there), what talking to it does, how a companion joins and its problems. **Place on
   map...** and **Rename id...** (follows into every map and `join=`). The Maps tab's Objects tool places NPCs from a list.
@@ -747,6 +768,13 @@ Almost everything is plain text:
   `hostile`, `wander`, `notes`; companions add `companion=<class>`, `partysprite`, `level`, `stats`, `gear`, `spells`.
   A map `[npc]` object is a placement: `npc=<id>`, `x`, `y`, its own `id` on that map, `show`/`hide`/`moveif`; any
   other key it sets wins over the NPC's. Dialogue adds a companion with `join=<npc id>`.
+* `assets/data/scripts/*.txt` (1.1.10) - scripts, one per file (the id is the file name). One command per line:
+  `let`/`keep` variables, `if`/`elif`/`else`/`end`, `while`, `for x in list`, `break`, `continue`, `stop`,
+  `call id args` / `return`, `start id`, `say`, `speaker`, `option text -> value`, `ask var prompt`, `pick var prompt`,
+  `wait seconds`, and any dialogue action as `action value` with `{expressions}`. Expressions: numbers, "text",
+  variables, flags, built-ins (`gold`, `day`, `hour`, `here`, `won`...) and functions (`cond("...")`, `random(a,b)`,
+  `places()`, `placename(p)`, `leagues(p)`...). Run by NPC `script=`, dialogue `script=`, `script:<id>` in action
+  lists, map `onenter=` and item `effect=script:<id>`. The Editor guide's scripting topics are the full manual.
 * `assets/editor_guide.txt` - the Editor guide (`== topic.id | Title`, `see: a, b`, then the text).
 * `assets/data/dungeons.txt` - procedural dungeon definitions (style, size, monsters, boss).
 * `assets/data/overworld.txt` - where locations sit on the overworld and which roads link them.
