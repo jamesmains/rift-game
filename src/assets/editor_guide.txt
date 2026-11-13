@@ -70,14 +70,14 @@ item.*, creature.*, spell.* and so on are the fields of each data file. Lines
 shown indented in a monospace style are examples you can copy as-is.
 
 == editor.shortcuts | Keyboard and mouse shortcuts
-see: maps.tools, maps.select, tab.dialogue, editor.undo, editor.check, editor.guide
+see: edit.text, maps.tools, maps.select, tab.dialogue, editor.undo, editor.check, editor.guide
 
 Everywhere:
 - F1: open the guide on the current tab.
 - Ctrl+S: save the current tab.
 - Tab / Shift+Tab: move to the next / previous field. Enter or Esc leaves a field.
 - Mouse wheel over a number field nudges it; hold Shift for steps of 10.
-- Text fields: click, drag or Shift+arrows to select, double-click selects all, Ctrl+A/C/X/V use the system clipboard.
+- Text fields: click, drag or Shift+arrows to select; double-click selects a word, triple-click everything; Ctrl+arrows jump by word (Ctrl+Shift+arrows select by word); Ctrl+Backspace / Ctrl+Delete delete a word; Ctrl+A/C/X/V use the system clipboard; right-click for a menu. Ctrl+E, or the ... button on text too long for its box, edits it in a big box. See edit.text.
 - Esc with no field focused: Exit the editor (asks if anything is unsaved). In the Tiles tab after a jump from a map, Esc goes back to the map.
 - Popups: list pickers filter as you type, arrows + Enter or click to choose; Enter = Yes/OK, Esc = Cancel.
 
@@ -92,12 +92,61 @@ Maps tab (with no text field focused):
 - Ctrl+Z undo, Ctrl+A select all, Ctrl+C / Ctrl+X copy or cut the selection, Ctrl+V paste then click to stamp (Shift+click keeps stamping), Delete clears the selection or removes the selected object, Esc cancels a paste or selection.
 - Rect tool: hold Shift while releasing to draw only the outline.
 
-Dialogue tab text editor: Ctrl+A/C/X/V, Ctrl+Z undo, Ctrl+S save, Ctrl+D
-duplicates the current line, Tab inserts two spaces, Home/End/PgUp/PgDn move.
+Dialogue and Scripts text editors: everything Notepad does and more - see
+edit.text (word wrap, find / replace, go to line, line tools, Wide).
 
 Tile picker and Tileset tab: wheel scrolls, Shift+wheel or drag scrolls
 sideways, arrow keys pan.
 
+
+== edit.text | Text editing (every text box)
+see: editor.shortcuts, tab.dialogue, tab.scripts, editor.undo
+
+Every text box in the Editor works the way Notepad does. The one-line fields
+(names, descriptions, search boxes...) and the big text editors of the
+Dialogue and Scripts tabs share the same keys.
+
+Mouse:
+- Click places the cursor, drag selects, Shift+click selects up to the click.
+- Double-click selects a word (keep the button down and drag to select word by word).
+- Triple-click selects the whole line (in a one-line field: everything).
+- Right-click opens a menu: Undo, Redo, Cut, Copy, Paste, Delete, Select word / line / all, and more in the big editors.
+
+Keys:
+- Ctrl+Left / Ctrl+Right: jump a word. Add Shift to select word by word.
+- Shift+arrows, Shift+Home / Shift+End: select.
+- Ctrl+Backspace / Ctrl+Delete: delete the word before / after the cursor.
+- Ctrl+A select all, Ctrl+C copy, Ctrl+X cut, Ctrl+V paste (also Ctrl+Insert, Shift+Delete, Shift+Insert).
+- Ctrl+Z undo, Ctrl+Y or Ctrl+Shift+Z redo. Typing a word is one undo step. In the form tabs, Ctrl+Z undoes the whole form (see editor.undo).
+
+Text too long for its box: press Ctrl+E in the field, or click the small ...
+button at its right end, or pick "Edit in a big box" from the right-click
+menu. The text opens in a large box where it wraps so all of it shows. Enter
+or OK puts it back, Esc cancels. It is still one line in the file.
+
+Dialogue and Scripts editors - the extra keys:
+- Home goes to the first letter of the line, press it again for the very start. Ctrl+Home / Ctrl+End: start / end of the file.
+- Up / Down keep the column you started from. PgUp / PgDn move a page. Ctrl+Up / Ctrl+Down scroll without moving the cursor.
+- Ctrl+F find (finds as you type, every match is marked), Enter or F3 = next, Shift+Enter or Shift+F3 = previous; Aa = match case, W = whole words. Ctrl+H find and replace (Replace, Replace all). Ctrl+G go to a line number. Esc closes the bar.
+- Ctrl+L select the line (again: the next one too). Ctrl+D duplicate the line (or the selected lines). Ctrl+Shift+K delete the line(s). Alt+Up / Alt+Down move the line(s) up or down.
+- Ctrl+/ comments the line(s) out with # (again: back in).
+- Tab indents, Shift+Tab outdents - the selected lines when several are selected. Ctrl+] / Ctrl+[ do the same.
+- Ctrl+Shift+U makes the selection UPPER CASE, Ctrl+U lower case.
+- Ctrl+C or Ctrl+X with nothing selected copies or cuts the whole line.
+- Insert switches between inserting and typing over (OVR in the status line).
+- Alt+Z or the Wrap button: word wrap. Long lines continue on the next row (a - in the margin). The Dialogue editor starts with it on.
+- Ctrl+E, the Wide button in the header or the status line: Wide - the editor takes the whole window (the file list and the help panel step aside). Narrow or Ctrl+E brings them back. Save and Check are in the header while it is wide.
+- Selecting a whole word (double-click) outlines its other copies; a bracket next to the cursor and its partner are boxed.
+- The status line shows the line and column, how much is selected, and what Check says about the line the cursor is on.
+
+Check while you type: a moment after you stop typing, the tab's Check runs on
+its own. Lines with a problem get a dot in the margin (red = error, orange =
+warning) and a mark on the scroll bar; point at the dot, or put the cursor on
+the line, to read it. The Check button still lists everything.
+
+Scripts only:
+- Enter keeps the indent and adds one after if, elif, else, while and for. Typing end, else or elif on its own line steps it back to its block.
+- After two letters of a word, a list offers commands, actions, built-in values, functions and words already in the script. Up / Down choose, Tab takes it, Esc closes it (Enter still starts a new line).
 
 == editor.check | Check all (whole-campaign check)
 see: maps.check, dlg.check, tab.flags, flags.status, editor.usedby
@@ -770,7 +819,7 @@ dungeon entry only matters again if you delete the file. All shipped dungeons
 are baked.
 
 == tab.dialogue | Dialogue tab
-see: dlg.nodes, dlg.options, dlg.actions, dlg.camp, dlg.check, editor.usedby, concepts.conditions
+see: edit.text, dlg.nodes, dlg.options, dlg.actions, dlg.camp, dlg.check, editor.usedby, concepts.conditions
 
 The Dialogue tab is a text editor for dialogue files (dialogue/<id>.txt) with
 a syntax cheat-sheet on the right. Left: the file list, New, Save, Delete,
@@ -6343,7 +6392,7 @@ The generated dungeon styles that scatter this node: style[:weight[:count]], com
   styles=mine:2:2-4,cave
 
 == tab.scripts | Scripts tab
-see: scripting.commands, scripting.values, scripting.actions, scripting.hooks, scripting.coachman, editor.usedby
+see: edit.text, scripting.commands, scripting.values, scripting.actions, scripting.hooks, scripting.coachman, editor.usedby
 
 The Scripts tab edits scripts: small programs in scripts/<id>.txt that the
 game runs. A script can talk with answers, work out prices and distances,

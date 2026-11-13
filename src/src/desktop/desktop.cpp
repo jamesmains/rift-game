@@ -535,7 +535,7 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
         if (in.pressed[K_TAB]) w.sub = w.sub == 0 ? 1 : 0;
         if (w.sub == 0 || w.sub == 2) { // name field focused (sub 2 = the on-screen keyboard is open too)
             for (char c : in.typed) if (w.text.size() < 14 && (isalnum((unsigned char)c) || c == ' ' || c == '-' || c == '\'')) w.text += c;
-            if (in.pressed[K_BACKSPACE] && !w.text.empty()) w.text.pop_back();
+            if (in.pressed[K_BACKSPACE] && !w.text.empty()) { if (in.ctrl()) { size_t n = w.text.size(); while (n > 0 && w.text[n - 1] == ' ') n--; while (n > 0 && w.text[n - 1] != ' ') n--; w.text.resize(n); } else w.text.pop_back(); }   // 1.1.11: Ctrl+Backspace = a word
         }
         int nClasses = (int)ctx.gd->classOrder.size();
         if (w.sub == 1 && !in.gamepadActive) {

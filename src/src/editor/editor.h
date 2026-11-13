@@ -74,18 +74,33 @@ struct EdMap {
     void hset(const std::string& k, const std::string& v) { for (auto& p : header) if (p.first == k) { p.second = v; return; } header.push_back({k, v}); }
 };
 
-// Simple multi-line text editor state (dialogue files).
+// Multi-line text editor state (dialogue and script files, the big box). 1.1.11 (#35): Notepad-style editing, see
+// editor_text.cpp (Editor::textEditWidget) for the keys.
 struct TextEdit {
     std::vector<std::string> lines{""};
-    int cx = 0, cy = 0, scroll = 0; bool dirty = false; std::string path;
+    int cx = 0, cy = 0, scroll = 0; bool dirty = false; std::string path;   // scroll = first line shown
     int ax = -1, ay = -1;                       // selection anchor (-1 = none)
-    std::vector<std::vector<std::string>> undo; // snapshots
+    struct Snap { std::vector<std::string> lines; int cx = 0, cy = 0; };
+    std::vector<Snap> undo, redo; int lastKind = -1;   // a run of typing / deleting is one undo step (lastKind)
+    int scrollSub = 0, hscroll = 0, goalX = -1;        // wrapped: row inside line 'scroll'; px scroll without wrap; the x Up/Down keep
+    bool wrap = false, wide = false, single = false, overwrite = false;   // single = the big box (one line, Enter is OK)
+    bool refocus = false;                       // Wide changed the layout (widget ids move): take the focus back next frame
+    bool dragging = false, dragWord = false, dragLine = false; int dwx0 = 0, dwx1 = 0, dwy = 0;
+    int bar = 0;                                // 1 find, 2 find + replace, 3 go to line
+    std::string findText, replText, gotoText, findLast; bool findCase = false, findWord = false, barFocus = false;
+    std::map<int, std::pair<bool, std::string>> marks;   // line -> (error, message): the live check's gutter dots
+    size_t checkedHash = 0; float editT = -10;           // live check: the text last checked, when it last changed
+    std::vector<std::string> ac; int acSel = 0, acStart = 0; bool acOpen = false;   // script word suggestions
     bool hasSel() const { return ay >= 0 && !(ax == cx && ay == cy); }
     void selRange(int& x0, int& y0, int& x1, int& y1) const { if (ay < cy || (ay == cy && ax <= cx)) { x0 = ax; y0 = ay; x1 = cx; y1 = cy; } else { x0 = cx; y0 = cy; x1 = ax; y1 = ay; } }
     std::string selText() const;
     void deleteSel();
     void insert(const std::string& t);
-    void snapshot() { undo.push_back(lines); if (undo.size() > 60) undo.erase(undo.begin()); }
+    void snapshot(int kind = 0) { if (kind > 0 && kind == lastKind && !undo.empty()) return; undo.push_back({lines, cx, cy}); if (undo.size() > 400) undo.erase(undo.begin()); redo.clear(); lastKind = kind; }
+    bool undoStep() { if (undo.empty()) return false; redo.push_back({lines, cx, cy}); lines = undo.back().lines; cx = undo.back().cx; cy = undo.back().cy; undo.pop_back(); fixCaret(); ay = -1; dirty = true; lastKind = -1; return true; }
+    bool redoStep() { if (redo.empty()) return false; undo.push_back({lines, cx, cy}); lines = redo.back().lines; cx = redo.back().cx; cy = redo.back().cy; redo.pop_back(); fixCaret(); ay = -1; dirty = true; lastKind = -1; return true; }
+    void clearKeepView() { bool wr = wrap, wd = wide; *this = TextEdit(); wrap = wr; wide = wd; }   // no file open, same wrap / wide
+    void fixCaret() { if (lines.empty()) lines.push_back(""); cy = cy < 0 ? 0 : cy >= (int)lines.size() ? (int)lines.size() - 1 : cy; if (cx < 0) cx = 0; if (cx > (int)lines[cy].size()) cx = (int)lines[cy].size(); }
     void load(const std::string& p);
     bool save();
     std::string text() const;
@@ -116,7 +131,7 @@ private:
     std::string toast; float toastT = 0;
     void say(const std::string& s) { toast = s; toastT = 3; }
     // ---- popups ----
-    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT } pop = P_NONE;
+    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT, P_BIGTEXT } pop = P_NONE;
     std::function<void(Tile)> popTile; std::function<void(int)> popList; std::function<void()> popYes; std::function<void(const std::string&)> popText;
     std::vector<std::string> popItems; std::string popTitle, popValue; int popSel = 0, popScroll = 0; int tileScrollX = 0, tileScrollY = 0; Tile popCur;
     int frameNo = 0, popOpenedFrame = -1;   // a popup ignores the click that opened it
@@ -208,7 +223,12 @@ private:
     std::vector<std::string> dlgFiles; int dlgSel = -1, dlgScroll = 0; TextEdit te;
     std::string dlgFilter, dlgFilterLast; size_t dlgFilterN = 0; std::set<std::string> dlgFilterHits;   // 1.1.6: dialogue search (names + text)
     void drawDialogue(InputState& in);
-    void textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in, int syntax = 0);   // syntax 1 = script colours
+    void textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in, int syntax = 0);   // syntax 1 = script colours (editor_text.cpp)
+    void liveCheck(TextEdit& t, int syntax);   // 1.1.11: runs the tab's Check a moment after the text changes, for the gutter dots
+    std::vector<std::string> scriptWords(const TextEdit& t, const std::string& prefix);   // autocomplete candidates
+    TextEdit bigTE; int bigTarget = -1, bigMax = 200; bool bigRefocus = false;   // 1.1.11: "Edit in a big box" for a single-line field
+    void openBigText(int fieldId, const std::string& value, int maxLen);
+    void drawBigText(InputState& in, bool& close);
     // ---- 1.1.10 (#34) scripts (editor_scripts.cpp): data/scripts/<id>.txt ----
     std::vector<std::string> scriptFiles; int scriptSel = -1, scriptScroll = 0; TextEdit ste; std::string scriptFilter;
     void drawScripts(InputState& in);
@@ -285,6 +305,15 @@ public:
     void genSearch(int g, const std::string& q, const std::string& key = "", const std::string& val = "") { gens[g].filter = q; gens[g].filterKey = key; gens[g].filterVal = val; }
     bool genSave(int g) { return gens[g].save(); }
     void closePopup() { pop = P_NONE; ui.modal = false; ui.blur(); }
+    // 1.1.11 headless tests: the text editors ("te" dialogue, "ste" scripts, "big" the big box); what 0 text, 1 selection, 2 caret, 3 state
+    std::string edText(const std::string& which, int what) {
+        TextEdit& t = which == "ste" ? ste : which == "big" ? bigTE : te;
+        if (what == 1) return t.selText();
+        if (what == 2) return std::to_string(t.cy + 1) + "," + std::to_string(t.cx + 1);
+        if (what == 3) return "wrap=" + std::to_string(t.wrap) + " wide=" + std::to_string(t.wide) + " bar=" + std::to_string(t.bar) + " ac=" + std::to_string(t.acOpen ? (int)t.ac.size() : 0) + " pop=" + std::to_string((int)pop) + " marks=" + std::to_string(t.marks.size()) + " menu=" + std::to_string(ui.menuOpen) + " focus=" + std::to_string(ui.focus) + " ids=" + std::to_string(ui.idCounter);
+        std::string o; for (size_t i = 0; i < t.lines.size(); i++) o += (i ? "|" : "") + t.lines[i]; return o;
+    }
+    std::string genValue(int g, int sec, const std::string& key) const { if (g < 0 || g >= (int)gens.size() || sec < 0 || sec >= (int)gens[g].secs.size()) return ""; return gens[g].secs[sec].get(key); }
 private:
     bool importBtn(int x, int y, int kind, int gen = -1);   // the small "Import" button in a list header
     void listHeader(int x, int y, int w, const std::string& title, int kind, int gen = -1);   // header + Import button (title clipped before it)

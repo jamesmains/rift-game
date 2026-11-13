@@ -174,7 +174,6 @@ std::string EdMap::toText() const {
 }
 
 // ============================================================ TextEdit
-void TextEdit::load(const std::string& p) { path = p; lines.clear(); std::string t; readFile(p, t); for (auto& l : split(t, '\n')) { std::string s = l; while (!s.empty() && s.back() == '\r') s.pop_back(); lines.push_back(s); } if (lines.empty()) lines.push_back(""); cx = cy = scroll = 0; dirty = false; }
 std::string TextEdit::text() const { std::string o; for (size_t i = 0; i < lines.size(); i++) { o += lines[i]; if (i + 1 < lines.size()) o += "\n"; } return o + "\n"; }
 bool TextEdit::save() { if (!writeFile(path, text())) return false; dirty = false; return true; }
 std::string TextEdit::selText() const {
@@ -201,6 +200,7 @@ void TextEdit::insert(const std::string& t) {
 // ============================================================ Editor
 bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, PlatformRequests* r) {
     ts = t; font = f; gd = g; assetDir = assets; ui.req = r; baseRoot = dataRoot = assetDir + "/data";
+    te.wrap = true;   // 1.1.11: dialogue text= lines are long - wrapped by default (Alt+Z / the Wrap button)
     auto mk = [&](const std::string& file, const std::string& title, const std::string& section, const std::string& listKey, std::vector<std::string> tmpl) { GenericEditor ge; ge.path = dataRoot + "/" + file; ge.title = title; ge.sectionName = section; ge.listKey = listKey; ge.templateKeys = tmpl; gens.push_back(ge); };
     mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique"});
     mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound"});
@@ -250,7 +250,7 @@ void Editor::setCampaign(const std::string& id) {
         g.replaceWhole = file == "overworld.txt";
         g.load(); g.sel = -1; g.scroll = 0; g.filter.clear(); g.filterKey.clear(); g.filterVal.clear();
     }
-    mapLoaded = false; mapDirty = false; te = TextEdit(); mapFilter.clear(); dlgFilter.clear(); refreshFiles(); worldNeedsGen = true; mapListScroll = 0; tab = 0;
+    mapLoaded = false; mapDirty = false; te.clearKeepView(); mapFilter.clear(); dlgFilter.clear(); refreshFiles(); worldNeedsGen = true; mapListScroll = 0; tab = 0;
     loadCampaignForm(); loadPlayState(); loadFlagDocs(); flagIndexDirty = true; mapScan.clear(); flagSelName.clear(); questPreview.clear();
     // open the campaign's own starting map (its own files are listed first)
     std::string first = c->startMap; if (std::find(mapFiles.begin(), mapFiles.end(), first) == mapFiles.end() && !mapFiles.empty()) first = mapFiles[0];
@@ -293,6 +293,7 @@ void Editor::drawPopup(InputState& in) {
     ui.modal = false; // widgets inside the popup may use the mouse
     if (popOpenedFrame == frameNo) { in.eatMouse(); in.eatKeys(); } // the click/key that opened us must not act inside
     bool close = false;
+    ui.bigAllowed = false;
     if (pop == P_TILE) {
         int x = 20, y = 30, w = W - 40, h = H - 60;
         ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
@@ -342,6 +343,8 @@ void Editor::drawPopup(InputState& in) {
         drawReport(in, close);
     } else if (pop == P_IMPORT) {
         drawImport(in, close);
+    } else if (pop == P_BIGTEXT) {
+        drawBigText(in, close);
     } else if (pop == P_TEXT) {
         int w = 360, h = 100, x = (W - w) / 2, y = (H - h) / 2;
         ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
@@ -351,8 +354,9 @@ void Editor::drawPopup(InputState& in) {
         if (ui.button(x + w - 90, y + h - 30, 70, 22, "Cancel") || in.pressed[K_ESCAPE]) close = true;
     }
     if (close && popOpenedFrame == frameNo) { ui.modal = true; in.eatMouse(); in.eatKeys(); }   // the callback opened the next popup (e.g. New campaign -> name prompt): keep that one
-    else if (close) { pop = P_NONE; ui.modal = false; ui.blur(); in.eatMouse(); in.eatKeys(); }
+    else if (close) { pop = P_NONE; ui.modal = false; ui.blur(); in.eatMouse(); in.eatKeys(); if (bigRefocus) { ui.focus = bigTarget; bigRefocus = false; } }
     else ui.modal = true;
+    ui.bigAllowed = true;
 }
 
 // ---------------- main ----------------
@@ -424,7 +428,10 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     // status bar
     cv.fillRect(0, H - BOTTOM, W, BOTTOM, PANEL);
     ui.text(6, H - BOTTOM + 3, toastT > 0 ? toast : "Editor - Tab/Shift+Tab move between fields, Enter/Esc leave a field, Ctrl+S saves the current tab, wheel over a number nudges it (shift = x10).", toastT > 0 ? ACCENT2 : DIM);
+    // 1.1.11 (#35): a single-line field asked to be edited in the big box
+    if (ui.bigReqId >= 0) { if (pop == P_NONE) openBigText(ui.bigReqId, ui.bigReqValue, ui.bigReqMax); ui.bigReqId = -1; }
     drawPopup(in);
+    ui.drawMenu();
     ui.drawTooltip();
     // cursor
     if (in.mouseInWindow) { int mx = in.mouseX, my = in.mouseY; static const char* cur[] = {"X........", "XX.......", "XOX......", "XOOX.....", "XOOOX....", "XOOOOX...", "XOOOOOX..", "XOOOOOOX.", "XOOOOXXXX", "XOXXOX...", "XX.XOOX..", "...XOOX..", "....XX..."}; for (int y = 0; y < 13; y++) for (int x = 0; x < 9; x++) { char ch = cur[y][x]; if (ch == 'X') cv.put(mx + x, my + y, C::Black); else if (ch == 'O') cv.put(mx + x, my + y, C::White); } }
@@ -1415,77 +1422,22 @@ void Editor::drawWorld(InputState& in) {
 }
 
 // ---------------- dialogue ----------------
-void Editor::textEditWidget(TextEdit& t, int x, int y, int w, int h, InputState& in, int syntax) {
-    int id = ui.nextId();
-    bool f = ui.focus == id;
-    ui.cv->fillRect(x, y, w, h, FIELD); ui.cv->rect(x, y, w, h, f ? ACCENT : BORDER);
-    int rowH = 13, rows = (h - 4) / rowH, gutter = 34;
-    static bool dragging = false;
-    int hoff = 0; if (f) { int cpx = font->width(t.lines[t.cy].substr(0, t.cx)); if (cpx > w - gutter - 20) hoff = cpx - (w - gutter - 20); }
-    auto posFromMouse = [&](int& ox, int& oy) { int ly = (in.mouseY - y - 2) / rowH + t.scroll; oy = clampi(ly, 0, (int)t.lines.size() - 1); int best = 0; for (size_t i = 0; i <= t.lines[oy].size(); i++) if (x + gutter - hoff + font->width(t.lines[oy].substr(0, i)) - 2 <= in.mouseX) best = (int)i; ox = best; };
-    if (ui.hover(x, y, w, h)) {
-        if (in.wheel) t.scroll -= in.wheel * 3;
-        if (in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; ui.focus = id; f = true; int ox, oy; posFromMouse(ox, oy); if (in.shift()) { if (t.ay < 0) { t.ax = t.cx; t.ay = t.cy; } } else { t.ax = ox; t.ay = oy; } t.cx = ox; t.cy = oy; dragging = true; }
-    } else if (in.mousePressed[0] && f && !ui.modal) { ui.focus = -1; f = false; }
-    if (dragging) { if (!in.mouseDown[0]) dragging = false; else if (in.mouseDX || in.mouseDY) { int ox, oy; posFromMouse(ox, oy); t.cx = ox; t.cy = oy; } }
-    if (f && !ui.modal) {
-        auto edit = [&]() { t.snapshot(); };
-        if (in.ctrl()) {
-            if (in.pressed[K_A]) { t.ax = 0; t.ay = 0; t.cy = (int)t.lines.size() - 1; t.cx = (int)t.lines[t.cy].size(); }
-            if (in.pressed[K_C] && t.hasSel()) ui.copyText(t.selText());
-            if (in.pressed[K_X] && t.hasSel()) { ui.copyText(t.selText()); edit(); t.deleteSel(); }
-            if (in.pressed[K_V]) { std::string p = ui.pasteText(); if (!p.empty()) { edit(); t.deleteSel(); t.insert(p); } }
-            if (in.pressed[K_Z] && !t.undo.empty()) { t.lines = t.undo.back(); t.undo.pop_back(); t.cy = clampi(t.cy, 0, (int)t.lines.size() - 1); t.cx = std::min(t.cx, (int)t.lines[t.cy].size()); t.ay = -1; t.dirty = true; }
-            if (in.pressed[K_S]) { if (t.save()) { changed = true; say("Saved " + t.path); } }
-            if (in.pressed[K_D]) { edit(); t.lines.insert(t.lines.begin() + t.cy + 1, t.lines[t.cy]); t.cy++; t.dirty = true; }
-        } else {
-            bool typedAny = false; for (char c : in.typed) if (c >= 32 && c < 127) typedAny = true;
-            if (typedAny) { edit(); t.deleteSel(); for (char c : in.typed) if (c >= 32 && c < 127) { t.lines[t.cy].insert(t.lines[t.cy].begin() + t.cx, c); t.cx++; } t.dirty = true; }
-            if (in.pressed[K_TAB]) { edit(); t.deleteSel(); t.lines[t.cy].insert(t.cx, "  "); t.cx += 2; t.dirty = true; }
-            if (in.pressed[K_ENTER]) { edit(); t.deleteSel(); std::string& L = t.lines[t.cy]; std::string rest = L.substr(t.cx); L = L.substr(0, t.cx); t.lines.insert(t.lines.begin() + t.cy + 1, rest); t.cy++; t.cx = 0; t.dirty = true; }
-            if (in.pressed[K_BACKSPACE]) { edit(); if (t.hasSel()) t.deleteSel(); else { std::string& L = t.lines[t.cy]; if (t.cx > 0) { L.erase(t.cx - 1, 1); t.cx--; t.dirty = true; } else if (t.cy > 0) { int nl = (int)t.lines[t.cy - 1].size(); t.lines[t.cy - 1] += L; t.lines.erase(t.lines.begin() + t.cy); t.cy--; t.cx = nl; t.dirty = true; } } }
-            if (in.pressed[K_DELETE]) { edit(); if (t.hasSel()) t.deleteSel(); else { std::string& L2 = t.lines[t.cy]; if (t.cx < (int)L2.size()) { L2.erase(t.cx, 1); t.dirty = true; } else if (t.cy + 1 < (int)t.lines.size()) { L2 += t.lines[t.cy + 1]; t.lines.erase(t.lines.begin() + t.cy + 1); t.dirty = true; } } }
-            auto startMove = [&]() { if (in.shift()) { if (t.ay < 0) { t.ax = t.cx; t.ay = t.cy; } } else t.ay = -1; };
-            bool moved = in.pressed[K_LEFT] || in.pressed[K_RIGHT] || in.pressed[K_UP] || in.pressed[K_DOWN] || in.pressed[K_HOME] || in.pressed[K_END] || in.pressed[K_PAGEUP] || in.pressed[K_PAGEDOWN];
-            if (moved) startMove();
-            if (in.pressed[K_LEFT]) { if (t.cx > 0) t.cx--; else if (t.cy > 0) { t.cy--; t.cx = (int)t.lines[t.cy].size(); } }
-            if (in.pressed[K_RIGHT]) { if (t.cx < (int)t.lines[t.cy].size()) t.cx++; else if (t.cy + 1 < (int)t.lines.size()) { t.cy++; t.cx = 0; } }
-            if (in.pressed[K_UP] && t.cy > 0) t.cy--; if (in.pressed[K_DOWN] && t.cy + 1 < (int)t.lines.size()) t.cy++;
-            if (in.pressed[K_PAGEUP]) t.cy = std::max(0, t.cy - rows); if (in.pressed[K_PAGEDOWN]) t.cy = std::min((int)t.lines.size() - 1, t.cy + rows);
-            if (in.pressed[K_HOME]) t.cx = 0; if (in.pressed[K_END]) t.cx = (int)t.lines[t.cy].size();
-            if (in.pressed[K_ESCAPE]) { if (t.hasSel()) t.ay = -1; else ui.focus = -1; }
-        }
-        t.cy = clampi(t.cy, 0, (int)t.lines.size() - 1); t.cx = std::min(t.cx, (int)t.lines[t.cy].size());
-        if (t.cy < t.scroll) t.scroll = t.cy; if (t.cy >= t.scroll + rows) t.scroll = t.cy - rows + 1;
-    }
-    t.scroll = clampi(t.scroll, 0, std::max(0, (int)t.lines.size() - rows));
-    hoff = 0; if (f) { int cpx = font->width(t.lines[t.cy].substr(0, t.cx)); if (cpx > w - gutter - 20) hoff = cpx - (w - gutter - 20); }
-    int sx0 = 0, sy0 = -1, sx1 = 0, sy1 = -1; if (t.hasSel()) t.selRange(sx0, sy0, sx1, sy1);
-    ui.cv->setClip({x + 1, y + 1, w - 2, h - 2});
-    for (int r = 0; r < rows && t.scroll + r < (int)t.lines.size(); r++) {
-        int i = t.scroll + r; int ry = y + 2 + r * rowH; const std::string& L = t.lines[i];
-        if (i == t.cy && f) ui.cv->fillRect(x + 1, ry - 1, w - 2, rowH, RGB(40, 44, 56));
-        Color8 col = TEXT; std::string tl = trim(L);
-        if (syntax == 1) {   // 1.1.10 scripts: control words, talk, variables, actions
-            std::string w0; for (char ch : tl) { if (isalnum((unsigned char)ch) || ch == '_') w0 += (char)tolower((unsigned char)ch); else break; }
-            static const std::set<std::string> ctl = {"if", "elif", "elseif", "else", "end", "endif", "endwhile", "endfor", "while", "for", "break", "continue", "stop", "return", "call", "start", "wait"};
-            static const std::set<std::string> talk = {"say", "speaker", "option", "ask", "pick"};
-            if (!tl.empty() && tl[0] == '#') col = DIM; else if (ctl.count(w0)) col = ACCENT2; else if (talk.count(w0)) col = RGB(150, 220, 150); else if (w0 == "let" || w0 == "keep") col = ACCENT; else if (isScriptAction(w0)) col = C::White;
-        }
-        else if (!tl.empty() && tl[0] == '[') col = ACCENT2; else if (!tl.empty() && tl[0] == '#') col = DIM; else if (startsWith(tl, "option=")) col = RGB(150, 220, 150); else if (startsWith(tl, "text=")) col = C::White; else if (startsWith(tl, "speaker=")) col = ACCENT;
-        ui.cv->setClip({x + gutter, y + 1, w - gutter - 1, h - 2});
-        if (sy0 >= 0 && i >= sy0 && i <= sy1) { int a = i == sy0 ? sx0 : 0, b = i == sy1 ? sx1 : (int)L.size(); int xa = x + gutter - hoff + font->width(L.substr(0, a)), xb = x + gutter - hoff + font->width(L.substr(0, b)) + (i != sy1 ? 6 : 0); ui.cv->fillRect(xa, ry - 1, std::max(2, xb - xa), rowH, SEL); }
-        font->draw(*ui.cv, *ts, x + gutter - hoff, ry, L, col);
-        if (i == t.cy && f && ((int)(ui.time * 2) % 2 == 0)) ui.cv->fillRect(x + gutter - hoff + font->width(L.substr(0, t.cx)), ry, 1, 12, C::White);
-        ui.cv->setClip({x + 1, y + 1, w - 2, h - 2});
-        ui.cv->fillRect(x + 1, ry - 1, gutter - 3, rowH, i == t.cy && f ? RGB(40, 44, 56) : FIELD);
-        font->draw(*ui.cv, *ts, x + 4, ry, std::to_string(i + 1), DIM);
-    }
-    ui.cv->resetClip();
-    { const char* hint = "drag/shift: select  ctrl+A/C/X/V  ctrl+Z undo  ctrl+S save  ctrl+D dup line"; ui.text(std::max(x + 6, x + w - 6 - font->width(hint)), y + h - 16, hint, Color8{255, 255, 255, 110}); }
-}
 void Editor::drawDialogue(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;
+    liveCheck(te, 0);   // 1.1.11: gutter dots for what Check finds, a moment after each change
+    if (te.wide && !te.path.empty()) {   // 1.1.11 (#35): Wide - the open file across the whole window
+        int ex = 4, ew = W - 8;
+        ui.panel(ex, y, ew, h); ui.header(ex, y, ew, fs::path(te.path).filename().string() + (te.dirty ? " *" : "") + "   (Wide: Ctrl+E or Narrow goes back)");
+        int bx = ex + ew - 4;
+        bx -= 58; if (ui.button(bx, y + 1, 56, 14, "Narrow", true, true)) { te.wide = false; ui.blur(); }
+        bx -= 48; if (ui.button(bx, y + 1, 44, 14, "Graph", true, dlgGraphMode)) { dlgGraphMode = true; ui.blur(); }
+        bx -= 40; if (ui.button(bx, y + 1, 36, 14, "Text", true, !dlgGraphMode)) { dlgGraphMode = false; ui.blur(); }
+        bx -= 54; if (ui.button(bx, y + 1, 50, 14, "Check", true, false, ACCENT2)) { lint = lintDialogue(te.text(), fs::path(te.path).stem().string()); lintShown = true; lintScroll = 0; lintTitle = fs::path(te.path).stem().string(); te.checkedHash = 0; te.editT = -10; liveCheck(te, 0); say(lint.empty() ? "Check: no problems found." : fmt("Check: %d finding(s) - dots in the margin, Narrow for the list.", (int)lint.size())); }
+        bx -= 50; if (ui.button(bx, y + 1, 46, 14, "Save", te.dirty, false, OK)) { if (te.save()) { changed = true; say("Saved " + te.path); } }
+        if (dlgGraphMode) drawDialogueGraph(ex + 2, y + 18, ew - 4, h - 20, in);
+        else { if (dlgGFocusText) { ui.focus = ui.idCounter + 1; dlgGFocusText = false; } textEditWidget(te, ex + 2, y + 18, ew - 4, h - 20, in); }
+        return;
+    }
     ui.panel(x, y, lw, h); listHeader(x, y, lw, fmt("Dialogue (%d)", (int)dlgFiles.size()), IMP_DLG); helpBtn(x + lw - 16, y + 1, "tab.dialogue");
     ui.searchField(x + 4, y + 20, lw - 8, dlgFilter, "search names and text...");
     if (dlgFilter != dlgFilterLast || dlgFilterN != dlgFiles.size()) { dlgFilterLast = dlgFilter; dlgFilterN = dlgFiles.size(); dlgFilterHits.clear(); std::string t; if (!dlgFilter.empty()) for (auto& f : dlgFiles) if (readFile(readPath("dialogue/" + f + ".txt"), t) && edMatch(f + " " + t, dlgFilter)) dlgFilterHits.insert(f); }   // searches the file names and what is said in them
@@ -1499,7 +1451,7 @@ void Editor::drawDialogue(InputState& in) {
     int by = y + h - 54;
     if (ui.button(x + 4, by, 50, 20, "New")) openTextPrompt("New dialogue id", "npc_name", [this](const std::string& nm) { std::string p = dataRoot + "/dialogue/" + nm + ".txt"; if (!fileExists(p)) writeFile(p, "[start]\nspeaker=" + nm + "\ntext=Hello, $hero.\noption=Goodbye.|end\n"); refreshFiles(); te.load(p); for (size_t i = 0; i < dlgFiles.size(); i++) if (dlgFiles[i] == nm) dlgSel = (int)i; });
     if (ui.button(x + 60, by, 50, 20, "Save", te.dirty && !te.path.empty(), false, OK)) { if (te.save()) { changed = true; say("Saved " + te.path); } }
-    if (ui.button(x + 116, by, 60, 20, "Delete", !te.path.empty(), false, DANGER)) openConfirm("Delete this dialogue file?", [this]() { remove(te.path.c_str()); te = TextEdit(); refreshFiles(); dlgSel = -1; });
+    if (ui.button(x + 116, by, 60, 20, "Delete", !te.path.empty(), false, DANGER)) openConfirm("Delete this dialogue file?", [this]() { remove(te.path.c_str()); te.clearKeepView(); refreshFiles(); dlgSel = -1; });
     if (ui.button(x + 4, by + 24, 60, 20, "Check", !te.path.empty(), false, ACCENT2)) { lint = lintDialogue(te.text(), fs::path(te.path).stem().string()); lintShown = true; lintScroll = 0; lintTitle = fs::path(te.path).stem().string(); say(lint.empty() ? "Check: no problems found." : fmt("Check: %d finding(s).", (int)lint.size())); }
     if (ui.button(x + 68, by + 24, 76, 20, "Check all", true, false, ACCENT2)) {
         lint.clear(); int files = 0; std::string txt;
@@ -1513,6 +1465,7 @@ void Editor::drawDialogue(InputState& in) {
     ui.panel(ex, y, ew, h); ui.header(ex, y, ew, te.path.empty() ? "no file open" : fs::path(te.path).filename().string() + (te.dirty ? " *" : ""));
     // Text | Graph toggle (the graph is a view of te.lines; editor_graph.cpp)
     helpBtn(ex + ew - 100, y + 1, "dlg.graph");
+    if (!te.path.empty()) { if (ui.button(ex + ew - 148, y + 1, 44, 14, "Wide")) { te.wide = true; ui.blur(); } if (ui.hover(ex + ew - 148, y + 1, 44, 14)) ui.tip("Make the editor as wide as the window (Ctrl+E)"); }
     if (ui.button(ex + ew - 84, y + 1, 36, 14, "Text", true, !dlgGraphMode)) { dlgGraphMode = false; ui.blur(); }
     if (ui.button(ex + ew - 46, y + 1, 44, 14, "Graph", true, dlgGraphMode)) { dlgGraphMode = true; ui.blur(); }
     if (ui.hover(ex + ew - 84, y + 1, 82, 14)) ui.tip("Edit as text, or see the file as a node graph");

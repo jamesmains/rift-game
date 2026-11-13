@@ -86,7 +86,8 @@ void Game::updateConsole(InputState& in, float dt) {
     (void)dt;
     if (actP(in, A_CONSOLE) || in.pressed[K_ESCAPE]) { popMode(); in.eatKeys(); return; }
     for (char ch : in.typed) if (ch >= 32 && ch < 127 && ch != '`' && ch != '~' && consoleBuf.size() < 120) consoleBuf += ch;
-    if (in.pressed[K_BACKSPACE] && !consoleBuf.empty()) consoleBuf.pop_back();
+    if (in.pressed[K_BACKSPACE] && !consoleBuf.empty()) { if (in.ctrl()) { size_t n = consoleBuf.size(); while (n > 0 && consoleBuf[n - 1] == ' ') n--; while (n > 0 && consoleBuf[n - 1] != ' ') n--; consoleBuf.resize(n); } else consoleBuf.pop_back(); }   // 1.1.11: Ctrl+Backspace = a word
+    if (in.ctrl() && in.pressed[K_V]) for (char ch : in.clipboard) if (ch >= 32 && ch < 127 && consoleBuf.size() < 120) consoleBuf += ch;
     if (in.pressed[K_UP] && !consoleHist.empty()) { if (consoleHistPos < 0) consoleHistPos = (int)consoleHist.size() - 1; else consoleHistPos = std::max(0, consoleHistPos - 1); consoleBuf = consoleHist[consoleHistPos]; }
     if (in.pressed[K_DOWN] && !consoleHist.empty()) { if (consoleHistPos >= 0 && consoleHistPos < (int)consoleHist.size() - 1) { consoleHistPos++; consoleBuf = consoleHist[consoleHistPos]; } else { consoleHistPos = -1; consoleBuf.clear(); } }
     if (in.pressed[K_ENTER]) { std::string c = consoleBuf; consoleBuf.clear(); runConsole(c); }

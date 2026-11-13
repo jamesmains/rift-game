@@ -28,6 +28,19 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.11 text boxes like Notepad
+
+* **Every Editor text box edits like Notepad**: double-click selects a word, triple-click the line, Ctrl+arrows jump
+  by word (Ctrl+Shift+arrows select by word), Ctrl+Backspace / Ctrl+Delete delete a word, Ctrl+Z / Ctrl+Y undo and
+  redo, and a right-click menu (Cut, Copy, Paste, Select word / line / all...).
+* **Long one-line fields open in a big box** (Ctrl+E, the ... button, or the right-click menu) where the text wraps.
+* **Dialogue and Scripts editors**: word wrap (on for dialogue), find as you type with match case / whole words,
+  replace and replace all, go to line, move / duplicate / delete / comment / indent lines, UPPER / lower case, smart
+  Home, redo, a status line (line, column, selection), and **Wide** (Ctrl+E): the editor across the whole window.
+* **Script editor**: indents follow `if` / `while` / `for` blocks, `end` / `else` step back by themselves, word
+  suggestions after two letters (Tab takes one), matching brackets boxed, and Check runs while you type - problem
+  lines get a dot in the margin with the message in the status line.
+
 ## 1.1.10 scripting
 
 * **Scripts**: small programs in `data/scripts/<id>.txt` that the game runs - talk with answers, prices and distances
@@ -540,6 +553,8 @@ Load/Save icons still work when no game is running.
 Double-click **Editor** on the desktop. It runs at 960x720 and edits the files under `assets/data`:
 
 * **Scripts** tab (1.1.10) - `scripts/<id>.txt` in a text editor with Check, a cheat sheet and Used by (see Modding).
+* **Text boxes** (1.1.11) - Notepad keys everywhere, a right-click menu, Ctrl+E edits a long field in a big box;
+  the Dialogue and Scripts editors add word wrap, find / replace, go to line, line tools and Wide (guide: edit.text).
 * **NPCs** tab (1.1.9) - every NPC once (`npcs.txt`): a Look card, pickers for each field, and a box with every map
   it stands on (click to open it there), what talking to it does, how a companion joins and its problems. **Place on
   map...** and **Rename id...** (follows into every map and `join=`). The Maps tab's Objects tool places NPCs from a list.

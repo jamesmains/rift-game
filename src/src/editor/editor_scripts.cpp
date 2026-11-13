@@ -62,6 +62,18 @@ std::vector<Editor::LintItem> Editor::lintScript(const std::string& text, const 
 
 void Editor::drawScripts(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 200;
+    liveCheck(ste, 1);   // 1.1.11: errors show as dots in the margin while you type
+    if (ste.wide && !ste.path.empty()) {   // 1.1.11 (#35): Wide - the open script across the whole window
+        int ex = 4, ew = W - 8;
+        ui.panel(ex, y, ew, h); ui.header(ex, y, ew, fs::path(ste.path).filename().string() + (ste.dirty ? " *" : "") + "   (Wide: Ctrl+E or Narrow goes back)");
+        int bx = ex + ew - 4;
+        bx -= 58; if (ui.button(bx, y + 1, 56, 14, "Narrow", true, true)) { ste.wide = false; ui.blur(); }
+        std::string cid = fs::path(ste.path).stem().string();
+        bx -= 54; if (ui.button(bx, y + 1, 50, 14, "Check", true, false, ACCENT2)) { sLint = lintScript(ste.text(), cid); sLintShown = true; sLintScroll = 0; sLintTitle = cid; ste.checkedHash = 0; ste.editT = -10; liveCheck(ste, 1); say(sLint.empty() ? "Check: no problems found." : fmt("Check: %d finding(s) - dots in the margin, Narrow for the list.", (int)sLint.size())); }
+        bx -= 50; if (ui.button(bx, y + 1, 46, 14, "Save", ste.dirty, false, OK)) { std::error_code ec; fs::create_directories(dataRoot + "/scripts", ec); if (ste.save()) { changed = true; flagIndexDirty = true; say("Saved " + ste.path); } }
+        textEditWidget(ste, ex + 2, y + 18, ew - 4, h - 20, in, 1);
+        return;
+    }
     ui.panel(x, y, lw, h); listHeader(x, y, lw, fmt("Scripts (%d)", (int)scriptFiles.size()), IMP_SCRIPTS); helpBtn(x + lw - 16, y + 1, "tab.scripts");
     ui.searchField(x + 4, y + 20, lw - 8, scriptFilter, "search names and text...");
     std::vector<std::string> sl; std::vector<int> sIdx; std::string t;
@@ -78,9 +90,9 @@ void Editor::drawScripts(InputState& in) {
         std::string nm; for (char c : toLower(nm0)) if (isalnum((unsigned char)c) || c == '_' || c == '-') nm += c; if (nm.empty()) return;
         std::error_code ec; fs::create_directories(dataRoot + "/scripts", ec);
         std::string p = dataRoot + "/scripts/" + nm + ".txt"; if (!fileExists(p)) writeFile(p, NEW_SCRIPT);
-        refreshFiles(); ste = TextEdit(); openScript(nm); changed = true; });
+        refreshFiles(); ste.clearKeepView(); openScript(nm); changed = true; });
     if (ui.button(x + 60, by, 50, 20, "Save", ste.dirty && !ste.path.empty(), false, OK)) { std::error_code ec; fs::create_directories(dataRoot + "/scripts", ec); if (ste.save()) { changed = true; flagIndexDirty = true; say("Saved " + ste.path); } }
-    if (ui.button(x + 116, by, 60, 20, "Delete", !ste.path.empty(), false, DANGER)) openConfirm("Delete this script file?", [this]() { remove(ste.path.c_str()); ste = TextEdit(); refreshFiles(); scriptSel = -1; changed = true; });
+    if (ui.button(x + 116, by, 60, 20, "Delete", !ste.path.empty(), false, DANGER)) openConfirm("Delete this script file?", [this]() { remove(ste.path.c_str()); ste.clearKeepView(); refreshFiles(); scriptSel = -1; changed = true; });
     std::string curId = ste.path.empty() ? "" : fs::path(ste.path).stem().string();
     if (ui.button(x + 4, by + 24, 60, 20, "Check", !ste.path.empty(), false, ACCENT2)) { sLint = lintScript(ste.text(), curId); sLintShown = true; sLintScroll = 0; sLintTitle = curId; say(sLint.empty() ? "Check: no problems found." : fmt("Check: %d finding(s).", (int)sLint.size())); }
     if (ui.button(x + 68, by + 24, 76, 20, "Check all", true, false, ACCENT2)) {
@@ -93,6 +105,7 @@ void Editor::drawScripts(InputState& in) {
     // editor
     int ex = x + lw + 6, ew = W - ex - 4 - 300;
     ui.panel(ex, y, ew, h); ui.header(ex, y, ew, ste.path.empty() ? "no script open" : fs::path(ste.path).filename().string() + (ste.dirty ? " *" : ""));
+    if (!ste.path.empty()) { if (ui.button(ex + ew - 48, y + 1, 44, 14, "Wide")) { ste.wide = true; ui.blur(); } if (ui.hover(ex + ew - 48, y + 1, 44, 14)) ui.tip("Make the editor as wide as the window (Ctrl+E)"); }
     if (!ste.path.empty()) textEditWidget(ste, ex + 2, y + 18, ew - 4, h - 20, in, 1);
     else font->drawWrapped(*ui.cv, *ts, ex + 10, y + 30, ew - 20, "Scripts are little programs for the game: talk with answers, prices worked out on the spot, counters that are saved, loops, random chances, and every dialogue action. Pick one on the left (coachman is the coach in every town) or press New.", DIM);
     // right: check results, or the cheat sheet + Used by

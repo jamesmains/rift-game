@@ -12,7 +12,8 @@ static std::map<std::string, Key> keyMap = {
     {"UP", K_UP}, {"DOWN", K_DOWN}, {"LEFT", K_LEFT}, {"RIGHT", K_RIGHT}, {"ENTER", K_ENTER}, {"ESC", K_ESCAPE}, {"TAB", K_TAB}, {"SPACE", K_SPACE},
     {"E", K_E}, {"Q", K_Q}, {"T", K_T}, {"A", K_A}, {"S", K_S}, {"D", K_D}, {"F", K_F}, {"R", K_R}, {"C", K_C}, {"W", K_W}, {"I", K_I}, {"V", K_V}, {"X", K_X}, {"Z", K_Z}, {"K", K_K}, {"P", K_P}, {"B", K_B}, {"J", K_J}, {"M", K_M}, {"O", K_O}, {"GRAVE", K_GRAVE}, {"L", K_L}, {"LEFT2", K_LEFT}, {"L", K_L}, {"N", K_N}, {"F1", K_F1},
     {"BS", K_BACKSPACE}, {"DEL", K_DELETE}, {"F1", K_F1}, {"F2", K_F2}, {"F5", K_F5}, {"F9", K_F9}, {"F11", K_F11},
-    {"1", K_1}, {"2", K_2}, {"3", K_3}, {"4", K_4}, {"5", K_5}, {"6", K_6}, {"7", K_7}, {"8", K_8}, {"PGUP", K_PAGEUP}, {"PGDN", K_PAGEDOWN}, {"SHIFT", K_SHIFT}, {"PADSTART", K_PAD_START}, {"PADA", K_PAD_A}, {"PADB", K_PAD_B}, {"PADX", K_PAD_X}, {"PADY", K_PAD_Y}, {"PADLB", K_PAD_LB}, {"PADRB", K_PAD_RB}, {"PADLT", K_PAD_LT}, {"PADRT", K_PAD_RT}, {"PADBACK", K_PAD_BACK}, {"PADLS", K_PAD_LS}, {"PADRS", K_PAD_RS}, {"PADUP", K_PAD_UP}, {"PADDOWN", K_PAD_DOWN}, {"PADLEFT", K_PAD_LEFT}, {"PADRIGHT", K_PAD_RIGHT}};
+    {"1", K_1}, {"2", K_2}, {"3", K_3}, {"4", K_4}, {"5", K_5}, {"6", K_6}, {"7", K_7}, {"8", K_8}, {"PGUP", K_PAGEUP}, {"PGDN", K_PAGEDOWN}, {"SHIFT", K_SHIFT}, {"PADSTART", K_PAD_START}, {"PADA", K_PAD_A}, {"PADB", K_PAD_B}, {"PADX", K_PAD_X}, {"PADY", K_PAD_Y}, {"PADLB", K_PAD_LB}, {"PADRB", K_PAD_RB}, {"PADLT", K_PAD_LT}, {"PADRT", K_PAD_RT}, {"PADBACK", K_PAD_BACK}, {"PADLS", K_PAD_LS}, {"PADRS", K_PAD_RS}, {"PADUP", K_PAD_UP}, {"PADDOWN", K_PAD_DOWN}, {"PADLEFT", K_PAD_LEFT}, {"PADRIGHT", K_PAD_RIGHT},
+    {"HOME", K_HOME}, {"END", K_END}, {"INS", K_INSERT}, {"F3", K_F3}, {"G", K_G}, {"H", K_H}, {"U", K_U}, {"Y", K_Y}, {"SLASH", K_SLASH}, {"LBRACKET", K_LBRACKET}, {"RBRACKET", K_RBRACKET}, {"9", K_9}, {"0", K_0}};
 
 int main(int argc, char** argv) {
     if (argc < 2) { printf("usage: %s script [outdir]\n", argv[0]); return 1; }
@@ -27,11 +28,19 @@ int main(int argc, char** argv) {
     std::string clip; bool padMode = false; int fails = 0;
     auto step = [&](int n) { for (int i = 0; i < n; i++) { if (padMode) in.gamepadActive = true; app.frame(in, dt); if (app.req.hasClipboardOut) { clip = app.req.setClipboard; app.req.hasClipboardOut = false; } bool c = in.down[K_CTRL], sh = in.down[K_SHIFT]; in.beginFrame(); in.down[K_CTRL] = c; in.down[K_SHIFT] = sh; if (c) in.clipboard = clip; if (app.wantsQuit()) break; } };
     Bot bot(app, in, step, fails);
+    // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
+    auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
+            if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
+            if (cmd == "alt") { in.down[K_ALT] = true; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_ALT] = false; step(1);  return true; }
+            if (cmd == "shiftclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(2); in.down[K_SHIFT] = true; in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); in.down[K_SHIFT] = false; step(2);  return true; }
+            if (cmd == "tripleclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; step(2); in.mouseDX = in.mouseDY = 0; for (int k = 0; k < 3; k++) { in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(3); }  return true; }
+        return false;
+    };
     for (auto& raw : split(script, '\n')) {
         std::string line = trim(raw); if (line.empty() || line[0] == '#') continue;
         auto p = split(line, ' ');
         std::string cmd = p[0];
-        if (bot.command(cmd, p, line)) {}
+        if (bot.command(cmd, p, line) || moreCommand(cmd, p)) {}
         else if (cmd == "frames") step(atoi(p[1].c_str()));
         else if (cmd == "key") { in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); step(1); }
         else if (cmd == "ctrl") { in.down[K_CTRL] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.clipboard.clear(); step(1); printf("ctrl+%s clip=[%s]\n", p[1].c_str(), clip.substr(0, 40).c_str()); }
@@ -140,8 +149,19 @@ int main(int argc, char** argv) {
             if (p.size() < 4) { printf("EXPECT bad line: %s\n", line.c_str()); fails++; continue; }
             std::string key = p[1], op = p[2], want = p[3]; for (size_t i = 4; i < p.size(); i++) want += " " + p[i];
             Game& g = app.game; std::string got; bool num = true;
+            auto edExpect = [&]() -> bool {   // 1.1.11 editor text checks (outside the else-if chain: MSVC limits its depth)
+#ifndef TRIFFALL_NO_EDITOR
+                if (startsWith(key, "edtext:")) { got = app.editor.edText(key.substr(7), 0); num = false; return true; }     // te / ste / big: the lines joined by |
+                if (startsWith(key, "edsel:")) { got = app.editor.edText(key.substr(6), 1); num = false; return true; }      // selected text
+                if (startsWith(key, "edcaret:")) { got = app.editor.edText(key.substr(8), 2); num = false; return true; }    // line,col (1-based)
+                if (startsWith(key, "edstate:")) { got = app.editor.edText(key.substr(8), 3); num = false; return true; }    // wrap= wide= bar= ac= pop=
+                if (startsWith(key, "edfield:")) { auto q = split(key.substr(8), ':'); got = q.size() >= 3 ? app.editor.genValue(atoi(q[0].c_str()), atoi(q[1].c_str()), q[2]) : ""; num = false; return true; }
+#endif
+                return false;
+            };
             static const char* MODES[] = {"EXPLORE", "DIALOGUE", "COMBAT", "MENU", "SHOP", "MESSAGE", "TRANSITION", "GAMEOVER", "LEVELUP", "NAME", "VICTORY", "PAUSE", "CUTSCENE", "SAVELOAD", "JOURNAL", "WORLDMAP", "CRAFT", "CONSOLE", "BOUNTY", "ENDING"};
-            if (key == "gold") got = std::to_string(g.party.gold);
+            if (edExpect()) {}
+            else if (key == "gold") got = std::to_string(g.party.gold);
             else if (key == "x") got = std::to_string(g.px); else if (key == "y") got = std::to_string(g.py);
             else if (key == "hp") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].hp);
             else if (key == "level") got = std::to_string(g.party.members.empty() ? 0 : g.party.members[0].level);

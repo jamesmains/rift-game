@@ -206,7 +206,8 @@ void Editor::drawDialogueGraph(int x, int y, int w, int h, InputState& in) {
     }
     if (live && !ui.typing() && dlgGSel >= 0) { if (in.pressed[K_ENTER] && !in.ctrl()) { dlgGraphJump(dlgGSel); return; } }
     if (live && !ui.typing() && in.ctrl()) {
-        if (in.pressed[K_Z] && !te.undo.empty()) { te.lines = te.undo.back(); te.undo.pop_back(); if (te.lines.empty()) te.lines.push_back(""); te.cy = clampi(te.cy, 0, (int)te.lines.size() - 1); te.cx = std::min(te.cx, (int)te.lines[te.cy].size()); te.ay = -1; te.dirty = true; say("Undo."); }
+        if (in.pressed[K_Z] && !in.shift() && te.undoStep()) say("Undo.");
+        if ((in.pressed[K_Y] || (in.pressed[K_Z] && in.shift())) && te.redoStep()) say("Redo.");
         if (in.pressed[K_S] && te.save()) { changed = true; say("Saved " + te.path); }
     }
     // keep some of the graph on screen

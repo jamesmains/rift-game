@@ -1,0 +1,165 @@
+# 1.1.11 (#35): the Editor's text boxes - Notepad-style editing in the Scripts editor, find / replace / go to line,
+# line tools, undo / redo, word wrap, Wide, script indents and suggestions, the right-click menu, and the big box
+# for single-line fields. Changes nothing on disk (nothing is saved).
+frames 5
+editor
+frames 5
+tab 25
+frames 3
+# open coachman, focus the text, replace everything with a small script typed in
+click 40 100
+frames 5
+click 400 200
+frames 2
+ctrl A
+type if gold > 5
+key ENTER
+type say rich
+key ENTER
+type end
+frames 2
+say -- Enter keeps the indent and adds one after if; end steps back by itself
+expect edtext:ste == if gold > 5|  say rich|end
+# Ctrl+Home, Ctrl+Right (word), Ctrl+Shift+Right (select a word)
+ctrl HOME
+ctrl RIGHT
+expect edcaret:ste == 1,4
+ctrlshift RIGHT
+expect edsel:ste contains gold
+# double-click a word, triple-click a line
+dblclick 272 80
+expect edsel:ste == gold
+tripleclick 300 93
+expect edsel:ste contains say rich
+shot te_line_sel.png
+# Ctrl+Backspace deletes a word; undo / redo
+ctrl END
+ctrl BS
+expect edtext:ste == if gold > 5|  say rich|
+ctrl Z
+expect edtext:ste == if gold > 5|  say rich|end
+ctrl Y
+expect edtext:ste == if gold > 5|  say rich|
+ctrl Z
+expect edtext:ste == if gold > 5|  say rich|end
+# Alt+Up moves the line, Ctrl+/ comments, Ctrl+D duplicates
+alt UP
+expect edtext:ste == if gold > 5|end|  say rich
+ctrl Z
+ctrl HOME
+ctrl SLASH
+expect edtext:ste == # if gold > 5|  say rich|end
+ctrl SLASH
+expect edtext:ste == if gold > 5|  say rich|end
+ctrl D
+expect edtext:ste == if gold > 5|if gold > 5|  say rich|end
+ctrl Z
+# Tab / Shift+Tab on a line
+shiftkey TAB
+expect edtext:ste == if gold > 5|  say rich|end
+# find: Ctrl+F, typing finds as you type
+ctrl F
+expect edstate:ste contains bar=1
+type say
+frames 2
+expect edsel:ste == say
+shot te_find.png
+key ESC
+expect edstate:ste contains bar=0
+# replace all
+ctrl H
+expect edstate:ste contains bar=2
+key TAB
+type tell
+frames 2
+click 470 100
+frames 2
+expect edtext:ste == if gold > 5|  tell rich|end
+click 641 80
+frames 2
+expect edstate:ste contains bar=0
+# go to line
+click 400 300
+ctrl G
+expect edstate:ste contains bar=3
+type 2
+key ENTER
+expect edcaret:ste == 2,1
+# word wrap and Wide (the editor keeps the keyboard)
+alt Z
+expect edstate:ste contains wrap=1
+ctrl E
+expect edstate:ste contains wide=1
+frames 3
+shot te_wide.png
+type x
+expect edtext:ste == if gold > 5|x  tell rich|end
+ctrl E
+expect edstate:ste contains wide=0
+ctrl Z
+expect edtext:ste == if gold > 5|  tell rich|end
+# suggestions: "pla" offers placename / places, Tab takes the first
+ctrl END
+key ENTER
+type let p = plac
+frames 2
+expect edstate:ste lacks ac=0
+shot te_suggest.png
+key TAB
+expect edtext:ste contains let p = place
+# the live check: an unclosed if is an error dot in the margin
+ctrl A
+type if gold > 1
+frames 60
+expect edstate:ste lacks marks=0
+shot te_marks.png
+# right-click menu: Select all, then Copy through the menu
+rclick 300 80
+frames 2
+expect edstate:ste contains menu=1
+shot te_menu.png
+key ESC
+expect edstate:ste contains menu=0
+# ---- single-line fields (Items tab): word keys, double-click, and the big box ----
+tab 3
+frames 3
+click 60 102
+frames 3
+expect edfield:0:0:id == iron_dagger
+# Ctrl+Backspace takes a word (the full stop is a word of its own), the form's Ctrl+Z puts it back
+click 700 384
+key END
+ctrl BS
+ctrl BS
+expect edfield:0:0:desc contains price of one
+expect edfield:0:0:desc lacks swing
+frames 70
+ctrl Z
+frames 2
+expect edfield:0:0:desc == Quick and cheap. Two stabs for the price of one swing.
+# double-click a word and type over it
+dblclick 364 384
+type Fast
+frames 2
+expect edfield:0:0:desc == Fast and cheap. Two stabs for the price of one swing.
+# the big box: Ctrl+E, type at the end, Enter = OK
+ctrl E
+frames 2
+expect edstate:big contains pop=8
+expect edtext:big == Fast and cheap. Two stabs for the price of one swing.
+shot te_bigbox.png
+key END
+type  Sharp.
+key ENTER
+frames 3
+expect edstate:big contains pop=0
+expect edfield:0:0:desc == Fast and cheap. Two stabs for the price of one swing. Sharp.
+# right-click menu on a field: Select all, then Ctrl+C copies all of it
+rclick 500 384
+frames 2
+expect edstate:te contains menu=1
+shot te_field_menu.png
+click 560 528
+frames 2
+expect edstate:te contains menu=0
+ctrl C

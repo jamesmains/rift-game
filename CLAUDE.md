@@ -41,7 +41,8 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass (1.1.10: scripts_1_1_10 plus the 1.1.9 list; 1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
+  editor_* tests pass (1.1.11: text_edit_1_1_11, every editor_* test, scripts_1_1_10, npcs_1_1_9, boot_and_setup,
+  new_game_name_focus, tutorial; 1.1.10: scripts_1_1_10 plus the 1.1.9 list; 1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
   facing_1_1_5, music_ambient; 1.1.6: those plus every editor_* test and editor_import_1_1_6; 1.1.7: all of those plus tutorial,
   tutorial_defeat_1_1_7, sprites_1010, fight_to_victory, standing_1_1_2, resource_nodes_1_1, story_choices,
   side_quests_1_0; 1.1.9: every editor_* test, main_quest, npcs_1_1_9, companion_and_menus, companion_quest,
@@ -306,6 +307,37 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   name field shrank to 100 px).
 - Headless/console: `con script CODE` (`\n` between lines), `con scripts`; expect `var:NAME`, `scripterror`,
   `scripts` (running count), `talk` (talk box text + answers). Test `tests/scripts_1_1_10.txt`.
+
+## 1.1.11 text editing (owner's #35: "if it would appear in Notepad it needs it" + "a way to extend the text box")
+- `editor/textops.h`: word helpers (`txt::wordLeft/wordRight/wordAt`, find with case / whole word). Word = alnum + `_`.
+- `EdUI::textField` (edui.h): double-click = word, triple = all (`EdUI::clicks`, counted in `begin` by time + spot),
+  Ctrl+arrows / Ctrl+Backspace/Delete by word, own undo/redo per focused field (`fUndo/fRedo`; in form tabs `genUndo`
+  eats Ctrl+Z first, so there the form undo wins), Shift+Del / Ctrl+Ins / Shift+Ins, scroll that stays put (`fOff`).
+- Right-click menu: `EdUI::openMenu(id, items)`; `menuInput()` at the top of `begin` eats its clicks/keys; the picked
+  command waits in `menuCmd` until the owning widget calls `takeCmd(id)` (immediate mode: the menu never touches text).
+  Drawn by `ui.drawMenu()` after the popups. The OS clipboard is now read on any left click / Insert too (main_raylib)
+  so the menu's Paste works.
+- Big box: a field sets `ui.bigReqId` (Ctrl+E, the "..." button on overflowing text, menu); `Editor::update` opens
+  `P_BIGTEXT` (`openBigText`/`drawBigText`, editor_text.cpp, a single-line wrapped `TextEdit` `bigTE`, widget id
+  7001); OK sets `ui.bigApplyId` and the field with that id takes the text next frame. `ui.bigAllowed` is false while
+  popups draw (no big box from inside a popup).
+- Multi-line editor: `Editor::textEditWidget` moved to `editor/editor_text.cpp` and rewritten: visual rows (`VRow`,
+  word wrap breaks after spaces), `TextEdit::scroll` stays the first LINE shown (+ `scrollSub` row inside it) so old
+  code that sets `te.scroll = cy - 6` still works. Undo snapshots keep the caret; `snapshot(kind)` merges a run of
+  typing (kind 1, breaks at spaces) or deleting (2); `undoStep/redoStep` (the graph's Ctrl+Z uses them). Find bar
+  (`t.bar` 1 find / 2 replace / 3 go to line, fields after the widget's id), autocomplete (`scriptWords`, syntax 1,
+  Tab takes - Enter never does), `liveCheck` (0.5 s after the last change runs lintScript/lintDialogue -> `t.marks`).
+  `TextEdit::load` no longer adds an empty last line (saving used to grow the file by a blank line each time).
+- Wide: `t.wide`, toggled by Ctrl+E / the status-line or header button; drawDialogue/drawScripts then lay out only the
+  editor (header has Save / Check / Narrow). Layout changes move widget ids, so toggles set `t.refocus` and the widget
+  takes the focus back next frame. Dialogue starts with wrap on (`Editor::init`). `clearKeepView()` instead of
+  `te = TextEdit()` keeps wrap/wide when a file closes.
+- Headless: `ctrlshift K`, `alt K`, `shiftclick X Y`, `tripleclick X Y`; keys HOME END INS F3 G H U Y SLASH
+  LBRACKET RBRACKET 9 0; expect `edtext:te|ste|big` (lines joined by |), `edsel:`, `edcaret:` (line,col), `edstate:`
+  (wrap wide bar ac pop marks menu focus), `edfield:<gen>:<sec>:<key>`. New commands/expects go in `moreCommand` /
+  `edExpect` lambdas: MSVC failed with C1061 (else-if chain nested too deeply) when they were added to the chains.
+  Test `tests/text_edit_1_1_11.txt`. Guide topic `edit.text`.
+- The game's own inputs (new-game name, dev console) only got Ctrl+Backspace (console: Ctrl+V too) - no caret there.
 
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively

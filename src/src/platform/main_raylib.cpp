@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         in.mouseInWindow = mx >= 0 && my >= 0 && mx < cw && my < chh && raw.cursorOnScreen;
         for (int b = 0; b < 3; b++) { in.mouseDown[b] = raw.mouseDown[b] != 0; in.mousePressed[b] = raw.mousePressed[b] != 0; in.mouseReleased[b] = raw.mouseReleased[b] != 0; }
         in.wheel = raw.wheel;
-        if (in.down[K_CTRL]) in.clipboard = rl_get_clipboard(); else in.clipboard.clear();
+        if (in.down[K_CTRL] || in.mousePressed[0] || in.pressed[K_INSERT]) in.clipboard = rl_get_clipboard(); else in.clipboard.clear();   // 1.1.11: also for the right-click menu's Paste and Shift+Insert
 
         gPlatform->update();
         if (gPlatform->wantsQuit()) in.quitRequested = true;
