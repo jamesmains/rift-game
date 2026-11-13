@@ -7,6 +7,7 @@ bool App::init(const std::string& assets, const std::string& saves, AudioBackend
     gAudio.init(audio, assets);
     canvas.init(UI::SCREEN_W, UI::SCREEN_H);
     if (!tileset.load(assets + "/tiles.png")) { error = "Missing " + assets + "/tiles.png"; return false; }
+    tileset.useCampaign(assets + "/data", "", true);   // 1.2.0: the base game's sprite sheets (assets/data/sheets)
     font.build(tileset);
     if (!data.load(assets + "/data")) { error = "Data error: " + data.lastError; return false; }
     ensureTileKindsFile(assets + "/data/tilekinds.txt");

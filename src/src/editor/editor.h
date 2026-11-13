@@ -131,11 +131,12 @@ private:
     std::string toast; float toastT = 0;
     void say(const std::string& s) { toast = s; toastT = 3; }
     // ---- popups ----
-    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT, P_BIGTEXT } pop = P_NONE;
+    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT, P_BIGTEXT, P_SHEET } pop = P_NONE;
+    std::function<void()> popCancel;   // 1.2.0: run when a list / text popup is cancelled (the tile picker reopens itself)
     std::function<void(Tile)> popTile; std::function<void(int)> popList; std::function<void()> popYes; std::function<void(const std::string&)> popText;
     std::vector<std::string> popItems; std::string popTitle, popValue; int popSel = 0, popScroll = 0; int tileScrollX = 0, tileScrollY = 0; Tile popCur;
     int frameNo = 0, popOpenedFrame = -1;   // a popup ignores the click that opened it
-    void openTilePicker(Tile current, std::function<void(Tile)> cb);
+    void openTilePicker(Tile current, std::function<void(Tile)> cb, char cat = 0);   // cat: the category shown first (1.2.0 #37)
     void openListPicker(const std::string& title, const std::vector<std::string>& items, int cur, std::function<void(int)> cb);
     void openConfirm(const std::string& title, std::function<void()> yes);
     void openTextPrompt(const std::string& title, const std::string& initial, std::function<void(const std::string&)> cb);
@@ -325,6 +326,46 @@ private:
     // ---- tileset ----
     int tsScroll = 0; Tile tsHover, tsPick;
     void drawTileset(InputState& in);
+    // ---- sprite sheets (editor_sheets.cpp, 1.2.0): #36 import / copy sheets, #37 tile categories and groups ----
+public:
+    struct SheetGroup { std::string name; std::vector<std::pair<int, int>> cells; };
+    struct SheetBook { std::string name; int cols = 0, rows = 0; std::string cats; std::vector<SheetGroup> groups; SheetGrid grid; bool loaded = false; };   // cats: a letter per cell (row * cols + col)
+    std::vector<SheetBook> books;                  // index = Tile::s; sheets/<name>.txt of each sheet
+    void syncBooks(bool force = false);            // (re)reads them when the sheets changed
+    char cellCat(Tile t);                          // the tile's category letter ('.' = not sorted)
+    bool saveBook(int s);
+    void reloadSheets();                           // after an import / copy / grid change: the Tileset and the books
+    int sheetImport(const std::string& png, const std::string& name, const SheetGrid& g, std::string& err);   // returns the sheet (-1 = failed)
+    bool copyBaseSheets(std::string& err);
+    bool removeSheet(int s, std::string& err);
+    std::string sheetsDir() const { return dataRoot + "/sheets"; }
+    int pickerCount(int s, char cat, int group) { int n = 0; return (int)pickerTiles(s, cat, group, n).size(); }   // headless tests
+    int pkSheet = 0, pkGroup = -1; char pkCat = 0;   // the picker's sheet, group (-1 = none) and category (0 = all)
+    std::vector<Tile> pickerTiles(int s, char cat, int group, int& sortedCount);
+    std::vector<int> visibleSheets() const;
+private:
+    std::string bookSig;
+    int pkScroll = 0, pkGroupScroll = 0; std::string pkFind; bool pkLayout = false; std::vector<Tile> pkMenuTiles; Tile pkHover;
+    std::function<void(Tile)> pkCb; Tile pkCur;
+    void reopenTilePicker() { popOpenedFrame = frameNo; pop = P_TILE; ui.modal = true; ui.blur(); }
+    void drawTilePicker(InputState& in, bool& close);
+    std::vector<int> shownGroups(int s, char cat, const std::string& find);   // indexes into books[s].groups
+    void openTileMenu(const std::vector<Tile>& tiles, int menuId);
+    void applyTileMenu(int cmd, bool fromPicker);
+    void setCats(const std::vector<Tile>& tiles, char k);
+    std::string tileUses(Tile t);
+    // Tileset tab
+    int tsSheet = 0, tsSheetScroll = 0, tsGroupSel = -1, tsGroupScroll = 0; char tsCatFilter = 0; std::string tsGroupFind;
+    std::set<int> tsSel; int tsAnchor = -1, tsDragC = -1, tsDragR = -1; bool tsDragging = false, tsAdding = false; int tsRDownX = 0, tsRDownY = 0;
+    std::vector<Tile> tsSelTiles();
+    // import window (P_SHEET)
+    std::string siPath, siName, siTitle, siErr; SheetGrid siGrid; Image8 siImg; int siEdit = -1, siZoom = 2, siScrollX = 0, siScrollY = 0; bool siPickKey = false, siGame = false;
+    Image8 siConv; int siConvCols = 0, siConvRows = 0; std::string siConvSig;
+public:
+    void openSheetImport(const std::string& path, int editSheet = -1);
+private:
+    void siLoad(const std::string& path);
+    void drawSheetImport(InputState& in, bool& close);
     // ---- cross-tab tools (editor_tools.cpp) ----
     int kindReturnTab = -1;                   // Tiles tab was entered from the map view: offer "back"
     void jumpToKind(const std::string& name);

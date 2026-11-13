@@ -84,6 +84,7 @@ int main(int argc, char** argv) {
         in.mouseInWindow = mx >= 0 && my >= 0 && mx < cw && my < chh && raw.cursorOnScreen;
         for (int b = 0; b < 3; b++) { in.mouseDown[b] = raw.mouseDown[b] != 0; in.mousePressed[b] = raw.mousePressed[b] != 0; in.mouseReleased[b] = raw.mouseReleased[b] != 0; }
         in.wheel = raw.wheel;
+        { std::string d = rl_dropped_files(); in.dropped.clear(); size_t a = 0; while (a < d.size()) { size_t b = d.find(10, a); if (b == std::string::npos) b = d.size(); if (b > a) in.dropped.push_back(d.substr(a, b - a)); a = b + 1; } }
         if (in.down[K_CTRL] || in.mousePressed[0] || in.pressed[K_INSERT]) in.clipboard = rl_get_clipboard(); else in.clipboard.clear();   // 1.1.11: also for the right-click menu's Paste and Shift+Insert
 
         gPlatform->update();

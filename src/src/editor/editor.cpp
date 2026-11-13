@@ -266,7 +266,7 @@ void Editor::newCampaign(const std::string& name0) {
     std::string dir = assetDir + "/campaigns/" + id; std::error_code ec;
     if (fs::exists(dir)) { say("A campaign folder '" + id + "' already exists."); return; }
     fs::create_directories(dir + "/maps", ec); fs::create_directories(dir + "/dialogue", ec);
-    writeFile(dir + "/campaign.txt", "# Campaign settings - edit them in the Editor's Campaign tab. This campaign is a separate game: it only uses the\n# files in this folder (tiles, sprites and sounds are shared by every campaign). It started empty: each tab's\n# Import button copies entries in from the base game or another campaign.\n[campaign]\nname=" + name + "\ndesc=\nauthor=\nicon=0,7\ngold=0\n");
+    writeFile(dir + "/campaign.txt", "# Campaign settings - edit them in the Editor's Campaign tab. This campaign is a separate game: it only uses the\n# files in this folder (sounds are shared by every campaign). It started empty: each tab's Import button copies\n# entries in from the base game or another campaign; the Tileset tab imports sprite sheets into sheets/.\n[campaign]\nname=" + name + "\ndesc=\nauthor=\nicon=0,7\ngold=0\n");
     setCampaign(id);
     say("Created the empty campaign '" + name + "'. Each tab's Import button brings in items, monsters, maps... from other campaigns; the first new map becomes the start.");
 }
@@ -281,10 +281,19 @@ void Editor::open() {
 }
 
 // ---------------- popups ----------------
-void Editor::openTilePicker(Tile current, std::function<void(Tile)> cb) { popOpenedFrame = frameNo; pop = P_TILE; popTile = cb; popCur = current; popTitle = "Pick a tile (click)"; if (current.valid()) { tileScrollX = std::max(0, current.c * 26 - 400); tileScrollY = std::max(0, current.r * 26 - 200); } ui.modal = true; ui.blur(); }
-void Editor::openListPicker(const std::string& title, const std::vector<std::string>& items, int cur, std::function<void(int)> cb) { popOpenedFrame = frameNo; pop = P_LIST; popItems = items; popList = cb; popSel = cur; popScroll = std::max(0, cur - 5); popTitle = title; popValue.clear(); ui.modal = true; ui.blur(); }
-void Editor::openConfirm(const std::string& title, std::function<void()> yes) { popOpenedFrame = frameNo; pop = P_CONFIRM; popYes = yes; popTitle = title; ui.modal = true; ui.blur(); }
-void Editor::openTextPrompt(const std::string& title, const std::string& initial, std::function<void(const std::string&)> cb) { popOpenedFrame = frameNo; pop = P_TEXT; popText = cb; popTitle = title; popValue = initial; ui.modal = true; ui.blur(); }
+void Editor::openTilePicker(Tile current, std::function<void(Tile)> cb, char cat) {
+    syncBooks(); pkCb = cb; pkCur = current; popTile = cb; popCur = current; popTitle = "Pick a tile";
+    auto vis = visibleSheets();
+    if (current.valid() && std::find(vis.begin(), vis.end(), (int)current.s) != vis.end()) pkSheet = current.s;
+    else if (std::find(vis.begin(), vis.end(), pkSheet) == vis.end()) pkSheet = vis.empty() ? 0 : vis[0];
+    pkCat = cat; pkGroup = -1; pkScroll = 0; pkGroupScroll = 0; pkFind.clear();
+    if (cat) { int n = 0; pickerTiles(pkSheet, cat, -1, n); if (n == 0) pkCat = 0; }   // nothing sorted into it on this sheet yet: show them all
+    if (current.valid()) { tileScrollX = std::max(0, current.c * 26 - 400); tileScrollY = std::max(0, current.r * 26 - 200); }
+    reopenTilePicker();
+}
+void Editor::openListPicker(const std::string& title, const std::vector<std::string>& items, int cur, std::function<void(int)> cb) { popCancel = nullptr; popOpenedFrame = frameNo; pop = P_LIST; popItems = items; popList = cb; popSel = cur; popScroll = std::max(0, cur - 5); popTitle = title; popValue.clear(); ui.modal = true; ui.blur(); }
+void Editor::openConfirm(const std::string& title, std::function<void()> yes) { popCancel = nullptr; popOpenedFrame = frameNo; pop = P_CONFIRM; popYes = yes; popTitle = title; ui.modal = true; ui.blur(); }
+void Editor::openTextPrompt(const std::string& title, const std::string& initial, std::function<void(const std::string&)> cb) { popCancel = nullptr; popOpenedFrame = frameNo; pop = P_TEXT; popText = cb; popTitle = title; popValue = initial; ui.modal = true; ui.blur(); }
 
 void Editor::drawPopup(InputState& in) {
     if (pop == P_NONE) return;
@@ -295,28 +304,7 @@ void Editor::drawPopup(InputState& in) {
     bool close = false;
     ui.bigAllowed = false;
     if (pop == P_TILE) {
-        int x = 20, y = 30, w = W - 40, h = H - 60;
-        ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
-        int ax = x + 4, ay = y + 20, aw = w - 8, ah = h - 50;
-        int cols = 206, rows = 50, cell = 26;
-        if (ui.hover(ax, ay, aw, ah)) { if (in.down[K_SHIFT]) tileScrollX -= in.wheel * 60; else tileScrollY -= in.wheel * 60; }
-        if (in.mouseDown[1] || in.mouseDown[2]) { tileScrollX -= in.mouseDX; tileScrollY -= in.mouseDY; }
-        if (!ui.typing()) { if (in.down[K_LEFT]) tileScrollX -= 8; if (in.down[K_RIGHT]) tileScrollX += 8; if (in.down[K_UP]) tileScrollY -= 8; if (in.down[K_DOWN]) tileScrollY += 8; }
-        tileScrollX = clampi(tileScrollX, 0, cols * cell - aw); tileScrollY = clampi(tileScrollY, 0, rows * cell - ah);
-        cv.fillRect(ax, ay, aw, ah, RGB(18, 18, 22)); cv.setClip({ax, ay, aw, ah});
-        int c0 = tileScrollX / cell, r0 = tileScrollY / cell;
-        for (int r = r0; r <= r0 + ah / cell + 1 && r < rows; r++) for (int c = c0; c <= c0 + aw / cell + 1 && c < cols; c++) {
-            int sx = ax + c * cell - tileScrollX, sy = ay + r * cell - tileScrollY;
-            ts->drawOpaque(cv, T(c, r), sx + 1, sy + 1, 2);
-            if (popCur.valid() && popCur.c == c && popCur.r == r) cv.rect(sx, sy, cell, cell, ACCENT2);
-        }
-        cv.resetClip();
-        int hc = (in.mouseX - ax + tileScrollX) / cell, hr = (in.mouseY - ay + tileScrollY) / cell;
-        bool over = ui.hover(ax, ay, aw, ah) && hc >= 0 && hc < cols && hr >= 0 && hr < rows;
-        if (over) { int sx = ax + hc * cell - tileScrollX, sy = ay + hr * cell - tileScrollY; cv.rect(sx, sy, cell, cell, C::White); ui.text(x + 8, y + h - 24, fmt("col %d, row %d", hc, hr), ACCENT2); ts->drawOpaque(cv, T(hc, hr), x + 110, y + h - 28, 2); if (in.mousePressed[0]) { Tile t = T(hc, hr); auto cb = popTile; close = true; cb(t); } }
-        ui.text(x + 160, y + h - 24, "wheel: scroll  shift+wheel / drag: horizontal  arrows: pan", DIM);
-        if (ui.button(x + w - 150, y + h - 28, 60, 20, "None")) { auto cb = popTile; close = true; cb(Tile{}); }
-        if (ui.button(x + w - 80, y + h - 28, 70, 20, "Cancel") || in.pressed[K_ESCAPE]) close = true;
+        drawTilePicker(in, close);
     } else if (pop == P_LIST) {
         int w = 360, h = 360, x = (W - w) / 2, y = (H - h) / 2;
         ui.panel(x, y, w, h); ui.header(x, y, w, popTitle);
@@ -330,13 +318,13 @@ void Editor::drawPopup(InputState& in) {
         if (hit < 0 && in.pressed[K_ENTER] && !shown.empty()) hit = lsel >= 0 ? lsel : 0;
         if (hit >= 0) { auto cb = popList; close = true; cb(idx[hit]); }
         ui.text(x + 8, y + h - 24, fmt("%d of %d - arrows + Enter or click", (int)shown.size(), (int)popItems.size()), DIM);
-        if (ui.button(x + w - 80, y + h - 28, 70, 20, "Cancel") || in.pressed[K_ESCAPE]) close = true;
+        if (!close && (ui.button(x + w - 80, y + h - 28, 70, 20, "Cancel") || in.pressed[K_ESCAPE])) { close = true; if (popCancel) { auto c = popCancel; popCancel = nullptr; c(); } }
     } else if (pop == P_CONFIRM) {
         int w = 360, h = 110, x = (W - w) / 2, y = (H - h) / 2;
         ui.panel(x, y, w, h); ui.header(x, y, w, "Confirm");
         font->drawWrapped(cv, *ts, x + 10, y + 26, w - 20, popTitle, TEXT);
         if (ui.button(x + w - 170, y + h - 30, 70, 22, "Yes", true, false, OK) || in.pressed[K_ENTER]) { auto cb = popYes; close = true; cb(); }
-        if (ui.button(x + w - 90, y + h - 30, 70, 22, "No") || in.pressed[K_ESCAPE]) close = true;
+        if (!close && (ui.button(x + w - 90, y + h - 30, 70, 22, "No") || in.pressed[K_ESCAPE])) { close = true; if (popCancel) { auto c = popCancel; popCancel = nullptr; c(); } }
     } else if (pop == P_HELP) {
         drawGuide(in, close);
     } else if (pop == P_REPORT) {
@@ -351,7 +339,9 @@ void Editor::drawPopup(InputState& in) {
         ui.idCounter = 5000; if (ui.focus < 5001) { ui.focus = 5001; ui.caret = (int)popValue.size(); }
         ui.textField(x + 10, y + 30, w - 20, popValue, 60);
         if (ui.button(x + w - 170, y + h - 30, 70, 22, "OK", !popValue.empty(), false, OK) || (in.pressed[K_ENTER] && !popValue.empty())) { auto cb = popText; std::string v = popValue; close = true; cb(v); }
-        if (ui.button(x + w - 90, y + h - 30, 70, 22, "Cancel") || in.pressed[K_ESCAPE]) close = true;
+        if (!close && (ui.button(x + w - 90, y + h - 30, 70, 22, "Cancel") || in.pressed[K_ESCAPE])) { close = true; if (popCancel) { auto c = popCancel; popCancel = nullptr; c(); } }
+    } else if (pop == P_SHEET) {
+        drawSheetImport(in, close);
     }
     if (close && popOpenedFrame == frameNo) { ui.modal = true; in.eatMouse(); in.eatKeys(); }   // the callback opened the next popup (e.g. New campaign -> name prompt): keep that one
     else if (close) { pop = P_NONE; ui.modal = false; ui.blur(); in.eatMouse(); in.eatKeys(); if (bigRefocus) { ui.focus = bigTarget; bigRefocus = false; } }
@@ -406,6 +396,8 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         else wantsClose = true;
     }
     if (tab != lastTab) { if (tab == 25) flagIndexDirty = true; if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; }
+    // 1.2.0 (#36): a PNG dropped on the window opens the sprite sheet import (the import window takes it itself)
+    if (pop == P_NONE) for (auto& d : in.dropped) if (toLower(fs::path(d).extension().string()) == ".png") { tab = 13; openSheetImport(d); break; }
     switch (tab) {
         case 0: drawMaps(in); break;
         case 8: { int uw = 330; drawGeneric(gens[5], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawEncounterUsage(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
@@ -438,6 +430,15 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 }
 
 // ---------------- generic key/value editor ----------------
+// 1.2.0 (#37): the tile category a sprite field's picker opens on
+static char tileCatFor(const std::string& sec, const std::string& key) {
+    if (key == "partysprite" || sec == "class" || sec == "npc") return 'c';
+    if (sec == "item") return 'i';
+    if (sec == "creature") return 'm';
+    if (sec == "spell" || sec == "achievement") return 'e';
+    if (sec == "template" || sec == "type" || sec == "resource") return 'p';
+    return 0;
+}
 static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite" || k == "partysprite"; }
 static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent" || k == "sparklecolor"; }
 
@@ -523,7 +524,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     helpBtn(fx + fw - 58, y + 1, s.name, tabTopic());
     { Tile pv; if (s.has("sprite")) pv = parseTile(s.get("sprite")); else if (s.has("tile")) pv = parseTile(s.get("tile")); else if (s.has("spriterow")) pv = T(s.has("spritecol") ? atoi(s.get("spritecol").c_str()) : 104, atoi(s.get("spriterow").c_str()));
       int psz = s.get("size") == "2" ? 2 : 1;
-      if (pv.valid()) { ui.cv->fillRect(fx + fw - 40, y + 1, 36, 14, PANEL2); for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile t = T(pv.c + a, pv.r + b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1, parseColor(s.get("color"))); else ts->draw(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1); } } }
+      if (pv.valid()) { ui.cv->fillRect(fx + fw - 40, y + 1, 36, 14, PANEL2); for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile t = tileAt(pv, a, b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1, parseColor(s.get("color"))); else ts->draw(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1); } } }
     // items, creatures, spells, shops: a "Used by" box under the fields
     std::string useKey = &g == &gens[0] ? "item" : &g == &gens[1] ? "creature" : &g == &gens[2] ? "spell" : &g == &gens[4] ? "shop" : "";
     bool npcTab = &g == &gens[17] && s.name == "npc";   // 1.1.9 (#33): NPCs get the Look card and a box with where they stand
@@ -654,9 +655,9 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (ui.textField(x, y, 90, v, 20)) g.dirty = true;
         { int psz = (k == "sprite" && s.get("size") == "2") ? 2 : 1;
           if (psz == 2) { ui.cv->fillRect(x + 98, y - 6, 52, 52, FIELD); ui.cv->rect(x + 98, y - 6, 52, 52, ACCENT2); }
-          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = T(t.c + a, t.r + b); if (!trim(s.get("color")).empty() && k != "partysprite") ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
+          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = tileAt(t, a, b); if (!trim(s.get("color")).empty() && k != "partysprite") ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
           if (psz == 2) ui.text(x + 154, y + 26, "size=2: the sprite is the 2x2 block starting at this tile (top-left)", DIM); }
-        if (ui.button(x + 130, y, 50, 16, "pick...")) { EdSection* sp = &s; std::string key = k; openTilePicker(t, [sp, key, &g](Tile nt) { if (!nt.valid()) return; if (key == "spriterow" || key == "spritecol") { for (size_t i = 0; i < sp->kv.size(); i++) if (sp->kv[i].first == "spriterow" || sp->kv[i].first == "spritecol") { sp->kv.erase(sp->kv.begin() + i); i--; } sp->set("sprite", fmt("%d,%d", nt.c, nt.r)); } else sp->set(key, fmt("%d,%d", nt.c, nt.r)); g.dirty = true; }); }
+        if (ui.button(x + 130, y, 50, 16, "pick...")) { EdSection* sp = &s; std::string key = k; openTilePicker(t, [sp, key, &g](Tile nt) { if (!nt.valid()) return; if (key == "spriterow" || key == "spritecol") { for (size_t i = 0; i < sp->kv.size(); i++) if (sp->kv[i].first == "spriterow" || sp->kv[i].first == "spritecol") { sp->kv.erase(sp->kv.begin() + i); i--; } sp->set("sprite", tileText(nt)); } else sp->set(key, tileText(nt)); g.dirty = true; }, tileCatFor(s.name, k)); }
         if (k == "sprite" && s.name == "creature") { ui.text(x + 190, y + 2, "character rows: col 104 + row = race; col 105 sword, 106 axe, 109 staff, 113 shield, 116 gun, 117 bow", DIM); }
         return;
     }
@@ -870,13 +871,13 @@ void Editor::drawKinds(InputState& in) {
     for (size_t i = 0; i < k.ground.size(); i++) {
         int gx = fx + keyW + (int)i * 70;
         ui.tile(k.ground[i], gx, cy - 2, 2, k.opaque ? C::White : k.tint, k.bg);
-        if (ui.button(gx + 28, cy - 2, 26, 13, "...")) { size_t ii = i; openTilePicker(k.ground[i], [&k, ii, this](Tile t) { k.ground[ii] = t; kindsDirty = true; }); }
+        if (ui.button(gx + 28, cy - 2, 26, 13, "...")) { size_t ii = i; openTilePicker(k.ground[i], [&k, ii, this](Tile t) { k.ground[ii] = t; kindsDirty = true; }, 't'); }
         if (k.ground.size() > 1 && ui.button(gx + 28, cy + 12, 26, 13, "x", true, false, DANGER)) { k.ground.erase(k.ground.begin() + i); kindsDirty = true; break; }
     }
     if (k.ground.size() < 6 && ui.button(fx + keyW + (int)k.ground.size() * 70, cy, 26, 20, "+")) { k.ground.push_back(k.ground.back()); kindsDirty = true; }
     cy += 34;
     ui.label(fx + 22, cy + 2, "prop (overlay)"); ui.tile(k.prop, fx + keyW, cy - 2, 2);
-    if (ui.button(fx + keyW + 28, cy - 2, 26, 13, "...")) openTilePicker(k.prop, [&k, this](Tile t) { k.prop = t; kindsDirty = true; });
+    if (ui.button(fx + keyW + 28, cy - 2, 26, 13, "...")) openTilePicker(k.prop, [&k, this](Tile t) { k.prop = t; kindsDirty = true; }, 'p');
     if (k.prop.valid() && ui.button(fx + keyW + 28, cy + 12, 26, 13, "x", true, false, DANGER)) { k.prop = Tile{}; kindsDirty = true; }
     cy += 34;
     if (kcheck(fx + 10, "walkable", k.walkable, "walkable")) kindsDirty = true;
@@ -1144,7 +1145,7 @@ void Editor::drawMaps(InputState& in) {
         Color8 col = C::White;
         if (o.type == "npc") { Tile t = parseTile(o.get("sprite")); if (!t.valid()) t = T(104, 0); if (!o.get("color").empty()) ts->drawRecolor(*ui.cv, t, sx, sy, zoom, parseColor(o.get("color"))); else ts->draw(*ui.cv, t, sx, sy, zoom); col = C::Cyan; }
         else if (o.type == "enemy") { std::string first = trim(split(o.get("group"), ',')[0]); const CreatureDef* cd = gd->creature(first); int sz = cd && cd->size == 2 ? 2 : 1; ui.cv->fillRect(sx, sy, cell * sz, cell * sz, RGB(120, 0, 0, 160));
-            if (cd) for (int b = 0; b < sz; b++) for (int a = 0; a < sz; a++) { Tile t = T(cd->tile.c + a, cd->tile.r + b); if (cd->recolor) ts->drawRecolor(*ui.cv, t, sx + a * cell, sy + b * cell, zoom, cd->color); else ts->draw(*ui.cv, t, sx + a * cell, sy + b * cell, zoom); }
+            if (cd) for (int b = 0; b < sz; b++) for (int a = 0; a < sz; a++) { Tile t = tileAt(cd->tile, a, b); if (cd->recolor) ts->drawRecolor(*ui.cv, t, sx + a * cell, sy + b * cell, zoom, cd->color); else ts->draw(*ui.cv, t, sx + a * cell, sy + b * cell, zoom); }
             if (sz == 2) { ow = oh = 2; ui.cv->rect(sx, sy, cell * 2, cell * 2, C::Orange); font->draw(*ui.cv, *ts, sx + 2, sy + cell * 2 - 11, "2x2", C::Orange); }
             col = C::Red; }
         else if (o.type == "chest" || o.type == "sign" || o.type == "savepoint" || o.type == "lever") { drawObjectLook(o, sx, sy, zoom, false); col = o.type == "sign" ? C::Cream : o.type == "savepoint" ? C::Cyan : C::Yellow; }   // 1.1.1: as the game draws it
@@ -1327,7 +1328,7 @@ void Editor::drawMaps(InputState& in) {
             if (ui.textField(px + 88, ry, vw2, o.kv[i].second, 300)) mapDirty = true;
             if (condKey && ui.hover(px + 88, ry, vw2, 16) && !o.kv[i].second.empty()) ui.tip("Reads: " + condEnglish(o.kv[i].second));
             if (flagKey && ui.hover(px + 88, ry, vw2, 16) && !o.kv[i].second.empty()) { std::string w = flagSetSummary(o.kv[i].second); ui.tip(o.kv[i].second + (w.empty() ? " - only this object sets it" : " - also set by " + w)); }
-            if (isTileKey(key)) { Tile t = parseTile(o.kv[i].second); if (ui.button(px + 88 + vw2 + 4, ry, 22, 16, "...")) { auto& kvr = o.kv[i]; openTilePicker(t, [&kvr, this](Tile nt) { kvr.second = nt.valid() ? fmt("%d,%d", nt.c, nt.r) : ""; mapDirty = true; }); } }
+            if (isTileKey(key)) { Tile t = parseTile(o.kv[i].second); if (ui.button(px + 88 + vw2 + 4, ry, 22, 16, "...")) { auto& kvr = o.kv[i]; openTilePicker(t, [&kvr, this](Tile nt) { kvr.second = nt.valid() ? tileText(nt) : ""; mapDirty = true; }, o.type == "npc" || key == "partysprite" ? 'c' : 'p'); } }
             if (flagKey || condKey) { auto* kvp = &o.kv[i]; bool app = condKey;
                 flagPicker(px + 88 + vw2 + 4, ry, 26, app, [kvp, app, this](const std::string& f) { kvp->second = app && !trim(kvp->second).empty() ? trim(kvp->second) + "&" + f : f; mapDirty = true; }, "f"); }
             if (ui.button(px + pw - 22, ry, 16, 16, "x", true, false, DANGER)) { o.kv.erase(o.kv.begin() + i); mapDirty = true; ui.blur(); break; }
@@ -1499,27 +1500,3 @@ void Editor::drawDialogue(InputState& in) {
     for (size_t i = 0; i < sizeof(ref) / sizeof(ref[0]); i++) font->draw(*ui.cv, *ts, rx + 6, y + 22 + (int)i * 13, ref[i], i == 11 ? ACCENT2 : (ref[i][0] == ' ' ? DIM : TEXT));
 }
 
-// ---------------- tileset browser ----------------
-void Editor::drawTileset(InputState& in) {
-    int x = 4, y = TOP + 4, w = W - 8, h = H - TOP - BOTTOM - 8;
-    ui.panel(x, y, w, h); ui.header(x, y, w, "Tileset browser - hover for coordinates, click to pick a tile"); helpBtn(x + w - 16, y + 1, "tab.tileset");
-    int ax = x + 4, ay = y + 20, aw = w - 8, ah = h - 50, cell = 26, cols = 206, rows = 50;
-    if (ui.hover(ax, ay, aw, ah)) { if (in.down[K_SHIFT]) tileScrollX -= in.wheel * 60; else tileScrollY -= in.wheel * 60; }
-    if (in.mouseDown[1] || in.mouseDown[2]) { tileScrollX -= in.mouseDX; tileScrollY -= in.mouseDY; }
-    if (!ui.typing()) { if (in.down[K_LEFT]) tileScrollX -= 8; if (in.down[K_RIGHT]) tileScrollX += 8; if (in.down[K_UP]) tileScrollY -= 8; if (in.down[K_DOWN]) tileScrollY += 8; }
-    tileScrollX = clampi(tileScrollX, 0, cols * cell - aw); tileScrollY = clampi(tileScrollY, 0, rows * cell - ah);
-    ui.cv->fillRect(ax, ay, aw, ah, RGB(18, 18, 22)); ui.cv->setClip({ax, ay, aw, ah});
-    int c0 = tileScrollX / cell, r0 = tileScrollY / cell;
-    for (int r = r0; r <= r0 + ah / cell + 1 && r < rows; r++) for (int c = c0; c <= c0 + aw / cell + 1 && c < cols; c++) { int sx = ax + c * cell - tileScrollX, sy = ay + r * cell - tileScrollY; ts->drawOpaque(*ui.cv, T(c, r), sx + 1, sy + 1, 2); if (tsPick.valid() && tsPick.c == c && tsPick.r == r) ui.cv->rect(sx, sy, cell, cell, ACCENT2); }
-    // column/row rulers
-    for (int c = c0; c <= c0 + aw / cell + 1 && c < cols; c++) if (c % 5 == 0) font->draw(*ui.cv, *ts, ax + c * cell - tileScrollX + 2, ay + 2, std::to_string(c), Color8{255, 255, 0, 160});
-    for (int r = r0; r <= r0 + ah / cell + 1 && r < rows; r++) if (r % 5 == 0) font->draw(*ui.cv, *ts, ax + 2, ay + r * cell - tileScrollY + 2, std::to_string(r), Color8{255, 255, 0, 160});
-    ui.cv->resetClip();
-    int hc = (in.mouseX - ax + tileScrollX) / cell, hr = (in.mouseY - ay + tileScrollY) / cell;
-    if (ui.hover(ax, ay, aw, ah) && hc < cols && hr < rows) { int sx = ax + hc * cell - tileScrollX, sy = ay + hr * cell - tileScrollY; ui.cv->rect(sx, sy, cell, cell, C::White); tsHover = T(hc, hr); if (in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; tsPick = tsHover; } }
-    std::string info = tsHover.valid() ? fmt("hover: col %d, row %d", tsHover.c, tsHover.r) : "";
-    if (tsPick.valid()) { info += fmt("    picked: %d,%d", tsPick.c, tsPick.r); std::string uses; for (auto& k : allTileKinds()) { for (auto& g : k.ground) if (g.valid() && g.c == tsPick.c && g.r == tsPick.r) uses += k.name + " "; if (k.prop.valid() && k.prop.c == tsPick.c && k.prop.r == tsPick.r) uses += k.name + "(prop) "; } if (!uses.empty()) info += "   used by: " + uses; }
-    ui.text(x + 8, y + h - 24, info, ACCENT2);
-    if (tsPick.valid()) ts->drawOpaque(*ui.cv, tsPick, x + w - 60, y + h - 30, 2);
-    ui.text(x + w - 420, y + h - 24, "character rows: col 104 = base pose, rows = creature type", DIM);
-}

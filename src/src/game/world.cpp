@@ -38,7 +38,7 @@ std::vector<TileKind>& editableTileKinds() { buildKinds(); return gKinds; }
 int tileKindIndex(const std::string& name) { buildKinds(); auto it = gKindIndex.find(name); return it == gKindIndex.end() ? -1 : it->second; }
 void rebuildTileKindIndex() { gKindIndex.clear(); for (size_t i = 0; i < gKinds.size(); i++) gKindIndex[gKinds[i].name] = (int)i; resolveTileKindGroups(); }
 
-static std::string tileStr(Tile t) { return t.valid() ? fmt("%d,%d", t.c, t.r) : ""; }
+static std::string tileStr(Tile t) { return tileText(t); }
 static std::string joinList(const std::vector<std::string>& v) { std::string o; for (size_t i = 0; i < v.size(); i++) o += (i ? "," : "") + v[i]; return o; }
 static void readJoinFields(const ConfigSection& sec, TileKind& k) {
     k.recolor = sec.geti("recolor", 0) != 0; k.under = sec.geti("under", 0) != 0; k.shift = sec.geti("shift", 0);

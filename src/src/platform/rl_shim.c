@@ -260,6 +260,15 @@ void rl_open_url(const char* url) { OpenURL(url); }
 const char* rl_app_dir(void) { return GetApplicationDirectory(); }
 const char* rl_get_clipboard(void) { const char* c = GetClipboardText(); return c ? c : ""; }
 void rl_set_clipboard(const char* s) { SetClipboardText(s); }
+// 1.2.0: files dropped on the window this frame, one path per line ("" when none)
+const char* rl_dropped_files(void) {
+    static char buf[8192]; buf[0] = 0;
+    if (!IsFileDropped()) return buf;
+    FilePathList l = LoadDroppedFiles(); size_t n = 0;
+    for (unsigned int i = 0; i < l.count; i++) { size_t k = strlen(l.paths[i]); if (n + k + 2 >= sizeof(buf)) break; if (n) buf[n++] = 10; memcpy(buf + n, l.paths[i], k); n += k; buf[n] = 0; }
+    UnloadDroppedFiles(l);
+    return buf;
+}
 int rl_monitor_w(void) { return GetMonitorWidth(GetCurrentMonitor()); }
 int rl_monitor_h(void) { return GetMonitorHeight(GetCurrentMonitor()); }
 void rl_message_box(const char* title, const char* text) {

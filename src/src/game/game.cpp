@@ -89,6 +89,7 @@ bool Game::switchCampaign(const std::string& id) {
     campaign = *c;
     if (same) return true;
     campaignId = want; campaignDir = c->dir;
+    if (ctx.ts) ctx.ts->useCampaign(assetDir + "/data", campaignDir, c->inherit);   // 1.2.0: its sprite sheets, before any data names one
     if (campaignDir.empty() || c->inherit) gd->load(assetDir + "/data"); else { gd->load(campaignDir); }
     if (!campaignDir.empty() && c->inherit) gd->loadOverlay(campaignDir);
     loadTileKinds(assetDir + "/data/tilekinds.txt"); if (!campaignDir.empty()) loadTileKindsOverlay(campaignDir + "/tilekinds.txt");
@@ -1262,7 +1263,7 @@ void Game::reloadContent() {
 void Game::drawUnitSprite(Canvas& cv, const Character& ch, int sx, int sy, bool flip) {
     if (ch.size == 2) {
         for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) {
-            Tile t = T(ch.tile.c + xx, ch.tile.r + yy);
+            Tile t = tileAt(ch.tile, xx, yy);
             ctx.ts->drawBacking(cv, t, sx + xx * TILE, sy + yy * TILE, 2);
             if (ch.recolor) ctx.ts->drawRecolor(cv, t, sx + xx * TILE, sy + yy * TILE, 2, ch.color); else ctx.ts->draw(cv, t, sx + xx * TILE, sy + yy * TILE, 2);
         }
@@ -1369,7 +1370,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
             const CreatureDef* cd = e.creatures.empty() ? nullptr : gd->creature(e.creatures[0]);
             int sx = e.x * TILE - cx, sy = e.y * TILE - cy;
             cv.fillRect(sx + 1, sy + 1, TILE - 2, TILE - 2, RGB(60, 0, 0, 150)); cv.rect(sx, sy, TILE, TILE, RGB(220, 40, 40));
-            if (cd) { if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) { ctx.ts->drawBacking(cv, T(cd->tile.c + xx, cd->tile.r + yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); ctx.ts->draw(cv, T(cd->tile.c + xx, cd->tile.r + yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); } }
+            if (cd) { if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) { ctx.ts->drawBacking(cv, tileAt(cd->tile, xx, yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); ctx.ts->draw(cv, tileAt(cd->tile, xx, yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); } }
                       else { ctx.ts->drawBacking(cv, cd->tile, sx, sy, 2); if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, sx, sy, 2, cd->color); else ctx.ts->draw(cv, cd->tile, sx, sy, 2); } }
             if (e.creatures.size() > 1) { ctx.font->draw(cv, *ctx.ts, sx + 16, sy - 4, "x" + std::to_string(e.creatures.size()), C::Red); }
         }

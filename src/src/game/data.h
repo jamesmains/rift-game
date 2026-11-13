@@ -124,6 +124,7 @@ struct GameData {
     std::string lastError;
 };
 
-Tile parseTile(const std::string& s);
+Tile parseTile(const std::string& s);   // "col,row" or "col,row@sheet" (1.2.0)
+std::string tileText(Tile t);           // the same back ("" for no tile)
 Color8 parseColor(const std::string& s);
 void parseRange(const std::string& s, int& lo, int& hi);

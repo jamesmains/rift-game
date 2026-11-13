@@ -283,7 +283,7 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
             int dx = x0 + lw + 16, dy = y0;
             if (cd) {
                 panel(ctx, dx - 6, dy - 6, w - lw - 16, SCREEN_H - 100, C::Panel, C::DkGray);
-                cv.fillRect(dx, dy, 52, 52, RGB(40, 40, 60)); if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->draw(cv, T(cd->tile.c + xx, cd->tile.r + yy), dx + 2 + xx * 24, dy + 2 + yy * 24, 2); } else if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, dx + 14, dy + 14, 2, cd->color); else ctx.ts->draw(cv, cd->tile, dx + 14, dy + 14, 2);
+                cv.fillRect(dx, dy, 52, 52, RGB(40, 40, 60)); if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->draw(cv, tileAt(cd->tile, xx, yy), dx + 2 + xx * 24, dy + 2 + yy * 24, 2); } else if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, dx + 14, dy + 14, 2, cd->color); else ctx.ts->draw(cv, cd->tile, dx + 14, dy + 14, 2);
                 ctx.font->bold = true; UI::text(ctx, dx + 60, dy, cd->name, C::Gold); ctx.font->bold = false;
                 UI::text(ctx, dx + 60, dy + 14, fmt("Level %d  %s  %s", cd->level, cd->faction.c_str(), cd->boss ? "BOSS" : ""), C::Gray);
                 UI::text(ctx, dx + 60, dy + 28, fmt("Killed: %d", kills), C::White);

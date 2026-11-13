@@ -28,6 +28,21 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.2.0 sprite sheets of your own, sorted tiles
+
+* **Import sprite sheets**: the Editor's Tileset tab imports any PNG of tiles in a grid (or drop the file on the Editor
+  window). Set the tile size, where the first tile starts and the gap between tiles (Guess reads it from the
+  picture), and which pixels are see-through: black, transparent, or one background colour picked from the picture.
+  Other tile sizes are scaled to the game's 12x12. A tile on an extra sheet is written `col,row@sheet`.
+* **New campaigns start with no sprite sheet**: import your own, or press Copy base game's to start from a copy of
+  the base game's sheet that you can repaint. Campaigns that build on the base game see its sheet too.
+* **Tile categories**: every tile is Terrain, Props, Characters, Creatures, Items, Effects, Letters or Unused, and
+  each tile picker opens on the right one (an item's sprite on Items, an NPC's on Characters...). The base game's
+  sheet comes sorted. Sort tiles in the Tileset tab (select, keys 1-9) or right-click a tile in any picker.
+* **Tile groups**: named sets like Potions, Swords and blades, Goblins or Furniture (77 for the base sheet) to find a
+  picture fast; make and fill them in the Tileset tab or from the picker.
+* Check all lists sprites that name a sheet the campaign doesn't have.
+
 ## 1.1.11 text boxes like Notepad
 
 * **Every Editor text box edits like Notepad**: double-click selects a word, triple-click the line, Ctrl+arrows jump

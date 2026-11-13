@@ -1057,7 +1057,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         int sx = u.x * TILE - cx + (int)u.offX, sy = u.y * TILE - cy + (int)u.offY, sz = u.ch.size * TILE;
         if (!u.friendly() && map->dark && !visible(u.x, u.y)) continue;   // lurking in the dark
         if (!u.ch.alive && u.summoned) continue;   // summons leave no body
-        if (!u.ch.alive) { if (!u.friendly()) ctx.ts->draw(cv, u.ch.size == 2 ? TL::SKULL : T(TL::CHAR_COL_DEAD, u.ch.tile.r), sx, sy, 2, RGB(150, 150, 150)); else ctx.ts->draw(cv, T(TL::CHAR_COL_DEAD, u.ch.tile.r), sx, sy, 2, RGB(200, 120, 120)); continue; }
+        if (!u.ch.alive) { if (!u.friendly()) ctx.ts->draw(cv, u.ch.size == 2 ? TL::SKULL : (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(150, 150, 150)); else ctx.ts->draw(cv, (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(200, 120, 120)); continue; }
         bool active = (int)i == cb.selectedUnit && !cb.ending;
         bool enemy = !u.friendly();
         Color8 team = enemy ? foeColor() : u.ally ? allyColor() : friendColor();
@@ -1067,7 +1067,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         drawUnitSprite(cv, u.ch, sx, sy, false);
         if (u.hitFlash > 0 && ((int)(u.hitFlash * 30) % 2 == 0 || (settings && settings->reduceFlashing))) {   // struck: the sprite flashes
             Color8 fc = settings && settings->reduceFlashing ? RGB(255, 200, 200, 110) : C::White;
-            if (u.ch.size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->drawRecolor(cv, T(u.ch.tile.c + xx, u.ch.tile.r + yy), sx + xx * TILE, sy + yy * TILE, 2, fc); }
+            if (u.ch.size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->drawRecolor(cv, tileAt(u.ch.tile, xx, yy), sx + xx * TILE, sy + yy * TILE, 2, fc); }
             else ctx.ts->drawRecolor(cv, u.ch.tile, sx, sy, 2, fc);
         }
         if (u.overwatch) { cv.fillRect(sx + sz - 9, sy - 1, 9, 7, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, sx + sz - 8, sy - 3, "o", C::Yellow); }

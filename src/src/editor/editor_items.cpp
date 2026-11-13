@@ -28,8 +28,9 @@ std::string rgbText(Color8 c) { return std::to_string(c.r) + "," + std::to_strin
 // the colour a picture is drawn in on the sheet (its most common non-black pixel); white if it has none
 Color8 Editor::tileOwnColor(Tile t) {
     if (!t.valid() || !ts) return C::White;
-    auto ck = ownColCache.find(t.c * 1000 + t.r); if (ck != ownColCache.end()) return ck->second;
-    const Image8& im = ts->img; std::map<uint32_t, int> n;
+    int key = t.s * 10000000 + t.c * 1000 + t.r;
+    auto ck = ownColCache.find(key); if (ck != ownColCache.end()) return ck->second;
+    const Image8& im = ts->pics(t.s, 0); std::map<uint32_t, int> n;
     int bx = 1 + t.c * Tileset::PITCH, by = 1 + t.r * Tileset::PITCH;
     for (int y = 0; y < Tileset::TS; y++) for (int x = 0; x < Tileset::TS; x++) {
         int sx = bx + x, sy = by + y; if (sx >= im.w || sy >= im.h) continue;
@@ -37,7 +38,7 @@ Color8 Editor::tileOwnColor(Tile t) {
         n[(uint32_t)c.r << 16 | (uint32_t)c.g << 8 | c.b]++;
     }
     uint32_t best = 0xFFFFFF; int bn = 0; for (auto& p : n) if (p.second > bn) { bn = p.second; best = p.first; }
-    return ownColCache[t.c * 1000 + t.r] = RGB((uint8_t)(best >> 16), (uint8_t)(best >> 8), (uint8_t)best);
+    return ownColCache[key] = RGB((uint8_t)(best >> 16), (uint8_t)(best >> 8), (uint8_t)best);
 }
 
 // the sheet's colours, most used first (each counted once per picture; near-identical shades merged)
@@ -94,7 +95,7 @@ int Editor::drawLookCard(GenericEditor& g, EdSection& s, int x, int y, int w, bo
     int cx = x + 120, cy = y + 6;
     ui.label(cx, cy + 2, "sprite");
     if (ui.textField(cx + 50, cy, 64, tileStr, 20)) { s.set(tk, tileStr); g.dirty = true; }
-    if (ui.button(cx + 120, cy, 92, 16, "Pick sprite...")) { EdSection* sp = &s; GenericEditor* gp = &g; std::string key = tk; openTilePicker(t, [sp, gp, key](Tile nt) { if (!nt.valid()) return; sp->set(key, fmt("%d,%d", nt.c, nt.r)); gp->dirty = true; }); }
+    if (ui.button(cx + 120, cy, 92, 16, "Pick sprite...")) { EdSection* sp = &s; GenericEditor* gp = &g; std::string key = tk; openTilePicker(t, [sp, gp, key](Tile nt) { if (!nt.valid()) return; sp->set(key, tileText(nt)); gp->dirty = true; }, npc ? 'c' : 'i'); }
     if (ui.hover(cx + 120, cy, 92, 16)) ui.tip(std::string(own ? "The picker shows the sheet as it is; the " : "The picker shows the sheet as it is; the new picture is drawn in this ") + (npc ? "NPC" : "item") + (own ? " keeps the picture's own colour" : "'s colour"));
     if (npc && ui.hover(cx + 50, cy, 64, 16)) ui.tip("col,row on the sheet. People are in columns 104-123 (and 141, 156, 166); animals in rows 14-16 near the left");
     // colour: the RGB of the tint (the sheet's own colour when color= isn't set)

@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include <vector>
+#include <filesystem>
+#include "util.h"
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -96,18 +98,84 @@ void Canvas::blitRecolor(const Image8& img, int sx, int sy, int sw, int sh, int 
 void Canvas::dim(int x, int y, int rw, int rh, uint8_t alpha) { fillRect(x, y, rw, rh, Color8{0, 0, 0, alpha}); }
 
 // ---------------- Tileset ----------------
-bool Tileset::load(const std::string& path) {
-    if (!img.load(path)) return false;
+// 1.2.0: the sheet names of the active campaign (index = Tile::s)
+static std::vector<std::string> gSheetNames = {"tiles"};
+int sheetIndex(const std::string& name0) {
+    std::string name = trim(name0); if (name.empty() || name == "tiles") return 0;
+    for (size_t i = 0; i < gSheetNames.size(); i++) if (gSheetNames[i] == name) return (int)i;
+    if (gSheetNames.size() >= 250) return 0;
+    gSheetNames.push_back(name); return (int)gSheetNames.size() - 1;
+}
+const std::string& sheetName(int s) { static const std::string none; return s >= 0 && s < (int)gSheetNames.size() ? gSheetNames[s] : none; }
+int sheetCount() { return (int)gSheetNames.size(); }
+
+SheetGrid readSheetGrid(const std::string& infoPath) {
+    SheetGrid g; std::string text; if (!readFile(infoPath, text)) return g;
+    for (auto& sec : parseConfig(text)) {
+        if (sec.name != "sheet") continue;
+        auto pair = [&](const char* k, int& a, int& b) { auto p = split(sec.get(k), ','); if (p.size() >= 2) { a = atoi(trim(p[0]).c_str()); b = atoi(trim(p[1]).c_str()); } else if (p.size() == 1 && !trim(p[0]).empty()) a = b = atoi(trim(p[0]).c_str()); };
+        pair("tile", g.tw, g.th); pair("offset", g.ox, g.oy); pair("gap", g.gx, g.gy);
+        g.tw = clampi(g.tw, 1, 256); g.th = clampi(g.th, 1, 256); g.ox = std::max(0, g.ox); g.oy = std::max(0, g.oy); g.gx = std::max(0, g.gx); g.gy = std::max(0, g.gy);
+        std::string c = toLower(trim(sec.get("clear", "black")));
+        if (c == "alpha") g.clear = 1;
+        else if (c != "black" && c != "") { auto p = split(c, ','); if (p.size() >= 3) { g.clear = 2; g.key = Color8{(uint8_t)atoi(p[0].c_str()), (uint8_t)atoi(p[1].c_str()), (uint8_t)atoi(p[2].c_str()), 255}; } }
+        g.title = sec.get("title");
+        break;
+    }
+    return g;
+}
+std::string sheetGridText(const SheetGrid& g) {
+    std::string o = "[sheet]\n";
+    if (!g.title.empty()) o += "title=" + g.title + "\n";
+    o += fmt("tile=%d,%d\noffset=%d,%d\ngap=%d,%d\n", g.tw, g.th, g.ox, g.oy, g.gx, g.gy);
+    o += g.clear == 1 ? std::string("clear=alpha\n") : g.clear == 2 ? fmt("clear=%d,%d,%d\n", g.key.r, g.key.g, g.key.b) : std::string("clear=black\n");
+    return o;
+}
+SheetGrid guessSheetGrid(int w, int h) {
+    SheetGrid g;
+    if (w % 13 == 1 && h % 13 == 1) return g;                       // the Urizen layout: 12x12 with a 1 px border
+    for (int t : {12, 16, 8, 24, 32, 10, 20}) {
+        if (w % t == 0 && h % t == 0) { g.tw = g.th = t; g.ox = g.oy = g.gx = g.gy = 0; return g; }
+        if (w % (t + 1) == 1 && h % (t + 1) == 1) { g.tw = g.th = t; g.ox = g.oy = g.gx = g.gy = 1; return g; }
+        if (w % (t + 1) == t && h % (t + 1) == t) { g.tw = g.th = t; g.ox = g.oy = 0; g.gx = g.gy = 1; return g; }
+    }
+    g.tw = g.th = 12; g.ox = g.oy = g.gx = g.gy = 0; return g;
+}
+// Cuts the picture by the grid and lays the tiles out like the base sheet: 12x12 cells at a 13 px pitch from 1,1.
+// Other tile sizes are scaled to 12x12 (nearest pixel). See-through pixels become black, which draw() leaves out.
+bool convertSheet(const Image8& src, const SheetGrid& g, Image8& out, int& cols, int& rows) {
+    cols = g.cols(src.w); rows = g.rows(src.h);
+    if (cols <= 0 || rows <= 0 || src.px.empty()) { cols = rows = 0; return false; }
+    cols = std::min(cols, 4000); rows = std::min(rows, 4000);
+    out.w = 1 + cols * Tileset::PITCH; out.h = 1 + rows * Tileset::PITCH; out.px.assign((size_t)out.w * out.h, Color8{0, 0, 0, 255});
+    for (int r = 0; r < rows; r++) for (int c = 0; c < cols; c++) {
+        int bx = g.ox + c * (g.tw + g.gx), by = g.oy + r * (g.th + g.gy);
+        for (int y = 0; y < Tileset::TS; y++) for (int x = 0; x < Tileset::TS; x++) {
+            int sx = bx + x * g.tw / Tileset::TS, sy = by + y * g.th / Tileset::TS;
+            if (sx < 0 || sy < 0 || sx >= src.w || sy >= src.h) continue;
+            Color8 p = src.px[(size_t)sy * src.w + sx];
+            bool clear = p.a < 128 || (g.clear == 2 && p.r == g.key.r && p.g == g.key.g && p.b == g.key.b);
+            Color8 o = clear ? Color8{0, 0, 0, 255} : Color8{p.r, p.g, p.b, 255};
+            if (!clear && g.clear != 0 && o.r == 0 && o.g == 0 && o.b == 0) o = Color8{1, 1, 1, 255};   // keep drawn black when black isn't the see-through colour
+            out.px[(size_t)(1 + r * Tileset::PITCH + y) * out.w + 1 + c * Tileset::PITCH + x] = o;
+        }
+    }
+    return true;
+}
+
+void Tileset::makeDerived(const Image8& img, Image8& tilesTransparent, Image8& tilesInside, std::vector<uint8_t>* empty, int cols, int rows) {
     tilesTransparent = img;
     for (auto& p : tilesTransparent.px) if (p.r == 0 && p.g == 0 && p.b == 0) p.a = 0;
     // each cell's black pixels that a flood from the cell's edge (4-way, through black) can't reach are part of the picture
     tilesInside = img;
     for (auto& p : tilesInside.px) p = Color8{0, 0, 0, 0};
+    if (empty) empty->assign((size_t)cols * rows, 1);
     for (int cy = 0; 1 + cy * PITCH + TS <= img.h; cy++) for (int cx = 0; 1 + cx * PITCH + TS <= img.w; cx++) {
         int bx = 1 + cx * PITCH, by = 1 + cy * PITCH;
         auto black = [&](int x, int y) { Color8 c = img.px[(size_t)(by + y) * img.w + bx + x]; return c.r == 0 && c.g == 0 && c.b == 0; };
         bool any = false; for (int y = 0; y < TS && !any; y++) for (int x = 0; x < TS; x++) if (!black(x, y)) { any = true; break; }
         if (!any) continue;
+        if (empty && cx < cols && cy < rows) (*empty)[(size_t)cy * cols + cx] = 0;
         uint8_t seen[TS][TS] = {}; int stack[TS * TS], n = 0;
         for (int i = 0; i < TS; i++) { int e[4][2] = {{i, 0}, {i, TS - 1}, {0, i}, {TS - 1, i}};
             for (auto& q : e) if (!seen[q[1]][q[0]] && black(q[0], q[1])) { seen[q[1]][q[0]] = 1; stack[n++] = q[1] * TS + q[0]; } }
@@ -116,26 +184,103 @@ bool Tileset::load(const std::string& path) {
                 if (nx >= 0 && ny >= 0 && nx < TS && ny < TS && !seen[ny][nx] && black(nx, ny)) { seen[ny][nx] = 1; stack[n++] = ny * TS + nx; } } }
         for (int y = 0; y < TS; y++) for (int x = 0; x < TS; x++) if (black(x, y) && !seen[y][x]) tilesInside.px[(size_t)(by + y) * img.w + bx + x] = Color8{0, 0, 0, 255};
     }
+}
+bool Tileset::load(const std::string& path) {
+    if (!img.load(path)) return false;
+    baseCols = (img.w - 1) / PITCH; baseRows = (img.h - 1) / PITCH;
+    makeDerived(img, tilesTransparent, tilesInside, &baseEmpty, baseCols, baseRows);
+    sheets.clear(); SheetPics t; t.name = "tiles"; t.path = path; t.own = true; sheets.push_back(t);   // until useCampaign: the base sheet only
+    gSheetNames.assign(1, "tiles");
     return true;
+}
+static std::vector<std::string> pngsIn(const std::string& dir) {
+    std::vector<std::string> out; std::error_code ec;
+    for (auto& e : std::filesystem::directory_iterator(dir, ec)) {
+        if (!e.is_regular_file(ec)) continue;
+        std::string ext = toLower(e.path().extension().string()); if (ext != ".png") continue;
+        out.push_back(e.path().stem().string());
+    }
+    std::sort(out.begin(), out.end());
+    return out;
+}
+static void loadSheetPics(SheetPics& sp) {
+    Image8 src; if (!src.load(sp.path)) { sp.loaded = false; return; }
+    sp.grid = readSheetGrid(sp.info);
+    if (!convertSheet(src, sp.grid, sp.img, sp.cols, sp.rows)) { sp.loaded = false; return; }
+    Tileset::makeDerived(sp.img, sp.trans, sp.inside, &sp.empty, sp.cols, sp.rows);
+    sp.loaded = true;
+}
+void Tileset::useCampaign(const std::string& baseData, const std::string& camp, bool inh, bool keepOrder) {
+    keepOrder = keepOrder && camp == campaignDir && baseData == baseDataDir;   // a reload: Tiles already parsed keep their sheet
+    std::vector<std::string> order = keepOrder ? gSheetNames : std::vector<std::string>{"tiles"};
+    baseDataDir = baseData; campaignDir = camp; inherit = camp.empty() || inh;
+    std::string tilesPng = baseData + "/../tiles.png";
+    auto infoFor = [&](const std::string& name) { std::string ci = camp + "/sheets/" + name + ".txt"; return !camp.empty() && fileExists(ci) ? ci : baseData + "/sheets/" + name + ".txt"; };
+    struct Avail { std::string name, path; bool own; };
+    std::vector<Avail> avail;
+    auto add = [&](const std::string& dir, bool own) {
+        for (auto& n : pngsIn(dir)) {
+            if (toLower(n) == "tiles") continue;
+            bool have = false; for (auto& x : avail) if (x.name == n) have = true;
+            if (!have) avail.push_back({n, dir + "/" + n + ".png", own});
+        }
+    };
+    if (!camp.empty()) add(camp + "/sheets", true);
+    add(baseData + "/sheets", camp.empty());
+    for (auto& a : avail) if (std::find(order.begin(), order.end(), a.name) == order.end()) order.push_back(a.name);
+    sheets.clear(); gSheetNames = order;
+    for (size_t i = 0; i < order.size(); i++) {
+        SheetPics sp; sp.name = order[i]; sp.info = infoFor(sp.name);
+        if (i == 0) {   // sheet 0
+            if (!camp.empty() && fileExists(camp + "/sheets/tiles.png")) { sp.path = camp + "/sheets/tiles.png"; sp.own = true; loadSheetPics(sp); }
+            else { sp.path = tilesPng; sp.own = camp.empty(); }   // the base pictures (img, tilesTransparent, tilesInside)
+        } else {
+            for (auto& a : avail) if (a.name == sp.name) { sp.path = a.path; sp.own = a.own; if (a.own) sp.info = camp + "/sheets/" + a.name + ".txt"; loadSheetPics(sp); }
+        }
+        sheets.push_back(sp);   // a name with no picture stays as a placeholder (draws nothing)
+    }
+}
+bool Tileset::visible(int s) const {
+    const SheetPics* sp = sheet(s); if (!sp) return false;
+    if (campaignDir.empty() || sp->own) return true;
+    return inherit;   // a standalone campaign shows only its own sheets (1.2.0 #36: none until one is imported or copied)
+}
+int Tileset::sheetCols(int s) const { if (s == 0 && (sheets.empty() || !sheets[0].loaded)) return baseCols; const SheetPics* sp = sheet(s); return sp && sp->loaded ? sp->cols : 0; }
+int Tileset::sheetRows(int s) const { if (s == 0 && (sheets.empty() || !sheets[0].loaded)) return baseRows; const SheetPics* sp = sheet(s); return sp && sp->loaded ? sp->rows : 0; }
+bool Tileset::cellEmpty(Tile t) const {
+    if (!t.valid() || t.r < 0) return true;
+    int cols = sheetCols(t.s), rows = sheetRows(t.s); if (t.c >= cols || t.r >= rows) return true;
+    const std::vector<uint8_t>& e = (t.s == 0 && (sheets.empty() || !sheets[0].loaded)) ? baseEmpty : sheets[t.s].empty;
+    size_t i = (size_t)t.r * cols + t.c; return i < e.size() ? e[i] != 0 : true;
+}
+const Image8& Tileset::pics(int s, int which) const {
+    static const Image8 none;
+    if (s > 0 || (s == 0 && !sheets.empty() && sheets[0].loaded)) {
+        const SheetPics* sp = sheet(s); if (!sp || !sp->loaded) return none;
+        return which == 0 ? sp->img : which == 1 ? sp->trans : sp->inside;
+    }
+    return which == 0 ? img : which == 1 ? tilesTransparent : tilesInside;
 }
 void Tileset::drawBacking(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX) const {
     if (!t.valid()) return;
-    cv.blit(tilesInside, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, C::White, flipX);
+    cv.blit(pics(t.s, 2), 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, C::White, flipX);
 }
 void Tileset::draw(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 tint, bool flipX) const {
     if (!t.valid()) return;
-    cv.blit(tilesTransparent, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, flipX);
+    cv.blit(pics(t.s, 1), 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, flipX);
 }
 void Tileset::drawRecolor(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color) const {
     if (!t.valid()) return;
-    cv.blitRecolor(tilesTransparent, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, color);
+    cv.blitRecolor(pics(t.s, 1), 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, color);
 }
 void Tileset::drawOpaque(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 tint) const {
     if (!t.valid()) return;
-    cv.blit(img, 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, false);
+    cv.blit(pics(t.s, 0), 1 + t.c * PITCH, 1 + t.r * PITCH, TS, TS, dx, dy, scale, tint, false);
 }
 void Tileset::drawLit(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX) const {
     if (!t.valid()) return;
+    const Image8& img = pics(t.s, 0); const Image8& tilesTransparent = pics(t.s, 1);
+    if (img.px.empty()) return;
     int bx = 1 + t.c * PITCH, by = 1 + t.r * PITCH;
     long sum = 0; int n = 0;   // brightness of the picture's coloured pixels (near-black detail pixels left out)
     for (int y = 0; y < TS; y++) for (int x = 0; x < TS; x++) {

@@ -3,6 +3,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <vector>
 
 // Physical keys (and gamepad buttons as virtual keys). Order matters for saved keybinds: append only.
 enum Key : uint8_t {
@@ -56,13 +57,14 @@ struct InputState {
     bool quitRequested = false;
     int lastKey = K_NONE;         // last key pressed this frame (for rebinding)
     std::string clipboard;        // OS clipboard contents, filled by the platform while Ctrl is held
+    std::vector<std::string> dropped;   // 1.2.0: files dropped on the window this frame (the Editor imports sprite sheets)
     bool ctrl() const { return down[K_CTRL]; }
     bool shift() const { return down[K_SHIFT]; }
 
     void beginFrame() {
         for (int i = 0; i < K_COUNT; i++) { pressed[i] = released[i] = false; }
         for (int i = 0; i < 3; i++) { mousePressed[i] = mouseReleased[i] = false; }
-        wheel = 0; typed.clear(); mouseDX = mouseDY = 0; lastKey = K_NONE;
+        wheel = 0; typed.clear(); dropped.clear(); mouseDX = mouseDY = 0; lastKey = K_NONE;
     }
     void press(Key k) { if (!down[k]) pressed[k] = true; down[k] = true; lastKey = k; }
     void release(Key k) { if (down[k]) released[k] = true; down[k] = false; }

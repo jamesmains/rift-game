@@ -238,13 +238,28 @@ void Editor::runCampaignCheck() {
     for (size_t i = 0; i < gens[17].secs.size(); i++) { auto& sc = gens[17].secs[i]; if (sc.name != "npc") continue;
         std::vector<std::pair<bool, std::string>> pr; npcProblems(sc, pr);
         for (auto& p : pr) { FlagUse u; u.gen = 17; u.sec = (int)i; u.tab = 24; addF(p.first, "NPC " + sc.get("id") + ": " + p.second, u); } }
+    // ---- sprite sheets (1.2.0 #36): a sprite written col,row@name needs that sheet ----
+    auto badSheet = [&](const std::string& v) -> std::string {
+        size_t at = v.find('@'); if (at == std::string::npos) return "";
+        std::string nm = trim(v.substr(at + 1)); if (nm.empty() || nm == "tiles") return "";
+        for (auto& sp : ts->sheets) if (sp.name == nm && sp.loaded) return "";
+        return nm;
+    };
+    auto spriteKey = [](const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite" || k == "partysprite"; };
+    { static const int genTab[] = {3, 4, 5, 6, 7, 8, 9, 10, 2, 14, 15, 16, 17, 20, 21, 22, 23, 24};
+      for (size_t gi = 0; gi < gens.size(); gi++) for (size_t si = 0; si < gens[gi].secs.size(); si++) for (auto& kv : gens[gi].secs[si].kv) {
+          if (!spriteKey(kv.first)) continue; std::string b = badSheet(kv.second); if (b.empty()) continue;
+          auto& sc = gens[gi].secs[si];
+          addF(true, gens[gi].title + " " + sc.get(gens[gi].listKey, sc.get("id")) + ": " + kv.first + "=" + kv.second + " is on the sprite sheet '" + b + "', which this campaign doesn't have (Tileset tab)", gu((int)gi, (int)si, gi < 18 ? genTab[gi] : 13)); }
+      for (auto& k : allTileKinds()) { std::vector<Tile> all = k.ground; all.push_back(k.prop); for (auto& e : k.edges) all.push_back(e);
+          for (auto& t : all) if (t.valid() && t.s && !(ts->sheet(t.s) && ts->sheet(t.s)->loaded)) { FlagUse u; u.tab = 1; addF(true, "Tile kind " + k.name + ": a picture is on the sprite sheet '" + sheetName(t.s) + "', which this campaign doesn't have", u); break; } } }
     // ---- maps ----
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue;
         auto walk = [&](int cx, int cy) { if (cx < 0 || cy < 0 || cx >= m.w || cy >= m.h) return false; const TileKind* k = tileKind(trim(split(m.at(cx, cy), '|')[0])); return k && k->walkable; };
         // 1.1.7: a trigger or exit area is fine while any of its cells can be walked on (a whole-map trigger starts on a tree)
         auto areaWalk = [&](const EdObj& ob, int x0, int y0) { int w = std::max(1, ob.geti("w")), h = std::max(1, ob.geti("h")); for (int yy = y0; yy < y0 + h; yy++) for (int xx = x0; xx < x0 + w; xx++) if (walk(xx, yy)) return true; return false; };
-        for (size_t oi = 0; oi < m.objs.size(); oi++) { const EdObj& raw = m.objs[oi]; EdObj o = resolvedObj(raw); FlagUse u; u.tab = 0; u.file = f; u.obj = (int)oi; int ox = o.geti("x"), oy = o.geti("y");
+        for (size_t oi = 0; oi < m.objs.size(); oi++) { const EdObj& raw = m.objs[oi]; EdObj o = resolvedObj(raw); FlagUse u; u.tab = 0; u.file = f; u.obj = (int)oi; for (auto& kv : raw.kv) if (spriteKey(kv.first) && !badSheet(kv.second).empty()) addF(true, "Map " + f + ": " + raw.type + " " + raw.get("id") + " " + kv.first + "=" + kv.second + " is on a sprite sheet this campaign doesn't have", u); int ox = o.geti("x"), oy = o.geti("y");
             std::string at = fmt("map %s: %s at %d,%d", f.c_str(), o.type.c_str(), ox, oy);
             if (!raw.get("template").empty() && !templateSec(raw.get("template"))) addF(true, at + " uses unknown template '" + raw.get("template") + "' (Objects tab)", u);
             if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) addF(true, at + " uses unknown resource node type '" + o.get("node") + "' (Resources tab)", u);

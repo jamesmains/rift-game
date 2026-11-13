@@ -41,7 +41,9 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
   (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
-  editor_* tests pass (1.1.11: text_edit_1_1_11, every editor_* test, scripts_1_1_10, npcs_1_1_9, boot_and_setup,
+  editor_* tests pass (1.2.0: sprite_sheets_1_2_0, every editor_* test, boot_and_setup, sprites_1010, tutorial,
+  item_color_1_1_8, npcs_1_1_9, scripts_1_1_10, text_edit_1_1_11, facing, item_details, resource_nodes, fight_to_victory,
+  standing_1_1_2, story_choices; 1.1.11: text_edit_1_1_11, every editor_* test, scripts_1_1_10, npcs_1_1_9, boot_and_setup,
   new_game_name_focus, tutorial; 1.1.10: scripts_1_1_10 plus the 1.1.9 list; 1.1.4: boot_and_setup, tutorial, pause_items_1_1_3, item_details_1_1_4 pass; 1.1.5: those plus
   facing_1_1_5, music_ambient; 1.1.6: those plus every editor_* test and editor_import_1_1_6; 1.1.7: all of those plus tutorial,
   tutorial_defeat_1_1_7, sprites_1010, fight_to_victory, standing_1_1_2, resource_nodes_1_1, story_choices,
@@ -339,6 +341,34 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   Test `tests/text_edit_1_1_11.txt`. Guide topic `edit.text`.
 - The game's own inputs (new-game name, dev console) only got Ctrl+Backspace (console: Ctrl+V too) - no caret there.
 
+## 1.2.0 sprite sheets (owner's #36 import / "new campaigns default to no spritesheet", #37 categories + groups)
+- `Tile` has a sheet index `s` (gfx.h). Data writes `col,row` (sheet 0) or `col,row@name`: always `parseTile` /
+  `tileText` (data.h), `tileAt(t, dc, dr)` for size-2 neighbours, `sameTile` to compare. Saves store member tiles as text.
+- `Tileset::useCampaign(baseData, campaignDir, inherit, keepOrder)` (gfx.cpp), called by App::init and
+  Game::switchCampaign BEFORE data loads (parseTile resolves names through the global sheet list). Sheet 0 "tiles" =
+  campaign `sheets/tiles.png` if it has one, else the base `assets/tiles.png` (the `img`/`tilesTransparent` members,
+  which the font and desktop always use). Then the campaign's `sheets/*.png`, then base `assets/data/sheets/*.png`
+  (always loaded; `visible()` = offered by pickers: own sheets, plus base ones for inherit=1 / the base game). Every
+  sheet is converted at load to the base layout (12x12 at pitch 13 from 1,1; other tile sizes scaled nearest; see-
+  through -> black) by `convertSheet`, so all draw code is unchanged. An unknown `@name` = placeholder, draws nothing.
+  `keepOrder` (Editor reloads) keeps indexes so already-parsed Tiles stay valid.
+- `sheets/<name>.txt`: `[sheet]` tile/offset/gap/clear(black|alpha|r,g,b)/title (game reads it), `[cells]` r<row>=
+  one category letter per column (t p c m i e l x .), `[group]` name= tiles=c,r c,r. Base sheet's file is
+  `assets/data/sheets/tiles.txt`, seeded at 1.2.0 by a throwaway script (regions by eye + what the data uses each
+  cell for; race rows of the character block: monsters vs people; 77 groups). Edits save at once; a campaign editing
+  a base sheet's categories writes its own copy (copy on write, `saveBook`).
+- Editor: `editor_sheets.cpp` - books (`syncBooks`, `saveBook`), `drawTilePicker` (P_TILE: sheet buttons, category
+  buttons with counts, groups list, compact grid with "Not sorted yet" after the sorted tiles, Whole sheet mode,
+  right-click menu `openTileMenu`/`applyTileMenu`), the Tileset tab (select/drag/ctrl/shift, keys 1-9, groups
+  buttons), the import window P_SHEET (`openSheetImport`, preview zoom, grid overlay, "As the game cuts it"),
+  `sheetImport` / `copyBaseSheets` / `removeSheet` / `reloadSheets`. `openTilePicker(t, cb, cat)`: callers pass the
+  category (`tileCatFor` in editor.cpp; kinds ground 't', prop 'p'; map objects npc 'c' else 'p'; Look card i/c).
+  An empty category on the sheet falls back to All. `popCancel` (new) runs when a list/text popup is cancelled, so
+  the picker reopens after "Add to a group...". PNG drops: `InputState::dropped` (rl_shim `rl_dropped_files`).
+- Check all reports sprites/tile kinds on a sheet the campaign doesn't have. Guide topics `tab.tileset`,
+  `sheet.campaigns|import|categories|groups`, `tile.picker`.
+- Test `tests/sprite_sheets_1_2_0.txt` (imports assets/icons.png as a 32x32 sheet; run from a copy of assets).
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).
@@ -367,7 +397,8 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - Code: `src\src\{core,game,desktop,editor,platform}`. Data: `src\assets\data\` (plain text: items, creatures,
   npcs, quests, dialogue, ASCII maps...). Campaigns: `src\assets\campaigns\` (tutorial only; the
   Gullwatch sample campaign was removed at 1.1.1 by the owner, The Lost Lighthouse at 1.1.7).
-- Art: `src\assets\tiles.png` is the Urizen 1-bit sheet by vurmux (CC0), `icons.png` the desktop icons
+- Art: `src\assets\tiles.png` is the Urizen 1-bit sheet by vurmux (CC0; categories/groups in
+  `src\assets\data\sheets\tiles.txt`, campaigns' own sheets in `<campaign>\sheets\`), `icons.png` the desktop icons
   (Cute Desktop Icons by Mayke-Arth). Sound and music are generated by `src\tools\mksounds.py`.
 - `assets\tilesheets\` - the original Urizen sheets (`urizen_onebit_tileset__v2d0.png` = same file as tiles.png;
   `urizen__2bit__free.png`). Tilebook's saved description of the 1-bit sheet

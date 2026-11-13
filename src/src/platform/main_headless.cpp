@@ -31,8 +31,19 @@ int main(int argc, char** argv) {
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
+            if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
+            if (cmd == "drop") { std::string path; for (size_t i = 1; i < p.size(); i++) path += (i > 1 ? " " : "") + p[i]; in.dropped = {path}; step(1); in.dropped.clear(); step(2); return true; }   // 1.2.0: a file dropped on the window
+#ifndef TRIFFALL_NO_EDITOR
+            if (cmd == "sheetimport") {   // sheetimport <png> <name> <tw> <th> <ox> <oy> <gx> <gy> [black|alpha|r,g,b]
+                SheetGrid g; g.tw = atoi(p[3].c_str()); g.th = atoi(p[4].c_str()); g.ox = atoi(p[5].c_str()); g.oy = atoi(p[6].c_str()); g.gx = atoi(p[7].c_str()); g.gy = atoi(p[8].c_str());
+                if (p.size() > 9) { if (p[9] == "alpha") g.clear = 1; else if (p[9] != "black") { auto c = split(p[9], ','); if (c.size() >= 3) { g.clear = 2; g.key = Color8{(uint8_t)atoi(c[0].c_str()), (uint8_t)atoi(c[1].c_str()), (uint8_t)atoi(c[2].c_str()), 255}; } } }
+                std::string err; int sh = app.editor.sheetImport(p[1], p[2], g, err); printf("sheetimport %s -> %d %s\n", p[2].c_str(), sh, err.c_str()); step(2); return true; }
+            if (cmd == "sheetcopy") { std::string err; bool ok = app.editor.copyBaseSheets(err); printf("sheetcopy ok=%d %s\n", ok ? 1 : 0, err.c_str()); step(2); return true; }
+            if (cmd == "edsetcampaign") { app.editor.setCampaign(p[1]); step(2); return true; }
+#endif
             if (cmd == "alt") { in.down[K_ALT] = true; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_ALT] = false; step(1);  return true; }
             if (cmd == "shiftclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(2); in.down[K_SHIFT] = true; in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); in.down[K_SHIFT] = false; step(2);  return true; }
+            if (cmd == "ctrlclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; step(2); in.down[K_CTRL] = true; in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); in.down[K_CTRL] = false; step(2);  return true; }   // 1.2.0
             if (cmd == "tripleclick") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; step(2); in.mouseDX = in.mouseDY = 0; for (int k = 0; k < 3; k++) { in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(3); }  return true; }
         return false;
     };
@@ -151,6 +162,13 @@ int main(int argc, char** argv) {
             Game& g = app.game; std::string got; bool num = true;
             auto edExpect = [&]() -> bool {   // 1.1.11 editor text checks (outside the else-if chain: MSVC limits its depth)
 #ifndef TRIFFALL_NO_EDITOR
+                if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer
+                if (startsWith(key, "sheetcat:")) { auto q = split(key.substr(9), ':'); app.editor.syncBooks(); Tile t = q.size() >= 2 ? parseTile(q[1] + "@" + q[0]) : Tile{}; got = std::string(1, app.editor.cellCat(t)); num = false; return true; }   // sheetcat:<sheet>:c,r
+                if (startsWith(key, "sheetgroups:")) { app.editor.syncBooks(); int sh = sheetIndex(key.substr(12)); got = sh < (int)app.editor.books.size() ? std::to_string(app.editor.books[sh].groups.size()) : "0"; return true; }
+                if (startsWith(key, "sheetdraws:")) { auto q = split(key.substr(11), ':'); Tile t = q.size() >= 2 ? parseTile(q[1] + "@" + q[0]) : Tile{}; got = app.tileset.cellEmpty(t) ? "0" : "1"; return true; }   // the tile has a picture
+                if (key == "pickcat") { got = app.editor.pkCat ? std::string(1, app.editor.pkCat) : std::string("all"); num = false; return true; }
+                if (key == "pickshown") { got = std::to_string(app.editor.pickerCount(app.editor.pkSheet, app.editor.pkCat, app.editor.pkGroup)); return true; }
+                if (key == "picksheet") { got = sheetName(app.editor.pkSheet); num = false; return true; }
                 if (startsWith(key, "edtext:")) { got = app.editor.edText(key.substr(7), 0); num = false; return true; }     // te / ste / big: the lines joined by |
                 if (startsWith(key, "edsel:")) { got = app.editor.edText(key.substr(6), 1); num = false; return true; }      // selected text
                 if (startsWith(key, "edcaret:")) { got = app.editor.edText(key.substr(8), 2); num = false; return true; }    // line,col (1-based)

@@ -394,11 +394,13 @@ Filling the map in on purpose:
 == concepts.tiles | Tiles, sprites and the tileset
 see: tab.tileset, tileset.browse, tab.tiles, creature.sprite, creature.size, class.spriterow
 
-All art comes from one tileset image (assets/tiles.png, the Urizen 1-bit
-set): a grid of 206 columns by 50 rows of 12x12 pixel cells. A tile is written
-as col,row counting from 0 at the top left, for example 26,6 (iron sword icon)
-or 104,0 (a human). Every tile or sprite field has a "pick..." button that opens
-the sheet; the Tileset tab shows coordinates as you hover.
+All art comes from sprite sheets. The base game's is assets/tiles.png (the
+Urizen 1-bit set): a grid of 206 columns by 50 rows of 12x12 pixel cells. A tile
+is written as col,row counting from 0 at the top left, for example 26,6 (iron
+sword icon) or 104,0 (a human). A campaign can have more sheets of its own
+(Tileset tab); a tile on one of those is written col,row@name, for example
+3,1@forest. Every tile or sprite field has a "pick..." button that opens the
+tile picker; the Tileset tab shows coordinates as you hover.
 
 Black pixels are transparent. A tint (tile kinds) multiplies the art's colours;
 a color= on an NPC or creature repaints the white parts in that colour.
@@ -868,21 +870,27 @@ event you can set as sound= on an item, spell or creature.
 Music is chosen automatically by map kind unless a map or dungeon sets music=.
 
 == tab.tileset | Tileset tab
-see: tileset.browse, concepts.tiles
+see: sheet.campaigns, sheet.import, sheet.categories, sheet.groups, tile.picker, tileset.browse, concepts.tiles
 
-A browser for the whole tileset image. Hover a cell to read its col,row;
-click it to pick it. The picked cell's coordinates are shown at the bottom
-with every tile kind that uses it as ground or prop. Yellow rulers every 5
-columns and rows help you count.
+The campaign's sprite sheets: the pictures every tile, sprite and icon comes
+from. On the left, the sheets this campaign has (with Import picture..., Copy
+base game's, Grid..., Reload and Remove), the categories and the groups; on the
+right, the chosen sheet as it is laid out, every tile marked with a coloured line
+in its category's colour.
 
-Use it to find art before you fill a tile=, sprite= or ground field, or to see
-which tile kind already uses a piece of art.
+Sorting tiles:
+- Click a tile to select it, drag to select a block, Ctrl+click to add or take
+  away one, Shift+click to add the block from the last tile clicked. Ctrl+A
+  selects every tile shown (the category or group picked on the left).
+- Keys 1 to 9 (or the coloured buttons under the sheet) give the selected tiles
+  a category. Right-click for the same choices plus the groups.
+- Click a category on the left to dim everything else; click it again for all.
+- Groups: New... (with the selected tiles), Rename..., Delete, + Add selected
+  and - Remove selected work on the group picked in the list.
 
-Tip: when the art you want is already used by a tile kind, the "used by" line
-tells you which kind to copy in the Tiles tab instead of building a new one from
-scratch. Character sprites live in columns 104 to 117, one creature type per
-row; the picker windows in other tabs show exactly the same sheet with the same
-coordinates.
+Every change is saved at once into sheets/<name>.txt. The line at the bottom
+shows the tile under the pointer: col,row (with @sheet when it isn't the main
+sheet), its category, its groups and what uses it.
 
 == tab.recipes | Recipes tab
 see: recipe.id, recipe.station, recipe.materials, recipe.difficulty, recipe.known, recipe.reveal
@@ -5661,18 +5669,113 @@ Use it for tutorials and story-light campaigns. XP from the lost fight is not
 given.
 
 == tileset.browse | Browsing the tileset
-see: tab.tileset, concepts.tiles
+see: tab.tileset, tile.picker, concepts.tiles
 
-Scroll with the wheel (Shift+wheel or dragging with the right or middle
-button moves sideways; arrow keys pan). Hover a cell for its column and row;
-click to pick it and see which tile kinds use it.
+Scroll with the wheel (Shift+wheel moves sideways; dragging with the middle or
+right button or the arrow keys pan). Hover a tile for its column and row and
+what uses it.
 
-To use a tile: note its col,row and type it into any tile or sprite field, or
-use that field's own "pick..." button, which opens the same sheet.
+To use a tile: type its col,row into any tile or sprite field (col,row@sheet for
+a sheet other than the main one), or use that field's own "pick..." button.
 
-Characters live in columns 104-117 (base pose at 104) with one creature type
-per row; column 201 holds fallen versions.
+On the base game's sheet, characters live in columns 104-117 (base pose at 104)
+with one creature type per row; column 201 holds fallen versions.
 
+
+== sheet.campaigns | Sprite sheets and campaigns
+see: sheet.import, tab.tileset, concepts.campaigns, concepts.tiles
+
+Each campaign keeps its sprite sheets in its own folder:
+  assets/campaigns/<id>/sheets/<name>.png   the picture
+  assets/campaigns/<id>/sheets/<name>.txt   its grid, categories and groups
+The base game's main sheet is assets/tiles.png (its notes are in
+assets/data/sheets/tiles.txt); more base-game sheets go in assets/data/sheets.
+
+A new campaign starts with no sheets: its pickers are empty until you import a
+picture or press Copy base game's, which copies the base game's sheet (with its
+categories and groups) into the campaign's sheets folder, so you can repaint it
+without touching the base game. A campaign with inherit=1 also sees the base
+game's sheets.
+
+The sheet called tiles is the campaign's main sheet: a tile written without
+@sheet comes from it, and so do the pictures the game draws itself (chests,
+doors, signs...). Without a tiles sheet of its own a campaign uses the base
+game's. Every other sheet is named in the tile: col,row@name.
+
+If a sheet goes missing, the tiles on it draw nothing; Check all lists every
+sprite that names a sheet the campaign doesn't have.
+
+== sheet.import | Importing a sprite sheet
+see: sheet.campaigns, sheet.categories, tab.tileset
+
+Tileset tab > Import picture... (or drop a PNG file anywhere on the Editor
+window). Type or paste the path of the PNG and press Load; then:
+- Name: the sheet's id, used in tiles as col,row@name. Calling it tiles makes
+  it the campaign's main sheet (see Sprite sheets and campaigns).
+- Tile size, First tile at, Gap between: how the picture is cut. Guess reads
+  the picture's size; the blue grid over the preview shows where every tile
+  is, and the hover line gives the pixel and tile under the pointer.
+- See-through pixels: Black (black and transparent pixels are left out, the
+  base sheet's way), Transparent only (black stays), or One colour (a
+  background colour such as magenta; Pick in the picture takes it from a click).
+- As the game cuts it shows the tiles as the game will have them.
+
+The game draws every tile 12x12 pixels: other sizes are scaled (pixel art looks
+best drawn at 12x12). Import copies the picture into the campaign's sheets
+folder; importing again under the same name replaces the picture and keeps its
+categories and groups. Grid... changes the cut of a sheet later; Reload picks up
+a picture repainted outside the game; Remove deletes the sheet's files.
+
+== sheet.categories | Tile categories
+see: sheet.groups, tile.picker, tab.tileset
+
+Every tile has one category, and a sprite field's picker opens on the matching
+one:
+- 1 Terrain: ground, floors, walls, water, roads (Tiles tab ground pieces).
+- 2 Props: furniture, plants, doors, signs, machines (Tiles tab props, Objects,
+  Resources, map objects).
+- 3 Characters: party members and NPCs (Classes, NPCs, map NPCs).
+- 4 Creatures: monsters and animals (Creatures).
+- 5 Items: weapons, armour, potions, loot (Items).
+- 6 Effects: spells, icons, symbols (Spells, Achievements).
+- 7 Letters: text and digits.
+- 8 Unused: never offered in a category (still under All).
+- 9 Not sorted: a new sheet's tiles. They are listed after the sorted tiles in
+  every category, so a fresh sheet can be used before it is sorted.
+
+The base game's sheet comes sorted. Sort tiles in the Tileset tab (select, then
+a key 1-9) or right-click a tile in any picker. Saved in sheets/<name>.txt
+under [cells]: one line per row, one letter per column (t p c m i e l x, and .
+for not sorted).
+
+== sheet.groups | Tile groups
+see: sheet.categories, tile.picker, tab.tileset
+
+A group is a named set of tiles on one sheet - Potions, Swords and blades,
+Goblins, Furniture - for finding the right picture quickly. The picker lists
+the groups that have tiles in the category it shows (type in "find a group" to
+narrow them); clicking one shows only its tiles. A tile can be in any number of
+groups.
+
+Make them in the Tileset tab (New... with the selected tiles, + Add selected,
+- Remove selected, Rename..., Delete) or from a right-click on a tile in a
+picker (Add to a group..., New group with this one..., Remove from ...). Saved
+in sheets/<name>.txt as [group] sections (name=, tiles=col,row col,row ...).
+
+== tile.picker | The tile picker
+see: sheet.categories, sheet.groups, tab.tileset
+
+Every tile or sprite field's "pick..." button opens it.
+- Top row: the campaign's sheets, and Whole sheet (show the sheet as it is laid
+  out, dimming tiles outside the category or group).
+- Second row: the categories with how many tiles each has. The picker opens on
+  the field's category (an item's sprite on Items, an NPC's on Characters...);
+  All shows every tile.
+- Left: the groups; (the whole category) goes back to the category.
+- Click a tile to take it; None clears the field; Esc or Cancel closes.
+- Right-click a tile to change its category or its groups without leaving.
+
+Tiles not sorted yet are shown after a "Not sorted yet" line in every category.
 == flags.status | Flag status
 see: tab.flags, flags.desc, concepts.flags
 

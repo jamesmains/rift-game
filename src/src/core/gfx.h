@@ -42,9 +42,17 @@ struct Image8 {
 
 struct Rect { int x, y, w, h; bool contains(int px, int py) const { return px >= x && py >= y && px < x + w && py < y + h; } };
 
-// Reference to a 12x12 tile in the tileset by (column,row).
-struct Tile { int16_t c = -1, r = -1; bool valid() const { return c >= 0; } };
-constexpr Tile T(int c, int r) { return Tile{(int16_t)c, (int16_t)r}; }
+// Reference to a 12x12 tile by (column,row) on a sprite sheet. s = the sheet (1.2.0): 0 = "tiles" (the campaign's own
+// sheets/tiles.png, else the base game's assets/tiles.png), others = the order Tileset::useCampaign registered them.
+// Written in data files as "col,row" (sheet 0) or "col,row@sheet" (tileText / parseTile in data.h).
+struct Tile { int16_t c = -1, r = -1; uint8_t s = 0; bool valid() const { return c >= 0; } };
+constexpr Tile T(int c, int r) { return Tile{(int16_t)c, (int16_t)r, 0}; }
+constexpr Tile tileAt(Tile t, int dc, int dr) { return Tile{(int16_t)(t.c + dc), (int16_t)(t.r + dr), t.s}; }   // a neighbour on the same sheet
+inline bool sameTile(Tile a, Tile b) { return a.c == b.c && a.r == b.r && a.s == b.s; }
+// Sheet names for the active campaign (index = Tile::s). sheetIndex adds an unknown name (it then draws nothing).
+int sheetIndex(const std::string& name);
+const std::string& sheetName(int s);
+int sheetCount();
 
 class Canvas {
 public:
@@ -81,6 +89,29 @@ public:
     void dim(int x, int y, int rw, int rh, uint8_t alpha);
 };
 
+// How a sheet's picture is cut into tiles (sheets/<name>.txt [sheet] section). Every sheet is converted when it loads
+// to the base layout (12x12 cells at a 13 px pitch from 1,1; see-through pixels black), so drawing is the same for all.
+struct SheetGrid {
+    int tw = 12, th = 12, ox = 1, oy = 1, gx = 1, gy = 1;   // tile size, offset of the first tile, gap between tiles
+    int clear = 0; Color8 key{0, 0, 0, 255};                // see-through: 0 black (+ transparent pixels), 1 transparent pixels only, 2 the key colour (+ transparent)
+    std::string title;
+    int cols(int imgW) const { return tw + gx > 0 ? (imgW - ox + gx) / (tw + gx) : 0; }
+    int rows(int imgH) const { return th + gy > 0 ? (imgH - oy + gy) / (th + gy) : 0; }
+};
+SheetGrid readSheetGrid(const std::string& infoPath);       // defaults (the Urizen layout) when the file or keys are missing
+std::string sheetGridText(const SheetGrid& g);              // the [sheet] section as written by the Editor
+SheetGrid guessSheetGrid(int imgW, int imgH);               // a likely grid for a picture of this size
+bool convertSheet(const Image8& src, const SheetGrid& g, Image8& out, int& cols, int& rows);   // to the base layout
+
+// One loaded sprite sheet in the base layout.
+struct SheetPics {
+    std::string name, path, info;       // name (Tile::s order), the picture file and its sheets/<name>.txt
+    bool loaded = false, own = false;   // own = in the campaign's folder (else the base game's)
+    int cols = 0, rows = 0; SheetGrid grid;
+    Image8 img, trans, inside;          // as Tileset::img / tilesTransparent / tilesInside
+    std::vector<uint8_t> empty;         // per cell (row * cols + col): nothing drawn in it
+};
+
 // The tileset: 12x12 tiles at 13px pitch starting at (1,1). Includes a bitmap font.
 class Tileset {
 public:
@@ -88,6 +119,19 @@ public:
     static constexpr int TS = 12;  // tile size
     static constexpr int PITCH = 13;
     bool load(const std::string& path);
+    // 1.2.0 (#36): the sprite sheets of a campaign. Sheet 0 "tiles" = campaignDir/sheets/tiles.png if there is one,
+    // else the base game's tiles.png (img above, which the font and desktop always use). Then every other
+    // campaignDir/sheets/*.png and the base game's baseDataDir/sheets/*.png (the base ones are always loaded so
+    // inherited data draws; `visible` = the ones a campaign's pickers offer). Re-registers the sheet names.
+    void useCampaign(const std::string& baseDataDir, const std::string& campaignDir, bool inherit, bool keepOrder = false);   // keepOrder: a reload after the Editor changed a sheet
+    std::vector<SheetPics> sheets;
+    std::string baseDataDir, campaignDir; bool inherit = true;
+    bool visible(int s) const;          // offered in this campaign's pickers
+    const SheetPics* sheet(int s) const { return s >= 0 && s < (int)sheets.size() ? &sheets[s] : nullptr; }
+    int sheetCols(int s) const;         // size in tiles (0 = nothing loaded)
+    int sheetRows(int s) const;
+    bool cellEmpty(Tile t) const;       // nothing drawn in the cell (or outside the sheet)
+    const Image8& pics(int s, int which) const;   // which: 0 img, 1 transparent, 2 inside
     // Draw tile (col,row) at pixel position with scale; black background pixels of the tile become transparent.
     void draw(Canvas& cv, Tile t, int dx, int dy, int scale = 1, Color8 tint = C::White, bool flipX = false) const;
     void drawRecolor(Canvas& cv, Tile t, int dx, int dy, int scale, Color8 color) const;
@@ -102,6 +146,9 @@ public:
     void drawBacking(Canvas& cv, Tile t, int dx, int dy, int scale, bool flipX = false) const;
     Image8 tilesTransparent; // copy of img with pure-black made transparent
     Image8 tilesInside;      // 1.0.15: only the black pixels not reachable from their cell's edge (drawBacking)
+    static void makeDerived(const Image8& img, Image8& trans, Image8& inside, std::vector<uint8_t>* empty = nullptr, int cols = 0, int rows = 0);
+private:
+    std::vector<uint8_t> baseEmpty; int baseCols = 0, baseRows = 0;
 };
 
 // Bitmap font. Two faces; since 1.1.1 every text uses STYLE_CLEAR (no setting), STYLE_CLASSIC only draws the logo:

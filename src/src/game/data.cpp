@@ -30,11 +30,14 @@ int itemCategoryOrder(const std::string& c) {
     for (int i = 0; i < 10; i++) if (c == order[i]) return i;
     return 50;
 }
-Tile parseTile(const std::string& s) {
+Tile parseTile(const std::string& s0) {
+    std::string s = s0; int sheet = 0;
+    size_t at = s.find('@'); if (at != std::string::npos) { sheet = sheetIndex(s.substr(at + 1)); s = s.substr(0, at); }
     auto p = split(s, ',');
     if (p.size() < 2) return Tile{};
-    return T(atoi(trim(p[0]).c_str()), atoi(trim(p[1]).c_str()));
+    Tile t = T(atoi(trim(p[0]).c_str()), atoi(trim(p[1]).c_str())); t.s = (uint8_t)sheet; return t;
 }
+std::string tileText(Tile t) { if (!t.valid()) return ""; std::string o = fmt("%d,%d", t.c, t.r); if (t.s) o += "@" + sheetName(t.s); return o; }
 Color8 parseColor(const std::string& s) {
     auto p = split(s, ',');
     if (p.size() < 3) return C::White;

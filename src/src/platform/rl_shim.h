@@ -34,6 +34,7 @@ const char* rl_app_dir(void);
 int rl_monitor_w(void);
 const char* rl_get_clipboard(void);
 void rl_set_clipboard(const char* s);
+const char* rl_dropped_files(void);   // 1.2.0: paths dropped on the window this frame, one per line
 int rl_monitor_h(void);
 // audio
 void rl_audio_init(void);

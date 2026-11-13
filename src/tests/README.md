@@ -26,6 +26,11 @@ Each script is a list of commands, one per line:
 
 The output directory doubles as the save directory for that run (settings.ini, slotN.sav).
 
+1.2.0 (sprite sheets, `sprite_sheets_1_2_0`): `rtap X Y` (right click, press + release), `ctrlclick X Y`, `drop PATH`
+(a file dropped on the window), `sheetimport PNG NAME TW TH OX OY GX GY [black|alpha|r,g,b]`, `sheetcopy` (copy the
+base game's sheet into the edited campaign), `edsetcampaign ID`; expect `sheets` (the sheets the pickers offer),
+`sheetcat:SHEET:c,r` (category letter), `sheetgroups:SHEET`, `sheetdraws:SHEET:c,r`, `pickcat`, `pickshown`, `picksheet`.
+
 The output directory must exist before running. `triffall_headless bakeall` (no script) bakes every
 generated dungeon and the overworld into map files.
 

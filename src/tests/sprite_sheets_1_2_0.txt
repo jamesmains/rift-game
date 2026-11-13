@@ -1,0 +1,106 @@
+# 1.2.0 (#36, #37): sprite sheets. The base sheet comes sorted into categories with groups; each sprite field's picker
+# opens on its category; a new campaign has no sheets until one is imported (assets/icons.png stands in for the
+# owner's picture: 32x32 tiles, transparent background) or the base game's is copied; a tile on another sheet is
+# written col,row@sheet; tiles are sorted in the Tileset tab (select + keys 1-9, right-click menu, groups).
+# Writes a campaign folder and sheets files: run it from a copy of assets (see README).
+frames 5
+editor
+frames 5
+# ---- base game: the sorted sheet ----
+tab 13
+frames 3
+expect sheets == tiles
+expect sheetcat:tiles:26,4 == i
+expect sheetcat:tiles:104,0 == c
+expect sheetcat:tiles:104,4 == m
+expect sheetcat:tiles:80,44 == l
+expect sheetgroups:tiles > 50
+shot sheets_tileset_base.png
+# ---- the Items tab's picker opens on Items, with groups ----
+tab 3
+frames 3
+click 40 102
+frames 3
+click 525 85
+frames 3
+expect pickcat == i
+expect picksheet == tiles
+expect pickshown > 700
+shot sheets_picker_items.png
+click 100 154
+frames 3
+expect pickshown == 100
+rtap 233 111
+frames 3
+shot sheets_picker_menu.png
+key ESC
+frames 2
+key ESC
+frames 3
+# ---- a new campaign starts with no sheets ----
+newcampaign Sheet Test
+frames 4
+expect sheets == none
+tab 13
+frames 3
+shot sheets_campaign_empty.png
+# dropping a PNG opens the import window with a guessed grid
+drop assets/icons.png
+frames 3
+expect edstate:te contains pop=9
+shot sheets_import_window.png
+click 605 61
+frames 3
+shot sheets_import_cut.png
+key ESC
+frames 3
+sheetimport assets/icons.png icons 32 32 0 0 0 0 alpha
+expect sheets == icons
+expect asset:campaigns/sheet_test/sheets/icons.png == 1
+expect asset:campaigns/sheet_test/sheets/icons.txt == 1
+expect sheetdraws:icons:0,0 == 0
+expect sheetdraws:icons:1,1 == 1
+frames 3
+shot sheets_campaign_icons.png
+# sort in the Tileset tab: click a tile, ctrl+click another, key 5 = Items (the picture's first row and column are empty)
+click 279 113
+ctrlclick 305 113
+frames 2
+key 5
+frames 2
+expect sheetcat:icons:1,1 == i
+expect sheetcat:icons:2,1 == i
+expect sheetcat:icons:3,1 == .
+# right-click > New group with these two
+rtap 279 113
+frames 3
+shot sheets_tileset_menu.png
+# ---- an item picked from the new sheet is written col,row@icons ----
+edimport gen 0 triffall iron_dagger
+tab 3
+frames 3
+click 40 102
+frames 3
+click 525 85
+frames 3
+expect picksheet == icons
+expect pickcat == i
+expect pickshown == 73
+click 233 111
+frames 3
+expect edfield:0:0:tile == 1,1@icons
+shot sheets_item_on_icons.png
+edsave 0
+# ---- copy the base game's sheet in ----
+sheetcopy
+expect sheets == tiles,icons
+expect asset:campaigns/sheet_test/sheets/tiles.png == 1
+expect asset:campaigns/sheet_test/sheets/tiles.txt == 1
+expect sheetcat:tiles:26,4 == i
+expect edfield:0:0:tile == 1,1@icons
+# switching away and back keeps everything
+edsetcampaign triffall
+expect sheets == tiles
+edsetcampaign sheet_test
+expect sheets == tiles,icons
+expect sheetcat:icons:2,1 == i
