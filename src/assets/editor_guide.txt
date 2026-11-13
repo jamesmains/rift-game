@@ -18,8 +18,9 @@ Creatures, Spells, Classes, Shops, Encounters (random fight tables), Quests,
 Dungeons (generated dungeons), Dialogue, Sounds, Tileset (browse the art),
 Recipes, Affixes, Banter, Achiev. (achievements), Campaign, Flags, Bounties
 (notice boards), Factions (town reputation), Objects (object templates and every
-placed object) and Resources (gather node types). A tab with unsaved changes
-shows a * after its name.
+placed object), Resources (gather node types) and NPCs (the people and animals
+of the world, companions too). A tab with unsaved changes shows a * after its
+name.
 
 The Campaign button in the header picks which campaign you are editing, or
 makes a new one. Each campaign is a separate game with its own files.
@@ -674,8 +675,9 @@ Classes are the hero's starting choices and every companion's class
 spend on any class. HP and MP grow with the hit and mana die of the classes
 ranked up, and spells unlock by rank in that class (learn=).
 
-Companions join through dialogue: join=<class id>:<Name>:<col,row>. The class
-decides their stats, gear, spells and the joined_<class> flag; their banter
+Companions are NPCs (NPCs tab) with companion=<class id>; they join through
+the dialogue action join=<npc id>. The class decides their stats, gear and
+spells (the NPC can change those) and the joined_<class> flag; their banter
 uses class= of the same id. So each companion needs their own class.
 
 The order of classes in the file is the order on the character creation screen.
@@ -1303,11 +1305,23 @@ dungeon level in an otherwise overworld campaign.
 Gotchas: a map id that does not exist is reported by Check all. Coach travel
 still only works from the overworld world map.
 
-== obj.npc | NPC object
-see: obj.npc.id, obj.npc.dialogue, obj.npc.sprite, obj.npc.show, obj.npc.hide, obj.npc.shop, obj.npc.moveif, maps.objects
+== obj.npc | NPC object (a placement of an NPC)
+see: tab.npcs, obj.npc.npc, obj.npc.id, obj.npc.dialogue, obj.npc.sprite, obj.npc.show, obj.npc.hide, obj.npc.shop, obj.npc.moveif, maps.objects
 
-A person or animal standing on the map. Walking into an NPC or pressing E next
-to it interacts with it. What happens, in this order:
+A person or animal standing on the map. Since 1.1.9 the person is an entry in
+the NPCs tab (npcs.txt) and the map object is a placement of it: npc=<id>,
+its spot (x, y), its own id on this map, and when it is there (show=, hide=,
+moveif=). Every key the placement doesn't set - or leaves empty - comes from
+the NPC, so editing the NPC changes it everywhere it stands. A placement can
+still set a key itself (Ilse has her own name= and dialogue= in her cell).
+
+To place one: Maps tab > Objects > npc, then pick the NPC under the type
+buttons (or "a new NPC") and click the map. From the NPCs tab, Place on map...
+does the same. An old-style npc object with its own name/sprite/dialogue and
+no npc= still works; select it and press make NPC to turn it into an NPC.
+
+Walking into an NPC or pressing E next to it interacts with it. What happens,
+in this order:
 
 - 1. hostile= set: a fight with those creatures starts.
 - 2. board= set: the notice board for that town opens.
@@ -1317,12 +1331,16 @@ to it interacts with it. What happens, in this order:
 - 6. shop= set: the shop opens (if it is open now).
 - 7. Otherwise: "<name> has nothing to say."
 
-  [npc]
+  [npc]            (on the map)
   id=smith
-  name=Smith Gorran
-  sprite=106,11
+  npc=smith_gorran
   x=33
   y=16
+
+  [npc]            (in npcs.txt, the NPCs tab)
+  id=smith_gorran
+  name=Smith Gorran
+  sprite=105,2
   dialogue=smith_gorran
 
 NPCs block movement. show=/hide= make them appear and disappear with the
@@ -1336,7 +1354,9 @@ A short name for this NPC, unique on its map. It is used by the dialogue
 actions npcmove=, hidenpc= and shownpc=, and the save uses it to remember
 where a moved NPC stands and whether it has been hidden for good.
 
-Format: lowercase id. Default: empty. New NPCs get npc1.
+Format: lowercase id. Default: the NPC's id (npc=). A new placement gets the
+NPC's id, or id_2, id_3... when that is taken on the map. This is the
+placement's id, not the NPC's: renaming the NPC keeps it.
 
   id=elder
 
@@ -4313,7 +4333,7 @@ Format: col,row (picker). Default: none.
 
   sprite=105,18
 
-A companion's join=class:Name:col,row can give them a different sprite from
+A companion NPC's partysprite= (NPCs tab) gives them a different sprite from
 their class.
 
 Use the picker; it writes sprite= and removes spritecol/spriterow for you. The preview next to the field shows the chosen sprite.
@@ -5273,7 +5293,7 @@ Items and money:
 - give=id:n,id (item= is the same). take=id:n. gold=n (negative pays; never below 0). xp=n (shared by the living party).
 
 Party:
-- join=class:Name:col,row (Name and sprite optional): add a companion (party of 4 max), sets joined_<class>. leave=class.
+- join=<npc id>: add that companion NPC (NPCs tab, companion= a class) to the party (4 max): its name, class, party picture, level, stats, gear and spells. Sets joined_<class>. An empty join= adds the NPC being talked to. The older join=class:Name:col,row (Name and sprite optional) still works. leave=class.
 - approve=class:n,class:n (or all:n). rep=faction:n,faction:n: change the party's reputation with a town or group (Factions tab), + or -.
 - heal=1: full HP/MP and sleep to 07:00. rest=1: inn rest - full HP/MP, revives, clears effects, morning. healer=1 or healer=<greeting>: paid healer menu. respec=1 (paid at a shrine) or respec=free.
 
@@ -5307,8 +5327,9 @@ for chats, personal quests, and approval-gated stories.
   option=You said you were militia. What happened?|story|approval:warrior:15
   option=Nothing. Carry on.|end
 
-The game uses the dialogue that ran the companion's join=, or any dialogue that
-contains a join= for their class. Without a [camp] node: "<name> has nothing to
+The game uses the dialogue that ran the companion's join=, else the companion
+NPC's dialogue= (NPCs tab), else any dialogue that contains a join= for their
+class. Without a [camp] node: "<name> has nothing to
 say right now." Check does not warn that [camp] is never reached.
 
 == dlg.check | Dialogue Check
@@ -6130,6 +6151,112 @@ Sound event played when it is pulled. Empty = unlock.
 == obj.lever.onuse | Lever script
 see: objtype, obj.trigger.script
 Script run after the lever is pulled (either way).
+
+== tab.npcs | NPCs tab
+see: obj.npc, obj.npc.npc, obj.npc.companion, obj.npc.dialogue, maps.objects, dlg.actions
+
+The people and animals of the world (npcs.txt). Each NPC is made once here -
+name, look, what talking to it does, and for companions how they join the
+party - and then placed on maps. A map [npc] object is a placement: npc=<id>
+plus its spot and when it is there; everything else comes from here.
+
+The list shows each NPC by name (id), companions marked. The Look card at the
+top: the big preview, how it looks on the map, the sprite (Pick sprite...)
+and its colour: Sheet colour keeps the picture's own colour; any other colour
+draws it as a white shape in that colour (the palette offers the colours other
+NPCs use and the sheet's most used ones).
+
+Fields: name, dialogue (pick...), shop, craft, board, travel, hostile, wander,
+notes, and for companions companion, partysprite, level, stats, gear, spells.
+The buttons at the bottom add the keys an NPC can have.
+
+The box under the fields:
+- Where it stands: every placement on every map, with its own id and its
+  show/hide/moveif conditions and the keys it sets itself. Click one to open
+  the map with it selected.
+- Place on map...: pick a map, then click where the NPC should stand.
+- Open dialogue: its dialogue in the Dialogue tab.
+- Rename id...: changes the NPC's id here, in every placement (npc=) and in
+  every join=. The placements' own ids stay (saved games use them).
+- Talking to it: what interacting does, in the game's order.
+- Companion: the class, party picture, level and gear they arrive with, and
+  which dialogue has their join=. Click it to open that line.
+- Problems: missing dialogue/shop/class/items, two companions of one class,
+  a companion nobody's dialogue adds. Check all lists them too.
+
+With nothing picked, the box counts NPCs and placements and lists the
+companions.
+
+== obj.npc.npc | Which NPC
+see: tab.npcs, obj.npc
+
+The NPC (NPCs tab) this placement shows. The placement takes every key it does
+not set itself from it. edit opens the NPC; other... shows a different NPC on
+this spot (its id and show/hide stay).
+
+  npc=smith_gorran
+
+Gotchas: an npc= naming no NPC is reported by Check and Check all; the
+placement then only has its own keys.
+
+== obj.npc.companion | Companion class
+see: tab.npcs, obj.npc.partysprite, obj.npc.level, obj.npc.gear, dlg.actions, tab.classes
+
+Makes the NPC a companion: the class they join the party as. The dialogue action
+join=<npc id> adds them (on the line where they agree to come). joining sets
+joined_<class> and hides the NPC for good where it stood; their [camp] node in
+their dialogue is their talk on the party screen (T).
+
+  companion=warrior
+
+Gotchas: one companion per class can be in the party (approval, banter and the
+joined_ flag go by class).
+
+== obj.npc.partysprite | Party picture
+see: obj.npc.companion, obj.npc.sprite
+
+A companion's picture in the party and in fights. Empty: the same as sprite=.
+
+  partysprite=105,22
+
+== obj.npc.level | Companion level
+see: obj.npc.companion
+
+The level a companion arrives at. Empty or 0: the hero's level when they join
+(the default). Their ranks all go to their own class.
+
+  level=5
+
+== obj.npc.stats | Companion stats
+see: obj.npc.companion, class.stats
+
+A companion's starting stats instead of their class's (before level-ups).
+Empty: the class's. set own stats fills in the class's to start from.
+
+  stats=str:16,dex:10,con:14,int:8,wis:9,cha:11
+
+== obj.npc.gear | Companion gear
+see: obj.npc.companion, tab.items
+
+Items a companion arrives with. Weapons, armour, helms, boots, off-hands and
+accessories are worn (in place of the class's starting weapon and armour);
+anything else goes into the pack (id:count).
+
+  gear=iron_sword,leather_armor,potion_red:2
+
+== obj.npc.spells | Companion spells
+see: obj.npc.companion, tab.spells
+
+Spells a companion knows when they join, besides the ones their class and
+level give.
+
+  spells=heal,bless
+
+== obj.npc.notes | Notes
+see: tab.npcs
+
+Your own notes about the NPC: who they are, where they fit in the story. The
+game ignores them.
 
 == tab.resources | Resources tab (gather node types)
 see: obj.gather, obj.gather.node, resource, tab.recipes

@@ -112,62 +112,45 @@ ty=107
 
 [npc]
 id=fenwick
-name=Old Fenwick
-sprite=141,0
+npc=old_fenwick
 x=8
 y=10
-dialogue=old_fenwick
 
 [npc]
 id=shrine_keeper
-name=Keeper Aldra
-sprite=123,1
+npc=keeper_aldra
 x=21
 y=24
-dialogue=keeper_aldra
 
 [npc]
 id=swamp_trader
-name=Trader Mosk
-sprite=105,1
+npc=trader_mosk
 x=26
 y=4
-dialogue=trader_mosk
 
 [npc]
 id=swamp_inn
-name=Innkeeper Ule
-sprite=104,0
+npc=innkeeper_ule
 x=17
 y=4
-dialogue=innkeeper_ule
 
 [npc]
 id=fisher
-name=Fisherwoman Tam
-sprite=104,1
+npc=fisherwoman_tam
 x=32
 y=22
-dialogue=fisher_tam
-wander=1
 
 [npc]
 id=kid
-name=Mud-caked Boy
-sprite=104,0
+npc=mud_boy
 x=22
 y=12
-dialogue=mud_boy
-wander=1
 
 [npc]
 id=frog
-name=Frog
-sprite=130,40
+npc=frog
 x=10
 y=24
-dialogue=frog
-wander=1
 
 [chest]
 x=32
@@ -186,20 +169,16 @@ y=25
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=10
 y=17
 board=murkwater
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=12
 y=17
-travel=1
 
 [gather]
 x=29

@@ -53,6 +53,11 @@ EdObj Editor::resolvedObj(const EdObj& o) const {
         std::string ty = t->get("type"); if (!ty.empty()) r.type = ty;
         for (auto& kv : t->kv) if (kv.first != "id" && kv.first != "type" && kv.first != "x" && kv.first != "y" && !r.has(kv.first)) r.kv.push_back(kv);
     }
+    // 1.1.9 (#33): an NPC placement takes what it doesn't set (or leaves empty) from its NPC (npcs.txt), before its type
+    if (r.type == "npc") if (const EdSection* n = npcSec(r.get("npc"))) {
+        for (auto& kv : n->kv) { if (kv.first == "id") continue; if (!r.has(kv.first)) r.kv.push_back(kv); else if (trim(r.get(kv.first)).empty()) r.set(kv.first, kv.second); }
+        if (r.get("id").empty()) r.set("id", trim(r.get("npc")));
+    }
     // 1.1.1: then its type's entry; an empty value (in the type, or on the object) counts as not set, as in the game
     if (const EdSection* ty = typeSec(r.type)) for (auto& kv : ty->kv) { if (kv.first == "id" || kv.first == "x" || kv.first == "y" || kv.first == "template" || trim(kv.second).empty()) continue;
         if (!r.has(kv.first)) r.kv.push_back(kv); else if (trim(r.get(kv.first)).empty()) r.set(kv.first, kv.second); }
@@ -68,6 +73,7 @@ std::vector<std::pair<std::string, std::string>> Editor::inheritedKeys(const EdO
     for (auto& kv : r.kv) if (!o.has(kv.first) || (trim(o.get(kv.first)).empty() && !trim(kv.second).empty())) out.push_back(kv);
     from.clear();
     if (templateSec(o.get("template"))) from = "template " + o.get("template");
+    if (r.type == "npc" && npcSec(r.get("npc"))) from += (from.empty() ? "" : " + ") + std::string("NPC ") + trim(r.get("npc"));
     if (const EdSection* ty = typeSec(r.type)) { bool any = false; for (auto& kv : ty->kv) if (kv.first != "id" && !trim(kv.second).empty()) any = true; if (any) from += (from.empty() ? "" : " + ") + std::string("type ") + r.type; }
     if (r.type == "gather") if (const EdSection* rs = resourceSec(r.get("node"), r.get("item"))) from += (from.empty() ? "" : " + ") + std::string("resource ") + rs->get("id");
     return out;

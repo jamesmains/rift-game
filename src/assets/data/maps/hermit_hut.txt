@@ -92,11 +92,9 @@ ty=91
 
 [npc]
 id=hermit
-name=The Hermit
-sprite=104,23
+npc=hermit
 x=12
 y=9
-dialogue=hermit
 
 [chest]
 x=10

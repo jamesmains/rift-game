@@ -208,6 +208,10 @@ void Editor::runCampaignCheck() {
       if (!camp.dialogue.empty() && std::find(dlgFiles.begin(), dlgFiles.end(), camp.dialogue) == dlgFiles.end()) addF(true, "Campaign: the opening dialogue '" + camp.dialogue + "' does not exist", u);
       std::string wm = toLower(camp.worldMap); if (!wm.empty() && wm != "overworld" && wm != "off" && wm != "current" && !isMap(camp.worldMap)) addF(true, "Campaign: worldmap= names a map that does not exist ('" + camp.worldMap + "')", u);
       for (auto& c : ids(camp.items)) if (!item(c)) addF(true, "Campaign: starting item '" + c + "' does not exist", u); }
+    // ---- NPCs (1.1.9) ----
+    for (size_t i = 0; i < gens[17].secs.size(); i++) { auto& sc = gens[17].secs[i]; if (sc.name != "npc") continue;
+        std::vector<std::pair<bool, std::string>> pr; npcProblems(sc, pr);
+        for (auto& p : pr) { FlagUse u; u.gen = 17; u.sec = (int)i; u.tab = 24; addF(p.first, "NPC " + sc.get("id") + ": " + p.second, u); } }
     // ---- maps ----
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue;
@@ -218,6 +222,8 @@ void Editor::runCampaignCheck() {
             std::string at = fmt("map %s: %s at %d,%d", f.c_str(), o.type.c_str(), ox, oy);
             if (!raw.get("template").empty() && !templateSec(raw.get("template"))) addF(true, at + " uses unknown template '" + raw.get("template") + "' (Objects tab)", u);
             if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) addF(true, at + " uses unknown resource node type '" + o.get("node") + "' (Resources tab)", u);
+            if (o.type == "npc" && !trim(o.get("npc")).empty() && !npcSec(o.get("npc"))) addF(true, at + " shows unknown NPC '" + o.get("npc") + "' (NPCs tab)", u);
+            if (o.type == "npc" && trim(o.get("npc")).empty()) addF(false, at + " is not linked to an NPC (select it in the Maps tab > make NPC)", u);
             if (ox < 0 || oy < 0 || ox >= m.w || oy >= m.h) addF(true, at + " is outside the map", u);
             else if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !((o.type == "trigger" || o.type == "exit") ? areaWalk(o, ox, oy) : walk(ox, oy))) addF(false, at + ((o.type == "trigger" || o.type == "exit") && (o.geti("w") > 1 || o.geti("h") > 1) ? " covers only blocked tiles" : " stands on a blocked tile"), u);
             if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) addF(true, at + " uses missing dialogue '" + o.get("dialogue") + "'", u);

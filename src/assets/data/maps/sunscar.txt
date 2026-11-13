@@ -100,53 +100,39 @@ ty=117
 
 [npc]
 id=sefa
-name=Matriarch Sefa
-sprite=104,22
+npc=matriarch_sefa
 x=11
 y=9
-dialogue=matriarch_sefa
 
 [npc]
 id=raider_env
-name=Raider Envoy Kesh
-sprite=107,22
+npc=kesh
 x=27
 y=17
-dialogue=raider_kesh
 
 [npc]
 id=sun_trader
-name=Trader Nabir
-sprite=105,1
+npc=trader_nabir
 x=27
 y=9
-dialogue=trader_nabir
 
 [npc]
 id=sun_inn
-name=Innkeeper Ora
-sprite=104,1
+npc=innkeeper_ora
 x=11
 y=17
-dialogue=innkeeper_ora
 
 [npc]
 id=sun_kid
-name=Sand Dancer
-sprite=104,0
+npc=sand_dancer
 x=20
 y=18
-dialogue=sand_dancer
-wander=1
 
 [npc]
 id=camel
-name=Goat
-sprite=1,16
+npc=goat
 x=14
 y=14
-dialogue=goat
-wander=1
 
 [chest]
 x=14
@@ -165,20 +151,16 @@ y=14
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=10
 y=14
 board=sunscar
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=12
 y=14
-travel=1
 
 [gather]
 x=19

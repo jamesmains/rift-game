@@ -128,65 +128,48 @@ ty=46
 
 [npc]
 id=tessa
-name=Tessa
-sprite=116,24
+npc=tessa
 x=43
 y=15
-dialogue=tessa
 hide=joined_scavenger
 
 [npc]
 id=scrap_vendor
-name=Junk-Dealer Vosk
-sprite=105,23
+npc=vosk
 x=12
 y=15
-dialogue=junk_vosk
 
 [npc]
 id=barkeep
-name=Barkeep Rusty
-sprite=120,22
+npc=barkeep_rusty
 x=18
 y=29
-dialogue=barkeep_rusty
 
 [npc]
 id=scav1
-name=Scavenger
-sprite=104,23
+npc=scavenger
 x=17
 y=14
-dialogue=scavenger_talk
-wander=1
 
 [npc]
 id=scav2
-name=Lookout
-sprite=116,22
+npc=lookout
 x=33
 y=14
-dialogue=lookout
-wander=1
 
 [npc]
 id=cultist_npc
-name=Robed Figure
-sprite=104,17
+npc=robed_figure
 x=45
 y=30
-dialogue=robed_figure
 show=rift_shard2_found
 hide=cult_fought
 
 [npc]
 id=drone_pet
-name=Pet Drone
-sprite=102,13
+npc=pet_drone
 x=45
 y=16
-dialogue=pet_drone
-wander=1
 
 [enemy]
 x=50
@@ -269,27 +252,23 @@ text=METRO - LINE 3. CLOSED BY ORDER OF THE CITY. (Someone has scratched an eye 
 
 [npc]
 id=rook_af
-name=Rook
-sprite=105,24
+npc=rook
 x=14
 y=16
-dialogue=rook
 show=rook_freed
 wander=1
 
 [npc]
 id=ilse
-name=Sister Ilse
-sprite=104,17
+npc=ilse
 x=45
 y=32
-dialogue=converts
 show=q_cult>=2&!converts_spared&!converts_judged
 
 [npc]
 id=ilse_warden
+npc=ilse
 name=Ilse, Sky Warden
-sprite=104,17
 x=45
 y=32
 dialogue=sky_wardens

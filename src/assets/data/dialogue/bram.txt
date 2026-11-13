@@ -15,7 +15,7 @@ option=Later.|end
 [join]
 speaker=Bram
 text=Finally! Let me get my shield. Lead on, boss.
-join=warrior:Bram:105,22
+join=bram
 approve=warrior:5
 option=Let's go.|end
 
@@ -111,5 +111,5 @@ speaker=Bram
 text=All right. All right. Don't make me regret it twice.
 gold=-200
 amends=warrior:45
-join=warrior:Bram:105,22
+join=bram
 option=Let's go.|end

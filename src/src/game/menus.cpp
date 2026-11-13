@@ -136,7 +136,8 @@ void Game::updateMenu(InputState& in, float dt) {
     int nMembers = (int)party.members.size();
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_L] || actP(in, A_INTERACT)) && party.members[menuMember].alive) { leader = menuMember; notify(party.members[leader].name + " takes the lead."); }
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_T] || actP(in, A_ITEMS)) && menuMember > 0 && menuMember < nMembers) { std::string cls = party.members[menuMember].classId; auto it = extra.find("dlg_" + cls); std::string did = it != extra.end() ? it->second : "";
-        if (did.empty()) for (auto& d : dialogues) { for (auto& n : d.second.nodes) for (auto& a : n.second.actions) if (a.first == "join" && startsWith(a.second, cls)) did = d.first; if (!did.empty()) { extra["dlg_" + cls] = did; break; } }
+        if (did.empty()) if (const NpcDef* nd = companionDef(cls)) { std::string cd = trim(nd->get("dialogue")); if (dialogues.count(cd) && dialogues[cd].nodes.count("camp")) { did = cd; extra["dlg_" + cls] = did; } }   // 1.1.9: the companion NPC's own dialogue
+        if (did.empty()) for (auto& d : dialogues) { for (auto& n : d.second.nodes) for (auto& a : n.second.actions) if (a.first == "join" && parseJoin(a.second).cls == cls) did = d.first; if (!did.empty()) { extra["dlg_" + cls] = did; break; } }
         if (!did.empty() && dialogues.count(did) && dialogues[did].nodes.count("camp")) { popMode(); startDialogue(did, nullptr, "camp"); return; } else notify(party.members[menuMember].name + " has nothing to say right now."); }
     if (menuTab == 1 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_C] || (gKeys.pad[A_INTERACT] && in.pressed[gKeys.pad[A_INTERACT]]))) { popMode(); openCraft("any"); return; }   // 1.1.7: pad X too (free on this tab)
     if (menuTab == 0) {

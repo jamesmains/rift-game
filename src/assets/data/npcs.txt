@@ -1,0 +1,448 @@
+# NPCs: the people and animals of the world. Edit them in the Editor's NPCs tab. (1.1.9)
+# A map [npc] object is a placement of one of them: npc=<id> plus its spot (x, y), its own id on that map (used by
+# hidenpc=/shownpc=/npcmove= and the save) and when it is there (show=, hide=, moveif=/movex=/movey=). Every other key
+# the placement doesn't set, or leaves empty, comes from here - so one NPC can stand in several places, and a placement
+# can still give itself its own name= or dialogue= (Ilse in her cell, Old Wick at each stop of the Tutorial).
+#   name, sprite (col,row), color (draw it in one colour), dialogue, shop (talking opens it when there is no dialogue),
+#   craft (forge | workbench | alchemy | any), board (town id: a notice board), travel=1 (coachman), hostile (creatures
+#   it turns into when attacked), wander=1, notes (for you; the game ignores them)
+# Companions: companion=<class id> makes the NPC one; the dialogue action join=<npc id> adds them to the party with
+#   partysprite (their picture in the party and in fights; default = sprite), level (empty = the hero's level),
+#   stats (str:12,dex:10,... instead of the class's), gear (items equipped on joining; others go to the pack),
+#   spells (known besides the class's). Their dialogue= holds the [camp] talk (T on the party screen).
+
+# ---- Companions (join=<npc id> in their dialogue) ----
+[npc]
+id=tessa
+name=Tessa
+sprite=116,24
+dialogue=tessa
+companion=scavenger
+partysprite=116,15
+
+[npc]
+id=elowen
+name=Elowen
+sprite=109,28
+dialogue=elowen
+companion=mage
+partysprite=109,17
+
+[npc]
+id=orin
+name=Orin
+sprite=123,21
+dialogue=orin
+companion=cleric
+partysprite=104,26
+
+[npc]
+id=bram
+name=Bram
+sprite=121,0
+dialogue=bram
+companion=warrior
+partysprite=105,22
+
+[npc]
+id=nyx
+name=Nyx
+sprite=156,23
+dialogue=nyx
+companion=ranger
+partysprite=117,10
+
+# ---- ashfall ----
+[npc]
+id=ilse
+name=Sister Ilse
+sprite=104,17
+dialogue=converts
+
+[npc]
+id=vosk
+name=Junk-Dealer Vosk
+sprite=105,23
+dialogue=junk_vosk
+
+[npc]
+id=barkeep_rusty
+name=Barkeep Rusty
+sprite=120,22
+dialogue=barkeep_rusty
+
+[npc]
+id=scavenger
+name=Scavenger
+sprite=104,23
+dialogue=scavenger_talk
+wander=1
+
+[npc]
+id=lookout
+name=Lookout
+sprite=116,22
+dialogue=lookout
+wander=1
+
+[npc]
+id=robed_figure
+name=Robed Figure
+sprite=104,17
+dialogue=robed_figure
+
+[npc]
+id=pet_drone
+name=Pet Drone
+sprite=102,13
+dialogue=pet_drone
+wander=1
+
+# ---- brasswick ----
+[npc]
+id=mayor_aldous
+name=Mayor Aldous
+sprite=104,27
+dialogue=mayor_aldous
+
+[npc]
+id=clerk_benning
+name=Clerk Benning
+sprite=104,0
+dialogue=clerk_benning
+
+[npc]
+id=captain_reyna
+name=Captain Reyna
+sprite=166,13
+dialogue=captain_reyna
+
+[npc]
+id=gate_guard
+name=Gate Guard
+sprite=113,13
+dialogue=gate_guard
+
+[npc]
+id=keep_guard
+name=Keep Guard
+sprite=113,13
+dialogue=keep_guard
+
+[npc]
+id=armorer_hald
+name=Armorer Hald
+sprite=105,2
+dialogue=armorer_hald
+
+[npc]
+id=merchant_pell
+name=Merchant Pell
+sprite=105,1
+dialogue=merchant_pell
+
+[npc]
+id=arcanist_morrow
+name=Arcanist Morrow
+sprite=104,28
+dialogue=arcanist_morrow
+
+[npc]
+id=innkeeper_fenna
+name=Innkeeper Fenna
+sprite=104,1
+dialogue=innkeeper_fenna
+
+[npc]
+id=brother_caul
+name=Brother Caul
+sprite=122,0
+dialogue=brother_caul
+
+[npc]
+id=washerwoman
+name=Washerwoman
+sprite=104,1
+dialogue=townsfolk
+wander=1
+
+[npc]
+id=street_urchin
+name=Street Urchin
+sprite=104,0
+dialogue=urchin
+wander=1
+
+[npc]
+id=veteran
+name=Veteran
+sprite=105,0
+dialogue=veteran
+wander=1
+
+[npc]
+id=bard_lio
+name=Bard Lio
+sprite=104,21
+dialogue=bard_lio
+
+[npc]
+id=cat
+name=Cat
+sprite=1,14
+dialogue=cat
+wander=1
+
+[npc]
+id=notice_board
+name=Notice Board
+sprite=29,20
+
+[npc]
+id=coachman
+name=Coachman
+sprite=104,0
+color=200,160,90
+travel=1
+
+[npc]
+id=sir_vael
+name=Sir Vael
+sprite=121,13
+color=190,190,205
+dialogue=sir_vael
+
+# ---- frosthold ----
+[npc]
+id=abbot_tyr
+name=Abbot Tyr
+sprite=123,0
+dialogue=abbot_tyr
+
+[npc]
+id=pilgrim
+name=Pilgrim
+sprite=104,0
+dialogue=pilgrim
+wander=1
+
+[npc]
+id=sister_maud
+name=Sister Maud
+sprite=104,1
+dialogue=sister_maud
+
+# ---- hermit_hut ----
+[npc]
+id=hermit
+name=The Hermit
+sprite=104,23
+dialogue=hermit
+
+# ---- hollowmere ----
+[npc]
+id=elder_mara
+name=Elder Mara
+sprite=141,1
+dialogue=elder_mara
+
+[npc]
+id=innkeeper_doss
+name=Innkeeper Doss
+sprite=105,0
+dialogue=innkeeper_doss
+
+[npc]
+id=merchant_ilsa
+name=Merchant Ilsa
+sprite=104,1
+dialogue=merchant_ilsa
+
+[npc]
+id=smith_gorran
+name=Smith Gorran
+sprite=105,2
+dialogue=smith_gorran
+
+[npc]
+id=healer_wren
+name=Healer Wren
+sprite=122,1
+dialogue=healer_wren
+
+[npc]
+id=farmer_tobb
+name=Farmer Tobb
+sprite=104,24
+dialogue=farmer_tobb
+wander=1
+
+[npc]
+id=little_pip
+name=Little Pip
+sprite=104,0
+dialogue=little_pip
+wander=1
+
+[npc]
+id=old_hesk
+name=Old Hesk
+sprite=141,22
+dialogue=old_hesk
+
+[npc]
+id=mutt
+name=Mutt
+sprite=10,16
+dialogue=mutt
+wander=1
+
+[npc]
+id=villager
+name=Villager
+sprite=104,0
+
+# ---- metro ----
+[npc]
+id=rook
+name=Rook
+sprite=105,24
+dialogue=rook
+
+# ---- millbrook ----
+[npc]
+id=trapper_jory
+name=Trapper Jory
+sprite=117,27
+dialogue=trapper_jory
+
+[npc]
+id=goodwife_ada
+name=Goodwife Ada
+sprite=104,1
+dialogue=goodwife_ada
+
+[npc]
+id=cow
+name=Cow
+sprite=0,16
+dialogue=cow
+wander=1
+
+[npc]
+id=pig
+name=Pig
+sprite=2,16
+dialogue=pig
+wander=1
+
+[npc]
+id=chicken
+name=Chicken
+sprite=8,16
+dialogue=chicken
+wander=1
+
+[npc]
+id=snig
+name=Snig the Peddler
+sprite=113,4
+dialogue=snig
+
+# ---- murkwater ----
+[npc]
+id=old_fenwick
+name=Old Fenwick
+sprite=141,0
+dialogue=old_fenwick
+
+[npc]
+id=keeper_aldra
+name=Keeper Aldra
+sprite=123,1
+dialogue=keeper_aldra
+
+[npc]
+id=trader_mosk
+name=Trader Mosk
+sprite=105,1
+dialogue=trader_mosk
+
+[npc]
+id=innkeeper_ule
+name=Innkeeper Ule
+sprite=104,0
+dialogue=innkeeper_ule
+
+[npc]
+id=fisherwoman_tam
+name=Fisherwoman Tam
+sprite=104,1
+dialogue=fisher_tam
+wander=1
+
+[npc]
+id=mud_boy
+name=Mud-caked Boy
+sprite=104,0
+dialogue=mud_boy
+wander=1
+
+[npc]
+id=frog
+name=Frog
+sprite=130,40
+dialogue=frog
+wander=1
+
+# ---- sunscar ----
+[npc]
+id=matriarch_sefa
+name=Matriarch Sefa
+sprite=104,22
+dialogue=matriarch_sefa
+
+[npc]
+id=kesh
+name=Raider Envoy Kesh
+sprite=107,22
+dialogue=raider_kesh
+
+[npc]
+id=trader_nabir
+name=Trader Nabir
+sprite=105,1
+dialogue=trader_nabir
+
+[npc]
+id=innkeeper_ora
+name=Innkeeper Ora
+sprite=104,1
+dialogue=innkeeper_ora
+
+[npc]
+id=sand_dancer
+name=Sand Dancer
+sprite=104,0
+dialogue=sand_dancer
+wander=1
+
+[npc]
+id=goat
+name=Goat
+sprite=1,16
+dialogue=goat
+wander=1
+
+# ---- wreck ----
+[npc]
+id=dormant_android
+name=Dormant Android
+sprite=78,13
+dialogue=ship_android
+
+[npc]
+id=quartermaster_unit
+name=Quartermaster Unit
+sprite=105,43
+dialogue=ship_vendor

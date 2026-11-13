@@ -865,14 +865,27 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "heal") { for (auto& m : party.members) m.fullHeal(*gd); log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; }
     else if (k == "shop") { std::string hrs; if (shopRefuses(v)) return; if (!shopOpen(v, hrs)) { if (mode == GMode::DIALOGUE) popMode(); showMessage("Closed", "The shop is closed right now. Opening hours: " + hrs + "."); } else { shopId = v; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); if (mode == GMode::DIALOGUE) popMode(); pushMode(GMode::SHOP); } }
     else if (k == "join") {
-        auto jp = split(v, ':'); std::string cls = trim(jp[0]); std::string cname = jp.size() > 1 ? trim(jp[1]) : ""; Tile ctile = jp.size() > 2 ? parseTile(jp[2]) : Tile{};
+        // 1.1.9 (#33): join=<npc id> takes class, name, party picture, level, stats, gear and spells from the NPC (npcs.txt);
+        // an empty join= is the NPC being talked to. The older join=class:Name:col,row still works.
+        std::string jv = trim(v); if (jv.empty() && dlgNpc) jv = dlgNpc->def;
+        JoinSpec js = parseJoin(jv); std::string cls = js.cls; std::string cname = js.name; Tile ctile = js.tile;
         const ClassDef* c = gd->cls(cls);
         if (c && party.members.size() < 4) {
             bool already = hasFlag("joined_" + cls);
             if (!already) { if (mode == GMode::DIALOGUE) extra["dlg_" + cls] = dlgId; Character ch; ch.initFromClass(*gd, *c, cname.empty() ? c->name : cname); int lvl = party.members[0].level;
+                if (js.npc) {   // the NPC's own make-up
+                    int fixed = atoi(js.npc->get("level").c_str()); if (fixed > 0) lvl = fixed;
+                    std::string st = trim(js.npc->get("stats")); if (!st.empty()) for (auto& part : split(st, ',')) { auto p = split(trim(part), ':'); if (p.size() != 2) continue; std::string sk = toLower(trim(p[0])); static const char* SK[ST_COUNT] = {"str", "dex", "con", "int", "wis", "cha"}; for (int s = 0; s < ST_COUNT; s++) if (sk == SK[s]) ch.baseStats[s] = atoi(trim(p[1]).c_str()); }
+                }
                 // companions arrive trained in their own class at the hero's level (respec at a shrine to change that)
                 while (ch.level < lvl) { ch.level++; ch.ranks[cls]++; for (int s = 0; s < ST_COUNT; s++) if (ch.level % 2 == 0) ch.baseStats[s]++; }
-                for (auto& sl : c->spellLevels) if (sl.first <= ch.rank(cls) && std::find(ch.spells.begin(), ch.spells.end(), sl.second) == ch.spells.end()) ch.spells.push_back(sl.second); if (ctile.valid()) ch.tile = ctile; ch.hp = ch.maxHP(*gd); ch.mp = ch.maxMP(*gd); party.members.push_back(ch); log(ch.name + " joined the party!"); setFlag("joined_" + cls); flags.erase("left_" + cls); if (dlgNpc) { hideNpcForGood(*dlgNpc); if (!dlgNpc->id.empty()) extra["home_" + cls] = "hidenpc_" + mapId + "_" + dlgNpc->id; } syncBonds(); }
+                for (auto& sl : c->spellLevels) if (sl.first <= ch.rank(cls) && std::find(ch.spells.begin(), ch.spells.end(), sl.second) == ch.spells.end()) ch.spells.push_back(sl.second); if (ctile.valid()) ch.tile = ctile;
+                if (js.npc) {
+                    for (auto& sp : split(js.npc->get("spells"), ',')) { std::string id = trim(sp); if (!id.empty() && gd->spell(id) && std::find(ch.spells.begin(), ch.spells.end(), id) == ch.spells.end()) ch.spells.push_back(id); }
+                    for (auto& it : split(js.npc->get("gear"), ',')) { std::string id = trim(split(trim(it), ':')[0]); const ItemDef* d = gd->item(id); if (!d) continue;
+                        if (d->equippable()) ch.equip[d->slot()] = id; else giveItem(id, std::max(1, atoi(split(trim(it), ':').size() > 1 ? split(trim(it), ':')[1].c_str() : "1"))); }
+                }
+                ch.hp = ch.maxHP(*gd); ch.mp = ch.maxMP(*gd); party.members.push_back(ch); log(ch.name + " joined the party!"); setFlag("joined_" + cls); flags.erase("left_" + cls); if (dlgNpc) { hideNpcForGood(*dlgNpc); if (!dlgNpc->id.empty()) extra["home_" + cls] = "hidenpc_" + mapId + "_" + dlgNpc->id; } syncBonds(); }
         } else if (party.members.size() >= 4) log("Your party is full.");
     }
     else if (k == "leave") { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == v) { log(party.members[i].name + " left the party."); party.members.erase(party.members.begin() + i); break; } }

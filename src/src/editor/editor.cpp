@@ -8,8 +8,8 @@
 namespace fs = std::filesystem;
 using namespace ED;
 
-static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources"};
-static const int NTABS = 24;
+static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs"};
+static const int NTABS = 25;
 int gEdTop = 28;                      // tab bar height: 28 for one row of tabs, 50 when they need two rows
 #define TOP gEdTop
 static const int BOTTOM = 18;
@@ -219,6 +219,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text", "reward", "project"});                                          // gens[14]
     mk("objects.txt", "Object types & templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
     mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles"});   // gens[16] (1.1.0)
+    mk("npcs.txt", "NPCs", "npc", "id", {"id", "name", "sprite", "dialogue"});   // gens[17] (1.1.9 #33): tab 24
     gens[13].altSection = "bounty"; gens[13].altTemplateKeys = {"id", "board", "kind", "target", "need", "where", "reward", "xp", "title", "text", "require", "repeat"};
     gens[15].altSection = "type"; gens[15].altTemplateKeys = {"id"};   // 1.1.1: [type] = what every object of a type uses
     loadGuide();
@@ -239,7 +240,7 @@ void Editor::setCampaign(const std::string& id) {
     if (onSwitchCampaign && !onSwitchCampaign(id)) { say("Could not load campaign " + id); return; }
     auto all = listCampaigns(assetDir); const CampaignInfo* c = nullptr; for (auto& x : all) if (x.id == id) c = &x;
     if (!c) return;
-    campaignId = c->id; campaignInherit = c->inherit; dataRoot = c->dir.empty() ? baseRoot : c->dir; baseResLoaded = false;
+    campaignId = c->id; campaignInherit = c->inherit; dataRoot = c->dir.empty() ? baseRoot : c->dir; baseResLoaded = false; baseNpcsLoaded = false; npcJoinsDirty = true; placeNpc.clear();
     for (auto& g : gens) {
         std::string file = fs::path(g.path).filename().string();
         g.path = dataRoot + "/" + file;
@@ -368,7 +369,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     for (int i = 0; i < NTABS; i++) {
         int tw = font->width(TABS[i]) + 8;
         if (tx + tw > W - 250) { trow++; tx = 4; }
-        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty);
+        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty) || (i == 24 && gens[17].dirty);
         if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (dirty ? "*" : ""), true, tab == i)) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; }
         tx += tw + 2;
     }
@@ -398,7 +399,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         if (any) openConfirm("There are unsaved changes. Exit anyway? (Save each tab with its Save button.)", [this]() { wantsClose = true; });
         else wantsClose = true;
     }
-    if (tab != lastTab) { if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23) flagIndexDirty = true; if (tab == 22 || tab == 23) poNeedScan = true; lastTab = tab; }
+    if (tab != lastTab) { if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; }
     switch (tab) {
         case 0: drawMaps(in); break;
         case 8: { int uw = 330; drawGeneric(gens[5], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawEncounterUsage(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
@@ -413,6 +414,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         case 20: { int uw = 330; drawGeneric(gens[13], 4, TOP + 4, W - 8 - uw - 6, H - TOP - BOTTOM - 8, in); drawBoardInfo(W - 4 - uw, TOP + 4, uw, H - TOP - BOTTOM - 8, in); break; }
         case 22: drawObjectsTab(in); break;
         case 23: drawResourcesTab(in); break;
+        case 24: drawGeneric(gens[17], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;   // 1.1.9: NPCs (the info box is drawn under the fields)
         case 14: case 15: case 16: case 17: drawGeneric(gens[tab - 5], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
         default: drawGeneric(gens[tab - 3], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
     }
@@ -426,7 +428,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 }
 
 // ---------------- generic key/value editor ----------------
-static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite"; }
+static bool isTileKey(const std::string& k) { return k == "tile" || k == "sprite" || k == "spentsprite" || k == "opensprite" || k == "onsprite" || k == "partysprite"; }
 static bool isColorKey(const std::string& k) { return k == "color" || k == "tint" || k == "bg" || k == "spent" || k == "sparklecolor"; }
 
 // 1.1.6 (#30): Filter button - pick a field the entries have, then one of its values (counted)
@@ -472,7 +474,9 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     for (int i : idx) { std::string l = g.secs[i].get(g.listKey); if (l.empty()) l = g.secs[i].get("name"); if (l.empty()) l = "(" + g.secs[i].name + ")"; if (g.secs[i].inherited) l += "  (base)";
         if (objTab) l = g.secs[i].name == "type" ? "every " + l : "template: " + l + (g.secs[i].get("type").empty() ? "" : "  (" + g.secs[i].get("type") + ")");
         else if (!g.altSection.empty()) l = (g.secs[i].name == g.altSection ? "  notice: " : "board: ") + l;
-        if (&g == &gens[5] && encounterUnused(g.secs[i].get("id"))) l += "  (unused)"; labels.push_back(l); }
+        if (&g == &gens[5] && encounterUnused(g.secs[i].get("id"))) l += "  (unused)";
+        if (&g == &gens[17]) { std::string nm = g.secs[i].get("name"); if (!nm.empty() && nm != l) l = nm + "  (" + l + ")"; if (!trim(g.secs[i].get("companion")).empty()) l += "  - companion"; }   // 1.1.9: NPCs by name
+        labels.push_back(l); }
     int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == g.sel) lsel = (int)i;
     int hit = ui.listBox(x + 4, y + 40 + fy0, lw - 8, h - (g.altSection.empty() ? 100 : 124) - fy0, labels, lsel, g.scroll);
     if (g.secs.empty()) ui.text(x + 10, y + 44 + fy0, "Empty - New, or Import.", DIM);
@@ -503,7 +507,7 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     // fields
     int fx = x + lw + 6, fw = w - lw - 6;
     ui.panel(fx, y, fw, h);
-    if (g.sel < 0 || g.sel >= (int)g.secs.size()) { ui.text(fx + 10, y + 10, "Select an entry on the left, or press New.", DIM); return; }
+    if (g.sel < 0 || g.sel >= (int)g.secs.size()) { ui.text(fx + 10, y + 10, "Select an entry on the left, or press New.", DIM); if (&g == &gens[17]) drawNpcInfo(fx + 4, y + 30, fw - 8, std::min(260, h - 40), in); return; }
     EdSection& s = g.secs[g.sel];
     ui.header(fx, y, fw, (s.name == "type" && objTab ? "[type]  every " + s.get("id") + " on every map   (empty = built-in)" : "[" + s.name + "]  " + s.get(g.listKey) + "   " + s.get("name")) + (s.inherited ? "   - from the base game; any edit makes it the campaign's own" : ""));
     helpBtn(fx + fw - 58, y + 1, s.name, tabTopic());
@@ -512,10 +516,11 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
       if (pv.valid()) { ui.cv->fillRect(fx + fw - 40, y + 1, 36, 14, PANEL2); for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile t = T(pv.c + a, pv.r + b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1, parseColor(s.get("color"))); else ts->draw(*ui.cv, t, fx + fw - 28 + a * 12, y + 2 + b * 12, 1); } } }
     // items, creatures, spells, shops: a "Used by" box under the fields
     std::string useKey = &g == &gens[0] ? "item" : &g == &gens[1] ? "creature" : &g == &gens[2] ? "spell" : &g == &gens[4] ? "shop" : "";
-    int usedH = useKey.empty() ? 0 : 130;
+    bool npcTab = &g == &gens[17] && s.name == "npc";   // 1.1.9 (#33): NPCs get the Look card and a box with where they stand
+    int usedH = npcTab ? 196 : useKey.empty() ? 0 : 130;
     int fieldsBottom = y + h - 32 - usedH;
     bool itemLook = &g == &gens[0] && s.name == "item";   // 1.1.8 (#32): items get a Look card (sprite + colour) above their fields
-    int lookH = itemLook ? drawItemLook(g, s, fx, y + 17, fw) : 0;
+    int lookH = itemLook ? drawItemLook(g, s, fx, y + 17, fw) : npcTab ? drawLookCard(g, s, fx, y + 17, fw, true) : 0;
     int rowH = 22; int fy = y + 22 + lookH - g.fieldScroll;
     if (ui.hover(fx, y + 20 + lookH, fw, fieldsBottom - y - 20 - lookH) && in.wheel) g.fieldScroll = std::max(0, g.fieldScroll - in.wheel * 22);
     ui.cv->setClip({fx + 1, y + 18 + lookH, fw - 2, fieldsBottom - y - 18 - lookH});
@@ -525,12 +530,13 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     for (size_t i = 0; i < s.kv.size(); i++) {
         auto& kv = s.kv[i];
         if (quests && (kv.first == "stage" || kv.first == "fail" || (kv.first == "objective" && atoi(trim(split(kv.second, '|')[0]).c_str()) != 0))) { ui.idCounter += 3; continue; }   // drawn as stage cards below
-        if (itemLook && (kv.first == "tile" || kv.first == "color")) { ui.idCounter += 3; continue; }   // set in the Look card
+        if ((itemLook && (kv.first == "tile" || kv.first == "color")) || (npcTab && (kv.first == "sprite" || kv.first == "color"))) { ui.idCounter += 3; continue; }   // set in the Look card
         int ry = fy + row * rowH; row++;
         if (ry + 16 > fieldsBottom || ry < y + 18 + lookH) { ui.idCounter += 3; continue; }
         ui.label(fx + 8, ry + 2, kv.first);
         if (s.name == "template") helpBtn(fx + keyW - 17, ry + 1, "obj." + s.get("type") + "." + kv.first, kv.first == "type" || kv.first == "id" ? "tab.objects" : "obj." + s.get("type"));
         else if (s.name == "type" && objTab) helpBtn(fx + keyW - 17, ry + 1, kv.first == "id" ? "objtype" : "obj." + s.get("id") + "." + kv.first, "objtype");
+        else if (npcTab) helpBtn(fx + keyW - 17, ry + 1, "obj.npc." + kv.first, "tab.npcs");
         else helpBtn(fx + keyW - 17, ry + 1, s.name + "." + kv.first, s.name);
         fieldWidgets(g, s, kv, fx + keyW, ry, fw - keyW - 30);
         if (ui.button(fx + fw - 24, ry, 18, 16, "x", true, false, DANGER)) { s.kv.erase(s.kv.begin() + i); g.dirty = true; ui.blur(); break; }
@@ -538,7 +544,8 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     if (!quests) g.fieldScroll = std::min(g.fieldScroll, std::max(0, row * rowH - (fieldsBottom - y - 40 - lookH)));
     if (quests) { int used = drawQuestStages(g, s, fx, fy + row * rowH + 4, fw, y + 18, y + h - 32, in); if (ui.hover(fx, y + 20, fw, h - 50) && in.wheel) {} g.fieldScroll = std::min(g.fieldScroll, std::max(0, row * rowH + used - (h - 80))); }
     ui.cv->resetClip();
-    if (usedH) drawUsedBy(useKey + ":" + s.get("id"), fx + 4, fieldsBottom + 2, fw - 8, usedH - 6, in);
+    if (npcTab) drawNpcInfo(fx + 4, fieldsBottom + 2, fw - 8, usedH - 6, in);
+    else if (usedH) drawUsedBy(useKey + ":" + s.get("id"), fx + 4, fieldsBottom + 2, fw - 8, usedH - 6, in);
     // add field row
     int ay = y + h - 26;
     ui.cv->fillRect(fx + 1, ay - 4, fw - 2, 30, PANEL);
@@ -549,7 +556,8 @@ void Editor::drawGeneric(GenericEditor& g, int x, int y, int w, int h, InputStat
     std::vector<std::string> quick = g.templateKeys;   // templates: the keys their object type reads
     if (s.name == "template") for (auto& k : edObjKeys(s.get("type"))) if (std::find(quick.begin(), quick.end(), k) == quick.end()) quick.push_back(k);
     if (s.name == "type" && objTab) { quick.clear(); for (auto& k : edObjKeys(s.get("id"))) quick.push_back(k); }
-    for (auto& k : quick) { if (s.has(k) || (itemLook && (k == "tile" || k == "color"))) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
+    if (npcTab) { quick = edNpcKeys(); if (trim(s.get("companion")).empty()) quick.erase(std::remove_if(quick.begin(), quick.end(), [](const std::string& k) { return k == "partysprite" || k == "level" || k == "stats" || k == "gear" || k == "spells"; }), quick.end()); }
+    for (auto& k : quick) { if (s.has(k) || (itemLook && (k == "tile" || k == "color")) || (npcTab && (k == "sprite" || k == "color"))) continue; int bw = font->width(k) + 8; if (qx + bw > fx + fw - 4) break; if (ui.button(qx, ay, bw, 16, k)) { s.kv.push_back({k, ""}); g.dirty = true; } qx += bw + 3; }
 }
 
 
@@ -577,6 +585,27 @@ static const std::map<std::string, std::vector<std::string>>& choiceTable() {
 void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string, std::string>& kv, int x, int y, int w) {
     const std::string& k = kv.first; std::string& v = kv.second;
     auto& kvr = kv;
+    // --- 1.1.9 (#33): NPCs (npcs.txt) ---
+    if (s.name == "npc" && &g == &gens[17]) {
+        auto npcSingle = [&](const std::string& title, std::vector<std::string> opts) { if (ui.textField(x, y, w - 60, v, 80)) g.dirty = true;
+            if (ui.button(x + w - 56, y, 52, 16, "pick...")) { int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker(title, opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } };
+        if (k == "id") { ui.text(x, y + 2, v, ACCENT2); ui.text(x + font->width(v) + 10, y + 2, "(Rename id... below changes it everywhere)", DIM); return; }
+        if (k == "dialogue") { std::vector<std::string> o{""}; for (auto& d : dlgFiles) o.push_back(d); npcSingle("dialogue (what talking to it opens; [camp] = a companion's party talk)", o); return; }
+        if (k == "shop") { std::vector<std::string> o{""}; for (auto& sh : gens[4].secs) o.push_back(sh.get("id")); npcSingle("shop (opened when it has no dialogue)", o); return; }
+        if (k == "board") { std::vector<std::string> o{""}; for (auto& b : boardIds()) o.push_back(b); npcSingle("notice board of which town", o); return; }
+        if (k == "companion") { std::vector<std::string> o{""}; for (auto& c : gd->classes) o.push_back(c.first); npcSingle("class it joins the party as (empty = not a companion)", o); return; }
+        if (k == "craft") { if (ui.choice(x, y, 140, v.empty() ? "(none)" : v)) { std::vector<std::string> opts{"", "forge", "workbench", "alchemy", "any"}; int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("crafting station it offers (only without a dialogue)", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } return; }
+        if (k == "travel") { bool b = v == "1"; if (ui.checkbox(x, y + 2, b ? "coachman: talking opens coach travel" : "no coach travel", b)) { v = b ? "1" : ""; g.dirty = true; } return; }
+        if (k == "wander") { bool b = v == "1"; if (ui.checkbox(x, y + 2, b ? "wanders near its spot" : "stands still", b)) { v = b ? "1" : ""; g.dirty = true; } return; }
+        if (k == "hostile") { if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true; if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> opts; for (auto& c : gd->creatures) opts.push_back(c.first); openListPicker("creature it turns into when talked to / attacked", opts, 0, [&kvr, opts, &g](int i) { kvr.second = trim(kvr.second).empty() ? opts[i] : kvr.second + "," + opts[i]; g.dirty = true; }); } return; }
+        if (k == "gear") { if (ui.textField(x, y, w - 60, v, 300)) g.dirty = true; if (ui.hover(x, y, w - 60, 16)) ui.tip("Items they arrive with: weapons and armour are worn (in place of the class's), the rest go to the pack (id:count)");
+            if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> opts; for (auto& it : gd->items) opts.push_back(it.first); openListPicker("item they join with", opts, 0, [&kvr, opts, &g](int i) { kvr.second = trim(kvr.second).empty() ? opts[i] : kvr.second + "," + opts[i]; g.dirty = true; }); } return; }
+        if (k == "level") { int lv = atoi(v.c_str()); if (ui.intField(x, y, 70, lv, 0, 30)) { v = lv > 0 ? std::to_string(lv) : ""; g.dirty = true; } ui.text(x + 78, y + 2, lv > 0 ? "arrives at this level" : "0 / empty = the hero's level when they join", DIM); return; }
+        if (k == "stats" && trim(v).empty()) { ui.text(x, y + 2, "(the class's stats)", DIM);
+            if (ui.button(x + 150, y, 120, 16, "set own stats")) { const ClassDef* c = gd->cls(trim(s.get("companion"))); static const char* SK[6] = {"str", "dex", "con", "int", "wis", "cha"}; std::string o; for (int i = 0; i < 6; i++) o += std::string(i ? "," : "") + SK[i] + ":" + std::to_string(c ? c->stats[i] : 10); v = o; g.dirty = true; }
+            return; }
+        if (k == "notes") { if (ui.textField(x, y, w, v, 400)) g.dirty = true; if (ui.hover(x, y, w, 16)) ui.tip("For you: who they are, where they fit in the story. The game doesn't show it."); return; }
+    }
     // --- six-stat rows ---
     if (k == "stats" || k == "bonus") {
         auto m = parsePairs(v); bool ch = false;
@@ -613,7 +642,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (ui.textField(x, y, 90, v, 20)) g.dirty = true;
         { int psz = (k == "sprite" && s.get("size") == "2") ? 2 : 1;
           if (psz == 2) { ui.cv->fillRect(x + 98, y - 6, 52, 52, FIELD); ui.cv->rect(x + 98, y - 6, 52, 52, ACCENT2); }
-          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = T(t.c + a, t.r + b); if (!trim(s.get("color")).empty()) ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
+          for (int b = 0; b < psz; b++) for (int a = 0; a < psz; a++) { Tile tt = T(t.c + a, t.r + b); if (!trim(s.get("color")).empty() && k != "partysprite") ts->drawRecolor(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2, parseColor(s.get("color"))); else ts->draw(*ui.cv, tt, x + 100 + a * 24, y - 4 + b * 24, 2); }
           if (psz == 2) ui.text(x + 154, y + 26, "size=2: the sprite is the 2x2 block starting at this tile (top-left)", DIM); }
         if (ui.button(x + 130, y, 50, 16, "pick...")) { EdSection* sp = &s; std::string key = k; openTilePicker(t, [sp, key, &g](Tile nt) { if (!nt.valid()) return; if (key == "spriterow" || key == "spritecol") { for (size_t i = 0; i < sp->kv.size(); i++) if (sp->kv[i].first == "spriterow" || sp->kv[i].first == "spritecol") { sp->kv.erase(sp->kv.begin() + i); i--; } sp->set("sprite", fmt("%d,%d", nt.c, nt.r)); } else sp->set(key, fmt("%d,%d", nt.c, nt.r)); g.dirty = true; }); }
         if (k == "sprite" && s.name == "creature") { ui.text(x + 190, y + 2, "character rows: col 104 + row = race; col 105 sword, 106 axe, 109 staff, 113 shield, 116 gun, 117 bow", DIM); }
@@ -914,7 +943,7 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
 }
 const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
-    if (t == "npc") return {"name", "sprite", "color", "dialogue", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
+    if (t == "npc") return {"npc", "name", "sprite", "color", "dialogue", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
     if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link"};
     if (t == "chest") return {"items", "gold", "locked", "flag", "sprite", "opensprite", "color", "sound", "onuse"};
     if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
@@ -953,6 +982,8 @@ void Editor::drawMaps(InputState& in) {
         for (auto& oRaw : em.objs) { EdObj o = resolvedObj(oRaw); int ox = o.geti("x"), oy = o.geti("y");   // as the game sees it (template and resource keys filled in)
             if (!oRaw.get("template").empty() && !templateSec(oRaw.get("template"))) problems.push_back(fmt("object at %d,%d uses unknown template '%s'", ox, oy, oRaw.get("template").c_str()));
             if (o.type == "gather" && !o.get("node").empty() && !resourceSec(o.get("node"), "")) problems.push_back(fmt("gather node at %d,%d uses unknown resource type '%s'", ox, oy, o.get("node").c_str()));
+            if (o.type == "npc" && !trim(o.get("npc")).empty() && !npcSec(o.get("npc"))) problems.push_back(fmt("npc at %d,%d shows unknown NPC '%s' (NPCs tab)", ox, oy, o.get("npc").c_str()));
+            if (o.type == "npc" && trim(o.get("npc")).empty()) problems.push_back(fmt("npc at %d,%d is not linked to an NPC (select it > make NPC)", ox, oy));
             if (o.type == "gather" && !gd->item(o.get("item"))) problems.push_back(fmt("gather node at %d,%d gives unknown item '%s'", ox, oy, o.get("item").c_str()));
             if (o.type != "door" && o.type != "sign" && o.type != "lever" && o.type != "obstacle" && o.type != "change" && o.type != "gather" && !walk(ox, oy)) problems.push_back(o.type + " " + o.get("id") + o.get("name") + fmt(" at %d,%d is on a blocked tile", ox, oy)); if (o.type == "npc" && !o.get("dialogue").empty() && std::find(dlgFiles.begin(), dlgFiles.end(), o.get("dialogue")) == dlgFiles.end()) problems.push_back("npc " + o.get("id") + " references missing dialogue '" + o.get("dialogue") + "'"); if (o.type == "exit") { std::string to = o.get("to"); bool ok = to == "overworld" || std::find(mapFiles.begin(), mapFiles.end(), to) != mapFiles.end(); for (auto& g : gens[7].secs) if (g.get("id") == to) ok = true; if (!ok) problems.push_back(fmt("exit at %d,%d leads to unknown map '%s'", ox, oy, to.c_str())); } if (o.type == "enemy") for (auto& c : split(o.get("group"), ',')) if (!trim(c).empty() && !gd->creature(trim(c))) problems.push_back("enemy group uses unknown creature '" + trim(c) + "'"); if (o.type == "chest") for (auto& it : split(o.get("items"), ',')) { std::string id = trim(split(it, ':')[0]); if (!id.empty() && !gd->item(id)) problems.push_back("chest has unknown item '" + id + "'"); } }
         auto sp = split(em.hget("spawn"), ','); if (sp.size() == 2 && !walk(atoi(sp[0].c_str()), atoi(sp[1].c_str()))) problems.push_back("spawn point is on a blocked tile");
@@ -995,6 +1026,18 @@ void Editor::drawMaps(InputState& in) {
                 openListPicker("Place copies of a template (make them in the Objects tab)", labels, cur, [this, ids](int i) { placeTmpl = ids[i]; });
             }
             if (ui.hover(x + 62, ty, lw - 66, 16)) ui.tip("Copies follow their template (Objects tab); a key set on one copy is that copy's own");
+            ty += 20;
+        }
+        if (objType == 0 && placeTmpl.empty()) {   // 1.1.9 (#33): which NPC (NPCs tab) an npc placement shows
+            const EdSection* pn = npcSec(placeNpc); if (!pn) placeNpc.clear();
+            ui.label(x + 4, ty + 2, "NPC:");
+            if (ui.choice(x + 62, ty, lw - 66, pn ? pn->get("name", placeNpc) : "(a new NPC)")) {
+                std::vector<std::string> ids{""}, labels{"+ a new NPC (made in the NPCs tab when you click)"};
+                for (auto& sc : gens[17].secs) if (sc.name == "npc" && !trim(sc.get("id")).empty()) { ids.push_back(trim(sc.get("id"))); labels.push_back(sc.get("name", sc.get("id")) + "  (" + sc.get("id") + ")" + (trim(sc.get("companion")).empty() ? "" : "  - companion")); }
+                int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == placeNpc) cur = (int)i;
+                openListPicker("NPC to place (edit them in the NPCs tab)", labels, cur, [this, ids](int i) { placeNpc = ids[i]; });
+            }
+            if (ui.hover(x + 62, ty, lw - 66, 16)) ui.tip("Clicking the map places this NPC (npc=). Its look, name and dialogue come from the NPCs tab; the placement keeps its spot and show/hide.");
             ty += 20;
         }
     } else {
@@ -1142,6 +1185,9 @@ void Editor::drawMaps(InputState& in) {
                         o.type = pt->get("type", "npc"); o.kv = {{"template", placeTmpl}, {"x", std::to_string(mtx)}, {"y", std::to_string(mty)}};
                         if (o.type == "npc") { int n = 1; for (auto& eo : em.objs) if (eo.get("template") == placeTmpl) n++; o.kv.insert(o.kv.begin() + 1, {"id", placeTmpl + "_" + std::to_string(n)}); }
                         if ((o.type == "chest" || o.type == "lever" || o.type == "obstacle") && !pt->has("flag")) o.set("flag", o.type + "_" + std::to_string(mtx) + "_" + std::to_string(mty));
+                    } else if (objType == 0) {   // 1.1.9: an NPC placement (a new NPC is made when none is picked)
+                        std::string nid = placeNpc; if (!npcSec(nid)) { nid = newNpc(nullptr); placeNpc = nid; say("New NPC '" + nid + "' made and placed - give it a name, look and dialogue in the NPCs tab."); }
+                        o.type = "npc"; o.kv = {{"id", npcPlacementId(em, nid)}, {"npc", nid}, {"x", std::to_string(mtx)}, {"y", std::to_string(mty)}};
                     } else { o.type = OBJ_TYPES[objType]; o.kv = objTemplate(o.type, mtx, mty);
                         if (o.type == "gather" && !gens[16].secs.empty()) o.kv = {{"x", std::to_string(mtx)}, {"y", std::to_string(mty)}, {"node", gens[16].secs[0].get("id")}}; }   // takes the rest from its resource type
                     em.objs.push_back(o); objSel = (int)em.objs.size() - 1; mapDirty = true; dragObj = true; ui.blur(); }
@@ -1232,6 +1278,18 @@ void Editor::drawMaps(InputState& in) {
                 if (ui.hover(px + pw - 72, ry, 66, 16)) ui.tip("Copy the template's values into this object and unlink it from the template");
                 ui.idCounter += 1; ry += 20; continue;
             }
+            if (key == "npc" && ro.type == "npc") {   // 1.1.9: the link to an NPCs tab entry
+                const EdSection* ns = npcSec(o.kv[i].second);
+                helpBtn(px + 5, ry + 1, "obj.npc.npc", "obj.npc");
+                ui.label(px + 22, ry + 2, "npc"); ui.text(px + 88, ry + 2, o.kv[i].second + (ns ? "  " + ns->get("name") : ""), ns ? ACCENT2 : DANGER);
+                if (!ns && ui.hover(px + 88, ry, 90, 16)) ui.tip("npcs.txt has no NPC with this id");
+                if (ui.button(px + pw - 122, ry, 46, 16, "edit", ns != nullptr)) { std::string nid = trim(o.kv[i].second); for (size_t t = 0; t < gens[17].secs.size(); t++) if (trim(gens[17].secs[t].get("id")) == nid) gens[17].sel = (int)t; gens[17].filter.clear(); gens[17].filterKey.clear(); gens[17].fieldScroll = 0; gens[17].scroll = std::max(0, gens[17].sel - 5); tab = 24; ui.blur(); }
+                if (ui.hover(px + pw - 122, ry, 46, 16)) ui.tip("Edit the NPC in the NPCs tab: every placement of it follows");
+                if (ui.button(px + pw - 72, ry, 66, 16, "other...")) { std::vector<std::string> ids, labels; int cur = 0; for (auto& sc : gens[17].secs) if (sc.name == "npc") { if (trim(sc.get("id")) == trim(o.kv[i].second)) cur = (int)ids.size(); ids.push_back(trim(sc.get("id"))); labels.push_back(sc.get("name", sc.get("id")) + "  (" + sc.get("id") + ")"); }
+                    auto* kvp = &o.kv[i]; openListPicker("This placement shows which NPC?", labels, cur, [this, kvp, ids](int j) { mapPushUndo(); kvp->second = ids[j]; mapDirty = true; }); }
+                if (ui.hover(px + pw - 72, ry, 66, 16)) ui.tip("Show a different NPC here (the spot, id and show/hide stay)");
+                ui.idCounter += 1; ry += 20; continue;
+            }
             helpBtn(px + 5, ry + 1, "obj." + ro.type + "." + key, "obj." + ro.type);
             ui.label(px + 22, ry + 2, key);
             bool flagKey = key == "flag", condKey = key == "require" || key == "openif" || key == "show" || key == "hide" || key == "moveif" || key == "if";
@@ -1268,7 +1326,13 @@ void Editor::drawMaps(InputState& in) {
         } else ui.idCounter += 1;
         ry += 22;
         if (!gone && shown(ry)) {
-            if (ro.type == "npc") { if (ui.button(px + 6, ry, 110, 16, "pick dialogue")) { openListPicker("Dialogue", dlgFiles, 0, [&o, this](int i) { o.set("dialogue", dlgFiles[i]); mapDirty = true; }); } }
+            if (ro.type == "npc") { if (ui.button(px + 6, ry, 110, 16, "own dialogue")) { openListPicker("Dialogue for this placement only (the NPC's own is set in the NPCs tab)", dlgFiles, 0, [&o, this](int i) { o.set("dialogue", dlgFiles[i]); mapDirty = true; }); }
+                if (ui.hover(px + 6, ry, 110, 16)) ui.tip("Give only this placement a dialogue of its own (the NPC keeps its dialogue everywhere else)");
+                if (trim(o.get("npc")).empty() && ui.button(px + pw - 110, ry, 104, 16, "make NPC", true, false, ACCENT2)) {   // 1.1.9: turn a hand-made npc object into an NPC
+                    mapPushUndo(); EdObj src = ro; std::string nid = newNpc(&src);
+                    for (size_t k2 = 0; k2 < o.kv.size(); k2++) if (o.kv[k2].first != "id" && o.kv[k2].first != "template" && o.kv[k2].first != "x" && o.kv[k2].first != "y" && o.kv[k2].first != "show" && o.kv[k2].first != "hide" && o.kv[k2].first != "moveif" && o.kv[k2].first != "movex" && o.kv[k2].first != "movey") { o.kv.erase(o.kv.begin() + k2); k2--; }
+                    o.kv.insert(o.kv.begin() + (o.has("id") ? 1 : 0), {"npc", nid}); mapDirty = true; say("NPC '" + nid + "' made from this object (NPCs tab) and linked to it. Save the map."); }
+                if (trim(o.get("npc")).empty() && ui.hover(px + pw - 110, ry, 104, 16)) ui.tip("Move this object's name, look and dialogue into a new NPC (NPCs tab) and link it"); }
             if (ro.type == "exit") { if (ui.button(px + 6, ry, 110, 16, "pick map")) { std::vector<std::string> ms = mapFiles; ms.insert(ms.begin(), "overworld"); for (auto& g : gens[7].secs) ms.push_back(g.get("id")); openListPicker("Target map", ms, 0, [&o, ms, this](int i) { o.set("to", ms[i]); mapDirty = true; }); } }
             if (ro.type == "enemy") { if (ui.button(px + 6, ry, 110, 16, "add creature")) { std::vector<std::string> cs; for (auto& c : gd->creatures) cs.push_back(c.first); openListPicker("Creature", cs, 0, [&o, cs, this](int i) { std::string g = o.get("group"); o.set("group", g.empty() ? cs[i] : g + "," + cs[i]); mapDirty = true; }); } }
             if (ro.type == "chest") { if (ui.button(px + 6, ry, 110, 16, "add item")) { std::vector<std::string> is; for (auto& c : gd->items) is.push_back(c.first); openListPicker("Item", is, 0, [&o, is, this](int i) { std::string g = o.get("items"); o.set("items", g.empty() ? is[i] + ":1" : g + "," + is[i] + ":1"); mapDirty = true; }); } }
@@ -1276,7 +1340,7 @@ void Editor::drawMaps(InputState& in) {
                 if (ids.empty()) say("No resource node types yet - make them in the Resources tab.");
                 else openListPicker("Resource node type (Resources tab)", ids, cur, [&o, ids, this](int i) { mapPushUndo(); o.set("node", ids[i]); o.erase("item"); mapDirty = true; }); }
                 if (ui.hover(px + 6, ry, 110, 16)) ui.tip("What kind of node this is: it takes item, amount, tool, look... from the Resources tab"); }
-            if (tmplId.empty()) { if (ui.button(px + pw - 110, ry, 104, 16, "make template")) templateFromObject(o, em.id, objSel);
+            if (tmplId.empty() && ro.type != "npc") { if (ui.button(px + pw - 110, ry, 104, 16, "make template")) templateFromObject(o, em.id, objSel);
                 if (ui.hover(px + pw - 110, ry, 104, 16)) ui.tip("Turn this object into a template (Objects tab) and link it, so copies can share its values"); }
         }
         ui.cv->resetClip();

@@ -150,7 +150,9 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
         else if (k == "give" || k == "take" || k == "item") { for (auto& it : split(v, ',')) { std::string idn = trim(split(trim(it), ':')[0]); if (idn.empty()) continue; if (!gd->item(idn)) err(ln, k + "= uses unknown item '" + idn + "'"); } }
         else if (k == "gold" || k == "xp") { if (atoi(v.c_str()) == 0) warn(ln, k + "= is zero"); }
         else if (k == "shop") { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == v) ok = true; if (!ok) err(ln, "unknown shop '" + v + "'"); curClosed = true; }
-        else if (k == "join") { std::string c = trim(split(v, ':')[0]); if (!gd->cls(c)) err(ln, "join= uses unknown class '" + c + "'"); }
+        else if (k == "join") { std::string c = joinClassOf(v); if (trim(v).empty()) {} else   // 1.1.9: join=<npc id> (an NPC with companion=) or class:Name:col,row; empty = the NPC being talked to
+            if (trim(v).find(':') == std::string::npos && npcSec(v) && c == trim(v)) err(ln, "join=" + trim(v) + ": that NPC has no companion= class (NPCs tab)");
+            else if (!gd->cls(c)) err(ln, trim(v).find(':') == std::string::npos ? "join= names no companion NPC or class '" + trim(v) + "'" : "join= uses unknown class '" + c + "'"); }
         else if (k == "leave") { if (!gd->cls(v)) err(ln, "leave= uses unknown class '" + v + "'"); }
         else if (k == "combat") { curClosed = true; for (auto& c : split(v, ',')) if (!trim(c).empty() && !gd->creature(trim(c))) err(ln, "combat= uses unknown creature '" + trim(c) + "'"); }
         else if (k == "spawn") { auto p = split(v, ','); if (p.size() < 3) err(ln, "spawn needs creature,x,y"); else if (!gd->creature(trim(p[0]))) err(ln, "spawn= uses unknown creature '" + trim(p[0]) + "'"); }

@@ -8,105 +8,90 @@ music=brasswick
 ambient=amb_town
 
 [legend]
+! = bed
+# = wall_stone
+$ = bush_t
+% = window
+& = flower|flower2|flower3|floor_grass
+( = torch
+) = banner_gold
+* = floor_marble
++ = floor_wood
+, = street
+- = floor_tile
 . = floor_grass
-, = floor_dirt
-T = tree|tree|tree2|tree3
-t = pine_t
-f = fence_wood
-F = flower|flower2|flower3|floor_grass
-# = wall_wood
-= = wall_stone
-h = floor_wood
-m = floor_tile
-D = door_wood
-W = window
-o = well
-w = floor_water
-b = barrel
-B = bed
+/ = path
+: = grass
+; = wall_wood
+< = shelf
+= = tree|tree|tree2|tree3
+> = shop_sign
+? = fountain
+@ = lantern
 A = table
-C = chair
-S = shelf
+D = door_wood
+F = cart
+I = pillar
 K = bookshelf
-n = anvil
-M = forge
-u = cauldron
-s = shop_sign
-i = inn_sign
-p = pillar
-x = void
-G = grave
-a = altar
-c = crop|crop2
-H = hay
+T = banner_red
+W = inn_sign
+^ = pine_t
+f = anvil
+h = cauldron
 k = crate
-% = banner_red
-& = banner_blue
-$ = banner_gold
-Q = fountain
-L = torch
-Z = statue
-R = floor_marble
-e = fence
-~ = bridge
-+ = floor_carpet
-O = brazier
-v = floor_water
-j = deadtree_t
-y = bush_t
-X = street
-Y = path
-J = window_stone
-1 = wall_brick
-2 = window_brick
-3 = lantern
-4 = cart
+m = forge
+o = barrel
+r = altar
+t = window_brick
+w = statue
+| = window_stone
+~ = wall_brick
 
 [rows]
-TTTTTttTTTTTTTTTTTTTTtTTTtTXXXXXXTTTTTTTTTTttTTTTTTTTTTTTTTT
-TTTT...T..TT.......TT......XXXXXX..T...T.t.TT...t...T...T..T
-T..............TTt........TXXXXXXt....TT......T.........T.TT
-T.tT..t..T....T....T.T...t.XXXXXX...TT...T...T....T..T.TT.TT
-TT..TT...T.F.T..........TTTXXXXXX..T........t.T.......TtT.Tt
-T....======================XXXXXX======================....T
-T....=..1111111111111111...XXXXXX.......============..=T...T
-TF...=..1mKKKKKKKKKKKKm1...XXXXXX..y....=LRRRZRRRRR=..=...tt
-T.TTT=..1mmmmmmmmmmmmmm1...XXXXXX.......=RRRRRRRRRR=..=..TTT
-T....=..1mmmmmmmmmmmmmm1...XXXXXX.......=RRRRRRRRRR=..=T...T
-T....=..1mmmmmmmmmmmmmm1...XXXXXX...y...=RRRRRRRRRR=.F=....T
-Tt...=..1%111111D11111%1...XXXXXX.......=RRRRRRRRRR=..=....T
-T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=RRRRRRRRRR=..=....T
-T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=RRRRRRRRRR=..=..T.T
-T....=======...............XXXXXX.......=RRRRRRRRRR=..=.T..T
-t..T.==BmmB=.#########....3XXXXXX3..y...=J==$D$===J=..=....T
-T..T.==mmmm=k#nMhhhhS#..pXXXXXXXXXXp............XX....=....T
-T.T..==kmmm=b#hhhhhhh#..XXXXXXXXXXXX..#########.XX....=....T
-T.T..==mmmm=.#hhhhhhh#..XXXXXXXXXXXX..#KhhuhhK#.XX...F=....T
-t....==JD=J=.#hhhhhhh#..XXXXXXXXXXXX.F#hhhhhhh#.XXy...=....T
-Y....=3...XX.#W#sD##W#..XXXXXQQXXXXX..#hhhhhhh#.XX...3=....Y
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXQQXXXXXXX#W#sD##W#XXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-Y....=....XX...F....y...XXXXXXXXXXXX.4..........XX....=.FT.Y
-T....=....XX.#########..pXXXXXXXXXXp..###########Y....=T...T
-T....=######.#ShhhhhS#....3XXXXXX3....#BhhhAAhhB#Y....=....T
-T....=#hhhh#.#hhhhhhh#.....XXXXXX.....#hhhhhhhhh#Y....=...TT
-t.T..=#hhhh#.#bhhhhhh#.....XXXXXX.....#bhhhhhhhh#Y....=TTT.T
-T....=#WD#W#.#W#sD##W#.....XXXXXX.....#hhhhhhhhh#Y....=....T
-T....=....XXXXXXXXXXXXXXXXXXXXXXXXXXXX#W#iD####W#Y....=..T.t
-TT...=....XXXXXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYY....=....T
-T....=.......11111111111F..XXXXXX...............y.....=....T
-TTT..=######.1LmmmammmL1...XXXXXX.....######.######...=....T
-TT...=#hhhh#.1mmmmmmmmm1...XXXXXX...F.#hhhh#.#hhhh#...=....T
-T..F.=#hhhh#.1mmmmmmmmm1...XXXXXX.....#hhhh#.#hhhh#...=....T
-t.F..=#WD#W#.12111D11121..FXXXXXX.....#WD#W#.#WD#W#..T=....T
-T....=F.....t..............XXXXXX...............F.....=T...T
-TT...======================XXXXXX======================..TTt
-T.T....T..............T....XXXXXX.........T.T......T.......T
-T..T......T.......T.TTT....XXXXXX...TTT.T.......T......T...T
-t...T.Tt....T...TT..T...T..XXXXXX.T.t.ttt.t.T....T..t.TTTTTT
-TTTt..F.....T......TT......XXXXXX....t...T......T.....T.TTTT
-TTTTTTTTTTtTTTTTTTTTtTTTTTTXXXXXXTtTttTtttTTtTtTTTTTTtTTTtTT
+=====^^==============^===^=,,,,,,==========^^===============
+====...=..==.......==......,,,,,,..=...=.^.==...^...=...=..=
+=...::::::::...==^........=,,,,,,^....==......=.........=.==
+=.^=::^..=.:..=....=.=...^.,,,,,,...==...=...=....=..=.==.==
+==..==...=.&.=..........===,,,,,,..=........^.=.......=^=.=^
+=.:::######################,,,,,,######################....=
+=.:::#..~~~~~~~~~~~~~~~~...,,,,,,.......############..#=...=
+=&...#..~-KKKKKKKKKKKK-~.::,,,,,,.:$..:.#(***w*****#..#...^^
+=.===#..~--------------~:::,,,,,,::.:::.#**********#..#..===
+=.:..#..~--------------~:::,,,,,,:::::..#**********#..#=...=
+=.:::#..~--------------~.:.,,,,,,:::$::.#**********#.&#....=
+=^...#..~T~~~~~~D~~~~~T~.:.,,,,,,.::.::.#**********#..#....=
+=.::.#....,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#**********#..#....=
+=.::.#....,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#**********#..#..=.=
+=::..#######.:::::::.....:.,,,,,,.......#**********#..#.=..=
+^..=.##!--!#.;;;;;;;;;.:::@,,,,,,@..$...#|##)D)###|#..#....=
+=..=.##----#k;fm++++<;::I,,,,,,,,,,I............,,.::.#....=
+=.=..##k---#o;+++++++;::,,,,,,,,,,,,..;;;;;;;;;.,,.:..#....=
+=.=..##----#.;+++++++;:.,,,,,,,,,,,,..;K++h++K;.,,.:.&#....=
+^....##|D#|#.;+++++++;:.,,,,,,,,,,,,.&;+++++++;.,,$:..#....=
+/....#@...,,.;%;>D;;%;..,,,,,??,,,,,..;+++++++;.,,.::@#..../
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,??,,,,,,,;%;>D;;%;,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+/...:#....,,...&....$...,,,,,,,,,,,,.F..:::::::.:,....#.&=./
+=::::#....,,.;;;;;;;;;..I,,,,,,,,,,I..;;;;;;;;;;;,.::.#=...=
+=.::.#;;;;;;.;<+++++<;.:..@,,,,,,@::..;!+++AA++!;,:::.#....=
+=.::.#;++++;.;+++++++;.:::.,,,,,,:::::;+++++++++;,:.:.#...==
+^.=:.#;++++;.;o++++++;.::::,,,,,,:::::;o++++++++;,.::.#===.=
+=..:.#;%D;%;.;%;>D;;%;.::::,,,,,,:::..;+++++++++;,:::.#....=
+=....#,,,,,,,,,,,,,,,,,,,,,,,,,,,::::,;%;WD;;;;%;,:::.#..=.^
+==...#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,:::.#....=
+=....#.......~~~~~~~~~~~&..,,,,,,:::..:::::::...$..::.#....=
+===..#;;;;;;.~(---r---(~.::,,,,,,:....;;;;;;.;;;;;;.:.#....=
+==...#;++++;.~---------~.:.,,,,,,:::&.;++++;.;++++;.:.#....=
+=..&.#;++++;.~---------~::.,,,,,,:....;++++;:;++++;...#....=
+^.&..#;%D;%;.~t~~~D~~~t~..&,,,,,,:::::;%D;%;:;%D;%;..=#....=
+=....#&.....^..............,,,,,,..::.:::::::...&.....#=...=
+==...######################,,,,,,######################..==^
+=.=....=..............=.:::,,,,,,.:::.....=.=......=.......=
+=..=......=.......=.===.:::,,,,,,:..===.=.......=......=...=
+^...=.=^....=...==..=.:::::,,,,,,.=.^.^^^.^.=....=..^.======
+===^..&.....=......==...::.,,,,,,....^...=......=.....=.====
+==========^=========^======,,,,,,=^=^^=^^^==^=^======^===^==
 
 [exit]
 x=27
@@ -146,139 +131,103 @@ ty=70
 
 [npc]
 id=mayor
-name=Mayor Aldous
-sprite=104,27
+npc=mayor_aldous
 x=16
 y=8
-dialogue=mayor_aldous
 
 [npc]
 id=clerk
-name=Clerk Benning
-sprite=104,0
+npc=clerk_benning
 x=11
 y=9
-dialogue=clerk_benning
 
 [npc]
 id=reyna
-name=Captain Reyna
-sprite=166,13
+npc=captain_reyna
 x=8
 y=16
-dialogue=captain_reyna
 
 [npc]
 id=guard1
-name=Gate Guard
-sprite=113,13
+npc=gate_guard
 x=28
 y=37
-dialogue=gate_guard
 
 [npc]
 id=guard2
-name=Keep Guard
-sprite=113,13
+npc=keep_guard
 x=45
 y=16
-dialogue=keep_guard
 moveif=keep_open
 movex=47
 movey=16
 
 [npc]
 id=armorer
-name=Armorer Hald
-sprite=105,2
+npc=armorer_hald
 x=17
 y=17
-dialogue=armorer_hald
 
 [npc]
 id=pell
-name=Merchant Pell
-sprite=105,1
+npc=merchant_pell
 x=17
 y=27
-dialogue=merchant_pell
 
 [npc]
 id=elowen
-name=Elowen
-sprite=109,28
+npc=elowen
 x=43
 y=19
-dialogue=elowen
 hide=joined_mage
 
 [npc]
 id=arcanist
-name=Arcanist Morrow
-sprite=104,28
+npc=arcanist_morrow
 x=40
 y=19
-dialogue=arcanist_morrow
 
 [npc]
 id=innkeeper2
-name=Innkeeper Fenna
-sprite=104,1
+npc=innkeeper_fenna
 x=43
 y=28
-dialogue=innkeeper_fenna
 
 [npc]
 id=priest
-name=Brother Caul
-sprite=122,0
+npc=brother_caul
 x=17
 y=34
-dialogue=brother_caul
 
 [npc]
 id=townsfolk1
-name=Washerwoman
-sprite=104,1
+npc=washerwoman
 x=20
 y=23
-dialogue=townsfolk
-wander=1
 
 [npc]
 id=townsfolk2
-name=Street Urchin
-sprite=104,0
+npc=street_urchin
 x=33
 y=23
-dialogue=urchin
-wander=1
 
 [npc]
 id=townsfolk3
-name=Veteran
-sprite=105,0
+npc=veteran
 x=36
 y=22
-dialogue=veteran
-wander=1
 
 [npc]
 id=bard
-name=Bard Lio
-sprite=104,21
+npc=bard_lio
 x=31
 y=27
-dialogue=bard_lio
 
 [npc]
 id=cat
-name=Cat
-sprite=1,14
+npc=cat
 x=9
 y=27
-dialogue=cat
-wander=1
 
 [sign]
 x=29
@@ -320,36 +269,29 @@ y=18
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=9
 y=13
 board=brasswick
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=11
 y=13
-travel=1
 
 [npc]
 id=vael
-name=Sir Vael
-sprite=121,13
-color=190,190,205
+npc=sir_vael
 x=49
 y=10
-dialogue=sir_vael
 
-# 1.0: Vell's followers, if the party handed them to the Mayor's court
 [npc]
 id=ilse_cell
+npc=ilse
 name=Ilse (prisoner)
-sprite=104,17
 x=42
 y=13
 dialogue=converts_cell
 show=converts_judged
+

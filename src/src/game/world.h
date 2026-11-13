@@ -106,6 +106,7 @@ struct Cell {
 
 struct NPC {
     std::string id, name, dialogue, shop;
+    std::string def;             // 1.1.9: npc= - the NPC (npcs.txt) this placement shows
     Tile tile; bool recolor = false; Color8 color = C::White;
     int x = 0, y = 0, homeX = 0, homeY = 0;
     bool wander = false, hidden = false; std::string showFlag, hideFlag; // visible only when flags match
@@ -170,7 +171,20 @@ struct ObjTemplate { std::string id, type; std::vector<std::pair<std::string, st
 void setObjectTemplates(const std::vector<ConfigSection>& secs);   // reads both [template] and [type] sections
 const ObjTemplate* objectTemplate(const std::string& id);
 const ObjTemplate* objectType(const std::string& type);
-void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv);   // template, then type
+void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv);   // template, then NPC, then type
+// 1.1.9 (owner's #33): NPCs (npcs.txt [npc]) are characters of their own: look, name, what talking to them does, and for
+// companions the class they join as and how they arrive. A map [npc] object is a placement with npc=<id> (plus its
+// spot, its own id and show/hide/moveif); every key it doesn't set (or leaves empty) comes from the NPC.
+// Order: placed object > its template > its NPC > the npc [type] entry > built-in.
+struct NpcDef { std::string id; std::vector<std::pair<std::string, std::string>> kv;
+    std::string get(const std::string& k, const std::string& d = "") const { for (auto& p : kv) if (p.first == k) return p.second; return d; } };
+void setNpcDefs(const std::vector<ConfigSection>& secs);         // later sections replace earlier ones with the same id
+const std::vector<NpcDef>& npcDefs();
+const NpcDef* npcDef(const std::string& id);
+const NpcDef* companionDef(const std::string& cls);              // the NPC with companion=<class id>, if any
+// a join= action: "<npc id>" (an NPC with companion=, 1.1.9) or the older "class:Name:col,row"
+struct JoinSpec { std::string cls, name; Tile tile; const NpcDef* npc = nullptr; };
+JoinSpec parseJoin(const std::string& v);
 struct SavePoint { int x = 0, y = 0; Tile sprite; bool hasColor = false; Color8 color = C::White; bool sparkle = true; Color8 sparkleColor = C::Cyan; std::string text, sound, onUse; };
 // objects made by code (generated dungeons, the overworld, the console) take their type's look the same way
 void applyTypeLook(SavePoint& s);

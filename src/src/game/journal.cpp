@@ -12,6 +12,7 @@ using namespace UI;
 void Game::loadSystems() {
     loadBoards(); loadHints();
     setResourceDefs(mergedConfig("resources.txt")); setObjectTemplates(mergedConfig("objects.txt"));   // 1.1.0: read by map loading
+    setNpcDefs(mergedConfig("npcs.txt"));   // 1.1.9 (#33): the NPCs map [npc] placements show (npc=)
     banters.clear(); achievements.clear(); recipes.clear(); affixes.clear(); factions.clear();
     for (auto& sec : mergedConfig("factions.txt")) { if (sec.name != "faction" || sec.get("id").empty()) continue; FactionDef f{sec.get("id"), sec.get("name", sec.get("id")), sec.get("text")};
         for (auto& kv : sec.kv) {   // reward=REP|item:n,gold:n|title    project=title|item:n,...|rep|gold|text

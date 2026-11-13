@@ -28,6 +28,21 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.1.9 NPCs of their own
+
+* **NPCs are now entries of their own** (`data/npcs.txt`), made once and placed on maps. Every person and animal in the
+  game - companions too - was moved over: a map `[npc]` is now a placement (`npc=<id>`, its spot, its id on that map
+  and when it is there), and everything else comes from the NPC. One NPC can stand in several places (Ilse, Rook, Old
+  Wick, the coachmen and notice boards), and a placement can still give itself its own name or dialogue.
+* **Companions are set up on their NPC**: `companion=<class>`, plus their picture in the party, the level they arrive at,
+  their own stats, the gear they wear and extra spells. Their dialogue adds them with `join=<npc id>` (the older
+  `join=class:Name:col,row` still works). Saved games carry on as before.
+* **The Editor has an NPCs tab**: a Look card (picture, colour), pickers for dialogue, shop, crafting station, notice
+  board and class, and a box showing every map the NPC stands on (click to open it there), what talking to them does,
+  how a companion joins and anything that's wrong. Place on map... puts an NPC on a map; Rename id... renames it
+  everywhere. In the Maps tab the Objects tool places NPCs from a list, a placement has edit / other... buttons for its
+  NPC, and an old hand-made npc object can be turned into an NPC with make NPC.
+
 ## 1.1.8 item colours
 
 * **Items can have their own colour.** Every item picture is a single colour on the sheet, so an item can now be drawn
@@ -504,6 +519,9 @@ Load/Save icons still work when no game is running.
 
 Double-click **Editor** on the desktop. It runs at 960x720 and edits the files under `assets/data`:
 
+* **NPCs** tab (1.1.9) - every NPC once (`npcs.txt`): a Look card, pickers for each field, and a box with every map
+  it stands on (click to open it there), what talking to it does, how a companion joins and its problems. **Place on
+  map...** and **Rename id...** (follows into every map and `join=`). The Maps tab's Objects tool places NPCs from a list.
 * **Guide** - **? Guide** in the header (or **F1**) opens a built-in manual: every tab, every field of every data
   file, every map object key, conditions, scripts, flags, encounters and the world map, with a searchable topic list,
   Back and "see also" links. Small **?** buttons sit on every tab and next to most fields and open the guide on that
@@ -725,6 +743,10 @@ Almost everything is plain text:
   `option=Label|target|condition` and actions (`set`, `give`, `take`, `gold`, `xp`, `join`,
   `shop`, `combat`, `teleport`, `heal`, `rest`, `message`, `cutscene`, `revealmap`...).
 * `hidenpc=id` now keeps the NPC hidden for good (saved); `shownpc=id` brings it back.
+* `assets/data/npcs.txt` (1.1.9) - the NPCs: name, `sprite`, `color`, `dialogue`, `shop`, `craft`, `board`, `travel`,
+  `hostile`, `wander`, `notes`; companions add `companion=<class>`, `partysprite`, `level`, `stats`, `gear`, `spells`.
+  A map `[npc]` object is a placement: `npc=<id>`, `x`, `y`, its own `id` on that map, `show`/`hide`/`moveif`; any
+  other key it sets wins over the NPC's. Dialogue adds a companion with `join=<npc id>`.
 * `assets/editor_guide.txt` - the Editor guide (`== topic.id | Title`, `see: a, b`, then the text).
 * `assets/data/dungeons.txt` - procedural dungeon definitions (style, size, monsters, boss).
 * `assets/data/overworld.txt` - where locations sit on the overworld and which roads link them.

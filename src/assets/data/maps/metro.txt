@@ -263,11 +263,9 @@ respawn=4
 
 [npc]
 id=rook
-name=Rook
-sprite=105,24
+npc=rook
 x=44
 y=23
-dialogue=rook
 hide=rook_freed
 
 [trigger]

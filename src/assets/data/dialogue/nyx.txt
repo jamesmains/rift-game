@@ -15,7 +15,7 @@ option=Later.|end
 [join]
 speaker=Nyx
 text=Lead. I'll watch the trees.
-join=ranger:Nyx:117,10
+join=nyx
 approve=ranger:5
 option=Let's go.|end
 
@@ -112,5 +112,5 @@ speaker=Nyx
 text=Lead. I'll watch the trees.
 gold=-200
 amends=ranger:45
-join=ranger:Nyx:117,10
+join=nyx
 option=Let's go.|end

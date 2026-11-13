@@ -22,7 +22,7 @@ next=join
 [join]
 speaker=Tessa
 text=Grab your gun. Or your sword, if you're old-fashioned. Let's crack it open.
-join=scavenger:Tessa:116,15
+join=tessa
 approve=scavenger:5
 option=Let's go.|end
 
@@ -124,5 +124,5 @@ speaker=Tessa
 text=Square. Grab your gun.
 gold=-200
 amends=scavenger:45
-join=scavenger:Tessa:116,15
+join=tessa
 option=Let's go.|end

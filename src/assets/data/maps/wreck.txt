@@ -116,19 +116,15 @@ locked=The hatch needs a blue keycard.
 
 [npc]
 id=ship_ai
-name=Dormant Android
-sprite=78,13
+npc=dormant_android
 x=27
 y=18
-dialogue=ship_android
 
 [npc]
 id=ship_vendor
-name=Quartermaster Unit
-sprite=105,43
+npc=quartermaster_unit
 x=16
 y=21
-dialogue=ship_vendor
 
 [enemy]
 x=36

@@ -62,8 +62,7 @@ TTTTtTTTTTtTTTTTTtTTTTTtTTTTTtTTTTTT
 
 [npc]
 id=wick
-name=Old Wick
-sprite=156,24
+npc=wick
 x=9
 y=12
 dialogue=tut_wick_first
@@ -71,8 +70,7 @@ hide=tut_intro
 
 [npc]
 id=wick_yard
-name=Old Wick
-sprite=156,24
+npc=wick
 x=9
 y=12
 dialogue=tut_wick

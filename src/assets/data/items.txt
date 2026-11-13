@@ -236,6 +236,7 @@ stat=int
 mp=8
 value=390
 desc=Fires shards of ice.
+color=0,255,255
 
 [item]
 id=plasma_saber
@@ -1363,6 +1364,7 @@ type=material
 tile=1,46
 value=6
 desc=Rust-red rock. Found in mines and rocky caves; a forge smelts three into an ingot.
+color=164,165,165
 
 [item]
 id=iron_ingot
@@ -1371,6 +1373,7 @@ type=material
 tile=2,46
 value=24
 desc=A bar of worked iron: the start of most smithing, and of reinforcing gear (+1).
+color=153,153,153
 
 [item]
 id=steel_ingot
@@ -1379,6 +1382,7 @@ type=material
 tile=2,46
 value=70
 desc=Folded steel. Needed for good blades and armour, and for reinforcing gear past +1.
+color=229,213,208
 
 [item]
 id=tanned_leather
@@ -1392,17 +1396,19 @@ desc=Cured hide, ready for straps, boots and armour.
 id=bone_dust
 name=Bone Dust
 type=material
-tile=5,38
+tile=31,13
 value=8
 desc=Ground bone from the restless dead. Alchemists consecrate it into blessed oil.
+color=255,221,201
 
 [item]
 id=ectoplasm
 name=Ectoplasm
 type=material
-tile=5,22
+tile=31,13
 value=30
 desc=Cold, faintly glowing residue left by wraiths. Prized by alchemists.
+color=76,196,49
 
 [item]
 id=slime_gel
@@ -1411,14 +1417,16 @@ type=material
 tile=6,22
 value=6
 desc=Sticky and flammable. The base of oils, flares and torches.
+color=122,181,73
 
 [item]
 id=venom_sac
 name=Venom Sac
 type=material
-tile=7,38
+tile=83,39
 value=14
 desc=From spiders and scorpions. Antidotes, venom oil and acid flasks.
+color=136,102,68
 
 [item]
 id=troll_blood
@@ -1440,17 +1448,19 @@ desc=A mushroom that smoulders in the dark of caves. Fire oil, firebombs and bla
 id=frost_lichen
 name=Frost Lichen
 type=material
-tile=4,27
+tile=12,18
 value=12
 desc=Grows on the north side of everything near Frosthold. Frost oil and cryo grenades.
+color=0,255,255
 
 [item]
 id=spider_silk
 name=Spider Silk
 type=material
-tile=3,38
+tile=4,39
 value=15
 desc=Strong as wire, light as breath. Bandages, and cloaks for those who can work it.
+color=254,255,255
 
 [item]
 id=rift_dust
@@ -1521,6 +1531,7 @@ type=material
 tile=2,22
 value=90
 desc=Green-black and slick; venom beads and slides off it.
+color=182,255,0
 
 [item]
 id=dragon_scale
@@ -1530,24 +1541,27 @@ type=material
 tile=3,22
 value=200
 desc=Ashwing's scale. Still warm. Fire runs off it like water.
+color=218,0,0
 
 [item]
 id=brood_eye
 category=Trophies
 name=Brood Mother's Eye
 type=material
-tile=9,34
+tile=109,42
 value=120
 desc=A giant spider's eye, all facets. Weavers say it lets silk be spun into shadow.
+color=122,0,0
 
 [item]
 id=reactor_core
 category=Trophies
 name=Hull Walker Reactor
 type=material
-tile=80,7
+tile=79,7
 value=400
 desc=The beating heart of the Hull Walker. A tinker could build a suit of power armour around it.
+color=168,138,94
 
 # ================= CRAFTED TOOLS & BOMBS =================
 [item]
@@ -1555,17 +1569,18 @@ id=shovel
 category=Tools
 name=Shovel
 type=consumable
-tile=9,31
+tile=0,31
 effect=dig
 value=30
 desc=Dig through rubble or loose earth (stand next to it and use the shovel from the Items menu, or just walk into the pile). It breaks after one hard job.
+color=127,51,0
 
 [item]
 id=blasting_charge
 category=Tools
 name=Blasting Charge
 type=consumable
-tile=0,42
+tile=58,16
 effect=blast
 dmg=10-18
 dmgtype=fire
@@ -1599,12 +1614,13 @@ desc=Thrown (3 AP). Freezes what it doesn't shatter. Everyone in the blast is hi
 id=acid_flask
 name=Acid Flask
 type=consumable
-tile=72,9
+tile=73,9
 dmg=10-16
 dmgtype=poison
 range=2
 value=40
 desc=Thrown (3 AP). Corrosive spray; leaves victims poisoned. Machines and the undead shrug it off.
+color=255,216,0
 
 # ================= MASTERWORK GEAR (crafted only) =================
 [item]
@@ -1647,6 +1663,7 @@ res=cold:25
 bonus=wis:2
 value=1400
 desc=A pale blade quenched in the lich's phylactery. Deals magic damage - the bane of the restless dead. Masterwork.
+color=0,134,255
 
 [item]
 id=colossus_greaves
@@ -1698,7 +1715,7 @@ desc=A sword with an edge of dragon scale; it is never cool to the touch. Fire d
 id=shadowsilk_cloak
 name=Shadowsilk Cloak
 type=armor
-tile=20,26
+tile=24,28
 def=5
 evasion=14
 move=1
@@ -1706,6 +1723,7 @@ res=poison:30
 bonus=dex:2
 value=1500
 desc=Spun from the brood mother's silk; it drinks the light. Masterwork.
+color=47,75,124
 
 [item]
 id=reactor_plate
@@ -1986,9 +2004,10 @@ desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Ri
 id=mithril_ingot
 name=Mithril Ingot
 type=material
-tile=8,46
+tile=2,46
 value=180
 desc=Half the weight of steel and twice as stubborn. The heart of the best gear a smith can make, and what it takes to reinforce anything to +3.
+color=205,221,255
 
 [item]
 id=rift_crystal
@@ -2117,6 +2136,7 @@ accuracy=10
 value=950
 salvage=mithril_ingot:1
 desc=Light as a branch, keen as winter. It finds gaps in armour by itself.
+color=205,221,255
 
 [item]
 id=mithril_spear
@@ -2131,6 +2151,7 @@ accuracy=5
 value=900
 salvage=mithril_ingot:1
 desc=A long pale blade on an ash shaft. Reaches over a friend's shoulder.
+color=205,221,255
 
 [item]
 id=mithril_helm
@@ -2141,6 +2162,7 @@ def=4
 value=650
 salvage=mithril_ingot:1
 desc=A close helm that weighs no more than a cap.
+color=205,221,255
 
 [item]
 id=mithril_shield
@@ -2152,6 +2174,7 @@ res=magic:10
 value=1000
 salvage=mithril_ingot:1
 desc=Spells skid off it like rain off oilcloth.
+color=205,221,255
 
 [item]
 id=mithril_mail
@@ -2163,6 +2186,7 @@ res=cold:10
 value=1500
 salvage=mithril_ingot:2
 desc=Fine rings of pale metal. All the protection of plate, none of the clatter - no penalty to evasion.
+color=205,221,255
 
 [item]
 id=riftsteel_blade
@@ -2178,6 +2202,7 @@ crit=8
 value=2600
 salvage=mithril_ingot:1,rift_crystal:1
 desc=Mithril folded around a sliver of the sky. It cuts the things that shouldn't be.
+color=204,204,204
 
 [item]
 id=riftsteel_plate
@@ -2191,6 +2216,7 @@ bonus=con:2
 value=3800
 salvage=mithril_ingot:2,rift_crystal:1
 desc=The best armour anyone in Aldmoor can make, and only a master smith can make it.
+color=204,204,204
 
 # ================= 1.1.2 TOWN FAVOURS (Honoured) =================
 

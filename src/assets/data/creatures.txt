@@ -439,7 +439,7 @@ faction=undead
 [creature]
 id=bear
 name=Brown Bear
-sprite=108,40
+sprite=14,14
 hp=70
 res=cold:30
 stats=str:16,dex:8,con:15,int:2,wis:5,cha:2
@@ -569,8 +569,6 @@ faction=rift
 [creature]
 id=cult_leader
 name=Hierophant Vell
-spritecol=109
-spriterow=17
 hp=230
 darkvision=1
 res=magic:40,shock:-30
@@ -588,6 +586,7 @@ loot=rift_key:100,crown_rift:100,potion_blue2:100,rift_dust:100
 ai=boss
 boss=1
 faction=rift
+sprite=203,17
 
 [creature]
 id=imp

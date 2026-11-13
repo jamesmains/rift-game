@@ -66,11 +66,14 @@ const std::vector<std::pair<Color8, int>>& Editor::sheetColors() {
 }
 
 
-int Editor::drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w) {
+int Editor::drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w) { return drawLookCard(g, s, x, y, w, false); }
+// 1.1.9: the same card for NPCs (npcs.txt sprite= / color=; NPC pictures are one colour on the sheet too)
+int Editor::drawLookCard(GenericEditor& g, EdSection& s, int x, int y, int w, bool npc) {
     const int H = 124;
+    const std::string tk = npc ? "sprite" : "tile", defTile = npc ? "104,0" : "26,46";   // the game's defaults when the key is missing
     ui.cv->fillRect(x + 1, y, w - 2, H, PANEL2); ui.cv->fillRect(x + 1, y + H - 1, w - 2, 1, BORDER);
-    std::string tileStr = s.get("tile");
-    Tile t = parseTile(s.has("tile") ? tileStr : std::string("26,46"));   // the game's default when tile= is missing
+    std::string tileStr = s.get(tk);
+    Tile t = parseTile(s.has(tk) && !trim(tileStr).empty() ? tileStr : defTile);
     std::string cs = trim(s.get("color")); bool own = cs.empty();
     Color8 sheet = tileOwnColor(t), col = own ? sheet : parseColor(cs);
     auto drawPic = [&](int px, int py, int scale) { if (own) ts->draw(*ui.cv, t, px, py, scale); else ts->drawRecolor(*ui.cv, t, px, py, scale, col); };
@@ -82,14 +85,18 @@ int Editor::drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w) {
     if (!t.valid()) ui.text(bx + 22, by + 44, "no sprite", DIM);
     // how it looks in the game: a menu row (1x) and on the ground (2x)
     int vx = x + w - 62;
+    if (npc) { ui.cv->fillRect(vx, y + 6, 16, 16, C::Black); ts->drawBacking(*ui.cv, t, vx + 2, y + 8, 1); drawPic(vx + 2, y + 8, 1); if (ui.hover(vx, y + 6, 16, 16)) ui.tip("On the map, as the game draws it");
+        ui.cv->fillRect(vx + 22, y + 6, 28, 28, C::Black); ts->drawBacking(*ui.cv, t, vx + 24, y + 8, 2); drawPic(vx + 24, y + 8, 2); if (ui.hover(vx + 22, y + 6, 28, 28)) ui.tip("On the map, zoomed in"); }
+    else {
     ui.cv->fillRect(vx, y + 6, 16, 16, C::Panel); drawPic(vx + 2, y + 8, 1); if (ui.hover(vx, y + 6, 16, 16)) ui.tip("In a menu (pack, shop, crafting)");
-    ui.cv->fillRect(vx + 22, y + 6, 28, 28, C::Black); drawPic(vx + 24, y + 8, 2); if (ui.hover(vx + 22, y + 6, 28, 28)) ui.tip("On the ground and on the hotbar");
+    ui.cv->fillRect(vx + 22, y + 6, 28, 28, C::Black); drawPic(vx + 24, y + 8, 2); if (ui.hover(vx + 22, y + 6, 28, 28)) ui.tip("On the ground and on the hotbar"); }
     // sprite
     int cx = x + 120, cy = y + 6;
     ui.label(cx, cy + 2, "sprite");
-    if (ui.textField(cx + 50, cy, 64, tileStr, 20)) { s.set("tile", tileStr); g.dirty = true; }
-    if (ui.button(cx + 120, cy, 92, 16, "Pick sprite...")) { EdSection* sp = &s; GenericEditor* gp = &g; openTilePicker(t, [sp, gp](Tile nt) { if (!nt.valid()) return; sp->set("tile", fmt("%d,%d", nt.c, nt.r)); gp->dirty = true; }); }
-    if (ui.hover(cx + 120, cy, 92, 16)) ui.tip(own ? "The picker shows the sheet as it is; the item keeps the picture's own colour" : "The picker shows the sheet as it is; the new picture is drawn in this item's colour");
+    if (ui.textField(cx + 50, cy, 64, tileStr, 20)) { s.set(tk, tileStr); g.dirty = true; }
+    if (ui.button(cx + 120, cy, 92, 16, "Pick sprite...")) { EdSection* sp = &s; GenericEditor* gp = &g; std::string key = tk; openTilePicker(t, [sp, gp, key](Tile nt) { if (!nt.valid()) return; sp->set(key, fmt("%d,%d", nt.c, nt.r)); gp->dirty = true; }); }
+    if (ui.hover(cx + 120, cy, 92, 16)) ui.tip(std::string(own ? "The picker shows the sheet as it is; the " : "The picker shows the sheet as it is; the new picture is drawn in this ") + (npc ? "NPC" : "item") + (own ? " keeps the picture's own colour" : "'s colour"));
+    if (npc && ui.hover(cx + 50, cy, 64, 16)) ui.tip("col,row on the sheet. People are in columns 104-123 (and 141, 156, 166); animals in rows 14-16 near the left");
     // colour: the RGB of the tint (the sheet's own colour when color= isn't set)
     cy += 22;
     ui.label(cx, cy + 2, "colour");
@@ -111,7 +118,7 @@ int Editor::drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w) {
         for (auto& p : pal) if (closeTo(p.c, c, item.empty() ? 10 : 4)) { p.sheetN += sheetN; if (!item.empty()) { p.items++; if (p.example.empty()) p.example = item; } return; }
         Sw sw; sw.c = c; sw.sheetN = sheetN; if (!item.empty()) { sw.items = 1; sw.example = item; } pal.push_back(sw);
     };
-    for (auto& it : g.secs) { std::string ic = trim(it.get("color")); Tile itT = parseTile(it.has("tile") ? it.get("tile") : std::string("26,46"));
+    for (auto& it : g.secs) { std::string ic = trim(it.get("color")); Tile itT = parseTile(it.has(tk) && !trim(it.get(tk)).empty() ? it.get(tk) : defTile);
         add(ic.empty() ? tileOwnColor(itT) : parseColor(ic), 0, it.get("name", it.get("id"))); }
     int pcols = std::max(8, (w - 128) / 17), cap = pcols * 3;
     for (auto& sc : sheetColors()) { if ((int)pal.size() >= cap) break; add(sc.first, sc.second, ""); }
@@ -126,7 +133,7 @@ int Editor::drawItemLook(GenericEditor& g, EdSection& s, int x, int y, int w) {
         if (ui.hover(sx, sy, 15, 15)) {
             ui.cv->rect(sx - 1, sy - 1, 17, 17, ACCENT2);
             std::string tip = rgbText(pal[i].c);
-            if (pal[i].items) tip += pal[i].items == 1 ? " - used by " + pal[i].example : " - used by " + std::to_string(pal[i].items) + " items (" + pal[i].example + "...)";
+            if (pal[i].items) tip += pal[i].items == 1 ? " - used by " + pal[i].example : " - used by " + std::to_string(pal[i].items) + (npc ? " NPCs (" : " items (") + pal[i].example + "...)";
             else tip += " - a sheet colour";
             ui.tip(tip);
         }

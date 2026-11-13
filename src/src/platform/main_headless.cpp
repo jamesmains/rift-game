@@ -179,6 +179,8 @@ int main(int argc, char** argv) {
                 else if (startsWith(key, "iconpos:") || startsWith(key, "icon:")) { got = "none"; bool pos = startsWith(key, "iconpos:"); std::string act = key.substr(pos ? 8 : 5);
                     for (size_t i = 0; i < app.desktop.iconDefs.size(); i++) if (app.desktop.iconDefs[i].action == act) got = pos ? fmt("%d,%d", app.desktop.iconPositions[i][0], app.desktop.iconPositions[i][1]) : fmt("%d,%d", app.desktop.iconDefs[i].ic, app.desktop.iconDefs[i].ir); }
                 else if (key == "wallpaper") got = std::to_string(app.desktop.wallpaper);
+                else if (startsWith(key, "npc:")) { got = "none"; if (g.map) for (auto& n : g.map->npcs) if (n.id == key.substr(4)) got = n.name + ";" + fmt("%d,%d", n.tile.c, n.tile.r) + ";" + n.dialogue + ";" + n.def; }   // 1.1.9: a placement on this map
+                else if (startsWith(key, "member:")) { size_t i = (size_t)atoi(key.substr(7).c_str()); got = i < g.party.members.size() ? g.party.members[i].name + ";" + g.party.members[i].classId + ";" + fmt("%d,%d", g.party.members[i].tile.c, g.party.members[i].tile.r) + ";" + std::to_string(g.party.members[i].level) : "none"; }
                 else if (key == "hint") { int h = g.currentHint(); got = h >= 0 ? g.hintDefs[h].text : ""; }
                 else if (startsWith(key, "fav:")) { int f = atoi(key.substr(4).c_str()) - 1; got = g.party.members.empty() || f < 0 || f > 7 ? "" : g.party.members[0].favs[f]; }
                 else if (key == "window") got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().type;

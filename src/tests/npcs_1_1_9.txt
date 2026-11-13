@@ -1,0 +1,60 @@
+# 1.1.9 (owner's #33): NPCs are entries of their own (data/npcs.txt); a map [npc] object is a placement with npc=<id>
+# that takes everything it doesn't set from its NPC. Companions join with join=<npc id> (class, name, party picture).
+# expect npc:<placement id> = name;sprite;dialogue;npc id   expect member:<n> = name;class;sprite;level
+newgame Kai warrior 1
+god
+teleport hollowmere 20 20
+frames 120
+expect npc:bram == Bram;121,0;bram;bram
+expect npc:elder == Elder Mara;141,1;elder_mara;elder_mara
+expect npc:board == Notice Board;29,20;;notice_board
+expect npc:coach == Coachman;104,0;;coachman
+shot hollowmere_npcs.png
+# one NPC, three placements: two give themselves their own name and dialogue
+teleport ashfall 20 20
+frames 120
+expect npc:ilse == Sister Ilse;104,17;converts;ilse
+expect npc:ilse_warden == Ilse, Sky Warden;104,17;sky_wardens;ilse
+expect npc:rook_af == Rook;105,24;rook;rook
+teleport metro 20 20
+frames 120
+expect npc:rook == Rook;105,24;rook;rook
+# companions: join=<npc id> takes class, name and party picture from the NPC
+con join elowen
+frames 5
+expect members == 2
+expect member:1 == Elowen;mage;109,17;1
+expect flag:joined_mage == 1
+con join nyx
+frames 5
+expect member:2 == Nyx;ranger;117,10;1
+# the older join=class:Name:col,row still works
+con join cleric:Tester:104,26
+frames 5
+expect member:3 == Tester;cleric;104,26;1
+# the Editor's NPCs tab
+editor
+frames 5
+tab 24
+frames 10
+expect edcount:17 >= 60
+shot editor_npcs_tab.png
+# pick Bram in the list: Look card, fields, where he stands, companion box
+click 60 147
+frames 10
+shot editor_npc_bram.png
+# his placement in the box opens Hollowmere with it selected
+click 300 500
+frames 20
+shot editor_npc_jump.png
+# Place on map...: pick the map, then click a spot - a placement of Bram (npc=bram, id bram_2)
+tab 24
+frames 5
+click 300 643
+frames 10
+type millbrook
+key ENTER
+frames 10
+click 600 300
+frames 10
+shot editor_npc_placed.png

@@ -1,0 +1,16 @@
+# The Tutorial's NPCs (the base game's npcs.txt is read too: this campaign has inherit=1). See data/npcs.txt.
+
+# ---- Companions (join=<npc id> in their dialogue) ----
+[npc]
+id=wick
+name=Old Wick
+sprite=156,24
+dialogue=tut_wick_quarry
+companion=ranger
+
+# ---- tut_wood ----
+[npc]
+id=dace
+name=Dace the Pedlar
+sprite=117,23
+dialogue=tut_dace

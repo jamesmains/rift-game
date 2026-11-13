@@ -15,7 +15,7 @@ option=Later.|end
 [join]
 speaker=Orin
 text=Abbot Tyr will understand. Eventually. Let us go.
-join=cleric:Orin:104,26
+join=orin
 approve=cleric:5
 option=Let's go.|end
 
@@ -111,5 +111,5 @@ speaker=Orin
 text=Then let us begin again. Carefully.
 gold=-200
 amends=cleric:45
-join=cleric:Orin:104,26
+join=orin
 option=Let's go.|end

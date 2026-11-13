@@ -273,7 +273,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
         std::string type = ob.first;
         applyObjectTemplate(type, kv);
         if (type == "npc") {
-            NPC n; n.id = gets(kv, "id"); n.name = gets(kv, "name", n.id); n.dialogue = gets(kv, "dialogue"); n.shop = gets(kv, "shop");
+            NPC n; n.def = trim(gets(kv, "npc")); n.id = gets(kv, "id"); if (n.id.empty()) n.id = n.def; n.name = gets(kv, "name", n.id); n.dialogue = gets(kv, "dialogue"); n.shop = gets(kv, "shop");
             n.x = n.homeX = geti(kv, "x", 0); n.y = n.homeY = geti(kv, "y", 0);
             n.tile = parseTile(gets(kv, "sprite", "104,0")); n.wander = geti(kv, "wander", 0) != 0;
             if (!gets(kv, "color").empty()) { n.recolor = true; n.color = parseColor(gets(kv, "color")); }
@@ -399,12 +399,35 @@ void setObjectTemplates(const std::vector<ConfigSection>& secs) {
         bool dup = false; for (auto& o : list) if (o.id == t.id) { o = t; dup = true; } if (!dup) list.push_back(t);
     }
 }
+static std::vector<NpcDef> gNpcDefs;   // 1.1.9: npcs.txt
+void setNpcDefs(const std::vector<ConfigSection>& secs) {
+    gNpcDefs.clear();
+    for (auto& sec : secs) {
+        if (sec.name != "npc" || trim(sec.get("id")).empty()) continue;
+        NpcDef d; d.id = trim(sec.get("id")); for (auto& kv : sec.kv) if (kv.first != "x" && kv.first != "y" && kv.first != "npc" && kv.first != "template") d.kv.push_back(kv);
+        bool dup = false; for (auto& o : gNpcDefs) if (o.id == d.id) { o = d; dup = true; } if (!dup) gNpcDefs.push_back(d);
+    }
+}
+const std::vector<NpcDef>& npcDefs() { return gNpcDefs; }
+const NpcDef* npcDef(const std::string& id) { if (id.empty()) return nullptr; for (auto& d : gNpcDefs) if (d.id == id) return &d; return nullptr; }
+const NpcDef* companionDef(const std::string& cls) { if (cls.empty()) return nullptr; for (auto& d : gNpcDefs) if (trim(d.get("companion")) == cls) return &d; return nullptr; }
+JoinSpec parseJoin(const std::string& v0) {
+    JoinSpec j; std::string v = trim(v0);
+    if (v.find(':') == std::string::npos) if (const NpcDef* d = npcDef(v)) if (!trim(d->get("companion")).empty()) {
+        j.npc = d; j.cls = trim(d->get("companion")); j.name = trim(d->get("name", d->id));
+        j.tile = parseTile(trim(d->get("partysprite")).empty() ? d->get("sprite") : d->get("partysprite")); return j; }
+    auto jp = split(v, ':'); j.cls = jp.empty() ? "" : trim(jp[0]); j.name = jp.size() > 1 ? trim(jp[1]) : ""; if (jp.size() > 2) j.tile = parseTile(jp[2]);
+    return j;
+}
 const ObjTemplate* objectTemplate(const std::string& id) { for (auto& t : gObjTemplates) if (t.id == id) return &t; return nullptr; }
 const ObjTemplate* objectType(const std::string& type) { for (auto& t : gObjTypes) if (t.id == type) return &t; return nullptr; }
 void applyObjectTemplate(std::string& type, std::vector<std::pair<std::string, std::string>>& kv) {
     auto fill = [&](const ObjTemplate& t) { for (auto& tk : t.kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { have = true; break; } if (!have) kv.push_back(tk); } };
     std::string id; for (auto& p : kv) if (p.first == "template") id = p.second;
     if (!id.empty()) if (const ObjTemplate* t = objectTemplate(id)) { if (!t->type.empty()) type = t->type; fill(*t); }
+    // 1.1.9: an NPC placement takes what it doesn't set (or leaves empty) from its NPC
+    if (type == "npc") { std::string nid; for (auto& p : kv) if (p.first == "npc") nid = trim(p.second);
+        if (const NpcDef* d = npcDef(nid)) for (auto& dk : d->kv) { if (dk.first == "id") continue; bool have = false; for (auto& p : kv) if (p.first == dk.first) { if (trim(p.second).empty()) p.second = dk.second; have = true; } if (!have) kv.push_back(dk); } }
     // then what every object of its type uses (an empty value on the object or its template counts as not set)
     if (const ObjTemplate* ty = objectType(type)) for (auto& tk : ty->kv) { bool have = false; for (auto& p : kv) if (p.first == tk.first) { if (trim(p.second).empty()) p.second = tk.second; have = true; } if (!have) kv.push_back(tk); }
 }

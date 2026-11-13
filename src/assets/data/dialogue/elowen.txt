@@ -15,7 +15,7 @@ option=Later.|end
 [join]
 speaker=Elowen
 text=Yes! Morrow, I quit - no, I'll be back, probably. Lead on, $hero.
-join=mage:Elowen:109,17
+join=elowen
 approve=mage:5
 option=Let's go.|end
 
@@ -111,5 +111,5 @@ speaker=Elowen
 text=Fine. But I'm keeping notes this time.
 gold=-200
 amends=mage:45
-join=mage:Elowen:109,17
+join=elowen
 option=Let's go.|end

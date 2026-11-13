@@ -80,11 +80,9 @@ text=A quarrymen's shrine, scratched into the rock.
 
 [npc]
 id=wick_quarry
-name=Old Wick
-sprite=156,24
+npc=wick
 x=13
 y=10
-dialogue=tut_wick_quarry
 
 [lever]
 x=13

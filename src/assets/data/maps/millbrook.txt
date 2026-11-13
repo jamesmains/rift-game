@@ -110,55 +110,40 @@ ty=96
 
 [npc]
 id=jory
-name=Trapper Jory
-sprite=117,27
+npc=trapper_jory
 x=24
 y=6
-dialogue=trapper_jory
 
 [npc]
 id=nyx
-name=Nyx
-sprite=156,23
+npc=nyx
 x=24
 y=11
-dialogue=nyx
 hide=joined_ranger
 
 [npc]
 id=farmer
-name=Goodwife Ada
-sprite=104,1
+npc=goodwife_ada
 x=9
 y=6
-dialogue=goodwife_ada
 
 [npc]
 id=cow
-name=Cow
-sprite=0,16
+npc=cow
 x=25
 y=18
-dialogue=cow
-wander=1
 
 [npc]
 id=pig
-name=Pig
-sprite=2,16
+npc=pig
 x=27
 y=19
-dialogue=pig
-wander=1
 
 [npc]
 id=chicken
-name=Chicken
-sprite=8,16
+npc=chicken
 x=23
 y=17
-dialogue=chicken
-wander=1
 
 [chest]
 x=12
@@ -173,27 +158,21 @@ text=MILLBROOK FARM. Beware of the goose.
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=9
 y=10
 board=millbrook
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=11
 y=10
-travel=1
 
 # 1.0: a goblin peddler, if the tribe from Greywood was spared
 [npc]
 id=snig
-name=Snig the Peddler
-sprite=113,4
+npc=snig
 x=31
 y=10
-dialogue=snig
 show=goblin_chief_spared&q_main>=3

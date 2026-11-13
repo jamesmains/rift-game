@@ -67,16 +67,13 @@ ondefeat=item:violet_splinter:3;xp:90;notify:The rats' backs bristle with violet
 
 [npc]
 id=dace
-name=Dace the Pedlar
-sprite=117,23
+npc=dace
 x=21
 y=5
-dialogue=tut_dace
 
 [npc]
 id=wick_camp
-name=Old Wick
-sprite=156,24
+npc=wick
 x=29
 y=6
 dialogue=tut_wick_camp

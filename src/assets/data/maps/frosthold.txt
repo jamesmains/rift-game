@@ -100,37 +100,28 @@ ty=23
 
 [npc]
 id=orin
-name=Orin
-sprite=123,21
+npc=orin
 x=16
 y=11
-dialogue=orin
 hide=joined_cleric
 
 [npc]
 id=abbot
-name=Abbot Tyr
-sprite=123,0
+npc=abbot_tyr
 x=14
 y=10
-dialogue=abbot_tyr
 
 [npc]
 id=pilgrim
-name=Pilgrim
-sprite=104,0
+npc=pilgrim
 x=18
 y=23
-dialogue=pilgrim
-wander=1
 
 [npc]
 id=frost_trader
-name=Sister Maud
-sprite=104,1
+npc=sister_maud
 x=22
 y=19
-dialogue=sister_maud
 
 [chest]
 x=15
@@ -144,17 +135,13 @@ y=16
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=10
 y=16
 board=frosthold
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=12
 y=16
-travel=1

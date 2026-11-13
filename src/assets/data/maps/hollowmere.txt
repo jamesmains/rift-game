@@ -100,87 +100,64 @@ ty=7
 
 [npc]
 id=elder
-name=Elder Mara
-sprite=141,1
+npc=elder_mara
 x=7
 y=5
-dialogue=elder_mara
 
 [npc]
 id=innkeeper
-name=Innkeeper Doss
-sprite=105,0
+npc=innkeeper_doss
 x=31
 y=5
-dialogue=innkeeper_doss
 
 [npc]
 id=bram
-name=Bram
-sprite=121,0
+npc=bram
 x=32
 y=7
-dialogue=bram
 hide=joined_warrior
 
 [npc]
 id=shopkeeper
-name=Merchant Ilsa
-sprite=104,1
+npc=merchant_ilsa
 x=5
 y=16
-dialogue=merchant_ilsa
 
 [npc]
 id=smith
-name=Smith Gorran
-sprite=105,2
+npc=smith_gorran
 x=33
 y=16
-dialogue=smith_gorran
 
 [npc]
 id=wren
-name=Healer Wren
-sprite=122,1
+npc=healer_wren
 x=38
 y=16
-dialogue=healer_wren
 
 [npc]
 id=villager1
-name=Farmer Tobb
-sprite=104,24
+npc=farmer_tobb
 x=22
 y=25
-dialogue=farmer_tobb
-wander=1
 
 [npc]
 id=villager2
-name=Little Pip
-sprite=104,0
+npc=little_pip
 x=14
 y=12
-dialogue=little_pip
-wander=1
 
 [npc]
 id=villager3
-name=Old Hesk
-sprite=141,22
+npc=old_hesk
 x=36
 y=24
-dialogue=old_hesk
 
 [npc]
 id=dog
-name=Mutt
-sprite=10,16
+npc=mutt
 x=23
 y=15
-dialogue=mutt
-wander=1
 
 [sign]
 x=12
@@ -217,27 +194,20 @@ y=26
 
 [npc]
 id=board
-name=Notice Board
-sprite=29,20
+npc=notice_board
 x=10
 y=10
 board=hollowmere
 
 [npc]
 id=coach
-name=Coachman
-sprite=104,0
-color=200,160,90
+npc=coachman
 x=12
 y=10
-travel=1
 
 [npc]
 id=npc1
-name=Villager
+npc=villager
 x=34
 y=12
-sprite=104,0
-dialogue=
-wander=0
 

@@ -57,6 +57,7 @@ struct EdObj { std::string type; std::vector<std::pair<std::string, std::string>
 const std::vector<std::string>& edObjTypes();
 std::vector<std::string> edObjKeys(const std::string& type);
 std::vector<std::string> edObjLookKeys(const std::string& type);   // 1.1.1: the look / use keys a [type] entry starts with
+const std::vector<std::string>& edNpcKeys();                       // 1.1.9: every key an NPC (npcs.txt) can have
 struct EdMap {
     std::string path, id;
     std::vector<std::pair<std::string, std::string>> header; // [map] keys
@@ -247,6 +248,24 @@ private:
     void drawGatherNode(const EdObj& resolved, int sx, int sy, int scale, const std::string& cellSpec, bool spent = false);
     void templateFromObject(const EdObj& o, const std::string& mapId, int objIndex);
     std::string placeTmpl; int objPanelScroll = 0;   // Maps tab: the template the Objects tool places; the object panel's scroll
+    // ---- NPCs (editor_npcs.cpp, 1.1.9 #33): gens[17] = npcs.txt; a map [npc] object is a placement with npc=<id> ----
+public:
+    const EdSection* npcSec(const std::string& id) const;   // the NPC entry (the base game's too, for a campaign with inherit=1)
+    std::string joinClassOf(const std::string& v) const;     // the class a join= value adds (an NPC id, or class:Name:col,row)
+    std::string newNpc(const EdObj* from);                   // a new NPC (from a placed object's keys), saved; returns its id
+    std::string npcPlacementId(const EdMap& m, const std::string& npcId) const;
+    void renameNpc(const std::string& from, const std::string& to);
+    void startPlacingNpc(const std::string& id);              // Maps tab, Objects tool, placing this NPC
+    std::string placeNpc;                                     // the NPC the Objects tool places (npc type)
+private:
+    mutable std::vector<EdSection> baseNpcs; mutable bool baseNpcsLoaded = false;
+    std::map<std::string, std::vector<std::string>> npcJoins; bool npcJoinsDirty = true;   // join= value -> dialogue files
+    int npcInfoScroll = 0;
+    std::string newNpcId(const std::string& name) const;
+    void scanNpcJoins();
+    void npcProblems(const EdSection& s, std::vector<std::pair<bool, std::string>>& out);
+    void drawNpcInfo(int x, int y, int w, int h, InputState& in);
+    int drawLookCard(GenericEditor& g, EdSection& s, int x, int y, int w, bool npc);
     // ---- import from another campaign (editor_import.cpp, 1.1.6 #29): every tab can copy entries in ----
 public:
     enum ImpKind { IMP_GEN, IMP_MAPS, IMP_DLG, IMP_KINDS, IMP_CAMP, IMP_FLAGS };
