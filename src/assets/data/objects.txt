@@ -61,10 +61,11 @@ onuse=
 [template]
 id=door_secret_crypt
 type=door
-sprite=23,3
+sprite=0,2
 opensprite=19,12
 
 [template]
 id=paper_sign
 type=sign
 sprite=27,14
+

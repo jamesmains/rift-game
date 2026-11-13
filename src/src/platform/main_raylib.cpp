@@ -44,8 +44,20 @@ int main(int argc, char** argv) {
     crashSessionBegin(saves);
     if (unclean) app.desktop.offerCrashRecovery();
     int scale = app.settings.scale < 1 ? 2 : app.settings.scale;
-    rl_init(UI::SCREEN_W * scale, UI::SCREEN_H * scale, "Triffall", app.settings.vsync ? 1 : 0);
+    // 1.2.1 (#38): the window used to open at the saved scale whatever the monitor, so a 3x window chosen on a big
+    // screen ran off a smaller one through the boot screen. Every window size now goes through fitWindow: the
+    // largest scale up to the wanted one that fits this monitor, and the window is kept on it.
+    auto fitWindow = [](int cw, int ch, int want, bool center) {
+        int sc = want < 1 ? 1 : want; int mw = rl_monitor_w(), mh = rl_monitor_h();
+        if (mw > 0 && mh > 0) while (sc > 1 && (cw * sc > mw - 80 || ch * sc > mh - 120)) sc--;
+        rl_place_window(cw * sc, ch * sc, center ? 1 : 0);
+    };
+    rl_init(UI::SCREEN_W, UI::SCREEN_H, "Triffall", app.settings.vsync ? 1 : 0);   // hidden until sized
+    fitWindow(UI::SCREEN_W, UI::SCREEN_H, scale, true);
+    rl_show_window();
     bool fullscreen = false;
+    // the fullscreen setting applies from the first frame (it used to wait for the end of the boot screen)
+    if (app.settings.fullscreen) { rl_toggle_borderless(); fullscreen = true; }
     bool integer = app.settings.integerScaling;
     InputState in;
     RlFrameInput raw;
@@ -95,13 +107,13 @@ int main(int argc, char** argv) {
         if (app.wantsQuit()) break;
 
         PlatformRequests& r = app.req;
-        if (r.setFullscreen) { r.setFullscreen = false; if (r.fullscreenValue != fullscreen) { rl_toggle_borderless(); fullscreen = r.fullscreenValue; } if (!fullscreen) rl_set_window_size(app.canvas.w * app.settings.scale, app.canvas.h * app.settings.scale); }
-        if (r.toggleFullscreen) { r.toggleFullscreen = false; rl_toggle_borderless(); fullscreen = !fullscreen; }
-        if (r.setScale) { int s = r.setScale; r.setScale = 0; if (!fullscreen) rl_set_window_size(app.canvas.w * s, app.canvas.h * s); }
+        if (r.setFullscreen) { r.setFullscreen = false; bool was = fullscreen; if (r.fullscreenValue != fullscreen) { rl_toggle_borderless(); fullscreen = r.fullscreenValue; } if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, app.settings.scale, was); }
+        if (r.toggleFullscreen) { r.toggleFullscreen = false; rl_toggle_borderless(); fullscreen = !fullscreen; if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, app.settings.scale, true); }
+        if (r.setScale) { int s = r.setScale; r.setScale = 0; if (!fullscreen) fitWindow(app.canvas.w, app.canvas.h, s, false); }
         if (r.setIntegerScaling) { r.setIntegerScaling = false; integer = r.integerScalingValue; }
         if (r.setVsync) { r.setVsync = false; rl_set_target_fps(r.vsyncValue ? 0 : 60); }
         if (!r.openURL.empty()) { rl_open_url(r.openURL.c_str()); r.openURL.clear(); }
-        if (r.canvasW) { if (!fullscreen) { int sc = app.settings.scale; int mw = rl_monitor_w(), mh = rl_monitor_h(); while (sc > 1 && (r.canvasW * sc > mw - 80 || r.canvasH * sc > mh - 120)) sc--; rl_set_window_size(r.canvasW * sc, r.canvasH * sc); } r.canvasW = r.canvasH = 0; }
+        if (r.canvasW) { if (!fullscreen) fitWindow(r.canvasW, r.canvasH, app.settings.scale, false); r.canvasW = r.canvasH = 0; }
 
         rl_present(app.canvas.px.data(), app.canvas.w, app.canvas.h, integer ? 1 : 0, app.settings.crt ? 1 : 0);
     }

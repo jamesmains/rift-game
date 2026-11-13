@@ -369,6 +369,15 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   `sheet.campaigns|import|categories|groups`, `tile.picker`.
 - Test `tests/sprite_sheets_1_2_0.txt` (imports assets/icons.png as a 32x32 sheet; run from a copy of assets).
 
+## 1.2.1 window size (owner's #38: boot screen cut off after moving from an ultrawide to a smaller monitor)
+- The window opened at 640x480 x settings scale with no monitor check (only the Editor's canvas change checked), and
+  fullscreen was applied only when the boot screen ended. Now `rl_init` creates the window hidden (not on web);
+  main_raylib's `fitWindow(cw, ch, want, center)` picks the largest scale <= wanted that fits (monitor - 80 x
+  monitor - 120) and calls `rl_place_window` (rl_shim.c: size + centre between title bar and taskbar, or move only if
+  off the monitor), then `rl_show_window`. Used at start, leaving fullscreen, the Settings scale buttons and canvas
+  changes. settings.fullscreen is applied right after the window shows. The saved scale is not lowered.
+- Checked on this PC's 1920x1080 monitor with scale=3: opens 1280x960 (2x), whole window on screen.
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).

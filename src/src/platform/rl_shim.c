@@ -116,7 +116,12 @@ static const char* gCrtFragmentShaderES =
 
 void rl_init(int w, int h, const char* title, int vsync) {
     SetTraceLogLevel(LOG_WARNING);
+#if defined(__EMSCRIPTEN__)
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | (vsync ? FLAG_VSYNC_HINT : 0));
+#else
+    // 1.2.1: start hidden; the caller sizes the window to fit the monitor (rl_place_window) and then shows it
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIDDEN | (vsync ? FLAG_VSYNC_HINT : 0));
+#endif
     InitWindow(w, h, title);
     SetExitKey(KEY_NULL);
     SetTargetFPS(vsync ? 0 : 60);
@@ -255,6 +260,31 @@ void rl_present(const void* rgba, int w, int h, int integerScaling, int crt) {
 // raylib marks a borderless window "floating" (always on top), which hides Alt+Tab targets behind the game; undo that.
 void rl_toggle_borderless(void) { ToggleBorderlessWindowed(); if (IsWindowState(FLAG_WINDOW_TOPMOST)) ClearWindowState(FLAG_WINDOW_TOPMOST); }
 void rl_set_window_size(int w, int h) { SetWindowSize(w, h); }
+// 1.2.1: size the window and keep it on its monitor: centre it when asked, or when any part (or the title bar)
+// would be off the monitor. The position raylib reports is the client area's; the title bar is ~31 px above it.
+void rl_place_window(int w, int h, int center) {
+    SetWindowSize(w, h);
+#if !defined(__EMSCRIPTEN__)
+    int m = GetCurrentMonitor(); Vector2 mp = GetMonitorPosition(m);
+    int mx = (int)mp.x, my = (int)mp.y, mw = GetMonitorWidth(m), mh = GetMonitorHeight(m);
+    if (mw <= 0 || mh <= 0) return;
+    Vector2 wp = GetWindowPosition(); int x = (int)wp.x, y = (int)wp.y;
+    const int TITLE = 32, BOTTOM = 48;   // title bar above the client area; taskbar at the bottom
+    if (center || x < mx || y < my + TITLE || x + w > mx + mw || y + h > my + mh - BOTTOM) {
+        x = mx + (mw - w) / 2; y = my + TITLE + (mh - TITLE - BOTTOM - h) / 2;
+        if (x < mx) x = mx;
+        if (y < my + TITLE) y = my + TITLE;
+        SetWindowPosition(x, y);
+    }
+#else
+    (void)center;
+#endif
+}
+void rl_show_window(void) {
+#if !defined(__EMSCRIPTEN__)
+    if (IsWindowState(FLAG_WINDOW_HIDDEN)) ClearWindowState(FLAG_WINDOW_HIDDEN);
+#endif
+}
 void rl_set_target_fps(int fps) { SetTargetFPS(fps); }
 void rl_open_url(const char* url) { OpenURL(url); }
 const char* rl_app_dir(void) { return GetApplicationDirectory(); }

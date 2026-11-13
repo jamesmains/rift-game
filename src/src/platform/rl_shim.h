@@ -27,6 +27,8 @@ void rl_poll(RlFrameInput* out, int gamepadEnabled);
 void rl_present(const void* rgba, int w, int h, int integerScaling, int crt);
 void rl_toggle_borderless(void);
 void rl_set_window_size(int w, int h);
+void rl_place_window(int w, int h, int center);   // 1.2.1: size + keep on the monitor (centre if asked or off it)
+void rl_show_window(void);                        // 1.2.1: rl_init leaves the desktop window hidden until this
 void rl_set_target_fps(int fps);
 void rl_open_url(const char* url);
 void rl_message_box(const char* title, const char* text);

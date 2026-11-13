@@ -28,6 +28,12 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.2.1 the window fits the screen
+
+* The game window opens at the biggest size that fits your monitor (a 3x window picked on a big screen no longer
+  runs off a smaller one during the boot screen), and it is kept on screen when the size changes.
+* Fullscreen now starts right away instead of after the boot screen.
+
 ## 1.2.0 sprite sheets of your own, sorted tiles
 
 * **Import sprite sheets**: the Editor's Tileset tab imports any PNG of tiles in a grid (or drop the file on the Editor
