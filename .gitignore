@@ -18,3 +18,5 @@ editor-edits/
 src/assets/audio/music/pixel_fantasy/
 # the owner's own test campaign (third-party tileset): stays on this PC and out of hand-out builds
 src/assets/campaigns/test/
+# the project notes stay on this PC (owner's rule)
+CLAUDE.md
