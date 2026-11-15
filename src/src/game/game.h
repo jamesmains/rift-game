@@ -133,7 +133,7 @@ struct CampaignInfo {
     int order = 100;                      // desktop icon / campaign list order (lower first; the tutorial is 0)
     bool achievements = true;             // achievements=0: nothing unlocks while playing it (the tutorial)
     std::string worldMap = "overworld";   // what M shows: overworld | off | current (the map you are on) | <map id>
-    std::string combatMusic, bossMusic;   // 1.3.1 (#47) combatmusic= / bossmusic=: fight music (empty = the "combat" / "boss" tracks)
+    std::string combatMusic;              // 1.3.1 (#47) combatmusic=: fight music (empty = the "combat" track); boss music is the boss creature's music= (1.3.2)
     std::string defeat;                   // 1.1.7 defeat=SCRIPT: a lost fight doesn't end the game - the party gets back up and this runs (the tutorial)
 };
 std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base game first

@@ -133,7 +133,7 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
         for (auto& l : split(sec.get("loot"), ',')) { auto kv = split(trim(l), ':'); if (kv.size() == 2) d.loot.push_back({trim(kv[0]), atoi(kv[1].c_str())}); }
         d.onHitEffect = sec.get("onhit"); d.boss = sec.geti("boss", 0) != 0; d.undead = sec.geti("undead", 0) != 0; d.mechanical = sec.geti("mechanical", 0) != 0;
         d.darkvision = sec.geti("darkvision", (d.undead || d.mechanical) ? 1 : 0) != 0;
-        d.faction = sec.get("faction", "monster"); d.sound = sec.get("sound"); d.attackSound = sec.get("attacksound");
+        d.faction = sec.get("faction", "monster"); d.sound = sec.get("sound"); d.attackSound = sec.get("attacksound"); d.music = trim(sec.get("music"));
         creatures[d.id] = d;
     }
     // ---- classes ----

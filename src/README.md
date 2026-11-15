@@ -28,6 +28,14 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.3.2 boss music belongs to the boss
+
+* A boss's music is now set on the boss itself: the Editor's Creatures tab has a **music** field (and a "boss" tick
+  box). It plays while that creature is in the fight; when it falls, the usual fight music comes back. Every boss in
+  the base game plays the boss theme, as before. Any other creature can have its own fight music too.
+* The Campaign tab's "Boss fight music" (added in 1.3.1) is gone; its "Fight music" and a map's own fight music still
+  set the music for ordinary fights.
+
 ## 1.3.1 fight music, music lists, no more ambient loops
 
 * **Fight music in the Editor:** the Campaign tab has Fight music and Boss fight music, and a map can pick its own

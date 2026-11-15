@@ -125,6 +125,7 @@ gold=18-36
 loot=steel_sword:30,kite_shield:30,potion_red2:30,chief_tusk:100,iron_ore:100
 ai=boss
 boss=1
+music=boss
 
 [creature]
 id=wolf
@@ -251,6 +252,7 @@ gold=27-54
 loot=scimitar:36,chain_shirt:24,potion_red2:25,bandit_banner:100
 ai=boss
 boss=1
+music=boss
 faction=bandit
 
 [creature]
@@ -433,6 +435,7 @@ gold=90-158
 loot=crystal_staff:100,mage_robe:36,phylactery_shard:100,arcane_dust:100,formula_steel:100
 ai=boss
 boss=1
+music=boss
 undead=1
 faction=undead
 
@@ -585,6 +588,7 @@ gold=68-112
 loot=rift_key:100,crown_rift:100,potion_blue2:100,rift_dust:100
 ai=boss
 boss=1
+music=boss
 faction=rift
 sprite=203,17
 
@@ -778,6 +782,7 @@ gold=0-0
 loot=combat_armor:100,circuit:100,plasma_rifle:24,reactor_core:100,power_core:100
 ai=boss
 boss=1
+music=boss
 mechanical=1
 faction=machine
 
@@ -889,6 +894,7 @@ level=15
 gold=225-405
 ai=boss
 boss=1
+music=boss
 faction=rift
 
 [creature]
@@ -912,6 +918,7 @@ gold=18-40
 loot=charm_venom:100,ranger_cloak:30,brood_eye:100,spider_silk:100,spider_silk:100
 ai=boss
 boss=1
+music=boss
 faction=wild
 
 [creature]
@@ -937,6 +944,7 @@ gold=45-90
 loot=amulet_life:100,potion_purple:100,hydra_scale:100,hydra_scale:100,hydra_scale:100,troll_blood:50
 ai=boss
 boss=1
+music=boss
 faction=wild
 
 [creature]
@@ -957,6 +965,7 @@ gold=36-72
 loot=war_hammer:100,great_helm:36,colossus_bone:100,bone_dust:100
 ai=boss
 boss=1
+music=boss
 undead=1
 faction=undead
 
@@ -982,6 +991,7 @@ gold=180-315
 loot=flame_sword:100,charm_fire:100,elixir:100,dragon_scale:100,dragon_scale:100,dragon_scale:100
 ai=boss
 boss=1
+music=boss
 faction=wild
 
 [creature]
@@ -1003,6 +1013,7 @@ gold=0-0
 loot=gem_rough:100,ring_int:36,crystal_core:100,rift_dust:100,formula_tech:100
 ai=boss
 boss=1
+music=boss
 mechanical=1
 faction=machine
 
@@ -1127,6 +1138,7 @@ gold=0-0
 loot=vigil_plate:60,rift_dust:100,power_core:100
 ai=boss
 boss=1
+music=boss
 faction=rift
 
 # ================= HESK'S BARROW =================
@@ -1152,5 +1164,6 @@ gold=10-25
 loot=bone_dust:100,barrow_blade:40
 ai=boss
 boss=1
+music=boss
 faction=undead
 

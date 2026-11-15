@@ -120,3 +120,6 @@ without it the same group attacks from its aggro range). Console `touch [0|1]` s
 1.3.1: `music_1_3_1` replaces `music_ambient` (no ambient loops any more, #50): every map names its music (#48), fights
 play the campaign's fight music or the map's own (console `combatmusic ID|-`, #47), and Editor header screenshots at
 960x720, 1280x720 and 1920x1080 (#46) with a click on Exit.
+
+1.3.2: `music_1_3_2` - a boss plays its own creatures.txt `music=` (goblin_chief: boss) even on a map with its own fight
+music; an ordinary fight there plays the map's.

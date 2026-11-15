@@ -203,7 +203,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     te.wrap = true;   // 1.1.11: dialogue text= lines are long - wrapped by default (Alt+Z / the Wrap button)
     auto mk = [&](const std::string& file, const std::string& title, const std::string& section, const std::string& listKey, std::vector<std::string> tmpl) { GenericEditor ge; ge.path = dataRoot + "/" + file; ge.title = title; ge.sectionName = section; ge.listKey = listKey; ge.templateKeys = tmpl; gens.push_back(ge); };
     mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique"});
-    mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound"});
+    mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound", "boss", "music"});
     mk("spells.txt", "Spells", "spell", "id", {"id", "name", "desc", "tile", "cost", "ap", "range", "area", "dmg", "dmgtype", "stat", "heal", "effect", "duration", "target", "utility", "ff", "level", "sound"});
     mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn"});
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
@@ -739,6 +739,8 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         }
     }
     if (k == "weapon" || k == "armor" || k == "ammo" || (k == "item" && s.name == "shop") || k == "locked" || k == "key") { singlePick("item", itemIds()); return; }
+    // 1.3.2: a creature's boss=1 is a tick box (dungeons' boss= stays a creature picker)
+    if (k == "boss" && s.name == "creature") { bool b = atoi(v.c_str()) != 0; if (ui.checkbox(x, y + 2, b ? "a boss: its music plays in its fights, stun fails, fleeing is harder" : "not a boss", b)) { v = b ? "1" : "0"; g.dirty = true; } return; }
     if (k == "boss") { singlePick("creature", creatureIds()); return; }
     if (k == "summon" && s.name == "spell") { std::vector<std::string> o2{""}; for (auto& c : creatureIds()) o2.push_back(c); singlePick("creature", o2); return; }
     if (k == "faction" && s.name == "shop") { std::vector<std::string> o{""}; for (auto& f : gens[14].secs) o.push_back(f.get("id")); for (auto& b : boardIds()) if (std::find(o.begin(), o.end(), b) == o.end()) o.push_back(b); singlePick("faction", o); return; }
@@ -1122,8 +1124,8 @@ void Editor::drawMaps(InputState& in) {
           std::vector<std::string> ids{""}, labels{"(the campaign's fight music)"};
           for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "music") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
           int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == cm) cur = (int)i;
-          openListPicker("Fight music on this map (bosses keep the boss music)", labels, cur, [this, ids](int i) { em.hset("combatmusic", ids[i]); if (ids[i].empty()) em.header.erase(std::remove_if(em.header.begin(), em.header.end(), [](const std::pair<std::string, std::string>& kv) { return kv.first == "combatmusic"; }), em.header.end()); mapDirty = true; }); }
-      if (ui.hover(cx - 4, hy, bw, 16)) { ui.tip(cm.empty() ? "Fights here play the campaign's fight music (Campaign tab). Click to give this map its own. Right-click: guide" : "Fights here play " + cm + " (bosses keep the boss music). Right-click: guide"); if (in.mousePressed[1]) openGuide("map.combatmusic"); }
+          openListPicker("Fight music on this map (bosses play their own)", labels, cur, [this, ids](int i) { em.hset("combatmusic", ids[i]); if (ids[i].empty()) em.header.erase(std::remove_if(em.header.begin(), em.header.end(), [](const std::pair<std::string, std::string>& kv) { return kv.first == "combatmusic"; }), em.header.end()); mapDirty = true; }); }
+      if (ui.hover(cx - 4, hy, bw, 16)) { ui.tip(cm.empty() ? "Fights here play the campaign's fight music (Campaign tab). Click to give this map its own. Right-click: guide" : "Fights here play " + cm + " (a boss, or a creature with its own music, plays that). Right-click: guide"); if (in.mousePressed[1]) openGuide("map.combatmusic"); }
       cx += bw + 4; }
     // 1.1.10 (#34): onenter= - actions run each time the party arrives (usually script:<id>)
     { std::string oe = em.hget("onenter"); int bw = std::min(76, vx + vw - 6 - cx);

@@ -1299,7 +1299,7 @@ Gotchas: an id that does not exist is silent and is reported in the Sounds tab
 under "events requested but not defined".
 
 == map.combatmusic | Map fight music
-see: campaign.combatmusic, campaign.bossmusic, map.music, tab.sounds
+see: campaign.combatmusic, creature.music, map.music, tab.sounds
 
 The music for ordinary fights on this map, instead of the campaign's fight
 music. In the Maps tab it is the "fight" button on the first header row
@@ -1310,7 +1310,7 @@ music (Campaign tab), which itself defaults to the combat track.
 
   combatmusic=tales_by_firelight
 
-Fights with a boss still play the boss music (campaign.bossmusic). Generated
+A boss, or any creature with its own music, plays that instead (creature.music). Generated
 dungeons take it from dungeons.txt combatmusic= (baking copies it).
 
 == map.table | Fallback encounter table
@@ -3932,9 +3932,10 @@ Spiders and snakes poison, ghouls weaken. Use sparingly on early monsters -
 stacked poison is deadly at level 1.
 
 == creature.boss | Boss
-see: creature.ai, dungeon.boss
+see: creature.ai, creature.music, dungeon.boss
 
-boss=1 marks a boss: combat switches to boss music, stun does not work on it,
+boss=1 marks a boss: combat switches to its own music (creature.music; none =
+the boss track), stun does not work on it,
 fleeing is much harder (-25%), and notice boards never post kill bounties for
 it. The bestiary labels it BOSS.
 
@@ -5743,7 +5744,7 @@ Gotchas: coach travel only works in overworld mode. Map items
 (effect=revealmap:) and revealmap= actions fill in whichever map they name.
 
 == campaign.combatmusic | Campaign fight music
-see: campaign.bossmusic, map.combatmusic, tab.sounds, tab.campaign
+see: creature.music, map.combatmusic, tab.sounds, tab.campaign
 
 The music every ordinary fight in this campaign plays (Campaign tab, "Fight
 music"). A map can override it with its own (Maps tab, "fight").
@@ -5752,17 +5753,26 @@ Format: the id of a [music] entry. Default: empty = the combat track.
 
   combatmusic=crown_of_thorns
 
-Order: the map's combatmusic=, else this, else combat. Boss fights use
-campaign.bossmusic instead.
+Order: a boss's own music (creature.music), else any enemy's own music, else the
+map's combatmusic=, else this, else combat.
 
-== campaign.bossmusic | Campaign boss fight music
-see: campaign.combatmusic, tab.sounds, tab.campaign
+== creature.music | Creature music
+see: creature.boss, map.combatmusic, campaign.combatmusic, tab.sounds
 
-The music for a fight with a boss creature (Campaign tab, "Boss fight music").
+The music that plays while this creature is in a fight (and still standing).
+Give it to a boss so its fight has its own theme. Creatures tab: "music" (add
+it with the quick-add button if the creature doesn't have it yet); the picker
+lists every music track.
 
-Format: the id of a [music] entry. Default: empty = the boss track.
+Format: the id of a [music] entry. Default: empty - a boss (boss=1) plays the
+boss track, any other creature changes nothing.
 
-  bossmusic=blood_and_honor
+  music=blood_and_honor
+
+Order in a fight: a living boss's music (or boss), else the music of any other
+living enemy that has some, else the map's combatmusic=, else the campaign's
+fight music, else combat. When the boss falls the music goes back to the usual
+fight music. Every boss in the base game names music=boss.
 
 == campaign.defeat | If the party falls
 see: tab.campaign, concepts.scripts, dlg.actions

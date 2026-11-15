@@ -67,7 +67,7 @@ CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, co
         c.startDialogue = sec.get("dialogue", ""); c.gold = sec.geti("gold", 25); c.inherit = sec.geti("inherit", 0) != 0;   // campaigns stand alone unless they ask to build on the base game
         c.startItems = sec.get("items"); c.startFlags = sec.get("flags"); c.worldMap = trim(sec.get("worldmap", "overworld"));
         c.order = sec.geti("order", 100); c.achievements = sec.geti("achievements", 1) != 0; c.defeat = trim(sec.get("defeat"));
-        c.combatMusic = trim(sec.get("combatmusic")); c.bossMusic = trim(sec.get("bossmusic"));
+        c.combatMusic = trim(sec.get("combatmusic"));
     }
     return c;
 }
@@ -251,9 +251,12 @@ std::string Game::musicWanted() const {
     if (m == GMode::VICTORY) return "fanfare";
     if (m == GMode::ENDING) return "ending";
     if (map->kind == "overworld" && (map->music.empty() || map->music == "overworld") && nightAmount() > 0.6f && gAudio.has("overworld_night")) return "overworld_night";
-    // 1.3.1 (#47): fight music = the map's combatmusic=, else the campaign's combatmusic= (bossmusic= for a boss), else combat / boss
+    // 1.3.1 (#47) / 1.3.2: fight music = a living boss's own music= (creatures.txt; none = boss), else any enemy's music=,
+    // else the map's combatmusic=, else the campaign's combatmusic=, else combat
     if (m == GMode::COMBAT) {
-        for (auto& u : cb.units) if (u.ch.alive && !u.friendly() && u.ch.boss) return !campaign.bossMusic.empty() && gAudio.has(campaign.bossMusic) ? campaign.bossMusic : "boss";
+        auto own = [&](const Character& ch) -> std::string { if (ch.creatureId.empty()) return ""; const CreatureDef* d = gd->creature(ch.creatureId); return d && !d->music.empty() && gAudio.has(d->music) ? d->music : ""; };
+        for (auto& u : cb.units) if (u.ch.alive && !u.friendly() && u.ch.boss) { std::string s = own(u.ch); return s.empty() ? "boss" : s; }
+        for (auto& u : cb.units) if (u.ch.alive && !u.friendly()) { std::string s = own(u.ch); if (!s.empty()) return s; }
         if (!map->combatMusic.empty() && gAudio.has(map->combatMusic)) return map->combatMusic;
         if (!campaign.combatMusic.empty() && gAudio.has(campaign.combatMusic)) return campaign.combatMusic;
         return "combat"; }

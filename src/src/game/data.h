@@ -90,6 +90,7 @@ struct CreatureDef {
     std::string faction = "monster"; // monster | bandit | machine | wild | undead | rift
     std::string sound;   // death sfx event (empty = death_enemy)
     std::string attackSound; // attack sfx event (empty = by weapon type)
+    std::string music;       // 1.3.2: fight music while it is in the fight (bosses: empty = the "boss" track)
 };
 
 struct ClassDef {

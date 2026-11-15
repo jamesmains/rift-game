@@ -1,0 +1,26 @@
+# 1.3.2: boss music is the boss creature's music= (creatures.txt); the campaign's bossmusic= is gone.
+frames 5
+newgame Arin warrior
+frames 120
+teleport overworld 60 60
+frames 60
+# a boss (goblin_chief: boss=1, music=boss) plays its own music, even on a map with its own fight music
+con combatmusic crown_of_thorns
+frames 5
+combat goblin_chief
+frames 120
+audio
+expect music == boss
+con kill
+frames 200
+key ENTER
+frames 60
+# an ordinary fight on that map plays the map's fight music
+combat rat
+frames 120
+audio
+expect music == crown_of_thorns
+con kill
+frames 200
+key ENTER
+frames 60
