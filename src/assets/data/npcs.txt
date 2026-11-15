@@ -454,3 +454,24 @@ name=Villager
 sprite=104,0
 dialogue=
 
+# ---- 1.4.0 quest routes (#74) ----
+[npc]
+id=bandit_lookout
+name=Thornhollow Lookout
+sprite=119,23
+dialogue=bandit_parley
+notes=At Thornhollow's gate: the Stolen Caravan's talk / pay route (Captain Harl answers through him).
+
+[npc]
+id=harl
+name=Captain Harl
+sprite=121,23
+dialogue=harl
+notes=Thornhollow's bandit captain after her band left (talked, scared or paid off); drinks at the Copper Kettle.
+
+[npc]
+id=well_guard
+name=Raider at the Pump
+sprite=114,22
+dialogue=well_guard
+notes=Sunscar's pump after Water Rights ends in a toll (well_toll) or the middle way (well_shared).

@@ -55,16 +55,35 @@ quest=Nyx: Four Pelts
 approve=ranger:5
 option=Let's go.|end
 
+# 1.4.0 (#81): Pack Sense if she makes the cloaks, Frost Fang if the pelts go to her father's hut (Loyal: stronger).
 [pelt_turnin]
 speaker=Nyx
-text=These are good. Thick. ...Give me an evening by a fire and there'll be two cloaks out of this. One's yours.
+text=These are good. Thick. ...Give me an evening by a fire and there'll be two cloaks out of this. One's yours. Unless.
+option=Make the cloaks. One for each of us.|pelt_cloaks
+option=Unless what? ...Hang them at your father's hut, Nyx.|pelt_hut
+
+[pelt_cloaks]
+speaker=Nyx
+text=Two cloaks. One fire. (By morning there are two, stitched the way he stitched them.) We hunt together now. I'll call it - you run.
 take=wolf_pelt:4
 give=ranger_cloak:1
-set=q_nyx_done
+set=q_nyx_done,nyx_cloaks
 xp=120
 approve=ranger:15
+teach=nyx:pack_sense|winter_pack
 quest=Nyx: Four Pelts - done
 option=Thank you.|end
+
+[pelt_hut]
+speaker=Nyx
+text=...By the door. Where he hung his. (She is quiet a long while.) He tipped his arrows with a frost charm, for the big ones. I kept it. Never used it. I will now.
+take=wolf_pelt:4
+set=q_nyx_done,nyx_pelts_hung
+xp=120
+approve=ranger:20
+teach=nyx:frost_fang|white_fang
+quest=Nyx: Four Pelts - done
+option=He'd be proud.|end
 
 [gifts]
 speaker=Nyx

@@ -294,3 +294,18 @@ y=13
 dialogue=converts_cell
 show=converts_judged
 
+# 1.4.0 (#74): Captain Harl drinks here once her band has left Thornhollow (the Stolen Caravan settled by talk or gold)
+[npc]
+id=harl
+npc=harl
+x=40
+y=27
+show=caravan_bandits_gone
+
+# 1.4.0 (#74): the hermit, once the party answered his question (the Hermit's Riddle, WIS), tells stories here
+[npc]
+id=hermit
+npc=hermit
+x=46
+y=27
+show=hermit_friend

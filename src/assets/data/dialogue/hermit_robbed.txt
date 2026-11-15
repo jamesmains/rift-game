@@ -1,0 +1,5 @@
+# 1.4.0 (#74): the hermit after the party stole his treasure (hermit_robbed) - the hut's placement swaps to this one.
+[start]
+speaker=The Hermit
+text=YOU. (He has a poker in his hand and the door half shut.) Forty years nobody took a thing from me. Get away from my hut, thief, before I remember how to use this.
+option=(Leave.)|end

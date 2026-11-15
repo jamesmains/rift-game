@@ -3,6 +3,7 @@ speaker=Matriarch Sefa
 text=Sunscar greets you. Water, shade, and a bed are yours. What we do not have is peace - a dragon nests in the old mine to the west, and it takes a goat a week and a child when it can.
 option=I'll deal with the dragon.|quest|!q_dragon>=1
 option=Ashwing is dead.|done|q_dragon_done&!q_dragon>=2
+option=Ashwing is gone. It won't come back.|done_gone|ashwing_gone&!q_dragon_done&!q_dragon>=2
 option=Goodbye.|end
 
 [quest]
@@ -10,6 +11,17 @@ speaker=Matriarch Sefa
 text=Ashwing, they call it. Even the raiders fear it - talk to their envoy Kesh, he may help you. Fire resistance, child. Lots of it.
 set=q_dragon=1
 option=Understood.|end
+
+# 1.4.0 (#74): the dragon talked (or paid) out of its mine. The slayer's katana stays on the wall.
+[done_gone]
+speaker=Matriarch Sefa
+text=Gone? Not dead - gone? (She listens to the wind a long moment.) The goats will come home. The children will play past the dunes again. No one will sing of a blade, but some of us will sing of you. The katana was for the one who slew it; take this instead, and our water, for as long as you live.
+set=q_dragon=2
+gold=300
+give=charm_fire:2
+xp=300
+rep=sunscar:5
+option=Thank you.|end
 
 [done]
 speaker=Matriarch Sefa

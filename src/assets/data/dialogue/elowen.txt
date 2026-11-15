@@ -55,15 +55,33 @@ quest=Elowen: What the Rift Keeps
 approve=mage:5
 option=Let's go.|end
 
+# 1.4.0 (#81): Stilled Light if she lets her mother go, Rift Hunger if she studies the wisps' hunger (Loyal: stronger).
 [wisp_turnin]
 speaker=Elowen
 text=...It's not her. It's not anyone. They're just light with a hunger in it. I don't know whether that's better or worse. Here - I wrote this down for you years ago and never had a reason to give it to anyone.
 give=scroll_frost:2
-set=q_elowen_done
+option=Then let her go, Elowen. Keep the light; leave the hunger.|wisp_letgo
+option=Then learn what the hunger is. Make it work for us.|wisp_study
+
+[wisp_letgo]
+speaker=Elowen
+text=Let her go. ...Yes. I think I've been holding my breath for eleven years. (She lets it out, and the air around her goes very still.) Oh. That's - I can do something with that.
+set=q_elowen_done,elowen_let_go
 xp=120
 approve=mage:15
+teach=elowen:stilled_light|lantern_of_the_lost
 quest=Elowen: What the Rift Keeps - done
 option=I'm sorry, Elowen.|end
+
+[wisp_study]
+speaker=Elowen
+text=Make it work for us. Morrow would be appalled. (She is already writing.) A hunger has a shape. Anything with a shape can be pointed. Give me one night with these notes.
+set=q_elowen_done,elowen_studies
+xp=120
+approve=mage:12
+teach=elowen:rift_hunger|rift_devouring
+quest=Elowen: What the Rift Keeps - done
+option=Careful, Elowen.|end
 
 [gifts]
 speaker=Elowen

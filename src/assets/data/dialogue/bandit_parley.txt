@@ -1,0 +1,83 @@
+# 1.4.0 (#73, #74): the Stolen Caravan can be settled at Thornhollow's gate. Talk (persuade CHA, intimidate party STR,
+# catch Harl's lie with WIS for a cheaper deal), pay, or refuse and fight as before. Talking or paying sends the band
+# away (caravan_bandits_gone hides their groups); Harl turns up in Brasswick's Copper Kettle afterwards (harl.txt).
+[start]
+speaker=Thornhollow Lookout
+text=That's far enough. (A crossbow, steady, at your chest.) You're the one Pell sent, aren't you? Captain Harl said someone would come. She also said you get to talk before you bleed, if you're the talking kind.
+option=I'm here for Pell's goods. Get your captain.|goods|q_caravan>=1&!q_caravan_done
+option=Just passing through.|end
+
+[goods]
+speaker=Captain Harl
+text=(A tall woman in a stolen guardsman's coat steps out from behind the palisade.) Pell's crates are my winter, friend. Fifty mouths in this camp, and every one of them hungry. Give me a reason to hand them over that isn't a sword - I have more swords than you.
+option=Pell has paid the Brasswick guard to march on you. Take your people and go while you can.|persuade|stat:cha>=12
+option=Look at me, Harl. Then count how many of your fifty you want to bury.|intimidate|partystat:str>=14
+option=Fifty mouths? I count nine cookfires.|lie|stat:wis>=12
+option=(Pay 200 gold) Then let me buy your winter. Two hundred for the lot.|ransom|gold:200
+option=Then I'll take them from you.|refuse
+option=I'll think about it.|end
+
+[lie]
+speaker=Captain Harl
+text=(She follows your eyes to the cookfires, and laughs despite herself.) Nine. Aye. Fifty is what I tell merchants. You've good eyes, and I'm tired of speeches - eighty gold and you can carry the crates out yourself.
+option=(Pay 80 gold) Done.|ransom_cheap|gold:80
+option=Pell has paid the Brasswick guard to march on you. Eighty is generous; leaving is smarter.|persuade|stat:cha>=12
+option=Eighty gold for stolen soap? I'll take them from you.|refuse
+
+[persuade]
+speaker=Captain Harl
+text=(She looks at you a long time. It is a bluff, and you both half know it - but only half.) ...Guards in the hills. Fine. FINE. Nobody dies for crates of soap. Take Pell's junk - and this. (A dented round shield.) One of mine pulled it off a dead militiaman years back. It never brought us any luck.
+set=q_caravan_done,caravan_talked,caravan_bandits_gone,sedge_shield_given
+give=mayor_seal:1
+rep=brasswick:10
+xp=250
+approve=cleric:5,scavenger:3
+quest=The Stolen Caravan - Harl's band is leaving Thornhollow
+next=leave
+
+[intimidate]
+speaker=Captain Harl
+text=(Her lookout lowers the crossbow before she tells him to.) ...You'd do it, too. I've seen that look on the Brasswick road. All right. We go. Take the crates - and take this old shield with them, it's been bad luck since the day we took it off that militia captain.
+set=q_caravan_done,caravan_talked,caravan_scared,caravan_bandits_gone,sedge_shield_given
+give=mayor_seal:1
+rep=brasswick:5
+xp=250
+approve=warrior:5,ranger:3,cleric:-2
+quest=The Stolen Caravan - Harl's band is leaving Thornhollow
+next=leave
+
+[ransom]
+speaker=Captain Harl
+text=(She weighs the purse, and grins.) Now that's a language everyone speaks. Done. Crates are in the back - and have the old shield too, it's been nothing but bad luck. Don't look for us here tomorrow.
+gold=-200
+set=q_caravan_done,caravan_ransom,caravan_bandits_gone,sedge_shield_given
+give=mayor_seal:1
+rep=brasswick:-5
+xp=150
+approve=scavenger:3,warrior:-5
+quest=The Stolen Caravan - you bought Pell's goods back
+next=leave
+
+[ransom_cheap]
+speaker=Captain Harl
+text=Eighty. Pleasure. (She tosses you the storeroom key - and an old dented shield.) Bad luck, that one. Don't look for us here tomorrow.
+gold=-80
+set=q_caravan_done,caravan_ransom,caravan_bandits_gone,sedge_shield_given
+give=mayor_seal:1
+rep=brasswick:-2
+xp=200
+approve=scavenger:5,warrior:-3
+quest=The Stolen Caravan - you bought Pell's goods back
+next=leave
+
+[refuse]
+speaker=Captain Harl
+text=Then come and take them. (She steps back behind the palisade.) Lads! Pell's dog wants to play!
+set=caravan_parley_refused
+approve=warrior:3,cleric:-2
+option=(Draw your weapon.)|end
+
+[leave]
+speaker=$hero
+text=By the time you have the crates stacked by the gate, the camp is coming apart: hides rolled, fires kicked out, packs on backs. Harl's band files out through the far palisade without a backward look. A heavy brass seal rolls out of one of Pell's crates. Thornhollow is empty.
+option=(Haul the goods back to Pell.)|end

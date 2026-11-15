@@ -175,3 +175,18 @@ node=sunpetal
 x=1
 y=10
 node=sunpetal
+
+# 1.4.0 (#74): a raider guards the pump once Water Rights ends in a toll or the middle way
+[npc]
+id=well_guard
+npc=well_guard
+x=22
+y=14
+show=well_toll
+
+[npc]
+id=well_guard2
+npc=well_guard
+x=22
+y=14
+show=well_shared

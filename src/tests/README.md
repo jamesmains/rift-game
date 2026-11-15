@@ -123,3 +123,10 @@ play the campaign's fight music or the map's own (console `combatmusic ID|-`, #4
 
 1.3.2: `music_1_3_2` - a boss plays its own creatures.txt `music=` (goblin_chief: boss) even on a map with its own fight
 music; an ordinary fight there plays the map's.
+
+1.4.0: `dialogue_1_4_0` - stat checks in dialogue (#73: `stat:cha>=12`, `partystat:str>=14`, the `[CHA 12]` tags, script
+`stat()` / `partystat()`, `stealthy`), other ways through quests (#74: the Stolen Caravan talked out and sneaked out,
+Water Rights patched + the middle way, Ashwing reasoned with) and companion quest abilities (#81: `teach=`, the Loyal
+version swapping in and out, a companion taught while away, save/load). Console: `setstat STAT N [MEMBER]`,
+`stealth [N]`, `spellsof [MEMBER]`. Expect keys: `answers` (the answers as shown, tags included, " | " between) and
+`spells:<member>` (comma list).

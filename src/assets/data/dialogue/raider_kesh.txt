@@ -5,6 +5,7 @@ option=I am.|help|q_dragon>=1&!kesh_helped
 option=Not yet.|end
 option=How does the water work here?|well|!q_well>=1
 option=I have a valve for the pump.|well_valve|q_well>=1&item:brass_valve&!q_well>=2
+option=Your old valve isn't finished. Three pieces of scrap and an hour, and I can patch it.|well_patch|q_well>=1&!q_well>=2&!item:brass_valve&itemn:scrap:3&stat:int>=12
 option=Goodbye.|end
 
 [help]
@@ -33,6 +34,40 @@ text=(Kesh fits the valve; the pump coughs, then gushes.) There she runs. So, $h
 take=brass_valve
 option=Free water for everyone. No tolls.|well_free
 option=Your people kept this place alive. Charge your toll.|well_toll
+option=Settlers drink free. Caravans pay - and your people guard the pump for the toll.|well_shared|stat:cha>=13
+option=(Pay 300 gold) Then I'll buy your people's claim. The water's free, and nobody goes short.|well_bought|gold:300
+
+# 1.4.0 (#74): more ways through Water Rights - patch the cracked valve (INT 12 and 3 scrap) instead of buying one, then
+# broker a middle way (CHA 13) or buy the raiders' claim (300 gold). Raider guards stand at the pump after a toll.
+[well_patch]
+speaker=Raider Kesh
+text=(You strip the cracked valve, braze a collar of scrap over the split and seat it again. The pump coughs, sputters - and gushes.) Huh. Didn't think that old thing had another summer in it. So, $hero. Whose well is it now? Mine and my people's - a copper a bucket, and a share of the toll for you? Or Sefa's, free for all?
+take=scrap:3
+set=q_well=1,well_patched
+option=Free water for everyone. No tolls.|well_free
+option=Your people kept this place alive. Charge your toll.|well_toll
+option=Settlers drink free. Caravans pay - and your people guard the pump for the toll.|well_shared|stat:cha>=13
+option=(Pay 300 gold) Then I'll buy your people's claim. The water's free, and nobody goes short.|well_bought|gold:300
+
+[well_shared]
+speaker=Raider Kesh
+text=(He turns it over, slowly.) Settlers free. Strangers pay. My people stand at the pump with spears and get paid for standing there... Sefa can call it charity and I can call it a toll, and we can both lie to our own. You'd make a fine envoy, $hero.
+set=q_well=2,well_shared
+xp=250
+rep=sunscar:10
+approve=cleric:3,scavenger:3
+option=Everyone drinks.|end
+
+[well_bought]
+speaker=Raider Kesh
+text=(He weighs the purse, then laughs.) You'd pay for water you'll never drink? ...Fine. Three hundred buys my people a winter's worth of food from Nabir. The well's Sefa's. Free. Don't tell anyone I was bought cheap.
+gold=-300
+set=q_well=2,well_free,well_bought
+xp=200
+rep=sunscar:20
+approve=cleric:5,warrior:3
+option=It's the right thing.|end
+
 
 [well_free]
 speaker=Raider Kesh

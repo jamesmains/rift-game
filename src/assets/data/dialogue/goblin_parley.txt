@@ -8,6 +8,8 @@ next=offer
 speaker=Grakk, Goblin Chief
 text=This crown - violet glass, fell from the sky on the night it opened. It sings to Grakk. It say: take farms, take more, take ALL. Grakk listen too long. You take crown. Grakk takes tribe over the mountain and never come back. Deal?
 option=Hand over the crown and go. If I see a goblin near Hollowmere again, I'll finish this.|spare|kills:goblin:3
+option=That crown is using you, Grakk. Give it up and you are a chief again, not its dog.|persuade|stat:cha>=11
+option=Crown. On the floor. Now - or I make the walk over the mountain very short.|intimidate|partystat:str>=13
 option=You took Tobb's boy and burned three farms. There's no deal.|fight
 option=Why should I believe you?|why
 
@@ -15,7 +17,29 @@ option=Why should I believe you?|why
 speaker=Grakk, Goblin Chief
 text=Because Grakk is ALIVE, tall-folk, and wants to stay so. Goblins keep promises that keep goblins alive. Also - look how many are left. Not many to keep promise WITH.
 option=Hand over the crown and go.|spare
+option=Your hunters are behind that hide wall, aren't they? Bows down, then we talk.|lie|stat:wis>=12
 option=No deal.|fight
+
+# 1.4.0 (#73): stat checks - persuade (CHA), intimidate (party STR), spot the ambush (WIS). All end in the spare
+# outcome; the WIS answer also turns up Grakk's hidden stash.
+[persuade]
+speaker=Grakk, Goblin Chief
+text=(Grakk's hand stops halfway to the crown. For a moment he looks old and very tired.) ...Its dog. Yes. Grakk was chief before glass fell. Grakk can be chief after. Take it. TAKE it, before it talks again.
+approve=cleric:3
+next=spare
+
+[intimidate]
+speaker=Grakk, Goblin Chief
+text=(The last of his hunters look at you, then at him, then at the floor.) ...Tall-folk means it. Grakk sees. No more farms. (The crown clatters onto the stone between you.)
+approve=warrior:3,cleric:-2
+next=spare
+
+[lie]
+speaker=Grakk, Goblin Chief
+text=(A long pause. Then a hiss behind the hides, and six bows lower.) ...Clever tall-folk. Grakk keeps one trick, always. Here - Grakk's own pot, the farm silver. Keep it. And keep crown. Grakk is done with tricks.
+gold=60
+approve=ranger:3
+next=spare
 
 [spare]
 speaker=Grakk, Goblin Chief

@@ -3,7 +3,10 @@ speaker=Merchant Pell
 text=Welcome to Pell's Provisions! Potions, scrolls, sundries. Or if you've a sword and a free afternoon, a problem.
 option=Let's trade.|shop
 option=What problem?|quest|!q_caravan>=1
-option=The bandit captain is dead.|done|q_caravan_done&!q_caravan>=2
+option=The bandit captain is dead.|done|q_caravan_done&bandit_leader_dead&!q_caravan>=2
+option=Your goods are back. Harl's band has left Thornhollow.|done_talk|caravan_talked&!bandit_leader_dead&!q_caravan>=2
+option=Your goods are back. I paid Harl for them.|done_ransom|caravan_ransom&!bandit_leader_dead&!q_caravan>=2
+option=Your goods are back. The bandits never saw me.|done_stolen|caravan_stolen&!bandit_leader_dead&!q_caravan>=2
 option=Goodbye.|end
 
 [shop]
@@ -11,7 +14,7 @@ shop=brasswick_market
 
 [quest]
 speaker=Merchant Pell
-text=Bandits hit my caravan south of the city and dragged the lot to their camp at Thornhollow. Kill their captain, get my goods back, and I'll pay 150 gold. The guard won't lift a finger.
+text=Bandits hit my caravan south of the city and dragged the lot to their camp at Thornhollow. Kill their captain, sweet-talk her, sneak the crates out under her nose - I don't care how. Get my goods back and I'll pay 150 gold. The guard won't lift a finger.
 set=q_caravan=1
 option=Consider it done.|end
 
@@ -22,4 +25,34 @@ set=q_caravan=2
 gold=150
 give=band_speed:1
 xp=250
+rep=brasswick:5
+option=Thanks.|end
+
+# 1.4.0 (#74): the other ways through the Stolen Caravan
+[done_talk]
+speaker=Merchant Pell
+text=Gone? Just... packed up and left, because you asked? (He counts crates, twice.) All of it. Every crate. You're wasted on swords, friend. Here's your 150 - and this came with the caravan, I've no idea what it does.
+set=q_caravan=2
+gold=150
+give=band_speed:1
+xp=150
+option=Thanks.|end
+
+[done_ransom]
+speaker=Merchant Pell
+text=You PAID them? With money? (He sighs.) Well, they're gone and my goods aren't. I'll pay the 150 I promised - I won't cover your generosity. And take this, it came with the caravan.
+set=q_caravan=2
+gold=150
+give=band_speed:1
+xp=100
+option=Fair enough.|end
+
+[done_stolen]
+speaker=Merchant Pell
+text=Out from under their noses? Ha! I'd give a week's takings to see the captain's face in the morning. Here's your 150, and this - it came with the caravan and I've no idea what it does.
+set=q_caravan=2
+gold=150
+give=band_speed:1
+xp=150
+rep=brasswick:5
 option=Thanks.|end

@@ -30,9 +30,15 @@ stage=q_ears>=2 | DONE You've collected the bounty on goblin ears. She'll keep p
 [quest]
 id=caravan
 name=The Stolen Caravan
-stage=q_caravan>=1 | Merchant Pell's caravan was taken by bandits camped at Thornhollow, south of Brasswick. @thornhollow
+stage=q_caravan>=1 | Merchant Pell's caravan was taken by bandits camped at Thornhollow, south of Brasswick. Kill their captain - or talk (or pay) your way past the lookout at the gate, or sneak into the storeroom unseen. @thornhollow
 stage=q_caravan_done | The bandit captain is dead. Tell Pell in the Brasswick market. @brasswick
+stage=caravan_stolen&!bandit_leader_dead | You carried Pell's goods out of Thornhollow under the bandits' noses. Tell Pell in the Brasswick market. @brasswick
+stage=caravan_talked | Captain Harl handed Pell's goods over and her band left Thornhollow. Tell Pell in the Brasswick market. @brasswick
+stage=caravan_ransom | You bought Pell's goods back from Captain Harl, and her band left Thornhollow. Tell Pell in the Brasswick market. @brasswick
 stage=q_caravan>=2 | DONE Pell rewarded you for recovering his goods.
+stage=q_caravan>=2&caravan_bandits_gone | DONE Pell has his goods back and Thornhollow stands empty. Harl's people drink at the Copper Kettle now.
+stage=q_caravan>=2&caravan_stolen&!bandit_leader_dead | DONE Pell has his goods back. Harl's band is still at Thornhollow, wondering who robbed them.
+objective=1 | q_caravan_done | Get Pell's goods out of Thornhollow: fight, talk, pay or sneak
 
 [quest]
 id=moonleaf
@@ -51,9 +57,12 @@ stage=q_hydra>=2 | DONE Murkwater is safe and Fenwick paid you.
 [quest]
 id=dragon
 name=Ashwing
-stage=q_dragon>=1 | A dragon nests in the old mine west of Sunscar Outpost. The raiders want it gone as badly as the settlers. @old_mine
+stage=q_dragon>=1 | A dragon nests in the old mine west of Sunscar Outpost. The raiders want it gone as badly as the settlers. Kill it - or, they say, it can be spoken to. @old_mine
 stage=q_dragon_done | Ashwing is slain. Tell Matriarch Sefa in Sunscar. @sunscar
+stage=ashwing_gone&!q_dragon_done | Ashwing has flown from the mine and won't come back. Tell Matriarch Sefa in Sunscar. @sunscar
 stage=q_dragon>=2 | DONE Sunscar sings of your deed.
+stage=q_dragon>=2&ashwing_gone&!q_dragon_done | DONE Ashwing is gone over the mountains. Sunscar sings of the day the dragon was talked out of its mine.
+objective=1 | q_dragon>=2 | Deal with Ashwing: fight it, reason with it or pay it off
 
 [quest]
 id=frost
@@ -65,8 +74,12 @@ stage=q_frost>=2 | DONE Orin blessed you for cleansing Rimehollow.
 [quest]
 id=hermit
 name=The Hermit's Riddle
-stage=q_hermit>=1 | The hermit south of Brasswick wants a Bear Claw, a Circuit Board and a Rough Gem. @hermit
+stage=q_hermit>=1 | The hermit south of Brasswick wants a Bear Claw, a Circuit Board and a Rough Gem - or someone who understands why he collects them. @hermit
 stage=q_hermit>=2 | DONE The hermit gave you his treasure.
+stage=q_hermit>=2&hermit_riddle | DONE You answered the hermit's question, and he gave you his treasure for it.
+stage=q_hermit>=2&hermit_friend | DONE You answered the hermit's question. He has left his hut and tells the story of the Rift's night at the Copper Kettle in Brasswick.
+stage=q_hermit>=2&hermit_robbed | DONE You stole the hermit's treasure while he dozed. He won't open his door to you again.
+objective=1 | q_hermit>=2 | Bring the claw, the board and the gem - or ask him why he wants them
 
 [quest]
 id=pelts
@@ -79,7 +92,9 @@ id=bram_quest
 name=Bram: The Captain's Shield
 stage=bram_quest | Kill the bandit leader at Thornhollow Camp and recover Captain Sedge's shield. @thornhollow
 stage=bram_quest&bandit_leader_dead | The bandit leader is dead. Talk to Bram (Party menu, T).
-stage=q_bram_done | DONE Bram carries his captain's memory; you carry the shield.
+stage=bram_quest&sedge_shield_given&!bandit_leader_dead | Captain Harl gave up Captain Sedge's shield without a fight. Talk to Bram (Party menu, T).
+stage=q_bram_done | DONE Bram carries his captain's memory; you carry the shield. He hits harder for it now (Sedge's Reprisal).
+stage=q_bram_done&bram_kept_shield | DONE Bram carries his captain's shield, and stands in front of whoever needs it (Sedge's Guard).
 
 [quest]
 id=elowen_quest
@@ -87,6 +102,8 @@ name=Elowen: What the Rift Keeps
 stage=elowen_quest | Destroy three rift wisps near the Scar at night and tell Elowen what you saw. @scar
 stage=elowen_quest&kills:rift_wisp:3 | Three wisps down. Talk to Elowen (Party menu, T).
 stage=q_elowen_done | DONE Elowen has her answer, such as it is.
+stage=q_elowen_done&elowen_let_go | DONE Elowen let her mother go. What was left is a stillness she can share (Stilled Light).
+stage=q_elowen_done&elowen_studies | DONE Elowen is learning to point the wisps' hunger at things (Rift Hunger).
 
 [quest]
 id=nyx_quest
@@ -94,6 +111,8 @@ name=Nyx: Four Pelts
 stage=nyx_quest | Bring Nyx four wolf pelts from the hills north of Frosthold. @frosthold
 stage=nyx_quest&itemn:wolf_pelt:4 | You have the pelts. Talk to Nyx (Party menu, T).
 stage=q_nyx_done | DONE Two cloaks, one fire, no words needed.
+stage=q_nyx_done&nyx_cloaks | DONE Two cloaks, one fire, no words needed. Nyx calls the hunt now (Pack Sense).
+stage=q_nyx_done&nyx_pelts_hung | DONE Four pelts hang by a hut door outside Frosthold. Nyx tips her arrows with her father's frost charm (Frost Fang).
 
 [quest]
 id=orin_quest
@@ -101,6 +120,8 @@ name=Orin: Let Them Rest
 stage=orin_quest | Destroy the lich in Dunmarrow Crypt so Orin's parish can rest. @dunmarrow
 stage=orin_quest&lich_dead | The lich is gone. Talk to Orin (Party menu, T).
 stage=q_orin_done | DONE The names were said. The crypt is quiet.
+stage=q_orin_done&orin_said_names | DONE The names were said. The crypt is quiet, and Orin's parish mends with him (Litany of Names).
+stage=q_orin_done&orin_sealed_crypt | DONE Orin sealed the deep chamber with the old priests' warding, and remembers every word (Grave Ward).
 
 [quest]
 id=tessa_quest
@@ -108,6 +129,8 @@ name=Tessa: One Question
 stage=tessa_quest | Collect three circuit boards from machines for Tessa's terminal. @lab
 stage=tessa_quest&itemn:circuit:3 | Three boards. Talk to Tessa (Party menu, T).
 stage=q_tessa_done | DONE The terminal answered. Tessa is not satisfied.
+stage=q_tessa_done&tessa_let_rest | DONE The terminal rests. Its casing is armour plating now (Scrap Plating).
+stage=q_tessa_done&tessa_kept_core | DONE Tessa pulled the terminal's core. It still screams when she points it at things (Signal Jam).
 
 [quest]
 id=cult
@@ -189,8 +212,12 @@ id=well
 name=Water Rights
 stage=q_well>=1 | Sunscar's well pump needs a brass valve (Ashfall's scrap traders sell them). Then Raider Kesh and Matriarch Sefa want you to decide whose water it is. @sunscar
 stage=q_well>=1&item:brass_valve | You have a brass valve. Bring it to Raider Kesh in Sunscar. @sunscar
+stage=q_well>=1&well_patched&!q_well>=2 | Kesh fitted your patched valve. Now decide whose well it is. @sunscar
 stage=well_free | DONE Sunscar's well runs free for raiders and settlers alike.
 stage=well_toll | DONE Kesh's people charge a copper a bucket for Sunscar's water, and you took a share.
+stage=well_shared | DONE Settlers drink free; caravans pay a copper a bucket, and Kesh's raiders guard the pump for it.
+stage=well_bought | DONE You bought the raiders' claim to Sunscar's well. The water runs free and nobody went short.
+objective=1 | q_well>=2 | Fit a valve (buy a brass one in Ashfall, or patch the old one with scrap) and settle the water
 
 [quest]
 id=dance

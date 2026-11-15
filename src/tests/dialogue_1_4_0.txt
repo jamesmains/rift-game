@@ -1,0 +1,181 @@
+# 1.4.0: stat checks in dialogue (#73), more ways through quests (#74), companion quest abilities (#81).
+# Console helpers: setstat STAT N [MEMBER], stealth N, spellsof [MEMBER]; expect answers (the answers as shown, with
+# their [CHA 12] tags) and spells:<member>.
+god
+newgame Mira cleric 1 7
+# ================= #73 stat checks: Grakk's parley =================
+con setstat cha 8
+con setstat wis 8
+con setstat str 8
+con flag q_main 1
+con dialogue goblin_parley offer
+expect mode == DIALOGUE
+expect answers lacks [CHA
+expect answers lacks [Party STR
+expect answers contains You took Tobb's boy
+con setstat cha 11
+frames 2
+expect answers contains [CHA 11] That crown is using you
+expect cond:stat:cha>=11 == 1
+expect cond:stat:cha>=12 == 0
+expect cond:stat:cha>11 == 0
+expect cond:stat:cha<12 == 1
+expect cond:stat:cha=11 == 1
+expect cond:partystat:str>=13 == 0
+con setstat str 13
+frames 2
+expect answers contains [Party STR 13] Crown. On the floor
+frames 600
+shot stat_check_answers.png
+choose Why should I believe
+expect answers lacks [WIS
+con setstat wis 12
+frames 2
+expect answers contains [WIS 12] Your hunters are behind
+choose Your hunters are behind
+expect flag:goblin_chief_spared == 1
+expect item:goblin_crown == 1
+expect gold >= 60
+# partystat counts the best living member; stat reads only the hero
+con join warrior
+con setstat str 15 1
+expect cond:partystat:str>=15 == 1
+expect cond:stat:str>=15 == 0
+# scripts read the same numbers
+con script keep tcha = stat("cha")\nkeep tstr = partystat("str")\nkeep tcond = cond("stat:cha>=11&!stealthy")
+frames 5
+expect var:tcha == 11
+expect var:tstr == 15
+expect var:tcond == 1
+# stealthy (Camouflage) is a condition too, and tags answers [Sneaking]
+expect cond:stealthy == 0
+con stealth 40
+expect cond:stealthy == 1
+con flag q_hermit 1
+con dialogue hermit
+expect answers contains [Sneaking] (He's nodding off
+choose Goodbye
+con stealth 0
+# ================= #74 the Stolen Caravan, talked out of Thornhollow =================
+con setstat cha 12
+con flag q_caravan 1
+teleport bandit_camp 24 27
+talk lookout
+choose I'm here for Pell's goods
+expect answers contains [CHA 12] Pell has paid the Brasswick guard
+expect answers contains [Party STR 14] Look at me, Harl
+expect answers contains [WIS 12] Fifty mouths
+choose Pell has paid the Brasswick guard
+expect flag:q_caravan_done == 1
+expect flag:caravan_talked == 1
+expect flag:caravan_bandits_gone == 1
+expect flag:sedge_shield_given == 1
+expect item:mayor_seal >= 1
+expect rep:brasswick >= 10
+expect queststatus:caravan contains Harl handed
+expect cond:map:bandit_camp == 1
+teleport brasswick 30 40
+talk pell
+choose Harl's band has left
+expect flag:q_caravan == 2
+expect queststatus:caravan contains Thornhollow stands empty
+talk harl
+choose never any guard march
+settle
+# ================= #81 Bram's quest ends without a killing: a lasting ability =================
+con flag bram_quest
+con dialogue bram camp
+choose Harl gave it up
+choose Carry it yourself
+expect flag:q_bram_done == 1
+expect flag:bram_kept_shield == 1
+expect spells:1 contains sedges_guard
+expect queststatus:bram_quest contains Sedge's Guard
+# Loyal: the stronger version replaces it; broken loyalty brings the first one back
+con approve warrior 40
+con run set:loyal_warrior
+expect spells:1 contains sedges_bulwark
+expect spells:1 lacks sedges_guard
+con approve warrior -55
+con run set:test_resync
+expect spells:1 contains sedges_guard
+expect spells:1 lacks sedges_bulwark
+con approve warrior 55
+con run set:test_resync2
+expect spells:1 contains sedges_bulwark
+# a companion who isn't in the party learns it when they join
+con run teach:elowen:stilled_light|lantern_of_the_lost
+expect members == 2
+con join mage
+expect members == 3
+expect spells:2 contains stilled_light
+# the hero can be taught too
+con run teach:hero:frost_fang
+expect spells:0 contains frost_fang
+# saves keep it all
+saveslot 1
+con approve mage 40
+con run set:loyal_mage
+expect spells:2 contains lantern_of_the_lost
+loadslot 1
+expect spells:1 contains sedges_bulwark
+expect spells:2 contains stilled_light
+expect spells:2 lacks lantern_of_the_lost
+expect spells:0 contains frost_fang
+con approve mage 40
+con run set:loyal_mage
+expect spells:2 contains lantern_of_the_lost
+# ================= #74 Water Rights: patch the valve (INT), then the middle way (CHA) =================
+con setstat int 12
+con setstat cha 13
+con flag q_well 1
+give scrap 3
+teleport sunscar 26 18
+talk raider_env
+choose Your old valve isn't finished
+expect answers contains [CHA 13] Settlers drink free
+choose Settlers drink free
+expect flag:well_shared == 1
+expect flag:q_well == 2
+expect item:scrap == 0
+expect queststatus:well contains guard the pump
+settle
+talk well_guard2
+choose How does the water work
+settle
+# ================= #74 Ashwing reasoned out of its mine (INT) =================
+con setstat int 13
+con flag q_dragon 1
+con dialogue ashwing_parley
+expect answers contains [INT 13] Because the glass is what's starving you
+choose Because the glass
+expect flag:ashwing_gone == 1
+expect queststatus:dragon contains flown from the mine
+teleport sunscar 12 10
+talk sefa
+choose Ashwing is gone
+expect flag:q_dragon == 2
+expect queststatus:dragon contains talked out of its mine
+settle
+# ================= #74 the Stolen Caravan, sneaking (a new game) =================
+newgame Sly ranger 1 9
+con flag q_caravan 1
+con flag bandit_camp_grp_5
+con flag bandit_camp_grp_8
+teleport bandit_camp 6 27
+walk 4 27
+walk 4 28
+expect flag:caravan_stolen == 0
+expect log contains wide awake
+walk 4 27
+con stealth 100
+walk 4 28
+expect flag:caravan_stolen == 1
+expect flag:q_caravan_done == 1
+expect flag:caravan_bandits_gone == 0
+expect queststatus:caravan contains under the bandits' noses
+teleport brasswick 30 40
+talk pell
+choose The bandits never saw me
+expect flag:q_caravan == 2
+expect queststatus:caravan contains wondering who robbed them

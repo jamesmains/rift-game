@@ -25,6 +25,7 @@ text=Boss. Need something?
 option=How are you holding up?|chat
 option=You said you were militia. What happened?|story|approval:warrior:15
 option=About that shield...|shield_turnin|bram_quest&bandit_leader_dead&!q_bram_done
+option=About that shield... Harl gave it up.|shield_spared|bram_quest&sedge_shield_given&!bandit_leader_dead&!q_bram_done
 option=I brought you something.|gifts
 option=You've been quiet lately.|strained|!approval:warrior:-14
 option=We've come a long way, you and I.|loyal|approval:warrior:30&q_bram_done&!loyal_warrior
@@ -55,15 +56,41 @@ quest=Bram: The Captain's Shield
 approve=warrior:5
 option=Let's move.|end
 
+# 1.4.0 (#81): how the quest ends changes Bram for good - Sedge's Guard if he carries the shield, Sedge's Reprisal if
+# you do. Loyal Bram (loyal_warrior, approval 10+) uses the stronger version (teach=...|...).
 [shield_turnin]
 speaker=Bram
 text=That's it. Dented where the arrow went through, same as I remember. Sedge would've wanted someone to carry it. You take it, boss - I've got my own.
+option=I'll carry it well. You carry what it cost.|shield_give
+option=No. Carry it yourself, Bram. It's yours more than anyone's.|shield_keep
+
+[shield_spared]
+speaker=Bram
+text=Harl just... handed it over? No blood? (He turns the shield over; the arrow dent is still there.) Sedge never liked a fight he didn't need. Maybe he'd have liked you. Somebody should carry it.
+approve=warrior:3
+option=I'll carry it well. You carry what it cost.|shield_give
+option=Carry it yourself, Bram. It's yours more than anyone's.|shield_keep
+
+[shield_give]
+speaker=Bram
+text=Then it's yours, boss. I'll carry the rest - three years, six men. The next thing that hurts one of us gets all of it at once.
 give=militia_shield:1
 set=q_bram_done
 xp=120
 approve=warrior:15
+teach=bram:sedges_reprisal|sedges_vengeance
 quest=Bram: The Captain's Shield - done
 option=I'll carry it well.|end
+
+[shield_keep]
+speaker=Bram
+text=...Mine. (He straps it on over his own and stands a little straighter.) All right. Then I stand where Sedge stood - in front of whoever needs it. Watch.
+set=q_bram_done,bram_kept_shield
+xp=120
+approve=warrior:20
+teach=bram:sedges_guard|sedges_bulwark
+quest=Bram: The Captain's Shield - done
+option=Stand there, then.|end
 
 [gifts]
 speaker=Bram

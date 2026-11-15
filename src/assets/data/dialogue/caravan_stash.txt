@@ -1,0 +1,15 @@
+# 1.4.0 (#74): the sneaking way through the Stolen Caravan - the storeroom trigger in Thornhollow (bandit_camp) fires only
+# while the party is stealthy (Camouflage). The bandits stay in their camp; Harl never learns who took the crates.
+[start]
+speaker=$hero
+text=Crates stamped PELL'S PROVISIONS, stacked behind a curtain of hides. Bandits snore in the next room; a wolf lifts its head, sniffs the air where you aren't, and lays it down again. Under the top crate, wrapped in an old militia cloak, lies a dented round shield - and a heavy brass seal.
+set=q_caravan_done,sedge_shield_given
+give=mayor_seal:1
+xp=250
+quest=The Stolen Caravan - the goods are yours, and nobody saw a thing
+next=out
+
+[out]
+speaker=$hero
+text=It takes four trips through the dark, one crate at a time. Nobody wakes. By morning Harl will be counting empty floor and blaming her own people.
+option=(Slip out of Thornhollow.)|end
