@@ -1,0 +1,36 @@
+# Terminal (1.4.0, #77): an old machine asks for a password; the right one sets a flag.
+# args: password, solved, title
+#   password  the word (upper/lower case, spaces and dashes don't matter)
+#   solved    the flag set when it accepts: a door's openif=, an obstacle's needs=flag:, a change's if=...
+#   title     the machine's name, shown on the box (optional)
+# Place it as a sign with no text (Objects tab template terminal) and onuse=script:terminal,<password>,<solved>,<title>
+# The base game hides its passwords in the desktop's lore files (My Computer); a file whose first line is #locked
+# only appears once a game runs lorefile:<name> (a chest's onuse=, a dialogue, a script).
+let title = "TERMINAL"
+if args >= 3
+  title = arg3
+end
+speaker {title}
+if flag(arg2)
+  log {title}: ACCESS GRANTED. (Already unlocked.)
+  stop
+end
+input word PASSWORD REQUIRED. Type it and press Enter.
+if word == ""
+  log {title}: SESSION CLOSED.
+  stop
+end
+if squash(word) == squash(arg1)
+  set {arg2}
+  sound unlock
+  notify ACCESS GRANTED
+  log {title}: ACCESS GRANTED. Somewhere close, a lock disengages.
+else
+  inc {arg2}_tries
+  sound ui_error
+  notify ACCESS DENIED
+  log {title}: ACCESS DENIED.
+  if flag(arg2 + "_tries") >= 2
+    log (Machines like this kept their secrets on disk. The old computer you started from - My Computer on the desktop - might know more.)
+  end
+end

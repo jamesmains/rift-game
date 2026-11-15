@@ -184,11 +184,18 @@ void Desktop::drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool acti
 }
 
 // ======================================================================= My Computer (lore files)
+// 1.4.0 (#77): a file whose first line is "#locked" stays hidden until a game unlocks it (action lorefile:<name>)
+std::vector<std::string> Desktop::loreFiles() const {
+    std::string loreDir = assetDir + "/data/lore"; std::error_code ec;
+    auto locked = [&](const std::string& stem) { std::string t; if (!readFile(loreDir + "/" + stem + ".txt", t)) return false; return startsWith(t, "#locked") && !(game && game->foundFiles.count(stem)); };
+    std::vector<std::string> files; for (auto& e : std::filesystem::directory_iterator(loreDir, ec)) if (e.path().extension() == ".txt" && !locked(e.path().stem().string())) files.push_back(e.path().stem().string());
+    std::sort(files.begin(), files.end());
+    return files;
+}
 void Desktop::drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
     Font& f = *ctx.font;
-    std::string loreDir = assetDir + "/data/lore"; std::error_code ec;
-    std::vector<std::string> files; for (auto& e : std::filesystem::directory_iterator(loreDir, ec)) if (e.path().extension() == ".txt") files.push_back(e.path().stem().string());
-    std::sort(files.begin(), files.end());
+    std::string loreDir = assetDir + "/data/lore";
+    std::vector<std::string> files = loreFiles();
     int lx = w.x + 6, ly = w.y + 26, lw = 150, lh = w.h - 34;
     bevelBox(cv, lx, ly, lw, lh, true); cv.fillRect(lx + 2, ly + 2, lw - 4, lh - 4, HILITE);
     f.draw(cv, *ctx.ts, lx + 6, ly + 4, "(C:) TRIFFALL-HDD", DKSHADOW);
@@ -214,6 +221,7 @@ void Desktop::drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool act
     bevelBox(cv, tx, ly, tw, lh, true); cv.fillRect(tx + 2, ly + 2, tw - 4, lh - 4, HILITE);
     if (w.sel >= 0 && w.sel < (int)files.size()) {
         std::string text; readFile(loreDir + "/" + files[w.sel] + ".txt", text);
+        if (startsWith(text, "#locked")) { size_t nl = text.find('\n'); text = nl == std::string::npos ? std::string() : text.substr(nl + 1); }
         std::vector<std::string> lines; for (auto& raw : split(text, '\n')) { std::string l = raw; if (!l.empty() && l.back() == '\r') l.pop_back(); if (l.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(l, tw - 16)) lines.push_back(wl); }
         int maxShow = (lh - 8) / 13; if (active && in.wheel && in.mouseX >= tx) w.page = clampi(w.page - in.wheel * 2, 0, std::max(0, (int)lines.size() - maxShow));
         w.page = clampi(w.page, 0, std::max(0, (int)lines.size() - maxShow));

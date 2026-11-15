@@ -102,6 +102,7 @@ public:
     void refreshCampaignIcons();           // one desktop icon per campaign folder in assets/campaigns
     void openNewGame(const std::string& campaignId);
 
+    std::vector<std::string> loreFiles() const;   // 1.4.0 (#77): the files My Computer lists (#locked ones once a game unlocked them)
 private:
     void drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool active);
     void updateWindow(DeskWindow& w, InputState& in, float dt, bool active);

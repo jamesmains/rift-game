@@ -69,3 +69,21 @@ id=paper_sign
 type=sign
 sprite=27,14
 
+# 1.4.0 (#76/#77): puzzle pieces. A sign with no text but an onuse= only runs its onuse, so these are a terminal and a
+# combination lock you can place and point at a script (onuse=script:terminal,PASSWORD,FLAG,TITLE or
+# onuse=script:combination_lock,CODE,FLAG,TITLE). The flag usually opens a door (openif=FLAG) or an obstacle (needs=flag:FLAG).
+[template]
+id=terminal
+type=sign
+sprite=70,21
+title=Terminal
+text=
+onuse=script:terminal,PASSWORD,terminal_open,TERMINAL
+
+[template]
+id=combo_lock
+type=sign
+sprite=10,45
+title=Combination lock
+text=
+onuse=script:combination_lock,1234,lock_open,Combination lock

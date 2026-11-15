@@ -9,6 +9,7 @@ bg=0,0,0
 music=dungeon
 
 [legend]
+D = door_wood
 # = wall_cave
 . = floor_dirt
 < = stairs_up
@@ -47,14 +48,14 @@ XXXXXXX#..........C###..##XX##....#...3#XXXXXXXXXXXX
 XXXXXXX#............#...3####..........#XXXXXXXXXXXX
 XXXXXXX##..............wM.##.....##....#XXXXXXXXXXXX
 XXXXXXXX#.<.........m.....C....b########XXXXXXXXXXXX
-XXXXXXX##...####m...w....w....b.#XXXXXXXXXXXXXXXXXXX
-XXXXX###1..#####..m.......m.....#XXXXXXXXXXXXXXXXXXX
-XXXX##..m.####.................##XXXXXXXXXXXXXXXXXXX
-XXXX#1....###r................##XXXXXXXXXXXXXXXXXXXX
-XXXX#......#.M.....w....###..##XXXXXXXXXXXXXXXXXXXXX
-XXXX#.................###X####XXXXXXXXXXXXXXXXXXXXXX
-XXXX##..........m....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXX##.....##.......m##XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXX##...####m...w....w....b.##############XXXXXX
+XXXXX###1..#####..m.......m..............#####XXXXXX
+XXXX##..m.####.................##........#...#XXXXXX
+XXXX#1....###r................###........D...#XXXXXX
+XXXX#......#.M.....w....###..##X#........#...#XXXXXX
+XXXX#.................###X####XX#........#####XXXXXX
+XXXX##..........m....##XXXXXXXXX#........#XXXXXXXXXX
+XXXX##.....##.......m##XXXXXXXXX##########XXXXXXXXXX
 XXX##.....####........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XX##w....##XX##.......##XXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XX#m...b##XXXX#.....w.3#XXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -255,3 +256,63 @@ node=mithril_ore
 x=31
 y=17
 node=mithril_ore
+
+[plate]
+x=35
+y=24
+group=mine_plates
+onpress=script:pressure_plates,mine_plates,mine_plates_open
+
+[plate]
+x=39
+y=27
+group=mine_plates
+onpress=script:pressure_plates,mine_plates,mine_plates_open
+
+[plate]
+x=33
+y=28
+group=mine_plates
+onpress=script:pressure_plates,mine_plates,mine_plates_open
+
+[crate]
+id=mine_crate1
+x=36
+y=25
+name=Ore crate
+
+[crate]
+id=mine_crate2
+x=38
+y=26
+name=Ore crate
+
+[lever]
+x=40
+y=23
+name=Tipping lever
+flag=mine_plates_reset
+toggle=1
+text=The floor lurches under your feet.
+onuse=resetcrates:With a rumble the crates slide back to the loading marks.
+
+[sign]
+x=33
+y=24
+title=Chalked on the wall
+sprite=27,14
+text=SORTING ROOM. Three plates, three loads: one crate on each of the two far plates, and the foreman stands on his own. When all three are down the strongroom opens. Stuck? Pull the tipping lever.
+
+[door]
+x=41
+y=25
+openif=mine_plates_open
+locked=The strongroom door is barred from inside by a mechanism. Something in this room must work it.
+flag=mine_strongroom_door
+
+[chest]
+x=43
+y=25
+items=iron_ingot:2,gem_rough:3,mithril_ore:1
+gold=120
+flag=mine_strongroom

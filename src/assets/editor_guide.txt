@@ -2209,6 +2209,10 @@ Format: any text on one line. Default: empty.
 Signs are a cheap way to add flavour, directions and hints. The journal note
 is titled "<map name> sign", so give the map a name.
 
+1.4.0: a sign with an empty text= and an onuse= shows nothing and only runs its
+onuse. That is how terminals and combination locks are made (Objects tab
+templates terminal and combo_lock; see scripting.puzzles).
+
 == obj.door | Door object
 see: obj.door.key, obj.door.require, obj.door.openif, obj.door.flag, obj.door.locked, obj.door.metal, objtype
 
@@ -2397,15 +2401,28 @@ The ways the obstacle can be cleared. Separate several with |.
 - dig: a shovel (it breaks).
 - blast: a blasting charge (3-second fuse - run!) or a big area spell of fire, shock or physical damage, which also hurts the party standing near.
 - burn, melt: a torch, fire oil, or any fire spell.
-- force:N: the strongest party member needs STR N or more.
+- force:N: the strongest party member needs STR N or more - or anyone casts a spell with utility=force (1.4.0), whatever the STR.
 - spell:UTILITY: a spell with that utility, e.g. spell:unlock.
 - item:ID: uses up one of that item.
+- freeze (1.4.0): water that a cold spell (utility=freeze) or a Frost Flask turns to ice for this visit. No flag is set and the water comes back when the party leaves the map. Default look: the water on its cell (else floor_water); clear= defaults to floor_ice.
+- shock (1.4.0): a dead machine, lift or door. A utility=shock spell, any shock damage spell, a Charged Cell or an Energy Cell Pack wakes it. Default look: door_metal.
+- emp (1.4.0): a sealed tech door. A utility=emp spell or an EMP Grenade scrambles its lock. Default look: door_metal.
+- light (1.4.0): something only seen in the light. A lit party (torch, light spell, glowing gear) that comes within two steps reveals it by itself; the menu also offers a light spell or lighting a torch. Default look: whatever the map has on the cell, so it can pass for a plain wall.
+- spell:detect: also uncovered by a utility=detect spell cast within 8 steps (needs=light|spell:detect is a hidden niche both a torch and a ranger can find).
 - flag:COND: the obstacle clears itself as soon as the condition COND is true, like a door's openif=. Its menu hint says nothing the party does here will shift it - something else must happen first.
 
   needs=burn
   needs=force:15|blast
   needs=item:keycard_red|spell:unlock
   needs=flag:pump_on&q_flood>=2
+  needs=freeze
+  needs=shock
+  needs=light|spell:detect
+
+The utility spells work from the Spells menu too: cast one next to an obstacle
+it clears (freeze, shock, emp, force) and it clears it; light and detect reveal
+hidden ones nearby. In the object panel the "+" button next to needs lists every
+value.
 
 Gotchas: if the obstacle's flag gets set any other way (dialogue set=, a
 lever) it also clears by itself. flag: can be mixed with other ways
@@ -2417,7 +2434,9 @@ see: obj.obstacle, obj.obstacle.clear, tab.tiles
 The tile kind painted on the obstacle's cells while it blocks.
 
 Format: a tile kind name. Default: vines when needs mentions burn, ice_wall
-when it mentions melt, otherwise rubble_pile.
+when it mentions melt; freeze: the water already on the cell (else floor_water);
+shock or emp: door_metal; light: the cell's own kind; otherwise rubble_pile.
+(1.4.0) The cells always block, even when the kind is walkable.
 
   kind=rubble_pile
 
@@ -4281,9 +4300,15 @@ A non-combat use, cast from the Spells menu outside fights:
 
 - light: a glow around the party on dark maps for a while (in combat: a light at the target tile).
 - stealth: monsters notice the party from a third of the distance and random fights are rarer.
-- detect: counts the unopened chests on the map and makes them glow.
+- detect: counts the unopened chests on the map and makes them glow; 1.4.0: also uncovers needs=spell:detect obstacles within 8 steps.
 - unlock: opens a locked door or chest next to the caster.
 - recall: returns to the last town entered.
+- freeze (1.4.0): turns the water of a needs=freeze obstacle next to the caster into ice for this visit.
+- shock (1.4.0): wakes a dead machine, lift or door (needs=shock) next to the caster. Any shock damage spell does it from the obstacle's menu too.
+- emp (1.4.0): scrambles a sealed tech door (needs=emp) next to the caster.
+- force (1.4.0): clears a force:N obstacle next to the caster whatever the STR; with none, heaves the crate in front of the party one tile (heavy crates too).
+
+light also reveals needs=light obstacles within two steps.
 
 Format: dropdown. Default: empty.
 
@@ -6799,6 +6824,15 @@ id ("" if they close the map). wait pauses for seconds of play on the map.
 Text: after say, option, speaker and actions, anything in {} is worked out.
 "Quoted text" works too, and can be joined with +.
 
+Typing (1.4.0):
+
+  input code Turn the dials. What is the combination?
+
+input opens a box the player types into (Enter = OK, Esc = cancel; on a pad
+the d-pad picks letters). The variable gets what was typed, "" when cancelled.
+It is how the combination lock and terminal scripts ask for codes. The box's
+title is the speaker (else the NPC's name). See scripting.puzzles.
+
 == scripting.values | Values and functions in scripts
 see: scripting.commands, concepts.conditions
 
@@ -6825,6 +6859,8 @@ Functions:
 - mapname(map), itemname(item).
 - Lists are text with commas: count(l), at(l, 2), contains(l, x), add(l, x).
 - len(t), upper(t), lower(t), find(t, part) (position, 0 = not there), min(a, b), max(a, b), abs(n), var("name").
+- 1.4.0: mid(t, start, length) - part of a text (start at 1; no length = to the end). squash(t) - only the letters and digits, in capitals: compare typed codes with squash(code) == squash(arg1) and "rift-0", "Rift 0" and "RIFT0" all match.
+- 1.4.0: plates(group), platesdown(group) - pressure plates on this map with that group= (all of them / those down now). crateat(x, y) - 1 if a crate stands there. lorefile(name) - 1 once that desktop file is unlocked.
 
 == scripting.actions | Actions in scripts
 see: dlg.actions, scripting.commands
@@ -6852,6 +6888,10 @@ New in 1.1.10, for scripts and dialogue nodes alike:
 - time=minutes - time passes. sound=id - plays a sound. encounter - a random fight from the ground underfoot. On a touch=1 map the group appears a few tiles away and chases the party (the script carries on at once); encounter now (action lists: encounter:now) starts the fight at once, as the coach's ambush does.
 - weather=new|clear|rain|storm|fog|snow. stat=travels:1 - counts towards a statistic (travels, kills, chests, crafted, bounties, fights).
 - teleport=map,x,y,text - the text shows while travelling.
+
+New in 1.4.0:
+- resetcrates[=message] - every crate on this map goes back to its placed spot (a "tipping lever" for a stuck plate puzzle).
+- lorefile=name - a #locked desktop file (data/lore/<name>.txt) appears in My Computer, for every save slot. See desktop.lorefiles.
 
 == scripting.hooks | Where scripts run
 see: tab.scripts, obj.npc.script, map.onenter, concepts.scripts
@@ -6902,3 +6942,153 @@ script:<id>. It doesn't run when a save is loaded. Give it a keep variable
 or a flag if it should only do something once.
 
   onenter=script:harbour_bells
+
+== obj.crate | Crate object (1.4.0)
+see: obj.crate.heavy, obj.plate, puzzle.plates, scripting.puzzles
+
+A crate the party pushes one tile by walking into it (Sokoban style). It blocks
+its cell - in fights too - and can't be pushed into walls, people, chests,
+exits, other crates or an open doorway.
+
+  [crate]
+  id=mine_crate1
+  x=36
+  y=25
+  name=Ore crate
+
+Crates go back to where they were placed every time the party arrives on the
+map, so a puzzle can never be lost for good. A lever with onuse=resetcrates puts
+them back at once. Keys: id (tests and scripts name it; default crate1, crate2...),
+name, heavy, sprite (default the crate picture 8,36), color.
+
+== obj.crate.heavy | Heavy crate
+see: obj.crate, obj.obstacle.needs
+
+heavy=N: walking into it only pushes it if the strongest party member has STR N.
+Otherwise a menu offers a utility=force spell (the warrior's heave) or a try with
+the best STR. A force spell cast from the Spells menu also heaves the crate in
+front of the party, however heavy.
+
+  heavy=16
+
+== obj.crate.id | Crate id
+see: obj.crate
+
+A name for this crate on this map (crate1, crate2... when empty). The headless
+tests check crate:<id>; scripts can look for a crate with crateat(x, y).
+
+== obj.plate | Pressure plate object (1.4.0)
+see: obj.plate.group, obj.plate.onpress, obj.crate, puzzle.plates
+
+A stone plate in the floor. It is down while a crate or the party's leader
+stands on it. When it goes down its onpress= runs, when it comes up its
+onrelease= runs (action lists, like a lever's onuse=). Plates that belong to one
+puzzle share a group=; the script functions plates(group) and platesdown(group)
+count them.
+
+  [plate]
+  x=35
+  y=24
+  group=mine_plates
+  onpress=script:pressure_plates,mine_plates,mine_plates_open
+
+Keys: group, onpress, onrelease, sprite (empty = a drawn stone square), color.
+Place plates on walkable floor.
+
+== obj.plate.group | Plate group
+see: obj.plate, puzzle.plates
+
+The puzzle this plate belongs to. scripts/pressure_plates.txt opens the puzzle
+once every plate of the group is down at the same time.
+
+== obj.plate.onpress | Plate onpress / onrelease
+see: obj.plate, scripting.hooks, concepts.scripts
+
+Action lists run when the plate goes down (onpress=) or comes back up
+(onrelease=): script:<id>,args, flag:NAME, message:Title|Text...
+
+== obj.plate.onrelease | Plate onrelease
+see: obj.plate.onpress
+
+Runs when the plate comes back up (the crate or the party moved off it).
+
+== scripting.puzzles | Puzzle scripts (1.4.0)
+see: puzzle.levers, puzzle.plates, puzzle.combination, puzzle.terminal, scripting.commands, obj.crate, obj.plate
+
+Four ready-made puzzle scripts in data/scripts. Each takes its settings as
+arguments, so the same script runs every copy of a puzzle:
+
+  onuse=script:lever_sequence,crypt_seq,3,3142,crypt_seq_solved
+  onpress=script:pressure_plates,mine_plates,mine_plates_open
+  onuse=script:combination_lock,4721,strongroom_open,Strongroom lock
+  onuse=script:terminal,RIFT0,vault_open,ANNEX-NET vault terminal
+
+Each one sets a "solved" flag. Point a door's openif=, a change's if= or an
+obstacle's needs=flag: at it. The first lines of each script say what its
+arguments are ("# args: ..."); the Editor's script lists show them, and picking
+one fills in the argument names for you to replace.
+
+In the base game: the crypt's four lords (levers), the old mine's sorting room
+(plates and crates), Kesh's strongroom in the bandit camp (combination lock),
+and terminals in the Research Annex, the metro and the starship.
+
+== puzzle.levers | Lever sequence puzzle
+see: scripting.puzzles, obj.lever
+
+scripts/lever_sequence.txt - pull the levers in the right order; a wrong lever
+springs them all back up.
+
+  args: puzzle, lever, order, solved
+
+Place each lever with toggle=0, flag=<puzzle>_<n> and
+onuse=script:lever_sequence,<puzzle>,<n>,<order>,<solved>. order is the lever
+numbers as digits (3142). Progress is kept in the flag <puzzle>_step. Leave a clue
+for the order somewhere (a sign, a dialogue).
+
+== puzzle.plates | Pressure plate puzzle
+see: scripting.puzzles, obj.plate, obj.crate
+
+scripts/pressure_plates.txt - every plate of a group down at once opens it.
+
+  args: group, solved, message
+
+Give each plate group=<group> and onpress=script:pressure_plates,<group>,<solved>.
+Add crates for the far plates; the party's leader can hold one plate. A lever
+with onuse=resetcrates helps a stuck player (leaving the map resets crates too).
+
+== puzzle.combination | Combination lock
+see: scripting.puzzles, scripting.commands
+
+scripts/combination_lock.txt - a box to type the code into (the script input
+statement).
+
+  args: code, solved, title
+
+Place it as a sign with no text (Objects tab template combo_lock, a padlock):
+onuse=script:combination_lock,<code>,<solved>,<title>. Upper/lower case, spaces
+and dashes in the answer don't matter. Hide the code elsewhere: a note, a
+dialogue, a desktop file.
+
+== puzzle.terminal | Terminal password
+see: scripting.puzzles, desktop.lorefiles
+
+scripts/terminal.txt - an old machine asks for a password. Two wrong tries and
+the log hints that the old computer (My Computer on the desktop) knows more.
+
+  args: password, solved, title
+
+Place it as a sign with no text (Objects tab template terminal):
+onuse=script:terminal,<password>,<solved>,<title>.
+
+== desktop.lorefiles | Desktop files (My Computer)
+see: puzzle.terminal, scripting.actions
+
+The text files in data/lore show in the desktop's My Computer. A file whose
+first line is #locked stays hidden until a game unlocks it with the action
+lorefile:<name> (a chest's onuse=, a dialogue, a script). Unlocked files stay
+for every save slot (files.ini in the save folder, like achievements); the dev
+console's reset_files locks them again.
+
+The base game chains its terminals this way: annex_memo is always there (the
+Annex password), the Annex vault unlocks metro_dispatch (the metro password),
+the metro vault unlocks ship_manifest (the ship password).

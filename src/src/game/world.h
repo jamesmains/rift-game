@@ -151,7 +151,14 @@ struct Trigger { int x = 0, y = 0, w = 1, h = 1; std::string script; std::string
 struct SignPost { int x = 0, y = 0; std::string text; Tile sprite; bool hasColor = false; Color8 color = C::White; std::string title, sound, onUse; };
 struct Door { int x = 0, y = 0; bool open = false; std::string key; std::string flag; Tile closedTile, openTile; std::string openIf, require, lockedMsg; std::string sound, msg, onUse; };
 // Something in the way that the right tool, spell or deed removes: rubble (shovel / blast), vines (fire), ice (fire), a boulder (STR)...
-struct Obstacle { int x = 0, y = 0, w = 1, h = 1; std::string name, kind, clearKind, needs, flag, msg, onClear; bool cleared = false; };
+struct Obstacle { int x = 0, y = 0, w = 1, h = 1; std::string name, kind, clearKind, needs, flag, msg, onClear; bool cleared = false;
+    bool visit = false; };   // 1.4.0 (#75): visit = cleared only for this visit (frozen water): it comes back when the party leaves the map
+// 1.4.0 (#76): a crate the party pushes one tile by walking into it (heavy=N: needs STR N or a utility=force spell).
+// Crates go back to their placed spots whenever the party arrives on the map (a stuck puzzle is never lost for good).
+struct Crate { int x = 0, y = 0, homeX = 0, homeY = 0, heavy = 0; std::string id, name; Tile sprite; bool hasColor = false; Color8 color = C::White; };
+// 1.4.0 (#76): a pressure plate: down while a crate or the party's leader stands on it. group= ties plates into one
+// puzzle (script functions plates/platesdown); onpress= / onrelease= are action lists run when it goes down / comes up.
+struct Plate { int x = 0, y = 0; std::string group, onPress, onRelease; Tile sprite; bool hasColor = false; Color8 color = C::White; bool down = false; };
 // A lever or switch: toggles a flag; doors (openif=), changes and obstacles react to flags.
 struct Lever { int x = 0, y = 0; std::string flag, msg, name; bool toggle = true; Tile sprite, onSprite; std::string sound, onUse; };
 // A part of the map that looks different while a condition holds (a bridge appears, a wall crumbles, water drains).
@@ -215,6 +222,10 @@ struct Map {
     std::vector<Lever> levers;
     std::vector<WorldChange> changes;
     std::vector<GatherNode> gathers;
+    std::vector<Crate> crates;     // 1.4.0 (#76)
+    std::vector<Plate> plates;
+    Crate* crateAt(int x, int y) { for (auto& c : crates) if (c.x == x && c.y == y) return &c; return nullptr; }
+    Plate* plateAt(int x, int y) { for (auto& p : plates) if (p.x == x && p.y == y) return &p; return nullptr; }
     Obstacle* obstacleAt(int x, int y) { for (auto& o : obstacles) if (!o.cleared && x >= o.x && y >= o.y && x < o.x + o.w && y < o.y + o.h) return &o; return nullptr; }
     Lever* leverAt(int x, int y) { for (auto& l : levers) if (l.x == x && l.y == y) return &l; return nullptr; }
     GatherNode* gatherAt(int x, int y) { for (auto& g : gathers) if (g.x == x && g.y == y) return &g; return nullptr; }

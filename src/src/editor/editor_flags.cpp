@@ -33,8 +33,23 @@ std::vector<std::string> condFlags(const std::string& cond) {
 }
 // flags a script ("set:a,b=2;dialogue:x;inc:c") or a set= value ("a,b=2") sets
 static std::vector<std::string> setList(const std::string& v) { std::vector<std::string> o; for (auto& f : split(v, ',')) { std::string n = trim(split(trim(f), '=')[0]); if (!n.empty()) o.push_back(n); } return o; }
+// 1.4.0 (#76): script:<id>,a,b,c sets the flags its arguments name when the script has "set {argN}" lines (the puzzle
+// scripts take their "solved" flag as an argument). gFlagScriptText reads a script's text (set while the index is built).
+static std::function<std::string(const std::string&)> gFlagScriptText;
+static void scriptArgFlags(const std::string& v, std::vector<std::pair<std::string, bool>>& out) {
+    if (!gFlagScriptText) return;
+    auto p = split(v, ','); std::string id = trim(p[0]); if (id.empty() || p.size() < 2) return;
+    std::string text = gFlagScriptText(id);
+    for (auto& raw : split(text, '\n')) {
+        std::string l = trim(raw); size_t sp = l.find(' '); if (sp == std::string::npos) continue;
+        std::string w = toLower(l.substr(0, sp)), rest = trim(l.substr(sp + 1)); bool set = w == "set" || w == "flag" || w == "inc"; if (!set && w != "clear") continue;
+        for (auto& part : split(rest, ',')) { std::string f = trim(split(part, '=')[0]);
+            if (f.size() == 6 && startsWith(f, "{arg") && f[5] == '}' && isdigit((unsigned char)f[4])) { size_t n = (size_t)(f[4] - '0'); if (n >= 1 && n < p.size() && !trim(p[n]).empty()) out.push_back({trim(p[n]), set}); } }
+    }
+}
 static void scriptFlags(const std::string& script, std::vector<std::pair<std::string, bool>>& out) {   // (flag, true = set / false = cleared)
     for (auto& a : split(script, ';')) { std::string t = trim(a); size_t p = t.find(':'); if (p == std::string::npos) continue; std::string k = trim(t.substr(0, p)), v = trim(t.substr(p + 1));
+        if (k == "script") { scriptArgFlags(v, out); continue; }
         if (k == "set" || k == "flag" || k == "inc") for (auto& f : (k == "set" ? setList(v) : std::vector<std::string>{v})) out.push_back({f, true});
         else if (k == "clear") for (auto& f : setList(v)) out.push_back({f, false});
         else if (k == "join") { std::string c = parseJoin(v).cls; if (!c.empty()) out.push_back({"joined_" + c, true}); }   // the NPCs the game has loaded
@@ -84,6 +99,7 @@ void Editor::scanMaps() {
 void Editor::ensureIndex() { if (flagIndexDirty || !indexBuilt) buildFlagIndex(); }
 
 void Editor::buildFlagIndex() {
+    gFlagScriptText = [this](const std::string& id) { std::string t; if (id.find('/') == std::string::npos && id.find('\\') == std::string::npos) readFile(readPath("scripts/" + id + ".txt"), t); return t; };   // 1.4.0
     flagIndex.clear(); flagIndexDirty = false; indexBuilt = true;
     scanMaps();
     auto add = [&](const std::string& f, bool set, const std::string& where, const std::string& detail, FlagUse u) { if (f.empty() || f[0] == '_') return; u.set = set; u.where = where; u.detail = detail; flagIndex[f].push_back(u); };
@@ -126,7 +142,7 @@ void Editor::buildFlagIndex() {
                 std::string d = std::string(ck) == "show" ? "only there while " : std::string(ck) == "hide" ? "gone while " : std::string(ck) == "moveif" ? "moves aside once " : std::string(ck) == "openif" ? "opens by itself once " : std::string(ck) == "if" ? "the tiles change while " : "locked until ";
                 addCond(c, where, std::string(ck) + "=: " + d + condEnglish(c), u); }
             for (auto& n : split(o.get("needs"), '|')) if (startsWith(trim(n), "flag:")) addCond(trim(n).substr(5), where, "needs=flag: can be cleared once " + condEnglish(trim(n).substr(5)), u);
-            for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) { std::vector<std::pair<std::string, bool>> fs2; scriptFlags(o.get(sk), fs2); for (auto& p : fs2) add(p.first, true, where, std::string(sk) + "=" + o.get(sk) + (p.second ? "" : "  (clears it)"), u); }
+            for (const char* sk : {"script", "ondefeat", "onclear", "onuse", "onpress", "onrelease"}) { std::vector<std::pair<std::string, bool>> fs2; scriptFlags(o.get(sk), fs2); for (auto& p : fs2) add(p.first, true, where, std::string(sk) + "=" + o.get(sk) + (p.second ? "" : "  (clears it)"), u); }
         }
     }
     // ---- scripts (1.1.10): set / flag / inc / clear lines, and flag("x") / cond("...") reads ----

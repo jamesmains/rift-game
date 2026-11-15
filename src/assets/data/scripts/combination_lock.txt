@@ -1,0 +1,27 @@
+# Combination lock (1.4.0, #76): type the combination; the right one sets a flag.
+# args: code, solved, title
+#   code    the combination: digits or letters (upper/lower case, spaces and dashes don't matter)
+#   solved  the flag set when it opens: a door's openif=, an obstacle's needs=flag:, a change's if=...
+#   title   the name on the box (optional)
+# Place it as a sign with no text (Objects tab template combo_lock) and onuse=script:combination_lock,<code>,<solved>,<title>
+# Put the code somewhere else for the party to find: a note (sign), a dialogue, a desktop file...
+if flag(arg2)
+  log The lock hangs open.
+  stop
+end
+if args >= 3
+  speaker {arg3}
+end
+input code Turn the dials. What is the combination?
+if code == ""
+  stop
+end
+if squash(code) == squash(arg1)
+  set {arg2}
+  sound unlock
+  notify Unlocked!
+  log Click - click - CLACK. The lock springs open.
+else
+  sound ui_error
+  log The dials spin back to zero. Wrong combination.
+end

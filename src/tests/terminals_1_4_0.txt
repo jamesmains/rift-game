@@ -1,0 +1,134 @@
+# 1.4.0 (#77): terminals in the Research Annex, the metro and the ship ask for a password (scripts/terminal.txt, the
+# script "input" box). The passwords are in the desktop's lore files: annex_memo.txt is always there; metro_dispatch
+# and ship_manifest start #locked and appear in My Computer once the vault before them is opened (chest onuse=
+# lorefile:<name>). Expect keys: lorefile:NAME (unlocked), deskfiles (what My Computer lists), inputtext.
+newgame Kai warrior 1
+god
+frames 30
+expect deskfiles contains annex_memo
+expect deskfiles lacks metro_dispatch
+expect deskfiles lacks ship_manifest
+expect lorefile:metro_dispatch == 0
+# ---- the Annex vault terminal (14,3): RIFT0, from annex_memo + machine_log ----
+con clearmap lab
+teleport lab 13 3
+frames 130
+key LEFT
+frames 10
+expect mode == EXPLORE
+key RIGHT
+frames 10
+expect mode == NAME
+type hello
+key ENTER
+frames 10
+expect log contains ACCESS DENIED
+expect flag:lab_vault_open == 0
+key RIGHT
+frames 10
+type password
+key ENTER
+frames 10
+expect log contains My Computer on the desktop
+key RIGHT
+frames 10
+type rift-0
+key ENTER
+frames 10
+expect flag:lab_vault_open == 1
+expect log contains ACCESS GRANTED
+key RIGHT
+frames 10
+expect mode == EXPLORE
+expect log contains Already unlocked
+teleport lab 9 3
+frames 10
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+expect x == 4
+key LEFT
+frames 10
+key UP
+frames 8
+key LEFT
+frames 20
+expect item:disk_dispatch == 1
+expect lorefile:metro_dispatch == 1
+expect deskfiles contains metro_dispatch
+expect deskfiles lacks ship_manifest
+expect log contains My Computer > metro_dispatch.txt
+shot term_lab_vault.png
+# ---- the metro dispatch terminal (45,20): 1407 MARGOT, from metro_dispatch ----
+con clearmap metro
+teleport metro 44 20
+frames 130
+key RIGHT
+frames 10
+expect mode == NAME
+type 1407 Margot
+key ENTER
+frames 10
+expect flag:metro_vault_open == 1
+teleport metro 45 22
+frames 10
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key UP
+frames 8
+key RIGHT
+frames 20
+expect item:disk_manifest == 1
+expect deskfiles contains ship_manifest
+# ---- the ship's captain's terminal (9,12): RATSNEVE (EVENSTAR backwards), from ship_manifest ----
+con clearmap ship
+teleport ship 10 12
+frames 130
+key LEFT
+frames 10
+expect mode == NAME
+type evenstar
+key ENTER
+frames 10
+expect flag:ship_vault_open == 0
+key LEFT
+frames 10
+type ratsneve
+key ENTER
+frames 10
+expect flag:ship_vault_open == 1
+teleport ship 9 11
+frames 10
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key UP
+frames 8
+key LEFT
+frames 20
+expect flag:ship_vault_chest == 1
+# unlocked files stay unlocked for every save slot (files.ini); console reset_files locks them again
+expect savefile:files.ini == 1
+con reset_files
+expect deskfiles lacks metro_dispatch
+log

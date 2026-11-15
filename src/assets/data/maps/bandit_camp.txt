@@ -9,6 +9,7 @@ bg=0,0,0
 music=tales_by_firelight
 
 [legend]
+D = door_wood
 , = rock
 . = floor_dirt
 : = floor_wood
@@ -51,10 +52,10 @@ o = barrel
 ,=.....=,=....................==......=,,,,,,,
 ,=...I.===.....===.=..........==......=,,,,,,,
 ,=.......................<............=,,,,,,,
-,=:::::=============o.........==......=,,,,,,,
-,=:::::=,,,,,,,,,,,=...A......==.....K=,,,,,,,
-,=======,,,,,,,,,,,=.....I....=========,,,,,,,
-,,,,,,,,,,,,,,,,,,,============,,,,,,,,,,,,,,,
+,=:::::===D=========o.........==......=,,,,,,,
+,=:::::==....=,,,,,=...A......==.....K=,,,,,,,
+,========....=,,,,,=.....I....=========,,,,,,,
+,,,,,,,,======,,,,,============,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -181,3 +182,31 @@ ty=103
 x=26
 y=29
 
+[sign]
+template=combo_lock
+x=12
+y=28
+title=Strongroom lock
+text=
+onuse=script:combination_lock,4721,bandit_strongroom_open,Strongroom lock
+
+[door]
+x=10
+y=28
+openif=bandit_strongroom_open
+locked=A stout plank door, barred with iron. The lock beside it has four brass dials.
+flag=bandit_strongroom_door
+
+[chest]
+x=11
+y=29
+items=steel_ingot:2,potion_red2:1,blasting_charge:1
+gold=160
+flag=bandit_strongroom_chest
+
+[sign]
+x=12
+y=5
+title=Crumpled note
+sprite=27,14
+text=Boss - the new strongroom lock is set. Four dials: FOUR, SEVEN, TWO, ONE. Learn it and burn this. Don't tell Vosk. - R.

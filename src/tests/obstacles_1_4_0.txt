@@ -1,0 +1,184 @@
+# 1.4.0 (#75): elemental obstacles - needs=freeze / shock / emp / light, force cleared by a utility=force spell, and
+# the items that do the same (Frost Flask, Charged Cell, EMP Grenade, a torch). The class spells come from another
+# change, so this test makes its own: console "testspell ID UTILITY [COST]" (a made-up spell with that utility=) and
+# "castout SPELL" (cast it from the menu, outside a fight). Expect keys: obstacle:X,Y (1 while blocked), kind:X,Y.
+newgame Kai warrior 1
+god
+frames 30
+# ---- freeze with a Frost Flask: the marsh's black channel (10,31-32); it thaws when the party leaves ----
+con clearmap marsh
+teleport marsh 10 30
+frames 130
+expect obstacle:10,31 == 1
+expect kind:10,31 == floor_water
+con give frost_flask 1
+key DOWN
+frames 30
+expect mode == DIALOGUE
+expect talk contains Frost Flask
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:10,31 == 0
+expect kind:10,32 == floor_ice
+expect item:frost_flask == 0
+expect log contains locks solid
+key DOWN
+frames 8
+key DOWN
+frames 8
+key DOWN
+frames 8
+expect y == 33
+key DOWN
+frames 20
+expect flag:marsh_drowned_alcove == 1
+shot obst_marsh_frozen.png
+teleport hollowmere 12 11
+frames 60
+con clearmap marsh
+teleport marsh 10 30
+frames 130
+expect obstacle:10,31 == 1
+expect kind:10,31 == floor_water
+# ---- freeze with a utility=freeze spell cast from the menu: the troll cave stream (6-7,21) ----
+con testspell t_rime freeze 0
+con clearmap troll_cave
+teleport troll_cave 8 21
+frames 130
+expect obstacle:7,21 == 1
+con castout t_rime
+frames 10
+expect obstacle:7,21 == 0
+expect kind:6,21 == floor_ice
+key LEFT
+frames 8
+key LEFT
+frames 8
+expect x == 6
+# ---- shock with a Charged Cell: the lab's dead service lift (43,27) ----
+con clearmap lab
+teleport lab 42 27
+frames 130
+expect obstacle:43,27 == 1
+expect kind:43,27 == door_metal
+con give charged_cell 1
+key RIGHT
+frames 30
+expect talk contains Charged Cell
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:43,27 == 0
+expect kind:43,27 == floor_metal
+expect log contains wakes
+# ---- shock with a utility=shock spell from the obstacle menu: the metro's dead freight lift (4,20) ----
+con testspell t_jolt shock 0
+con clearmap metro
+teleport metro 4 19
+frames 130
+expect obstacle:4,20 == 1
+key DOWN
+frames 30
+expect talk contains t_jolt
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:4,20 == 0
+# ---- emp with an EMP Grenade: the metro's security shutter (34,12) ----
+con clearmap metro
+teleport metro 34 13
+frames 130
+expect obstacle:34,12 == 1
+con give emp_grenade 1
+key UP
+frames 30
+expect talk contains EMP Grenade
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:34,12 == 0
+expect log contains seal lets go
+# ---- emp with a utility=emp spell cast from the menu: the ship's sealed armoury (9,4) ----
+con testspell t_emp emp 0
+con clearmap ship
+teleport ship 10 4
+frames 130
+expect obstacle:9,4 == 1
+con castout t_emp
+frames 10
+expect obstacle:9,4 == 0
+# ---- light by a torch from the obstacle menu: the barrow's scratched wall (12,19) ----
+con clearmap barrow
+teleport barrow 13 19
+frames 130
+expect cond:lit == 0
+expect obstacle:12,19 == 1
+con give torch_item 1
+key LEFT
+frames 30
+expect talk contains Light a torch
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:12,19 == 0
+expect cond:lit == 1
+expect log contains torch
+# ---- light: the crypt's odd stretch of wall (9,33) shows itself once a lit party comes within two steps ----
+con testspell t_light light 0
+con clearmap crypt
+teleport crypt 13 33
+frames 130
+expect obstacle:9,33 == 1
+con castout t_light
+frames 10
+expect obstacle:9,33 == 1
+key LEFT
+frames 10
+key LEFT
+frames 10
+expect obstacle:9,33 == 0
+expect kind:9,33 == floor_stone
+expect log contains not what it seemed
+# ---- force: the goblin barricade (9,24) gives way to a utility=force spell whatever the STR ----
+con testspell t_heave force 0
+con clearmap goblin_cave
+teleport goblin_cave 8 24
+frames 130
+expect obstacle:9,24 == 1
+key RIGHT
+frames 30
+expect talk contains t_heave
+key ENTER
+frames 60
+key ENTER
+frames 20
+expect obstacle:9,24 == 0
+# ---- force cast from the menu next to the old mine's wedged boulder (34,19) ----
+con clearmap old_mine
+teleport old_mine 33 19
+frames 130
+expect obstacle:34,19 == 1
+con castout t_heave
+frames 10
+expect obstacle:34,19 == 0
+expect flag:mine_boulder == 1
+# ---- detect: a utility=detect spell cast within 8 steps uncovers the crypt wall (a new game: the maps load again) ----
+newgame Kai warrior 1
+god
+frames 30
+con testspell t_sense detect 0
+con clearmap crypt
+teleport crypt 15 33
+frames 130
+expect obstacle:9,33 == 1
+con castout t_sense
+frames 10
+expect obstacle:9,33 == 0
+expect log contains senses prickle
+log

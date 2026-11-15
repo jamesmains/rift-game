@@ -321,10 +321,31 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
         } else if (type == "obstacle") {
             Obstacle o; o.x = geti(kv, "x", 0); o.y = geti(kv, "y", 0); o.w = geti(kv, "w", 1); o.h = geti(kv, "h", 1); o.name = gets(kv, "name", "Rubble");
             o.kind = gets(kv, "kind"); o.clearKind = gets(kv, "clear"); o.needs = gets(kv, "needs", "rubble"); o.flag = gets(kv, "flag"); o.msg = gets(kv, "text"); o.onClear = gets(kv, "onclear");
-            if (o.kind.empty()) o.kind = o.needs.find("burn") != std::string::npos ? "vines" : o.needs.find("melt") != std::string::npos ? "ice_wall" : "rubble_pile";
-            if (o.clearKind.empty() && m.inBounds(o.x, o.y)) { const auto& ks = allTileKinds(); o.clearKind = ks[m.at(o.x, o.y).kind].name; if (!ks[m.at(o.x, o.y).kind].walkable) o.clearKind = "floor_cave"; }
-            for (int yy = o.y; yy < o.y + o.h; yy++) for (int xx = o.x; xx < o.x + o.w; xx++) m.set(xx, yy, o.kind, rng);
+            // 1.4.0 (#75): freeze (water -> ice), shock / emp (a dead or sealed machine door), light (shows only when lit:
+            // looks like whatever the map has there)
+            auto needsHas = [&](const char* w) { for (auto& n : split(o.needs, '|')) if (trim(n) == w) return true; return false; };
+            const auto& ks = allTileKinds(); bool inb = m.inBounds(o.x, o.y);
+            const TileKind* here = inb && m.at(o.x, o.y).kind < ks.size() ? &ks[m.at(o.x, o.y).kind] : nullptr;
+            if (o.kind.empty()) {
+                if (needsHas("freeze")) o.kind = here && here->water && !here->walkable ? here->name : "floor_water";
+                else if (needsHas("light") && here) o.kind = here->name;
+                else if (needsHas("shock") || needsHas("emp")) o.kind = "door_metal";
+                else o.kind = o.needs.find("burn") != std::string::npos ? "vines" : o.needs.find("melt") != std::string::npos ? "ice_wall" : "rubble_pile";
+            }
+            if (o.clearKind.empty() && needsHas("freeze")) o.clearKind = "floor_ice";
+            if (o.clearKind.empty() && inb) { o.clearKind = ks[m.at(o.x, o.y).kind].name; if (!ks[m.at(o.x, o.y).kind].walkable) o.clearKind = "floor_cave"; }
+            for (int yy = o.y; yy < o.y + o.h; yy++) for (int xx = o.x; xx < o.x + o.w; xx++) { m.set(xx, yy, o.kind, rng); if (m.inBounds(xx, yy)) m.at(xx, yy).walkable = false; }   // 1.4.0: blocks even if its kind is walkable (a metal door)
             m.obstacles.push_back(o);
+        } else if (type == "crate") {   // 1.4.0 (#76)
+            Crate c; c.x = c.homeX = geti(kv, "x", 0); c.y = c.homeY = geti(kv, "y", 0); c.id = gets(kv, "id"); if (c.id.empty()) c.id = fmt("crate%d", (int)m.crates.size() + 1);
+            c.heavy = geti(kv, "heavy", 0); c.name = gets(kv, "name", c.heavy > 0 ? "Heavy crate" : "Crate");
+            kvTile(kv, "sprite", c.sprite); kvColor(kv, "color", c.hasColor, c.color);
+            if (m.inBounds(c.x, c.y)) m.at(c.x, c.y).walkable = false;   // a crate blocks its cell (fights too); pushing it moves the block
+            m.crates.push_back(c);
+        } else if (type == "plate") {   // 1.4.0 (#76)
+            Plate p; p.x = geti(kv, "x", 0); p.y = geti(kv, "y", 0); p.group = trim(gets(kv, "group")); p.onPress = gets(kv, "onpress"); p.onRelease = gets(kv, "onrelease");
+            kvTile(kv, "sprite", p.sprite); kvColor(kv, "color", p.hasColor, p.color);
+            m.plates.push_back(p);
         } else if (type == "lever") {
             Lever l; l.x = geti(kv, "x", 0); l.y = geti(kv, "y", 0); l.flag = gets(kv, "flag"); l.msg = gets(kv, "text"); l.name = gets(kv, "name", "Lever"); l.toggle = geti(kv, "toggle", 1) != 0;
             kvTile(kv, "sprite", l.sprite); kvTile(kv, "onsprite", l.onSprite); kvText(kv, "sound", l.sound); kvText(kv, "onuse", l.onUse);

@@ -9,6 +9,7 @@ bg=0,0,0
 music=crypt
 
 [legend]
+D = door_stone
 # = wall_gray
 + = candle
 , = rock
@@ -43,23 +44,23 @@ s = skull
 ,#...........##......#,#..........#,,,,,,,,,,,,,,,,,,,,,
 ,###########.#####.#.###..........#,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,####.#,,,#................#,,,#T#########,,,,,,,
-,,,,,,,,#T##.##,,###.###.....C....#,,,#.........#,,,,,,,
-,,,,#####C.I..#,,,,#.#,#..........#,,,#.........#,,,,,,,
-,,,##:s.#.....######.########....######.....b...#,,,,,,,
-,,,#:s.....<.................b..................#,,,,,,,
-,,,#ss..#.....######.#####......................#,,,,,,,
-,,,##:s.#.....#,,,,#.#,,,#.........####...C.....#,,,,,,,
+,,,,,,,,#T##.##,,###.###.....C....#,,,#.........######,,
+,,,,#####C.I..#,,,,#.#,#..........#,,,#.........#....#,,
+,,,##:s.#.....######.########....######.....b...#....#,,
+,,,#:s.....<.................b..................D....#,,
+,,,#ss..#.....######.#####......................#....#,,
+,,,##:s.#.....#,,,,#.#,,,#.........####...C.....######,,
 ,,,,########..#,,,,#.#,,,#....C....#,,#.........#,,,,,,,
 ,,,,,,,,,,,#.#######.#####.........#,,#......+..#,,,,,,,
 ,,,,,,,,,,,#.......................#,,#########.##,,,,,,
 ,,,,,,,,,,,#.######T.#####.........#,,,,,,,,,#...#,,,,,,
 ,,,,,,,,,,##.#,,#;....=#,#.........#,,,,,,,,,#...#,,,,,,
 ,,,,,,,,,##T.####......###.........#,,,,,,,,,#...#,,,,,,
-,,,,,,,,,#;....##..b.............###,,,,,,,,,#####,,,,,,
-,,,,,,,,,#.....##.b....#########.###,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,#.....#########,,,,####.#T##,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,#..b..#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,#.C...#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,#####;....##..b.............###,,,,,,,,,#####,,,,,,
+,,,,,#...#.....##.b....#########.###,,,,,,,,,,,,,,,,,,,,
+,,,,,#...#.....#########,,,,####.#T##,,,,,,,,,,,,,,,,,,,
+,,,,,#...#..b..#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
+,,,,,#####.C...#,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,#######,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.......#,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,#.....C.#,,,,,,,,,,,,,,,,,,,
@@ -239,3 +240,74 @@ flag=chest_7_24
 items=the_two_ring:1
 locked=
 
+[obstacle]
+x=9
+y=33
+name=Odd stretch of wall
+needs=light|spell:detect
+clear=floor_stone
+text=Cold stone, like the rest of the crypt.
+
+[chest]
+x=6
+y=33
+items=oil_blessed:1,arcane_dust:2,ring_int:1
+gold=65
+flag=crypt_hidden_niche
+
+[lever]
+x=40
+y=19
+name=Lever of the Crown
+flag=crypt_seq_1
+toggle=0
+text=The crown lever drops with a heavy clack.
+onuse=script:lever_sequence,crypt_seq,1,3142,crypt_seq_solved
+
+[lever]
+x=42
+y=19
+name=Lever of the Sword
+flag=crypt_seq_2
+toggle=0
+text=The sword lever drops with a heavy clack.
+onuse=script:lever_sequence,crypt_seq,2,3142,crypt_seq_solved
+
+[lever]
+x=44
+y=19
+name=Lever of the Skull
+flag=crypt_seq_3
+toggle=0
+text=The skull lever drops with a heavy clack.
+onuse=script:lever_sequence,crypt_seq,3,3142,crypt_seq_solved
+
+[lever]
+x=46
+y=19
+name=Lever of the Candle
+flag=crypt_seq_4
+toggle=0
+text=The candle lever drops with a heavy clack.
+onuse=script:lever_sequence,crypt_seq,4,3142,crypt_seq_solved
+
+[sign]
+x=39
+y=20
+title=Inscription
+sprite=27,14
+text=FOUR LORDS SLEEP HERE. WAKE THEM AS THEY WOKE IN LIFE: THE SKULL FIRST, FOR DEATH WAS EVER EARLY; THEN THE CROWN, TO GIVE THE ORDER; THEN THE CANDLE, TO LIGHT THE WAY; AND LAST THE SWORD, TO CLOSE THE DOOR BEHIND.
+
+[door]
+x=48
+y=22
+openif=crypt_seq_solved
+locked=A stone door with no handle. Four empty sockets above it wait for something.
+flag=crypt_reliquary_door
+
+[chest]
+x=51
+y=21
+items=oil_blessed:2,elixir:1,amulet_wis:1
+gold=150
+flag=crypt_reliquary

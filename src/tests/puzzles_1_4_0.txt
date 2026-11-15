@@ -1,0 +1,184 @@
+# 1.4.0 (#76): the reusable puzzle scripts in the base dungeons.
+#  * lever sequence (scripts/lever_sequence.txt): the crypt's four lords, order Skull Crown Candle Sword (3142)
+#  * pressure plates + crates (scripts/pressure_plates.txt): the old mine's sorting room
+#  * combination lock (scripts/combination_lock.txt, the script "input" box): Kesh's strongroom in the bandit camp
+# Console "clearmap MAP" removes a map's enemy groups for the visit. Expect keys: crate:ID (x,y), plate:X,Y, inputtext.
+newgame Kai warrior 1
+god
+frames 30
+# ---- lever sequence: a wrong lever first springs everything back ----
+con clearmap crypt
+teleport crypt 40 20
+frames 130
+key UP
+frames 20
+expect flag:crypt_seq_1 == 0
+expect flag:crypt_seq_step == 0
+expect log contains wrong order
+# the right order: Skull (44,19), Crown (40,19), Candle (46,19), Sword (42,19)
+teleport crypt 44 20
+frames 10
+key UP
+frames 20
+expect flag:crypt_seq_3 == 1
+expect flag:crypt_seq_step == 1
+expect log contains 1 of 4
+teleport crypt 40 20
+frames 10
+key UP
+frames 20
+expect flag:crypt_seq_step == 2
+# pulling a lever that is already down does nothing
+key UP
+frames 20
+expect flag:crypt_seq_step == 2
+teleport crypt 46 20
+frames 10
+key UP
+frames 20
+expect flag:crypt_seq_step == 3
+expect flag:crypt_seq_solved == 0
+teleport crypt 42 20
+frames 10
+key UP
+frames 20
+expect flag:crypt_seq_solved == 1
+expect log contains unlocks
+teleport crypt 47 22
+frames 10
+key RIGHT
+frames 10
+key RIGHT
+frames 10
+expect x == 49
+shot puzzle_crypt_open.png
+# ---- pressure plates: two crates onto the far plates, then the party onto the third ----
+con clearmap old_mine
+teleport old_mine 31 23
+frames 130
+expect crate:mine_crate1 == 36,25
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key DOWN
+frames 8
+key DOWN
+frames 8
+expect x == 37
+expect y == 25
+# push crate 1 left, then up onto the plate at 35,24
+key LEFT
+frames 8
+expect crate:mine_crate1 == 35,25
+key DOWN
+frames 8
+key LEFT
+frames 8
+key UP
+frames 8
+expect crate:mine_crate1 == 35,24
+expect plate:35,24 == 1
+expect log contains 1 of 3
+shot puzzle_plates_1.png
+# crate 2: right, then down onto the plate at 39,27
+key DOWN
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+key RIGHT
+frames 8
+expect crate:mine_crate2 == 39,26
+key UP
+frames 8
+key RIGHT
+frames 8
+key DOWN
+frames 8
+expect crate:mine_crate2 == 39,27
+expect plate:39,27 == 1
+expect log contains 2 of 3
+expect flag:mine_plates_open == 0
+# and the party onto the last plate
+key LEFT
+frames 8
+key DOWN
+frames 8
+key DOWN
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+key LEFT
+frames 8
+expect x == 33
+expect y == 28
+expect plate:33,28 == 1
+expect flag:mine_plates_open == 1
+expect log contains mechanism grinds open
+shot puzzle_plates_done.png
+# the tipping lever puts the crates back (and leaving the map does too)
+teleport old_mine 40 24
+frames 10
+key UP
+frames 20
+expect crate:mine_crate1 == 36,25
+expect crate:mine_crate2 == 38,26
+expect flag:mine_plates_open == 1
+key DOWN
+frames 8
+key RIGHT
+frames 10
+key RIGHT
+frames 10
+expect x == 42
+# ---- combination lock: a wrong code, then the one from the chief's note ----
+con clearmap bandit_camp
+teleport bandit_camp 12 27
+frames 130
+key DOWN
+frames 10
+expect mode == NAME
+type 1234
+frames 2
+expect inputtext == 1234
+key ENTER
+frames 10
+expect mode == EXPLORE
+expect flag:bandit_strongroom_open == 0
+expect log contains Wrong combination
+key DOWN
+frames 10
+type 4-7-2-1
+key ENTER
+frames 10
+expect flag:bandit_strongroom_open == 1
+expect log contains springs open
+# Esc cancels the box without trying a code
+key DOWN
+frames 10
+expect mode == EXPLORE
+expect log contains hangs open
+teleport bandit_camp 10 27
+frames 10
+key DOWN
+frames 10
+key DOWN
+frames 10
+expect y == 29
+log

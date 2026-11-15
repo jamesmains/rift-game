@@ -82,7 +82,9 @@ void Editor::drawScripts(InputState& in) {
         sl.push_back(scriptFiles[i]); sIdx.push_back((int)i);
     }
     int cur = -1; for (size_t i = 0; i < sIdx.size(); i++) if (sIdx[i] == scriptSel) cur = (int)i;
-    int hit = ui.listBox(x + 4, y + 38, lw - 8, h - 98, sl, cur, scriptScroll);
+    int hit = ui.listBox(x + 4, y + 38, lw - 8, h - 114, sl, cur, scriptScroll);
+    { std::string oid = ste.path.empty() ? "" : fs::path(ste.path).stem().string(), a = oid.empty() ? "" : scriptArgs(oid);   // 1.4.0 (#76): its "# args:" line
+      if (!a.empty()) { std::string t2 = "args: " + a; while (t2.size() > 4 && font->width(t2) > lw - 12) t2.pop_back(); ui.text(x + 6, y + h - 72, t2, ACCENT2); if (ui.hover(x + 4, y + h - 74, lw - 8, 16)) ui.tip("This script's arguments (its \"# args:\" line): script:" + oid + "," + a); } }
     if (scriptFiles.empty()) ui.text(x + 10, y + 42, "No scripts yet: New or Import.", DIM);
     if (hit >= 0) openScript(scriptFiles[sIdx[hit]]);
     int by = y + h - 54;
@@ -161,6 +163,8 @@ void Editor::drawScripts(InputState& in) {
         "  (a visited place on the world map,",
         "   \"\" if none was chosen)",
         "wait 1.5   (seconds on the map)",
+        "input code Enter the code:",
+        "  (a typing box; \"\" if cancelled)",
         "",
         "{...} puts a value into any text.",
         "\"text\" + n joins, = and == compare,",
@@ -190,7 +194,11 @@ void Editor::drawScripts(InputState& in) {
         "count(l) at(l, 2) contains(l, x)",
         "add(l, x)",
         "len(t) upper(t) lower(t) find(t, s)",
-        "min(a, b) max(a, b) abs(n) var(name)"};
+        "min(a, b) max(a, b) abs(n) var(name)",
+        "mid(t, start, len)  squash(t)",
+        "  squash = letters+digits, capitals",
+        "plates(g) platesdown(g)  crateat(x,y)",
+        "lorefile(name)  (desktop file found)"};
     static const char* ref2[] = {
         "Every dialogue action, as a line:",
         "give potion:2    take key:1",
@@ -210,6 +218,8 @@ void Editor::drawScripts(InputState& in) {
         "travel (the coach map)",
         "rep faction:n   approve class:n",
         "revealmap map   win line|line",
+        "",
+        "1.4.0: resetcrates   lorefile name",
         "",
         "New in 1.1.10 (dialogue too):",
         "script id[,args]  time minutes",

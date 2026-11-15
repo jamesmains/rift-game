@@ -150,6 +150,13 @@ SVal Game::scriptFn(ScriptRun& r, const std::string& n, const std::vector<SVal>&
     if (n == "max") return SVal::num(std::max(n0(), n1()));
     if (n == "abs") return SVal::num(n0() < 0 ? -n0() : n0());
     if (n == "var") return SVal::parse(keptVar(s0()));
+    // 1.4.0 (#76/#77)
+    if (n == "mid") { std::string t = a[0].str(); long long st = n1(); long long ln = a.size() > 2 ? a[2].toNum() : (long long)t.size(); if (st < 1) { ln += st - 1; st = 1; } if (ln <= 0 || st > (long long)t.size()) return SVal::text(""); return SVal::text(t.substr((size_t)st - 1, (size_t)ln)); }
+    if (n == "squash") { std::string o; for (char c : a[0].str()) if (isalnum((unsigned char)c)) o += (char)toupper((unsigned char)c); return SVal::text(o); }   // codes: case, spaces and dashes don't matter
+    if (n == "plates") return SVal::num(platesIn(s0(), false));
+    if (n == "platesdown") return SVal::num(platesIn(s0(), true));
+    if (n == "crateat") return SVal::num(map && map->crateAt((int)n0(), (int)n1()) ? 1 : 0);
+    if (n == "lorefile") return SVal::num(foundFiles.count(s0()) ? 1 : 0);
     err = "unknown function " + n + "()";
     return SVal::num(0);
 }
@@ -315,6 +322,15 @@ bool Game::scriptExec(ScriptRun& r) {
             if (mode != GMode::WORLDMAP) { scriptAssign(r, s.name, SVal::text("")); return true; }
             r.pendingVar = s.name; r.pendingKind = SP_PICK; r.wait = SW_IDLE; return false;
         }
+        case SO_INPUT: {   // 1.4.0 (#76/#77): the text box; resumed by textInputDone
+            std::string prompt = s.hasA ? val(s.a).str() : std::string(); if (!err.empty()) break;
+            if (mode == GMode::DIALOGUE && dlgId == SCRIPT_DLG && scriptDlgOwner == r.id) popMode();
+            if (mode != GMode::EXPLORE) { r.wait = SW_IDLE; return false; }
+            f->pc++;
+            NPC* np = scriptNpc(r);
+            openTextInput(r.speakerSet ? r.speaker : np ? np->name : std::string(), prompt, r.id);
+            r.pendingVar = s.name; r.pendingKind = SP_INPUT; r.wait = SW_INPUT; return false;
+        }
         case SO_WAIT: {
             SVal v = val(s.a); if (!err.empty()) break;
             long long ms = s.name == "ms" ? v.toNum() : v.toNum() * 1000;
@@ -346,6 +362,10 @@ void Game::tickScripts(float dt) {
         if (mode != GMode::EXPLORE) break;
         if (r->wait == SW_TIMER) { r->timer -= dt; if (r->timer > 0) continue; r->wait = SW_NONE; }
         else if (r->wait == SW_IDLE) r->wait = SW_NONE;
+        else if (r->wait == SW_INPUT) {   // its text box went away some other way: as if cancelled
+            r->wait = SW_NONE; if (r->pendingKind == SP_INPUT) scriptAssign(*r, r->pendingVar, SVal::text(""));
+            r->pendingKind = SP_NONE; r->pendingVar.clear();
+        }
         else if (r->wait == SW_DIALOGUE) {   // its box was closed some other way: carry on as if answered with nothing
             r->wait = SW_NONE; if (r->pendingKind == SP_ASK) { scriptAssign(*r, r->pendingVar, SVal::text("")); r->options.clear(); }
             r->pendingKind = SP_NONE; r->pendingVar.clear();
@@ -354,4 +374,23 @@ void Game::tickScripts(float dt) {
         resumeScript(r);
     }
     sweepRuns(scriptRuns);
+}
+
+// ------------------------------------------------------------------ 1.4.0 (#76/#77): the text box
+// GMode::NAME (unused since the new-game name moved to the desktop) is the box: menus.cpp draws it and reads the keys.
+void Game::openTextInput(const std::string& title, const std::string& prompt, int owner) {
+    inputBuf.clear(); inputTitle = title; inputPrompt = prompt; inputOwner = owner;
+    pushMode(GMode::NAME);
+}
+void Game::textInputDone(bool ok) {
+    std::string text = ok ? trim(inputBuf) : std::string();
+    if (mode == GMode::NAME) popMode();
+    std::shared_ptr<ScriptRun> r;
+    for (auto& x : scriptRuns) if (!x->done && x->id == inputOwner && x->wait == SW_INPUT) r = x;
+    inputOwner = 0;
+    if (!r) return;
+    r->wait = SW_NONE;
+    if (r->pendingKind == SP_INPUT) scriptAssign(*r, r->pendingVar, SVal::text(text));
+    r->pendingKind = SP_NONE; r->pendingVar.clear();
+    resumeScript(r);
 }

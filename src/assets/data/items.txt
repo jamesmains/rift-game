@@ -2311,3 +2311,45 @@ bonus=con:2
 category=Accessories
 unique=1
 
+# ================= 1.4.0 (#75, #77): tools for elemental obstacles, data disks =================
+[item]
+id=frost_flask
+category=Tools
+name=Frost Flask
+type=consumable
+tile=41,4
+color=150,210,255
+effect=frost
+value=45
+desc=A stoppered flask of alchemical cold. Thrown on water, it freezes it solid for a while - long enough to cross. Use it next to the water.
+
+[item]
+id=charged_cell
+category=Tools
+name=Charged Cell
+type=consumable
+tile=88,6
+color=255,235,90
+effect=power
+value=50
+desc=A heavy cell, still humming. Wired into a dead machine, lift or door, it wakes it for one last job. Use it next to the machine.
+
+[item]
+id=disk_dispatch
+category=Keepsakes
+name=Data Disk (Dispatch)
+type=key
+tile=54,10
+color=120,200,255
+value=0
+desc=A disk labelled METRO DISPATCH - LINE 3. The old computer on the desktop can read it: look in My Computer.
+
+[item]
+id=disk_manifest
+category=Keepsakes
+name=Data Disk (Manifest)
+type=key
+tile=54,10
+color=255,160,90
+value=0
+desc=A scorched disk labelled CARGO MANIFEST. The old computer on the desktop can read it: look in My Computer.

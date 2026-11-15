@@ -9,6 +9,7 @@ bg=0,0,0
 music=tech
 
 [legend]
+d = door_metal
 # = wall_hull
 , = terminal2
 . = floor_grid
@@ -24,18 +25,18 @@ X = rock
 [rows]
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXX##########XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#........#XX#######XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXX#...t....####.....######################XXXXXXX
-XXXXXXXXX#......................................#XXXXXXX
-XXXXXXXXX#........####.....###.......##########.#XXXXXXX
-XXXXXXXXX#........#XX#...,.#X#.......#XXX######.#####XXX
+XXX#######........#XX#######XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXX#.....#...t....####.....######################XXXXXXX
+XXX#............................................#XXXXXXX
+XXX#.....#........####.....###.......##########.#XXXXXXX
+XXX#######........#XX#...,.#X#.......#XXX######.#####XXX
 XXXXXXXXX#####.####XX#...t.#X#.......#XXX#..........#XXX
 XXXXXXXX######.###XXX#...S.###t......#####...k......#XXX
-XXXXXXXX#........#XXX#..t.......t............=......#XXX
-XXXXXXXX#........#####.....######.########...k......#XXX
-XXXXXXXX#................########.######X#..........#XXX
-XXXXXXXX#t.......#########XX#.....,....#X######.#####XXX
-XXXXXXXX#........#XXXXXXXXXX#..........########.####XXXX
+XX#######........#XXX#..t.......t............=......#XXX
+XX#.....#........#####.....######.########...k......#XXX
+XX#.....d................########.######X#..........#XXX
+XX#.....#t.......#########XX#.....,....#X######.#####XXX
+XX#######........#XXXXXXXXXX#..........########.####XXXX
 XXXXXXXX#####..###XXXXXXXXXX#.B....................#XXXX
 XXXXXXXXXXXX#..#XXXXXXXXXXXX#..........#####.......#XXXX
 XXXXXXXXXXXX#..##########XXX#.........B#XXX#.......#XXXX
@@ -180,3 +181,55 @@ node=circuit
 x=26
 y=5
 node=rift_crystal
+
+[obstacle]
+x=9
+y=4
+name=Sealed armoury
+needs=emp
+clear=floor_grid
+text=ARMOURY - CREW WEAPONS. A heavy hatch, its lock still blinking on ship power after forty years.
+
+[chest]
+x=4
+y=3
+items=emp_grenade:1,ammo_rifle:2,stimpak:2
+gold=90
+flag=ship_armoury_1
+
+[chest]
+x=4
+y=5
+items=cell_pack:2,medkit:1
+gold=60
+flag=ship_armoury_2
+
+[sign]
+template=terminal
+x=9
+y=12
+title=Captain's terminal
+text=
+onuse=script:terminal,RATSNEVE,ship_vault_open,EVENSTAR - CAPTAIN'S CABIN
+
+[door]
+x=8
+y=11
+openif=ship_vault_open
+metal=1
+locked=CAPTAIN'S STORES. The hatch answers only to the terminal beside it.
+flag=ship_vault_door
+
+[chest]
+x=3
+y=10
+items=rift_crystal:2,elixir:2,power_core:1
+gold=250
+flag=ship_vault_chest
+
+[sign]
+x=3
+y=12
+title=Captain's log
+text=Day 9 after the fall. The crew think the lock code is a secret. It is the old joke: our own name, read the wrong way round. If you are reading this, you were clever - or desperate. Take what is left.
+sprite=27,14
