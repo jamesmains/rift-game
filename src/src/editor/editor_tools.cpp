@@ -132,7 +132,8 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
             else if (startsWith(c, "party:")) { std::string p = c.substr(6); bool ok = gd->cls(p) != nullptr; if (!ok) warn(line, "condition party:" + p + " is not a class id (it will match a member's name only)"); }
             else if (startsWith(c, "map:")) { if (!isMap(c.substr(4))) warn(line, "condition map: names a map that does not exist ('" + c.substr(4) + "')"); }
             else if (startsWith(c, "equipped:")) { if (!gd->item(c.substr(9))) err(line, "condition uses unknown item '" + c.substr(9) + "'"); }
-            else if (startsWith(c, "mode:") || startsWith(c, "fav:") || startsWith(c, "weather:") || c == "lit" || c == "night" || c == "day" || c == "room") { }   // 1.1.7: game states, not flags
+            else if (startsWith(c, "mode:") || startsWith(c, "fav:") || startsWith(c, "weather:") || c == "lit" || c == "night" || c == "day" || c == "room" || c == "stealthy") { }   // 1.1.7: game states, not flags (1.4.0: stealthy)
+            else if (startsWith(c, "stat:") || startsWith(c, "partystat:")) { int st, v; std::string op; if (!parseStatCheck(c.substr(c[0] == 'p' ? 10 : 5), st, op, v)) err(line, "stat check '" + c + "' should look like stat:cha>=12 (str dex con int wis cha; >= > <= < =)"); }   // 1.4.0 (#73)
             else { std::string f = c; size_t ge = f.find(">="); if (ge != std::string::npos) f = trim(f.substr(0, ge)); if (!flags.count(f)) warn(line, "flag '" + f + "' is never set by any dialogue, trigger, chest, enemy or dungeon"); } }
     };
     for (size_t i = 0; i < lines.size(); i++) {
@@ -165,6 +166,9 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
         else if (k == "hidenpc" || k == "shownpc") { if (v.empty()) err(ln, k + "= needs an npc id"); }
         else if (k == "rep") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2 || atoi(p[1].c_str()) == 0) err(ln, "rep needs faction:amount (amount not zero)"); else if (!knownFaction(trim(p[0]))) warn(ln, "rep= faction '" + trim(p[0]) + "' is not in factions.txt or a board id"); } }
         else if (k == "amends") { auto p = split(v, ':'); if (p.size() < 2 || !gd->cls(trim(p[0]))) err(ln, "amends needs class:amount with a known class"); }
+        else if (k == "teach") { for (auto& part : split(v, ',')) { std::string t = trim(part); size_t c = t.find(':'); if (c == std::string::npos) { err(ln, "teach needs who:spell (who = companion NPC id, class, member name or hero)"); continue; }   // 1.4.0 (#81)
+            std::string who = trim(t.substr(0, c)); if (toLower(who) != "hero" && !gd->cls(who) && !gd->cls(joinClassOf(who))) warn(ln, "teach: '" + who + "' is not hero, a class or a companion NPC (it will only match a party member's name)");
+            auto alts = split(t.substr(c + 1), '|'); for (auto& a : alts) if (!gd->spell(trim(a))) err(ln, "teach= uses unknown spell '" + trim(a) + "'"); if (alts.size() > 2) warn(ln, "teach: only spell|loyal_spell - extra '|' parts are ignored"); } }
         else if (k == "craftxp") { auto p = split(v, ':'); std::string st = trim(p[0]); if (p.size() < 2 || (st != "forge" && st != "alchemy" && st != "workbench" && st != "field")) err(ln, "craftxp needs forge|alchemy|workbench|field:amount"); }
         else if (k == "approve") { for (auto& part : split(v, ',')) { auto p = split(trim(part), ':'); if (p.size() < 2) err(ln, "approve needs class:amount"); else if (trim(p[0]) != "all" && !gd->cls(trim(p[0]))) err(ln, "approve= uses unknown class '" + trim(p[0]) + "'"); } }
         else if (k == "craft") { curClosed = true; if (v != "forge" && v != "alchemy" && v != "workbench" && v != "any" && v != "1") warn(ln, "craft= should be forge, alchemy, workbench or any"); }

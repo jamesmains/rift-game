@@ -6,7 +6,8 @@
 //   call <id> [args], start <id> [args], return [value], stop
 //   any dialogue action: give potion:2, gold -{fare}, set met_mara, teleport overworld,10,20, dialogue elder ...
 // Text in quotes or after say/option/actions can hold {expressions}. Expressions: numbers, "text", variables, flags,
-// built-in values (gold, day, hour, here...), functions (cond("item:key"), random(1,6), placename(p)...), + - * / %,
+// built-in values (gold, day, hour, here...), functions (cond("item:key"), random(1,6), placename(p), 1.4.0: stat("cha"),
+// partystat("str")...), + - * / %,
 // == != < <= > >=, and / or / not.
 // compileScript turns the text into a flat list of statements with jumps (the Editor's Check uses it too); the game
 // runs them in Game::resumeScript (script.cpp), pausing on say / ask / pick / wait and on actions that open a screen.

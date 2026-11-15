@@ -24,7 +24,9 @@ const std::vector<std::string>& scriptActionKeys() {
         "travel", "revealmap", "rep", "approve", "amends", "craftxp", "note", "win", "savepoint", "finish", "respec", "healer",
         "healsvc", "obstacle", "npcmove", "mapset",
         // 1.1.10, for scripts and dialogue alike
-        "time", "sound", "encounter", "weather", "stat", "script"};
+        "time", "sound", "encounter", "weather", "stat", "script",
+        // 1.4.0
+        "teach"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }
@@ -43,7 +45,8 @@ static const std::map<std::string, std::pair<int, int>>& fnTable() {
         {"flag", {1, 1}}, {"cond", {1, 1}}, {"has", {1, 1}}, {"visited", {1, 1}}, {"inparty", {1, 1}}, {"rep", {1, 1}}, {"approval", {1, 1}}, {"kills", {1, 1}},
         {"random", {1, 2}}, {"chance", {1, 1}}, {"places", {0, 0}}, {"placename", {1, 1}}, {"placemap", {1, 1}}, {"placex", {1, 1}}, {"placey", {1, 1}},
         {"distance", {1, 1}}, {"leagues", {1, 1}}, {"mapname", {1, 1}}, {"itemname", {1, 1}}, {"count", {1, 1}}, {"at", {2, 2}}, {"contains", {2, 2}},
-        {"add", {2, 2}}, {"len", {1, 1}}, {"upper", {1, 1}}, {"lower", {1, 1}}, {"find", {2, 2}}, {"min", {2, 2}}, {"max", {2, 2}}, {"abs", {1, 1}}, {"var", {1, 1}}};
+        {"add", {2, 2}}, {"len", {1, 1}}, {"upper", {1, 1}}, {"lower", {1, 1}}, {"find", {2, 2}}, {"min", {2, 2}}, {"max", {2, 2}}, {"abs", {1, 1}}, {"var", {1, 1}},
+        {"stat", {1, 1}}, {"partystat", {1, 1}}};   // 1.4.0 (#73)
     return t;
 }
 const std::vector<std::string>& scriptFunctions() { static std::vector<std::string> k; if (k.empty()) for (auto& f : fnTable()) k.push_back(f.first); return k; }

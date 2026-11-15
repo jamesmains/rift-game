@@ -27,6 +27,61 @@ void Game::syncBonds() {
         int a = approvalOf(m.classId);
         m.bond = companionLoyal(m.classId) ? 1 : a <= -15 ? -1 : 0;
     }
+    applyTaught("", true);   // 1.4.0 (#81): lessons from their personal quests (the Loyal version while Loyal)
+}
+
+// ---------------- taught abilities (1.4.0, #81) ----------------
+// teach=WHO:SPELL[|LOYAL_SPELL][,WHO:SPELL...] - WHO is a companion NPC id (bram), a class id (warrior), a party member's
+// name, or hero. The hero learns SPELL at once. A companion's lesson is remembered in extra["taught_<class>"] (saved),
+// so it also reaches a companion who is away and arrives with them when they join again; applyTaught swaps in the
+// LOYAL_SPELL while they are Loyal (flag loyal_<class> and approval 10+) and back if their loyalty breaks.
+void Game::teachAction(const std::string& v) {
+    for (auto& part : split(v, ',')) {
+        std::string t = trim(part); size_t col = t.find(':'); if (col == std::string::npos) continue;
+        std::string who = trim(t.substr(0, col)); auto alts = split(t.substr(col + 1), '|');
+        std::string base = trim(alts[0]), loyal = alts.size() > 1 ? trim(alts[1]) : "";
+        const SpellDef* sd = gd->spell(base); if (!sd) { log("(teach: unknown spell '" + base + "')"); continue; }
+        if (!loyal.empty() && !gd->spell(loyal)) loyal.clear();
+        bool hero = toLower(who) == "hero"; std::string cls;
+        if (!hero) for (size_t i = 0; i < party.members.size(); i++) if (toLower(party.members[i].name) == toLower(who)) { if (i == 0) hero = true; else cls = party.members[i].classId; break; }
+        if (!hero && cls.empty()) cls = gd->cls(who) ? who : parseJoin(who).cls;   // a class id, else a companion NPC's id
+        if (hero) {
+            if (party.members.empty()) continue; Character& m = party.members[0];
+            if (std::find(m.spells.begin(), m.spells.end(), base) == m.spells.end()) { m.spells.push_back(base); log(m.name + " learns " + sd->name + "."); notify(m.name + " learns " + sd->name + "!"); gAudio.play("ability_learned"); }
+            continue;
+        }
+        if (cls.empty() || !gd->cls(cls)) { log("(teach: nobody called '" + who + "')"); continue; }
+        std::string& list = extra["taught_" + cls]; std::string entry = base + (loyal.empty() ? "" : "|" + loyal);
+        bool have = false; for (auto& e : split(list, ',')) if (trim(e) == entry) have = true;
+        if (!have) list += (list.empty() ? "" : ",") + entry;
+        bool present = false; for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == cls) present = true;
+        if (present) applyTaught(cls, true);
+        else log("They will remember " + sd->name + " when they travel with you again.");
+    }
+}
+
+void Game::applyTaught(const std::string& onlyCls, bool announce) {
+    for (size_t i = 1; i < party.members.size(); i++) {
+        Character& m = party.members[i]; if (!onlyCls.empty() && m.classId != onlyCls) continue;
+        auto it = extra.find("taught_" + m.classId); if (it == extra.end()) continue;
+        bool loyal = companionLoyal(m.classId);
+        auto has = [&m](const std::string& id) { return std::find(m.spells.begin(), m.spells.end(), id) != m.spells.end(); };
+        for (auto& e : split(it->second, ',')) {
+            auto alts = split(trim(e), '|'); std::string base = trim(alts[0]), up = alts.size() > 1 ? trim(alts[1]) : "";
+            if (!gd->spell(up)) up.clear();
+            std::string want = loyal && !up.empty() ? up : base, other = want == base ? up : base;
+            const SpellDef* wd = gd->spell(want); if (!wd) continue;
+            bool swapped = !other.empty() && has(other);
+            if (swapped) { m.spells.erase(std::remove(m.spells.begin(), m.spells.end(), other), m.spells.end()); for (auto& f : m.favs) if (f == "spell:" + other) f = "spell:" + want; }
+            if (has(want)) continue;
+            m.spells.push_back(want);
+            if (!announce) continue;
+            const SpellDef* od = swapped ? gd->spell(other) : nullptr;
+            if (od && want == up) { log(m.name + " is Loyal: " + od->name + " becomes " + wd->name + "."); notify(m.name + ": " + wd->name + "!"); }
+            else if (od) log(m.name + "'s loyalty is shaken: " + od->name + " is only " + wd->name + " again.");
+            else { log(m.name + " learns " + wd->name + "."); notify(m.name + " learns " + wd->name + "!"); gAudio.play("ability_learned"); }
+        }
+    }
 }
 
 void Game::changeApproval(const std::string& cls, int d) {

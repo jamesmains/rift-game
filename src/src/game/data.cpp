@@ -8,6 +8,33 @@ int dmgTypeFromName(const std::string& s) { for (int i = 0; i < DT_COUNT; i++) i
 static const char* kStatNames[] = {"STR", "DEX", "CON", "INT", "WIS", "CHA"};
 const char* statName(int s) { return (s >= 0 && s < ST_COUNT) ? kStatNames[s] : "?"; }
 int statFromName(const std::string& s) { std::string u = toUpper(s); for (int i = 0; i < ST_COUNT; i++) if (u == kStatNames[i]) return i; return ST_STR; }
+bool parseStatCheck(const std::string& body, int& stat, std::string& op, int& value) {
+    std::string b = trim(body); size_t i = 0; while (i < b.size() && isalpha((unsigned char)b[i])) i++;
+    std::string name = toUpper(b.substr(0, i)); stat = -1; for (int s = 0; s < ST_COUNT; s++) if (name == kStatNames[s]) stat = s;
+    if (stat < 0) return false;
+    size_t j = i; while (j < b.size() && (b[j] == '>' || b[j] == '<' || b[j] == '=')) j++;
+    op = b.substr(i, j - i); if (op == "==") op = "=";
+    if (op != ">=" && op != ">" && op != "<=" && op != "<" && op != "=") return false;
+    std::string num = trim(b.substr(j)); if (num.empty()) return false;
+    for (size_t k = 0; k < num.size(); k++) if (!isdigit((unsigned char)num[k]) && !(k == 0 && num[k] == '-')) return false;
+    value = atoi(num.c_str()); return true;
+}
+bool statCheckPasses(int have, const std::string& op, int value) {
+    return op == ">=" ? have >= value : op == ">" ? have > value : op == "<=" ? have <= value : op == "<" ? have < value : have == value;
+}
+std::string dialogueCheckTag(const std::vector<std::string>& conds) {
+    std::string tag;
+    for (auto& cond : conds) for (auto& part : split(cond, '&')) {
+        std::string c = trim(part); if (c.empty() || c[0] == '!') continue;
+        bool party = startsWith(c, "partystat:");
+        if (party || startsWith(c, "stat:")) {
+            int st, v; std::string op; if (!parseStatCheck(c.substr(party ? 10 : 5), st, op, v)) continue;
+            std::string n = op == ">=" ? std::to_string(v) : op == ">" ? std::to_string(v + 1) : op == "<=" ? std::to_string(v) + " or less" : op == "<" ? std::to_string(v - 1) + " or less" : "= " + std::to_string(v);
+            tag += std::string("[") + (party ? "Party " : "") + kStatNames[st] + " " + n + "] ";
+        } else if (c == "stealthy") tag += "[Sneaking] ";
+    }
+    return tag;
+}
 
 static const char* kSlotNames[] = {"Weapon", "Off-hand", "Head", "Body", "Feet", "Accessory"};
 const char* slotName(int s) { return (s >= 0 && s < SL_COUNT) ? kSlotNames[s] : "?"; }

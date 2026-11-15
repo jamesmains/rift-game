@@ -49,6 +49,7 @@ const std::vector<SoundTrigger>& soundTriggers() {
         {"load", "Exploring", "save", "a saved game is loaded"},
         {"levelup", "Exploring", nullptr, "a party member reaches a new level"},
         {"respec", "Exploring", "levelup", "a party member's points are reset (respec)"},
+        {"ability_learned", "Exploring", "levelup", "someone learns a lasting ability (teach= in dialogue and scripts: companion quests)"},
         {"quest", "Exploring", nullptr, "a quest updates (quest= in dialogue and scripts)"},
         {"rest", "Exploring", nullptr, "rest= / heal= in dialogue (inns, beds)"},
         {"healer", "Exploring", "rest", "a healer heals or cures the party"},
