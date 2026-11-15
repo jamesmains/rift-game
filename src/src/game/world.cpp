@@ -246,6 +246,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             else if (k == "encounter") m.encounterRate = atoi(v.c_str()); else if (k == "table") m.encounterTable = v;
             else if (k == "spawn") { auto p = split(v, ','); if (p.size() == 2) { m.spawnX = atoi(p[0].c_str()); m.spawnY = atoi(p[1].c_str()); } }
             else if (k == "music") m.music = v;
+            else if (k == "combatmusic") m.combatMusic = v;
             else if (k == "ambient") m.ambient = v;
             else if (k == "worldmap") m.worldMap = v;
             else if (k == "onenter") m.onEnter = v;

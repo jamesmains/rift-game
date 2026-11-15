@@ -2,6 +2,7 @@
 id=hollowmere_home
 name=Your Cottage
 kind=interior
+music=town
 spawn=5,5
 bg=0,0,0
 

@@ -156,6 +156,7 @@ void App::frame(InputState& in, float dt) {
         case AppState::EDITOR:
 #ifndef TRIFFALL_NO_EDITOR
             if (!editor.previewingMusic) gAudio.music("");
+            gAudio.ambient("");   // 1.3.1 (#49): a playtest's ambient loop stops in the Editor (the game keeps running for the next Play)
             editor.update(in, dt, canvas);
             if (editor.wantsClose) {
                 editor.wantsClose = false; state = AppState::DESKTOP; canvas.init(UI::SCREEN_W, UI::SCREEN_H); req.canvasW = -1; req.canvasH = -1;   // -1: the game's screen size (1.2.2)

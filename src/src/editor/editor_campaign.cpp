@@ -21,6 +21,7 @@ void Editor::loadCampaignForm() {
         if (k == "name") camp.name = v; else if (k == "desc") camp.desc = v; else if (k == "author") camp.author = v; else if (k == "version") camp.version = v;
         else if (k == "icon") camp.icon = v; else if (k == "gold") camp.gold = atoi(v.c_str()); else if (k == "items") camp.items = v; else if (k == "flags") camp.flags = v;
         else if (k == "dialogue") camp.dialogue = v; else if (k == "intro") camp.intro.push_back(v); else if (k == "worldmap") camp.worldMap = v; else if (k == "defeat") camp.defeat = v;
+        else if (k == "combatmusic") camp.combatMusic = v; else if (k == "bossmusic") camp.bossMusic = v;
         else if (k == "start") { auto p = split(v, ','); camp.startMap = trim(p[0]); camp.startX = p.size() > 1 ? atoi(p[1].c_str()) : 0; camp.startY = p.size() > 2 ? atoi(p[2].c_str()) : 0; }
         else camp.extra.push_back({k, v});
     }
@@ -39,6 +40,8 @@ bool Editor::saveCampaignForm() {
     if (!camp.dialogue.empty()) o += "dialogue=" + camp.dialogue + "\n";
     if (!camp.worldMap.empty() && camp.worldMap != "overworld") o += "worldmap=" + camp.worldMap + "\n";
     if (!trim(camp.defeat).empty()) o += "defeat=" + trim(camp.defeat) + "\n";
+    if (!trim(camp.combatMusic).empty()) o += "combatmusic=" + trim(camp.combatMusic) + "\n";
+    if (!trim(camp.bossMusic).empty()) o += "bossmusic=" + trim(camp.bossMusic) + "\n";
     for (auto& kv : camp.extra) o += kv.first + "=" + kv.second + "\n";
     if (!writeFile(camp.path, o)) { say("Could not write " + camp.path); return false; }
     camp.dirty = false; changed = true; say("Saved " + camp.path);
@@ -88,7 +91,7 @@ void Editor::drawCampaign(InputState& in) {
         ui.label(lx, ry + 3, fmt("Line %d", (int)i + 1));
         if (ui.textField(fx, ry, 600 - fx, camp.intro[i], 600)) camp.dirty = true;
         if (ui.button(x + 604, ry, 18, 16, "x", true, false, DANGER)) del = (int)i;
-        ry += 20; if (ry > y + h - 190) { ui.text(fx, ry, fmt("(+%d more lines)", (int)camp.intro.size() - (int)i - 1), DIM); ry += 16; break; }
+        ry += 20; if (ry > y + h - 250) { ui.text(fx, ry, fmt("(+%d more lines)", (int)camp.intro.size() - (int)i - 1), DIM); ry += 16; break; }
     }
     if (del >= 0) { camp.intro.erase(camp.intro.begin() + del); camp.dirty = true; }
     if (ui.button(fx, ry, 90, 18, "+ intro line")) { camp.intro.push_back(""); camp.dirty = true; }
@@ -121,6 +124,19 @@ void Editor::drawCampaign(InputState& in) {
     ry += row + 12;
     // ---- 1.1.7: what a lost fight does ----
     field("If the party falls", camp.defeat, "Empty: game over (load a save). A script: the party gets back up healed and it runs, e.g. dialogue:my_fallen", "defeat");
+    // ---- 1.3.1 (#47): fight music (a map can override the ordinary one: Maps tab, "fight" in the header) ----
+    auto musicRow = [&](const char* label, std::string& v, const char* def, const char* key, const char* tip) {
+        ui.label(lx, ry + 3, label); helpBtn(fx - 18, ry + 2, std::string("campaign.") + key, "tab.campaign");
+        auto di = gAudio.defs.find(v); bool bad = !v.empty() && (di == gAudio.defs.end() || di->second.kind != "music");
+        if (ui.button(fx, ry, 200, 18, v.empty() ? std::string(def) + " (default)" : v, true, false, bad ? DANGER : ACCENT2)) {
+            std::vector<std::string> ids{""}, labels{std::string(def) + " (default)"};
+            for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "music") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
+            int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == v) cur = (int)i;
+            std::string* target = &v; openListPicker(label, labels, cur, [this, ids, target](int i) { *target = ids[i]; camp.dirty = true; }); }
+        ui.text(fx + 210, ry + 3, bad ? "not a music track in the Sounds tab" : tip, bad ? DANGER : DIM);
+        ry += row; };
+    musicRow("Fight music", camp.combatMusic, "combat", "combatmusic", "every fight, unless a map has its own");
+    musicRow("Boss fight music", camp.bossMusic, "boss", "bossmusic", "fights with a boss creature");
     // ---- right column: playtest state, export ----
     { int rx = x + 640, rw = w - 646; drawPlayState(rx, y + 22, rw, 300, in); drawExportPanel(rx, y + 328, rw, h - 334 - 30, in); }
     // ---- buttons ----

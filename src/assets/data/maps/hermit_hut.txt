@@ -3,7 +3,6 @@ id=hermit_hut
 name=Hermit's Hut
 kind=town
 music=ballad_of_ashenwood
-ambient=amb_forest
 spawn=11,18
 bg=0,0,0
 

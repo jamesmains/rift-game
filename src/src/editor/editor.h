@@ -23,7 +23,7 @@ struct EdSection { std::string name; std::vector<std::pair<std::string, std::str
     bool has(const std::string& k) const { for (auto& p : kv) if (p.first == k) return true; return false; }
 };
 struct CampaignForm {
-    std::string path, headerComments, name, desc, author, version, icon, startMap, items, flags, dialogue, worldMap, defeat;
+    std::string path, headerComments, name, desc, author, version, icon, startMap, items, flags, dialogue, worldMap, defeat, combatMusic, bossMusic;   // 1.3.1 (#47) combatmusic= / bossmusic=
     int startX = 0, startY = 0, gold = 25; std::vector<std::string> intro; std::vector<std::pair<std::string, std::string>> extra; bool dirty = false;
 };
 struct PlayState { bool on = false, dirty = false; int level = 1, gold = 500; std::string cls, flags, items, party; };   // Campaign tab > Play from a state (playtest.txt)
@@ -158,7 +158,7 @@ private:
     std::vector<MapScan> mapScan;                                  // every map's header, objects and tile kinds (for the indexes)
     std::map<std::string, std::vector<FlagUse>> flagIndex; bool flagIndexDirty = true, indexBuilt = false;
     std::map<std::string, std::string> flagDocs; bool flagDocsDirty = false;   // flags.txt notes
-    std::string flagSelName, flagFilter; bool flagStoryOnly = true; int flagScroll = 0, flagUseScroll = 0, lastTab = -1;
+    std::string flagSelName, flagFilter; bool flagStoryOnly = true; int flagScroll = 0, flagUseScroll = 0, lastTab = -1; bool hdrWide = false;   // 1.3.1: header buttons in one row (wide Editor)
     std::map<std::string, int> questPreview;
     std::map<std::string, std::vector<FlagUse>> useIndex;       // "item:id" / "creature:id" / "shop:id" / "dialogue:id" / "spell:id" -> where it is used
     int useScroll = 0;

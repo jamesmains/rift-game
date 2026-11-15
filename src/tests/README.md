@@ -83,7 +83,7 @@ presses, real dialogue choices, the combat AI fighting for the party:
 Scripts: `main_quest` (cottage to the ending, every story flag and the three choices checked), `side_quests_1_0` (the
 nine new side quests, and the Editor's Check all with errors counted as failures), `story_choices` (the other answers to
 the three choices, the ending screens), `save_safety` (.bak rescue, autosave, newer-version refusal, dropped items,
-crash report), `accessibility`, `combat_feedback`, `music_ambient`, `boot_and_setup`, `demo_mode`.
+crash report), `accessibility`, `combat_feedback`, `music_1_3_1`, `boot_and_setup`, `demo_mode`.
 Other new driver commands: `checkall [strict]`, `setting NAME VALUE`, `saveslot N`, `loadslot N|auto`,
 `filereplace FILE OLD NEW`, `truncate FILE`, `boot T`, `setupwizard`, `perf N [LABEL]`, `segfault` (not in the suite).
 New expect keys: `music`, `ambient`. Pacing and frame-time tools: `tools/pacing.sh`, `tools/perf_scenes.txt`.
@@ -116,3 +116,7 @@ outside its leash, catches the party walking back; a random ambush appears 4+ ti
 fights at once). Expect `groups` (x,y[,c chasing][,t ambush] of every group on the map) and `enemydist` (nearest).
 1.2.3: `touch_combat_1_2_3` (map header `touch=1`: a placed group in sight does not attack until it is next to the party;
 without it the same group attacks from its aggro range). Console `touch [0|1]` sets it for the current visit.
+
+1.3.1: `music_1_3_1` replaces `music_ambient` (no ambient loops any more, #50): every map names its music (#48), fights
+play the campaign's fight music or the map's own (console `combatmusic ID|-`, #47), and Editor header screenshots at
+960x720, 1280x720 and 1920x1080 (#46) with a click on Exit.

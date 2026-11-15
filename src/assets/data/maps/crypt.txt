@@ -7,7 +7,6 @@ dark=1
 light=3
 bg=0,0,0
 music=crypt
-ambient=amb_crypt
 
 [legend]
 # = wall_gray

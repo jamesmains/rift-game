@@ -28,6 +28,19 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.3.1 fight music, music lists, no more ambient loops
+
+* **Fight music in the Editor:** the Campaign tab has Fight music and Boss fight music, and a map can pick its own
+  fight music with the new "fight" button in the Maps tab header (`combatmusic=` in a map header or a dungeons.txt
+  entry, `combatmusic=` / `bossmusic=` in campaign.txt). Bosses keep the boss music.
+* Every map's music field now shows the track it plays (maps that used to fall back by kind name it), and it has a
+  list button like ambient. A field left empty shows the track it falls back to in grey.
+* The ambient sound loops (wind, rain, drips, town noise...) were removed: they no longer fit the game. A campaign
+  can still add its own in the Sounds tab.
+* Fix: a playtest's ambient loop kept playing after going back to the Editor.
+* Fix: on wide screens the Editor's Guide and Check all buttons sat on top of the Campaign and Exit buttons, so Exit
+  couldn't be clicked. The four buttons now sit side by side when the tabs fit on one row.
+
 ## 1.3.0 a real soundtrack, a fresh press kit, the browser demo
 
 * **New music:** the whole soundtrack is now the Pixel Fantasy pack by AlkaKrab (30 tracks), matched to each place:
@@ -871,9 +884,9 @@ Almost everything is plain text:
 ## Audio
 
 The music is the Pixel Fantasy pack by AlkaKrab (`assets/audio/music/pixel_fantasy/`, 30 loops and 3 short stings).
-The sound effects and ambient loops are synthesized by `tools/mksounds.py` (numpy + ffmpeg) into `assets/audio/sfx/*.wav`
-and `assets/audio/ambient/*.ogg`; re-run it to regenerate them (`music` as an argument still makes the old generated
-tracks, which nothing uses any more). `assets/data/sounds.txt` maps event ids to files,
+The sound effects are synthesized by `tools/mksounds.py` (numpy + ffmpeg) into `assets/audio/sfx/*.wav`; re-run it to
+regenerate them (`music` / `ambient` as arguments still make the old generated tracks and loops, which nothing uses any
+more: the ambient loops were removed at 1.3.1). `assets/data/sounds.txt` maps event ids to files,
 so replacing a sound is either dropping a new file over the old one or pointing the event at a different file in
 the Sounds tab. Several files on one event are picked at random; `pitchvar` adds random pitch.
 

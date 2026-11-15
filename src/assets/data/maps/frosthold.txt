@@ -5,7 +5,6 @@ kind=town
 spawn=16,26
 bg=0,0,0
 music=frosthold
-ambient=amb_wind
 
 [legend]
 . = floor_snow

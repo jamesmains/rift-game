@@ -224,6 +224,7 @@ struct Map {
     int spawnX = 1, spawnY = 1;
     int seed = 0;
     std::string music;
+    std::string combatMusic;     // 1.3.1 (#47) header combatmusic=: ordinary fights on this map (empty = the campaign's)
     std::string ambient;         // header ambient=: the ambient loop (sounds.txt [ambient]); "none" = silence; empty = chosen by place
     std::string worldMap;        // header worldmap=: what M shows while on this map (overrides the campaign): off | self | overworld | <map id>
     std::string onEnter;         // 1.1.10 header onenter=: actions (script:<id>...) run each time the party arrives (not on loading a save)

@@ -12,7 +12,7 @@ import numpy as np
 
 SR = 22050
 OUT = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
-WHAT = set(sys.argv[2:]) or {"sfx", "ambient"}   # 1.0: e.g. "mksounds.py assets/audio music ambient"
+WHAT = set(sys.argv[2:]) or {"sfx"}   # e.g. "mksounds.py assets/audio music ambient"; 1.3.1 (#50): ambient loops left the game, only made when asked
 # 1.3.0: the game's music is the Pixel Fantasy pack (audio/music/pixel_fantasy), so the generated tracks are only made
 # when asked for ("music"); they are no longer used by sounds.txt.
 

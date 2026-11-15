@@ -7,7 +7,6 @@ dark=1
 light=3
 bg=0,0,0
 music=call_of_the_raven
-ambient=amb_crypt
 
 [legend]
 # = wall_gray

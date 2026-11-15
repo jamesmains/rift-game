@@ -209,7 +209,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
     mk("encounters.txt", "Encounter tables", "table", "id", {"id", "level", "group"});
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
-    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "ambient", "table", "touch"});
+    mk("dungeons.txt", "Dungeons", "dungeon", "id", {"id", "name", "style", "w", "h", "seed", "level", "exit", "monsters", "boss", "bossflag", "bossdefeat", "loot", "music", "combatmusic", "ambient", "table", "touch"});
     mk("overworld.txt", "Overworld locations", "location", "id", {"id", "name", "x", "y", "kind", "map", "tx", "ty", "clear", "road", "require", "locked", "reveal"});
     mk("recipes.txt", "Recipes", "recipe", "id", {"id", "name", "result", "count", "station", "materials", "gold", "level", "difficulty", "skill", "known", "reveal"});          // gens[9]
     mk("affixes.txt", "Affixes", "affix", "id", {"id", "name", "pos", "tier", "types", "mods", "dmgtype", "value"});                   // gens[10]
@@ -359,12 +359,19 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     if (toastT > 0) toastT -= dt;
     // tabs
     // tabs flow into a second row when they do not fit beside the Exit button
-    { int rows = 1, fx = 4; for (int i = 0; i < NTABS; i++) { int tw = font->width(TABS[i]) + 8; if (fx + tw > W - 250) { rows++; fx = 4; } fx += tw + 2; } gEdTop = 6 + 22 * rows; }   // 28 / 50 / 72
+    // 1.3.1 (#46): one row = Campaign | Guide | Check all | Exit side by side (needs W - 382 for the tabs); else the
+    // buttons stack in two rows at the right (W - 250 for the tabs) and the bar is at least two rows high
+    { int tabsW = 4; for (int i = 0; i < NTABS; i++) tabsW += font->width(TABS[i]) + 10;
+      hdrWide = tabsW <= W - 382;
+      int lim = hdrWide ? W - 382 : W - 250;
+      int rows = 1, fx = 4; for (int i = 0; i < NTABS; i++) { int tw = font->width(TABS[i]) + 8; if (fx + tw > lim) { rows++; fx = 4; } fx += tw + 2; }
+      if (!hdrWide && rows < 2) rows = 2;
+      gEdTop = 6 + 22 * rows; }   // 28 / 50 / 72
     cv.fillRect(0, 0, W, TOP, PANEL);
     int tx = 4, trow = 0;
     for (int i = 0; i < NTABS; i++) {
         int tw = font->width(TABS[i]) + 8;
-        if (tx + tw > W - 250) { trow++; tx = 4; }
+        if (tx + tw > (hdrWide ? W - 382 : W - 250)) { trow++; tx = 4; }
         bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty) || (i == 24 && gens[17].dirty) || (i == 25 && ste.dirty);
         if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (dirty ? "*" : ""), true, tab == i)) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; }
         tx += tw + 2;
@@ -372,7 +379,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     if (tab == 1 && kindReturnTab >= 0 && !ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE]) { tab = kindReturnTab; kindReturnTab = -1; in.eatKeys(); }
     {
         std::string cname = "Triffall"; for (auto& c : listCampaigns(assetDir)) if (c.id == campaignId) cname = c.name;
-        if (ui.button(W - 240, 4, 164, 20, "Campaign: " + cname.substr(0, 14), true, campaignId != "triffall", ACCENT2)) {
+        if (ui.button(hdrWide ? W - 374 : W - 240, 4, 164, 20, "Campaign: " + cname.substr(0, 14), true, campaignId != "triffall", ACCENT2)) {
             auto all = listCampaigns(assetDir); std::vector<std::string> names; int cur = 0;
             for (size_t i = 0; i < all.size(); i++) { names.push_back(all[i].name + (all[i].id == "triffall" ? "  (base game)" : "  [" + all[i].id + "]")); if (all[i].id == campaignId) cur = (int)i; }
             names.push_back("+ New campaign...");
@@ -383,13 +390,15 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
                 if (any) openConfirm("Unsaved changes will be lost. Switch campaign anyway?", [this, id]() { setCampaign(id); }); else setCampaign(id);
             });
         }
-        if (ui.hover(W - 240, 4, 164, 20)) ui.tip("Each campaign is a separate game in assets/campaigns/<id>/ with its own maps, items, monsters... and its own desktop icon. The Campaign tab sets its name and where new games start.");
+        if (ui.hover(hdrWide ? W - 374 : W - 240, 4, 164, 20)) ui.tip("Each campaign is a separate game in assets/campaigns/<id>/ with its own maps, items, monsters... and its own desktop icon. The Campaign tab sets its name and where new games start.");
     }
-    if (ui.button(W - 240, TOP >= 50 ? 26 : 4, TOP >= 50 ? 164 : 60, 20, TOP >= 50 ? "? Guide  (F1)" : "? Guide", true, false, ACCENT)) openGuide(tabTopic());
-    if (ui.hover(W - 240, TOP >= 50 ? 26 : 4, 164, 20)) ui.tip("How everything in the Editor works. The small ? buttons open it on the matching page.");
-    if (in.pressed[K_F1] && pop == P_NONE) openGuide(tabTopic());
-    if (ui.button(W - 70, TOP >= 50 ? 26 : 4, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
-    if (ui.hover(W - 70, TOP >= 50 ? 26 : 4, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables...");
+    { int gx = hdrWide ? W - 206 : W - 240, gy = hdrWide ? 4 : 26, gw = hdrWide ? 60 : 164;
+      int kx = hdrWide ? W - 140 : W - 70, ky = hdrWide ? 4 : 26;
+      if (ui.button(gx, gy, gw, 20, hdrWide ? "? Guide" : "? Guide  (F1)", true, false, ACCENT)) openGuide(tabTopic());
+      if (ui.hover(gx, gy, gw, 20)) ui.tip("How everything in the Editor works (F1). The small ? buttons open it on the matching page.");
+      if (in.pressed[K_F1] && pop == P_NONE) openGuide(tabTopic());
+      if (ui.button(kx, ky, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
+      if (ui.hover(kx, ky, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables..."); }
     if (ui.button(W - 70, 4, 64, 20, "Exit", true, false, DANGER) || (!ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE] && !mapPanning)) {
         bool any = mapDirty || kindsDirty || te.dirty || ste.dirty || sndDirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
         if (any) openConfirm("There are unsaved changes. Exit anyway? (Save each tab with its Save button.)", [this]() { wantsClose = true; });
@@ -431,6 +440,8 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
 
 // ---------------- generic key/value editor ----------------
 // 1.2.0 (#37): the tile category a sprite field's picker opens on
+// 1.3.1 (#48): the track a map with no music= plays (Game::musicWanted)
+static std::string edKindMusic(const std::string& kind) { return kind == "overworld" ? "overworld" : kind == "town" || kind == "interior" ? "town" : kind == "dungeon" ? "dungeon" : "forest"; }
 static char tileCatFor(const std::string& sec, const std::string& key) {
     if (key == "partysprite" || sec == "class" || sec == "npc") return 'c';
     if (sec == "item") return 'i';
@@ -764,7 +775,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     if (k == "spell") { singlePick("spell", spellIds()); return; }
     if (k == "map" || k == "to") { singlePick("map", mapIds()); return; }
     if (k == "sound" || k == "attacksound") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") o.push_back(id); singlePick("sound event (empty = automatic)", o); return; }
-    if (k == "music") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "music") o.push_back(id); singlePick("music track", o); return; }
+    if (k == "music" || k == "combatmusic") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "music") o.push_back(id); singlePick("music track", o); return; }
     if (k == "ambient") { std::vector<std::string> o{"", "none"}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "ambient") o.push_back(id); singlePick("background loop (empty = none)", o); return; }
     // --- list builders (comma lists) ---
     auto listPick = [&](const std::string& title, std::vector<std::string> opts, const std::string& suffix) {
@@ -999,7 +1010,7 @@ void Editor::drawMaps(InputState& in) {
     if (hit >= 0) { hit = mIdx[hit]; mapListSel = hit; }
     if (hit >= 0) { if (mapDirty) { std::string f = mapFiles[hit]; openConfirm("Discard unsaved changes to the current map?", [this, f]() { loadMapFile(f); }); } else loadMapFile(mapFiles[hit]); }
     int by = y + 134;
-    if (ui.button(x + 4, by, 44, 18, "New")) openTextPrompt("New map id (file name)", "new_map", [this](const std::string& nm) { em = EdMap(); em.id = nm; em.path = dataRoot + "/maps/" + nm + ".txt"; em.header = {{"id", nm}, {"name", nm}, {"kind", "town"}, {"spawn", "5,5"}, {"bg", "0,0,0"}}; em.init(30, 20, "floor_grass"); for (int i = 0; i < 30; i++) { em.at(i, 0) = "tree"; em.at(i, 19) = "tree"; } for (int j = 0; j < 20; j++) { em.at(0, j) = "tree"; em.at(29, j) = "tree"; } mapLoaded = true; mapDirty = true; resizeW = 30; resizeH = 20; objSel = -1; refreshFiles();
+    if (ui.button(x + 4, by, 44, 18, "New")) openTextPrompt("New map id (file name)", "new_map", [this](const std::string& nm) { em = EdMap(); em.id = nm; em.path = dataRoot + "/maps/" + nm + ".txt"; em.header = {{"id", nm}, {"name", nm}, {"kind", "town"}, {"music", "town"}, {"spawn", "5,5"}, {"bg", "0,0,0"}}; em.init(30, 20, "floor_grass"); for (int i = 0; i < 30; i++) { em.at(i, 0) = "tree"; em.at(i, 19) = "tree"; } for (int j = 0; j < 20; j++) { em.at(0, j) = "tree"; em.at(29, j) = "tree"; } mapLoaded = true; mapDirty = true; resizeW = 30; resizeH = 20; objSel = -1; refreshFiles();
         if (camp.startMap.empty() && dataRoot != baseRoot) { camp.startMap = nm; camp.startX = 5; camp.startY = 5; saveCampaignForm(); say("New games of this campaign start on " + nm + " (B over a tile or the Campaign tab changes it). Save the map to keep it."); } });
     if (ui.button(x + 52, by, 44, 18, "Save", mapLoaded && mapDirty, false, OK)) { if (em.save()) { mapDirty = false; changed = true; refreshFiles(); say("Saved " + em.path); } else say("Save failed!"); }
     if (ui.button(x + 100, by, 48, 18, "Revert", mapLoaded && mapDirty)) { std::string f = em.id; openConfirm("Revert all changes?", [this, f]() { loadMapFile(f); }); }
@@ -1095,7 +1106,25 @@ void Editor::drawMaps(InputState& in) {
         std::string v = em.hget(key); cx += lw2 + 4; if (ui.textField(cx, hy, w, v, 60)) { em.hset(key, v); mapDirty = true; } cx += w + 8; };
     helpBtn(vx + 5, hy + 1, "maps.header", "tab.maps");
     int cx = vx + 22;
-    hfield("name", cx, 100); hfield("kind", cx, 70); hfield("spawn", cx, 50); hfield("dark", cx, 24); hfield("light", cx, 24); hfield("encounter", cx, 24); hfield("music", cx, 70);
+    bool hnarrow = vw < 820;   // 1.3.1: the 960-wide Editor - narrower fields so music v, fight and on enter fit
+    hfield("name", cx, hnarrow ? 72 : 96); hfield("kind", cx, hnarrow ? 52 : 64); hfield("spawn", cx, hnarrow ? 44 : 50); hfield("dark", cx, 24); hfield("light", cx, 24); hfield("encounter", cx, 24);
+    // 1.3.1 (#48): music - a list of the tracks (Sounds tab); empty plays the track for the map's kind, shown greyed
+    { int mfx = cx + font->width("music") + 4; hfield("music", cx, hnarrow ? 60 : 64);
+      if (em.hget("music").empty()) ui.text(mfx + 3, hy + 2, edKindMusic(em.hget("kind")), DIM);
+      if (ui.button(cx - 8, hy, 14, 16, "v")) { std::string def = edKindMusic(em.hget("kind")); std::vector<std::string> ids, labels;
+          for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "music") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
+          std::string now = em.hget("music").empty() ? def : em.hget("music"); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == now) cur = (int)i;
+          if (!ids.empty()) openListPicker("Music on this map (Sounds tab: the tracks)", labels, cur, [this, ids](int i) { em.hset("music", ids[i]); mapDirty = true; }); }
+      cx += 10; }
+    // 1.3.1 (#47): combatmusic= - this map's own fight music (empty = the campaign's, Campaign tab); bosses keep the boss music
+    { std::string cm = em.hget("combatmusic"); int bw = hnarrow ? 40 : 46;
+      if (ui.button(cx - 4, hy, bw, 16, cm.empty() ? "fight" : "fight*", true, !cm.empty())) {
+          std::vector<std::string> ids{""}, labels{"(the campaign's fight music)"};
+          for (auto& id : gAudio.order) { auto it = gAudio.defs.find(id); if (it == gAudio.defs.end() || it->second.kind != "music") continue; ids.push_back(id); labels.push_back(it->second.desc.empty() ? id : id + "  - " + it->second.desc); }
+          int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == cm) cur = (int)i;
+          openListPicker("Fight music on this map (bosses keep the boss music)", labels, cur, [this, ids](int i) { em.hset("combatmusic", ids[i]); if (ids[i].empty()) em.header.erase(std::remove_if(em.header.begin(), em.header.end(), [](const std::pair<std::string, std::string>& kv) { return kv.first == "combatmusic"; }), em.header.end()); mapDirty = true; }); }
+      if (ui.hover(cx - 4, hy, bw, 16)) { ui.tip(cm.empty() ? "Fights here play the campaign's fight music (Campaign tab). Click to give this map its own. Right-click: guide" : "Fights here play " + cm + " (bosses keep the boss music). Right-click: guide"); if (in.mousePressed[1]) openGuide("map.combatmusic"); }
+      cx += bw + 4; }
     // 1.1.10 (#34): onenter= - actions run each time the party arrives (usually script:<id>)
     { std::string oe = em.hget("onenter"); int bw = std::min(76, vx + vw - 6 - cx);
       if (ui.button(cx - 4, hy, bw, 16, oe.empty() ? "on enter" : "on enter *", true, !oe.empty())) {

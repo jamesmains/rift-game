@@ -3,7 +3,6 @@ id=wreck
 name=The Wreck - Upper Hull
 kind=ruins
 music=tech
-ambient=amb_wind
 spawn=27,34
 bg=0,0,0
 

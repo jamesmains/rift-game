@@ -5,7 +5,6 @@ kind=town
 spawn=20,26
 bg=0,0,0
 music=sunscar
-ambient=amb_wind
 
 [legend]
 . = floor_sand

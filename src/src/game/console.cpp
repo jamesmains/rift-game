@@ -19,7 +19,7 @@ void Game::runConsole(const std::string& line) {
         out("world: teleport MAP [X Y] | maps | pos | reveal | worldmap MODE | time HH:MM | day N | weather clear|rain|storm|fog|snow");
         out("party: give ITEM [N] | gold N | xp N | level N | heal | hurt N [poison] | god | auto | spells | learn SPELL [MEMBER] | join CLASS | item?");
         out("story: flag NAME [V] | unflag NAME | flags | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | achieve ID | reset_achievements");
-        out("fights: spawn CREATURE[,CREATURE] | kill | touch [0|1] | cast SPELL [DX DY] | bestiary CREATURE N | difficulty 0-2");
+        out("fights: spawn CREATURE[,CREATURE] | kill | touch [0|1] | combatmusic [ID|-] | cast SPELL [DX DY] | bestiary CREATURE N | difficulty 0-2");
         out("screens: bounty [TOWN] | bounties | craft [STATION] | cskill STATION XP | shop ID | dialogue ID [NODE] | run SCRIPT");
         out("misc: stats | hint | doors | demo 0|1 | autosave | crashtest | reload | clear");
     }
@@ -57,6 +57,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "doors") { if (map) { const auto& k = allTileKinds(); for (int y = 0; y < map->h; y++) for (int x = 0; x < map->w; x++) { const Cell& ce = map->at(x, y); if (ce.kind < k.size() && startsWith(k[ce.kind].name, "door")) { const auto& d = doorShop(x, y); std::string h; bool open = d.first.empty() || shopOpen(d.first, h); out(fmt("%d,%d %s %s (%d cells)", x, y, d.first.empty() ? "-" : d.first.c_str(), d.first.empty() ? "" : (open ? "open" : "LOCKED"), (int)d.second.size())); } } } }
     else if (c == "bestiary") { if (gd->creature(arg(1))) { bestiary[arg(1)] = std::max(1, atoi(arg(2).c_str())); out("ok"); } else out("unknown creature"); }
     else if (c == "bounties") { out(fmt("%d boards:", (int)boards.size())); for (auto& b : boards) out("  board " + b.id + " (map " + b.map + ")"); for (auto& b : bountyOffers) out("  offer " + b.town + " " + b.kind + " " + b.target + (b.title.empty() ? "" : " '" + b.title + "'")); for (auto& b : bounties) out("  taken " + b.town + " " + b.kind + " " + b.target); }
+    else if (c == "combatmusic") { if (!map) return; if (!arg(1).empty()) map->combatMusic = arg(1) == "-" ? "" : arg(1); out("combatmusic = " + (map->combatMusic.empty() ? std::string("(campaign: ") + (campaign.combatMusic.empty() ? "combat" : campaign.combatMusic) + ")" : map->combatMusic) + " - this visit; map header combatmusic="); }   // 1.3.1 (#47)
     else if (c == "touch") { if (!map) return; if (!arg(1).empty()) map->touchCombat = argi(1) != 0; out(std::string("touch = ") + (map->touchCombat ? "1 (fights start when a group touches the party)" : "0 (groups attack within aggro range)") + " - this visit; map header touch=1"); }
     else if (c == "worldmap") { if (!arg(1).empty()) campaign.worldMap = arg(1); out("world map = " + campaign.worldMap + " (overworld | off | current | MAP_ID; campaign.txt worldmap=)"); }
     else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }

@@ -52,6 +52,8 @@ bool Editor::bakeDungeon(const EdSection& sec, std::string& err) {
                 {"music", sec.get("music", style == "tech" || style == "ship" ? "tech" : "dungeon")}};
     if (!sec.get("table").empty()) e.header.push_back({"table", sec.get("table")});
     if (atoi(sec.get("touch").c_str()) != 0) e.header.push_back({"touch", "1"});   // 1.2.3 (#40)
+    if (!sec.get("combatmusic").empty()) e.header.push_back({"combatmusic", sec.get("combatmusic")});   // 1.3.1 (#47)
+    if (!sec.get("ambient").empty()) e.header.push_back({"ambient", sec.get("ambient")});
     mapToEd(m, e, id, false);
     if (!e.save()) { err = "could not write " + e.path; return false; }
     refreshFiles();
@@ -65,7 +67,7 @@ bool Editor::bakeDungeon(const EdSection& sec, std::string& err) {
 void Editor::bakeOverworld() {
     Map m; generateOverworld(m, worldSeed, readPath("overworld.txt"));
     EdMap e; e.id = "overworld"; e.path = dataRoot + "/maps/overworld.txt";
-    e.header = {{"id", "overworld"}, {"name", "Aldmoor"}, {"kind", "overworld"}, {"spawn", fmt("%d,%d", m.spawnX, m.spawnY)}, {"encounter", std::to_string(m.encounterRate)}, {"table", m.encounterTable}, {"bg", "58,112,52"}};
+    e.header = {{"id", "overworld"}, {"name", "Aldmoor"}, {"kind", "overworld"}, {"music", "overworld"}, {"spawn", fmt("%d,%d", m.spawnX, m.spawnY)}, {"encounter", std::to_string(m.encounterRate)}, {"table", m.encounterTable}, {"bg", "58,112,52"}};
     mapToEd(m, e, "overworld", true);
     std::error_code ec; fs::create_directories(dataRoot + "/maps", ec);
     if (!e.save()) { say("Could not write " + e.path); return; }

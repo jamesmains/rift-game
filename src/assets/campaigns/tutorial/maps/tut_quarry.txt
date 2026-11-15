@@ -7,7 +7,6 @@ dark=1
 light=2
 bg=0,0,0
 music=dungeon
-ambient=amb_cave
 worldmap=self
 
 [legend]

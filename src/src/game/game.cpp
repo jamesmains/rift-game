@@ -67,6 +67,7 @@ CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, co
         c.startDialogue = sec.get("dialogue", ""); c.gold = sec.geti("gold", 25); c.inherit = sec.geti("inherit", 0) != 0;   // campaigns stand alone unless they ask to build on the base game
         c.startItems = sec.get("items"); c.startFlags = sec.get("flags"); c.worldMap = trim(sec.get("worldmap", "overworld"));
         c.order = sec.geti("order", 100); c.achievements = sec.geti("achievements", 1) != 0; c.defeat = trim(sec.get("defeat"));
+        c.combatMusic = trim(sec.get("combatmusic")); c.bossMusic = trim(sec.get("bossmusic"));
     }
     return c;
 }
@@ -161,7 +162,7 @@ Map* Game::loadMap(const std::string& id) {
                                 ex.size() > 0 ? trim(ex[0]) : "overworld", ex.size() > 2 ? atoi(ex[1].c_str()) : 0, ex.size() > 2 ? atoi(ex[2].c_str()) : 0,
                                 pool, sec.get("boss"), sec.get("bossflag"), sec.get("loot", "common"));
                 m->name = sec.get("name", id); m->encounterTable = sec.get("table");
-                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient", st == "cave" || st == "mine" ? "amb_cave" : st == "crypt" ? "amb_crypt" : st == "tech" || st == "ship" ? "amb_machine" : "");
+                std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient"); m->combatMusic = sec.get("combatmusic");   // 1.3.1: no ambient by style (#50), fight music (#47)
                 m->touchCombat = sec.geti("touch", 0) != 0;   // 1.2.3 (#40)
                 if (sec.has("bossdefeat")) for (auto& e : m->enemies) if (e.flag == sec.get("bossflag")) e.onDefeatScript = sec.get("bossdefeat");
                 ok = true; break;
@@ -249,27 +250,25 @@ std::string Game::musicWanted() const {
     if (m == GMode::GAMEOVER) return "gameover";
     if (m == GMode::VICTORY) return "fanfare";
     if (m == GMode::ENDING) return "ending";
-    if (map->kind == "overworld" && map->music.empty() && nightAmount() > 0.6f && gAudio.has("overworld_night")) return "overworld_night";
-    if (m == GMode::COMBAT) { for (auto& u : cb.units) if (u.ch.alive && !u.friendly() && u.ch.boss) return "boss"; return "combat"; }
+    if (map->kind == "overworld" && (map->music.empty() || map->music == "overworld") && nightAmount() > 0.6f && gAudio.has("overworld_night")) return "overworld_night";
+    // 1.3.1 (#47): fight music = the map's combatmusic=, else the campaign's combatmusic= (bossmusic= for a boss), else combat / boss
+    if (m == GMode::COMBAT) {
+        for (auto& u : cb.units) if (u.ch.alive && !u.friendly() && u.ch.boss) return !campaign.bossMusic.empty() && gAudio.has(campaign.bossMusic) ? campaign.bossMusic : "boss";
+        if (!map->combatMusic.empty() && gAudio.has(map->combatMusic)) return map->combatMusic;
+        if (!campaign.combatMusic.empty() && gAudio.has(campaign.combatMusic)) return campaign.combatMusic;
+        return "combat"; }
     if (!map->music.empty()) return map->music;
     if (map->kind == "overworld") return "overworld";
     if (map->kind == "town" || map->kind == "interior") return "town";
     if (map->kind == "dungeon") return "dungeon";
     return "forest";
 }
-// 1.1.6 (owner's #28, 2nd take): each map names its own loop (header ambient=<id>, a Maps tab picker; generated dungeons
-// take ambient= from dungeons.txt, else one by style) - nothing is guessed from the place any more, so no waves or birds
-// where they don't fit. On top of that, outdoors: rain / storm / snow replace the map's loop, and the daytime life of a
-// town or forest gives way to night insects at night. ambient=none = silence, weather included.
+// 1.3.1 (owner's #50): the base game has no ambient loops any more (they didn't fit the theme). A campaign can still add
+// [ambient] sounds in the Sounds tab and pick one per map (header ambient=<id>; generated dungeons: dungeons.txt ambient=).
+// Nothing replaces it by weather or time of day. ambient=none = silence.
 std::string Game::ambientWanted() const {
     if (!running || !map || mode == GMode::ENDING || mode == GMode::GAMEOVER) return "";
     const std::string& a = map->ambient; if (a == "none") return "";
-    if (outdoors()) {
-        if (weather == "storm") return "amb_storm";
-        if (weather == "rain") return "amb_rain";
-        if (weather == "snow") return "amb_wind";
-        if ((a == "amb_town" || a == "amb_forest") && nightAmount() > 0.6f) return "amb_night";
-    }
     return a;
 }
 std::string Game::weaponSound(const Character& ch) const {

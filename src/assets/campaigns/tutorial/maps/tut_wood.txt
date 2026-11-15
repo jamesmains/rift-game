@@ -5,7 +5,6 @@ kind=town
 spawn=1,12
 bg=0,0,0
 music=forest
-ambient=amb_forest
 worldmap=self
 
 [legend]

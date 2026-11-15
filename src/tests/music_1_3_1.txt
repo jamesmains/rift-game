@@ -1,0 +1,76 @@
+# 1.3.1: every map names its music (#48), fight music from the campaign or the map (#47), no ambient loops (#50),
+# a playtest's ambient stops in the Editor (#49), the Editor's header buttons never overlap (#46).
+frames 5
+newgame Arin warrior
+frames 120
+expect mode == EXPLORE
+# #48: maps that used to fall back by kind now say so in their header
+teleport hollowmere 14 14
+frames 60
+audio
+expect music == town
+expect ambient lacks amb_
+teleport hollowmere_home 3 3
+frames 60
+audio
+expect music == town
+teleport overworld 60 60
+con weather storm
+clock 720
+frames 60
+audio
+expect music == overworld
+# #50: no loop anywhere, not even in a storm
+expect ambient lacks amb_
+teleport crypt 12 22
+frames 60
+audio
+expect music == crypt
+expect ambient lacks amb_
+teleport goblin_cave 5 5
+frames 60
+audio
+expect ambient lacks amb_
+# #47: fights play the campaign's fight music (the base game: combat), a map can have its own
+teleport overworld 60 60
+frames 60
+combat rat
+frames 120
+audio
+expect music == combat
+con kill
+frames 200
+key ENTER
+frames 60
+con combatmusic crown_of_thorns
+frames 5
+combat rat
+frames 120
+audio
+expect music == crown_of_thorns
+con kill
+frames 200
+key ENTER
+frames 60
+con combatmusic -
+frames 5
+# #46: the Editor header at the 4:3 size and at wide sizes
+editor
+frames 10
+expect state == 3
+shot ed_header_960.png
+tab 18
+frames 5
+shot ed_campaign_960.png
+tab 0
+frames 5
+edscreen 1280 720
+frames 10
+shot ed_header_1280.png
+edscreen 1920 1080
+frames 10
+shot ed_header_1920.png
+# Exit (top right) closes the Editor at this size
+click 1880 14
+frames 10
+expect state == 1

@@ -556,23 +556,16 @@ one copies it into the campaign.
 == concepts.ambient | Ambient sound
 see: tab.sounds, maps.header
 
-A map can play a quiet background loop under its music (it follows the
-Ambience volume): wind, a town murmur, birdsong in woods and fields, cave
-drips, a still crypt, frogs, a machine hum, a crackling fire, the sea on a
-shore, breathing in the Scar. sounds.txt lists them as [ambient] entries (the
-Sounds tab shows them as [ambient]; the kind button cycles sfx / music /
-ambient).
+The base game has no ambient loops (since 1.3.1: they no longer fitted the
+game). A campaign can still add its own: in the Sounds tab make an entry and
+set its kind to ambient (the kind button cycles sfx / music / ambient); it is
+written to sounds.txt as an [ambient] entry and follows the player's Ambience
+volume.
 
-Each map names its own loop: the ambient field on the second header row of the
-Maps tab (the v button lists every [ambient] entry), or ambient=amb_swamp in the
-map header. Nothing is guessed from the place, so no waves or birds where they
-don't belong. Generated dungeons take ambient= from their dungeons.txt entry
-(without one: cave/mine = amb_cave, crypt = amb_crypt, tech/ship = amb_machine).
-
-On top of the map's loop, outdoors (not dark, not an interior):
-  rain = amb_rain, storm = amb_storm, snow = amb_wind
-  amb_town / amb_forest at night = amb_night (insects)
-Empty = no loop of its own; ambient=none = silence, weather included.
+A map then names its loop: the ambient field on the second header row of the
+Maps tab (the v button lists every [ambient] entry), or ambient=<id> in the map
+header. Generated dungeons take ambient= from their dungeons.txt entry. Empty
+or none = silence. Weather and the time of day don't change it.
 
 == tab.maps | Maps tab
 see: maps.tools, maps.objects, maps.select, maps.header, maps.check, maps.play, maps.arrival, maps.start, maps.resize
@@ -1147,7 +1140,7 @@ left, resize, then Select everything (Ctrl+A), cut and paste it further down.
 Resize can be undone with Ctrl+Z.
 
 == maps.header | Map header fields
-see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.table, map.bg, map.worldmap, map.ambient, map.touch
+see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.combatmusic, map.table, map.bg, map.worldmap, map.ambient, map.touch
 
 The two rows above the map view edit the [map] header of the file:
 
@@ -1163,10 +1156,10 @@ The two rows above the map view edit the [map] header of the file:
   table=
   bg=0,0,0
   worldmap=
-  ambient=amb_cave
 
 Fields left empty use their defaults. The id is the file name and is not
-edited here. table and ambient have pickers. Changes mark the map unsaved; save
+edited here. music, table and ambient have pickers (the v buttons); "fight"
+picks the map's own fight music (map.combatmusic). Changes mark the map unsaved; save
 with Save or Ctrl+S.
 
 The id is never written by these fields; it comes from the file name you chose
@@ -1287,19 +1280,38 @@ need a floor kind with a weight. The Encounters tab warns when a table is reache
 map whose rate is 0.
 
 == map.music | Map music
-see: tab.sounds, map.kind, dungeon.music
+see: tab.sounds, map.kind, map.combatmusic, dungeon.music
 
-The music track played on this map, overriding the default chosen by kind.
-Fights still switch to combat (or boss) music.
+The music track played on this map. The v button next to the field lists every
+music track of the Sounds tab. Fights switch to the fight music
+(map.combatmusic, campaign.combatmusic) and boss fights to the boss music.
 
-Format: the id of a [music] entry in the Sounds tab. Default: empty =
-automatic (overworld, town, dungeon, forest by kind).
+Format: the id of a [music] entry in the Sounds tab. Every base-game map names
+its track (since 1.3.1). Default: empty = by kind - overworld, town (kind town
+or interior), dungeon, or forest (anything else); the field then shows that
+track greyed.
 
   music=tech
 
-Gotchas: the picker lists only music tracks. An id that does not exist is
-silent and is reported in the Sounds tab under "events requested but not
-defined".
+On the overworld, music=overworld (or empty) turns to overworld_night at night.
+
+Gotchas: an id that does not exist is silent and is reported in the Sounds tab
+under "events requested but not defined".
+
+== map.combatmusic | Map fight music
+see: campaign.combatmusic, campaign.bossmusic, map.music, tab.sounds
+
+The music for ordinary fights on this map, instead of the campaign's fight
+music. In the Maps tab it is the "fight" button on the first header row
+("fight*" when the map has its own); its list holds every music track.
+
+Format: the id of a [music] entry. Default: empty = the campaign's fight
+music (Campaign tab), which itself defaults to the combat track.
+
+  combatmusic=tales_by_firelight
+
+Fights with a boss still play the boss music (campaign.bossmusic). Generated
+dungeons take it from dungeons.txt combatmusic= (baking copies it).
 
 == map.table | Fallback encounter table
 see: concepts.encounters, map.encounter, table.usedby, tilekind.biome
@@ -1334,14 +1346,14 @@ map does not look like a hole. Dark dungeons look best with black.
 == map.ambient | Map background loop
 see: concepts.ambient, tab.sounds, map.music, maps.header
 
-The background loop played under the music on this map (wind, drips, frogs,
-rain, a town murmur...). It is on the second header row of the Maps tab; the v
-button next to it lists every [ambient] entry of the Sounds tab.
+A background loop played under the music on this map. The base game has none
+(1.3.1); a campaign can add [ambient] entries in the Sounds tab. It is on the
+second header row of the Maps tab; the v button next to it lists every
+[ambient] entry.
 
-Format: the id of an [ambient] entry, or none. Default: empty = no loop of its
-own (outdoors, rain / storm / snow still play their loop; none = always silent).
+Format: the id of an [ambient] entry, or none. Default: empty = silence.
 
-  ambient=amb_cave
+  ambient=my_wind
 
 Its loudness is the entry's volume in the Sounds tab times the player's
 Ambience volume setting.
@@ -4930,12 +4942,21 @@ A baked dungeon map keeps this as its header music=. Any [music] track from the 
 == dungeon.ambient | Dungeon background loop
 see: map.ambient, concepts.ambient, tab.sounds
 
-The background loop played under the music in the generated dungeon.
+A background loop played under the music in the generated dungeon (the base
+game has no [ambient] entries since 1.3.1; a campaign can add its own).
 
-Format: an [ambient] id (picker), or none. Default: empty = by style (cave and
-mine: amb_cave, crypt: amb_crypt, tech and ship: amb_machine, others: none).
+Format: an [ambient] id (picker), or none. Default: empty = silence.
 
-  ambient=amb_cave
+  ambient=my_drips
+
+== dungeon.combatmusic | Dungeon fight music
+see: map.combatmusic, campaign.combatmusic
+
+The music for ordinary fights in the generated dungeon, as map.combatmusic does
+for a map. Default: empty = the campaign's fight music. Baking copies it into
+the map header.
+
+  combatmusic=riders_of_the_storm
 
 == dungeon.touch | Dungeon fights start by touch
 see: map.touch, obj.enemy.aggro
@@ -5720,6 +5741,28 @@ Format: overworld, off, current, or a map id. Default: overworld.
 
 Gotchas: coach travel only works in overworld mode. Map items
 (effect=revealmap:) and revealmap= actions fill in whichever map they name.
+
+== campaign.combatmusic | Campaign fight music
+see: campaign.bossmusic, map.combatmusic, tab.sounds, tab.campaign
+
+The music every ordinary fight in this campaign plays (Campaign tab, "Fight
+music"). A map can override it with its own (Maps tab, "fight").
+
+Format: the id of a [music] entry. Default: empty = the combat track.
+
+  combatmusic=crown_of_thorns
+
+Order: the map's combatmusic=, else this, else combat. Boss fights use
+campaign.bossmusic instead.
+
+== campaign.bossmusic | Campaign boss fight music
+see: campaign.combatmusic, tab.sounds, tab.campaign
+
+The music for a fight with a boss creature (Campaign tab, "Boss fight music").
+
+Format: the id of a [music] entry. Default: empty = the boss track.
+
+  bossmusic=blood_and_honor
 
 == campaign.defeat | If the party falls
 see: tab.campaign, concepts.scripts, dlg.actions

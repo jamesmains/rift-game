@@ -7,7 +7,6 @@ dark=1
 light=4
 bg=0,0,0
 music=tales_by_firelight
-ambient=amb_fire
 
 [legend]
 , = rock

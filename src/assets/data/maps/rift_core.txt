@@ -7,10 +7,10 @@ dark=1
 light=3
 bg=0,0,0
 music=rift
-ambient=amb_rift
 
 [legend]
 # = wall_rift
+, = rock
 . = floor_rift
 < = stairs_up
 M = mushroom2
@@ -19,54 +19,52 @@ c = crystal
 m = mushroom
 r = rocks
 w = web
-X = rock
-R = crystal
 
 [rows]
-XXXXXXXXXXXXXXXXXXXXX#####XXXXXXXXXXXXXXXXXX########XX
-XXX######XXX##########.R.##XXXXXXXXXXXXXXXX##..##..##X
-XX##..R.##XX#.b..r##......##XXXXXXXXXXXXXXX#........#X
-XX#......##X#.m....m....M..##XXXXXXXXXXXXXX#........#X
-X##..m..m.####..c...........#XXXXXXXXXXXXXX#........#X
-##.........##...............#XXXXXXXXXXXXXX##......##X
-#.....r.R............m.....##X#####XXXXXXXX##m....##XX
-#......w#................m##XX#...######XX##.....##XXX
-#......###.......##....####XXX#....##..####.....##XXXX
-##.....###wm....########XXXXXX#....w....##...r..#XXXXX
-X#....c.#b.....R#XXXXXXXXXXXXX##rr.br..........b#XXXXX
-X#..............##XXXXXXXXXXXXX##.......b.......#XXXXX
-X#.....c.....Rb..##XXX#####XXXXX###.............#XXXXX
-X#..r.......###...#####...#XXXXXXX###.....##....#XXXXX
-X#.....m...##X##m....r....#XXXXXXXXX#....####...#XXXXX
-X##b.......##XX#..........#XXXX######....#XX#m..#XXXXX
-XX##.......w#XX#.......b.##XXX##.c..m....#XX#m..#XXXXX
-XXX#........#XX#......####XXXX#.........w#XX#..##XXXXX
-XXX#.Mm.mw..##X##.....######X##...c...m..#XX####XXXXXX
-XXX#b........#####.r...c...###.m.....m..##XXXXXXXXXXXX
-XXX##..........###.b..........c.r......##XXXXXXXXXXXXX
-XXXX###.....m...##.r....m.............##XXXXXXXXXXXXXX
-XXXXXX#####.....m...............m.#####XXXXXXXXXXXXXXX
-XXXXXXXXXX##.............###.r.####XXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX##<............#X#####XXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX#.......########XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX#......##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX#.....R##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX##wm.c..#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXX##....m#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXX#...mm#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXX##m...##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXX#....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXX#.m..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXX##...m#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X####XXXXXXX##...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#..#XXXXXXXX#w..#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#..##X#######..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#...###........#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#............m.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#...............#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X##...R.m.m......#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#########...bm##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXX#######XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+,,,,,,,,,,,,,,,,,,,,,#####,,,,,,,,,,,,,,,,,,########,,
+,,,######,,,##########.c.##,,,,,,,,,,,,,,,,##..##..##,
+,,##..c.##,,#.b..r##......##,,,,,,,,,,,,,,,#........#,
+,,#......##,#.m....m....M..##,,,,,,,,,,,,,,#........#,
+,##..m..m.####..c...........#,,,,,,,,,,,,,,#........#,
+##.........##...............#,,,,,,,,,,,,,,##......##,
+#.....r.c............m.....##,#####,,,,,,,,##m....##,,
+#......w#................m##,,#...######,,##.....##,,,
+#......###.......##....####,,,#....##..####.....##,,,,
+##.....###wm....########,,,,,,#....w....##...r..#,,,,,
+,#....c.#b.....c#,,,,,,,,,,,,,##rr.br..........b#,,,,,
+,#..............##,,,,,,,,,,,,,##.......b.......#,,,,,
+,#.....c.....cb..##,,,#####,,,,,###.............#,,,,,
+,#..r.......###...#####...#,,,,,,,###.....##....#,,,,,
+,#.....m...##,##m....r....#,,,,,,,,,#....####...#,,,,,
+,##b.......##,,#..........#,,,,######....#,,#m..#,,,,,
+,,##.......w#,,#.......b.##,,,##.c..m....#,,#m..#,,,,,
+,,,#........#,,#......####,,,,#.........w#,,#..##,,,,,
+,,,#.Mm.mw..##,##.....######,##...c...m..#,,####,,,,,,
+,,,#b........#####.r...c...###.m.....m..##,,,,,,,,,,,,
+,,,##..........###.b..........c.r......##,,,,,,,,,,,,,
+,,,,###.....m...##.r....m.............##,,,,,,,,,,,,,,
+,,,,,,#####.....m...............m.#####,,,,,,,,,,,,,,,
+,,,,,,,,,,##.............###.r.####,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,##<............#,#####,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,#.......########,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,#......##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,#.....c##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,##wm.c..#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,##....m#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,#...mm#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,##m...##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,#....##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,#.m..##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,##...m#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,####,,,,,,,##...#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#..#,,,,,,,,#w..#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#..##,#######..##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#...###........#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#............m.##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#...............#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,##...c.m.m......#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,#########...bm##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,#######,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 [enemy]
 group=alien_warrior,demon,cultist
@@ -221,24 +219,24 @@ y=18
 node=ember_cap
 
 [trigger]
-x=22
-y=22
+x=23
+y=19
 w=5
 h=5
 script=cutscene:The air tastes of copper and thunder.|Somewhere ahead, something is breathing - slowly, the way a sleeper breathes. The floor breathes with it.
 flag=rc_whisper1
 
 [trigger]
-x=37
-y=17
+x=36
+y=15
 w=5
 h=5
 script=cutscene:For a heartbeat you are standing in Ashfall forty years ago, and the sky above the towers is opening like an eye.|People are looking up. Most of them are smiling. Then the light comes down.|You are back in the Scar. Your hands are shaking.
 flag=rc_whisper2
 
 [trigger]
-x=45
-y=8
+x=41
+y=9
 w=5
 h=5
 script=cutscene:A voice without a mouth fills the cavern:|'LITTLE KEY. LITTLE SHARDS. YOU HAVE CARRIED ME HOME.'|'I WAS UNMADE ONCE. I REMEMBER HOW IT ENDED. DO YOU?'
@@ -253,3 +251,4 @@ node=rift_crystal
 x=11
 y=17
 node=rift_crystal
+

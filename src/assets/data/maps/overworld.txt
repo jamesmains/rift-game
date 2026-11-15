@@ -2,7 +2,7 @@
 id=overworld
 name=Aldmoor
 kind=overworld
-ambient=amb_wind
+music=overworld
 spawn=44,93
 encounter=4
 table=plains
@@ -69,7 +69,7 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~soooooooOooOosssw~~~~~WWWWWWW~~WWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~woOoooooooooooOssw~~~~~~WWWW~~~~~WWWWWWWWWWWWWWWWWWWW~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~soooooOooOOOOOoossw~~~~~~W~~~~~~~~~~~WWWWWWWWWWWWWWW~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~wooOoooOOooooooooOsswwww~~~~~~~~~~~~~~~WWWWWWWWWWWW~~~~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~wooooooOoOoOOOoooossssssswwss~~~~~~~~~~WWWWWWWWWW~~~~~~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~wooooo.OoOoOOOoooossssssswwss~~~~~~~~~~WWWWWWWWWW~~~~~~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~wooOoooOoooOoooOOoooooOOOoOooOo~~~~~~~~~WWWWWWW~~~~~sss~~~~~~WWWWWWWWWWWWWWWWWWWWWWWWWW~~WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~wsooooooooooooOooOooooooooOoooOoossssww~~~WWWW~~~~ssssss~~www~~~~~WWWWWWWWWWWWWWWWWWWWW~~~~~~WWWW_______WWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~wsoOOooOoooooooooOOOooooooooOooooOoOosssw~~~~~~ws"b".swww~~sswwww~~~~~WWWWWWWWWWWWWWWWWW~~~~~~~~WW_______WWWWWWWWWWWWWWWWWWWWWW
@@ -83,7 +83,7 @@ WWWWWWWWWWWWWWWWWWWW~~~~wssssssooOooooOoooO...+oo.ooooooOOOOooOOoOoooooooOOoooop
 WWWWWWWWWWWWWWWWWWW~~~~wwsssoOooO.oOo...ooooo.+.oooOoooooooooooOoooOoooOooOoOOfpf....b...........txxTZzxxxxxxtzxxxxsssw~~~sssss+ssxxxxzzsw~~~~~~~~~~~~ww~~~~~WWW
 WWWWWWWWWWWWWWWWWW~~~wwwsssOoooooooo.OOoOooooo+oo.OoooooooooOoooOoOooooOOooOOO.f..f...,...ss.."b,.zxTZxzxxxtxxxztxxsssw~~~sssX+XXsxxxxxTtw~~~~wwww~~w~~~~~~WWWWW
 WWWWWWWWWWWWWWWWWW~~ww~sOOoOoOoOooooOOoOOooooo+oooooOooOOoooooOooOooOooooOooof..ffffb.psssss,......xxtxxxZtxxxxxxxzsssw~~~wXXXXXsstxzxtxtw~~~~wwwwwwwww~~~~WWWWW
-WWWWWWWWWWWWWWWWW~~~wssooooooooooooOoOoooOoooo++ooOOooooOoooooooooOooOoooooooFpfpff.p.ssssssp,b...bxZzztxxxxtzZtxxxsssw~~~~XXXXsssxxxzxtxs~~~~~wwwwwsssw~~~~WWWW
+WWWWWWWWWWWWWWWWW~~~wssooooooooooooOoOoooOoooo++ooOOoo.oOoooooooooOooOoooooooFpfpff.p.ssssssp,b...bxZzztxxxxtzZtxxxsssw~~~~XXXXsssxxxzxtxs~~~~~wwwwwsssw~~~~WWWW
 WWWWWWWWWWWWWWWWW~~~wsooooOOooOoOooo___ooOOooOo++++oooooooOooooooOooooOooOooOfFF..ffppswwwwws.......xttxssssTtxssZssssw~~~~XXX0ssxxxxzxzZZw~~~wwsssssxxsw~~~WWWW
 WWWWWWWWWWWWWWWW~~~~wsOooOOOooOoOoooo_ooOOoooooOoo++ooooooooOoOOoooooooooooooFfffFfFF.swwwwws..""...xxxZssssstsssssswwww~~=XXXXssxxxxxTzxxswwwsssssssxZsw~~~WWWW
 WWWWWWWWWWWWWWWW~~~wwssoOoooooOoOo_o4ooOooOOoOooooO++OOoooooooooOooooooOoOooOfFffFFPPsw~~~~~wss.....zzxxswwwwswwsssswwss===XXXXXssxxZxzxxxssssxxssssssssw~~~~WWW
@@ -93,7 +93,7 @@ WWWWWWWWWWWWWW~~wssssssswwww~~~~wwwsoOoOOooooooooooooO++OoOOoOOooooOoooooPppfFFf
 WWWWWWWWWWWWW~~~wwsswwwww~ww~~~~~~wsoooooOoOooOOOOOoooo++ooOooooOOooOppfFfPPPffPfffPsww~~W~~~~~~~wsssssww~~~~~~~~~~ww=w==+sww~~wwssxxxxxsszsswwwwwsxtxZs~~~~~~WW
 WWWWWWWWWWWWW~~~~~~~~~~~~wwww~~~~~wsoOoooooOooooooOooOoo++ooOoOooooffpPpFFfFpfFpfpPFsw~~~W~~~~~~wwssssswwsw~~~~~~~ww====www~~~~wwsxxxxzsssssswwwwwssxssw~~~~~~WW
 WWWWWWWWWWWWWW~~~~~~~~~~~wwww~~~~~~sooooOOoOoooOOoooooooO++OoooOoOfpFFPPfffpfffFFFffPsw~~~~~~~wwwwsssssssxtw~~~wwwws+=w~~~~~~~~wwsxtxzxsssswwsssssssssww~~~~~~WW
-WWWWWWWWWWWWWWWWWWWW~WW~~~~ww~~~~~wsOoooOooOOoooooOOoofssP+++OooFffFFfFpfFFFfFFfsssfssw~~~~~~~wswwssssssstZswwwwwwss++www~~~~~~~wwssssswwswwsssssxssswwww~ww~~WW
+WWWWWWWWWWWWWWWWWWWW~WW~~~~ww~~~~~wsOoooOooOOoooooOOoofssP+++Ooo.ffFFfFpfFFFfFFfsssfssw~~~~~~~wswwssssssstZswwwwwwss++www~~~~~~~wwssssswwswwsssssxssswwww~ww~~WW
 WW~~WWWWWWWWWWWWWWWWWWW~~~~~~www~~wsssssOoooOoooooooofsssfPf_____FFfPPfswwsssssswwssssswwwwwwwsswwsssssssx.TZssssss++ssssw~~~~~~~~www~~~wwwwssssxzxssswwssww~~~W
 ~~~~~WWWWWWWWWWWWWWWWWWW~~~~~~wwwwwsssssOoooOooooooosssssspF+_sssfffFPsw~~~~wwww~wwwwssssssssssswwwwssss....xxxsss++zztxxw~~ww~~~~~~~~~~~~wwwwwsxxsssssssssww~~~
 ~~~~~~~WWWWWWWWWWWWWWWWWW~~~~~~wwwssssssOOooOooosssssfssssFf_+6+sFppsww~~~~~~~~~~~wwwssssssswsssswwwssssb..."xxtz++zzxxtxswww~~~~~~~~WWW~~~~~~~wwsssswsss.sssw~~

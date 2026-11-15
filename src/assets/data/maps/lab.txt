@@ -7,62 +7,62 @@ dark=1
 light=5
 bg=0,0,0
 music=tech
-ambient=amb_machine
 
 [legend]
 # = wall_metal
-, = pipe_v
+, = rock
 . = floor_metal
+: = pipe_v
+; = terminal2
 < = stairs_up
-= = terminal2
+= = grass
 B = box
 S = server
 c = cryopod
 k = crate
 t = terminal
-X = rock
 
 [rows]
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXX########XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXX#B.....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXX#...c.t#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X########.....B#######################XXXXXXXXXXXXXX
-X#.....##..................c.........#XXXXXXXXXXXXXX
-X#.....##......#######......########.#XXXXXXXXXXXXXX
-X#....k##......#XXXXX#k.....#XXXXXX#.#####XXXXXXXXXX
-X#.....#########XXXXX#......#XXXXXX#.,...#XXXXXXXXXX
-X#.....#XX##########X#......########.k...#XXXXXXXXXX
-X#...S.#XX#........#X##.#...........t....#XXXXXXXXXX
-X#.....#XX#..B.....#XX#.#.##########.....#XXXXXXXXXX
-X###.###XX#......t.####.#.##########.#.###XXXXXXXXXX
-XXX#.#XXXX#..t....B....................#XXXXXXXXXXXX
-XXX#.#XXXX#........####.....########.#.#XXXXXXXXXXXX
-XXX#.#XXXX#........#XX#.....#XXX#......#XXXXXXXXXXXX
-XXX#.##################.....#XXX#......#XXXXXXXXXXXX
-XXX#........................#XXX#......#XXXXXXXXXXXX
-XXX#######.....k#######....B#XXX#B.....#XXXXXXXXXXXX
-XXXXXXXXX#....c.#XXXXX#...S.#XXX#.S...c#XXXXXXXXXXXX
-XXXXXXXXX#B.....##XXXX#.#.###XXX####.#.#XXXXXXXXXXXX
-XXXXXXXXX#...<...#XXXX#.#.#XXXXXXXX#.#.#XXXXXXXXXXXX
-XXXXXXXXX#.......#XXXX#.#.#XXXXXXXX#.#.#XXXXXXXXXXXX
-XXXXXXXXX#..t....#XXXX#.#.#XXXXXX###.#.#####XXXXXXXX
-XXXXXXXXX#######.#XX###.#.#XXXXXX#..t......#XXXXXXXX
-XXXXXXXXXXXXXXX#.#XX#.c...#XXXXXX#.........#XXXXXXXX
-XXXXXXXXXXXXX###.####.....#XXXXXX#.........#XXXXXXXX
-X#######XXXXX#...t.##=..t.#XXXXXX#.........#XXXXXXXX
-X#.S...#XXXXX#.....##.....#XXXXXX#...t.....#XXXXXXXX
-X#...B.#XXXXX#.....##.....#XXXXXX#.........#XXXXXXXX
-X#.....#XXXXX#............#XXXXXX#.........#XXXXXXXX
-X#..t..#######.....######.############.#####XXXXXXXX
-X#.....................................#XXXXXXXXXXXX
-X#...S.#################################XXXXXXXXXXXX
-X#.....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#.....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#######XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,########,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,#B.....#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,#...c.t#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,########.....B#######################,,,,,,,,,,,,,,
+,#.....##..................c.........#,,,,,,,,,,,,,,
+,#.....##......#######......########.#,,,,,,,,,,,,,,
+,#....k##......#,,,,,#k.....#,,,,,,#.#####,,,,,,,,,,
+,#.....#########,,,,,#......#,,,,,,#.:...#,,,,,,,,,,
+,#.....#,,##########,#......########.k...#,,,,,,,,,,
+,#...S.#,,#........#,##.#...........t....#,,,,,,,,,,
+,#.....#,,#..B.....#,,#.#.##########.....#,,,,,,,,,,
+,###.###,,#......t.####.#.##########.#.###,,,,,,,,,,
+,,,#.#,,,,#..t....B....................#,,,,=,,,,,,,
+,,,#.#,,,,#........####.....########.#.#,,,,,,,,,,,,
+,,,#.#,,,,#........#,,#.....#,,,#......#,,,,,,,,,,,,
+,,,#.##################.....#,,,#......#,,,,,,,,,,,,
+,,,#........................#,,,#......#,,,,,,,,,,,,
+,,,#######.....k#######....B#,,,#B.....#,,,,,,,,,,,,
+,,,,,,,,,#....c.#,,,,,#...S.#,,,#.S...c#,,,,,,,,,,,,
+,,,,,,,,,#B.....##,,,,#.#.###,,,####.#.#,,,,,,,,,,,,
+,,,,,,,,,#...<...#,,,,#.#.#,,,,,,,,#.#.#,,,,,,,,,,,,
+,,,,,,,,,#.......#,,,,#.#.#,,,,,,,,#.#.#,,,,,,,,,,,,
+,,,,,,,,,#..t....#,,,,#.#.#,,,,,,###.#.#####,,,,,,,,
+,,,,,,,,,#######.#,,###.#.#,,,,,,#..t......#,,,,,,,,
+,,,,,,,,,,,,,,,#.#,,#.c...#,,,,,,#.........#,,,,,,,,
+,,,,,,,,,,,,,###.####.....#,,,,,,#.........#,,,,,=,,
+,#######,,,,,#...t.##;..t.#,,,,,,#.........#,,,,,,=,
+,#.S...#,,,,,#.....##.....#,,,,,,#...t.....#,,,,,,,,
+,#...B.#,,,,,#.....##.....#,,,,,,#.........#,,,,,,,,
+,#.....#,,,,,#............#,,,,,,#.........#,,,,,,,,
+,#..t..#######.....######.############.#####,,,,,,,,
+,#.....................................#,,,,,,,,,,,,
+,#...S.#################################,,,,,,,,,,,,
+,#.....#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#.....#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,#######,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 [enemy]
 group=turret,scrap_drone
@@ -194,7 +194,6 @@ x=10
 y=20
 node=scrap
 
-# 1.0 side quest "Signal in the Static": the tape room by the entrance
 [chest]
 x=10
 y=23
@@ -205,3 +204,4 @@ items=signal_tape:1
 x=3
 y=35
 node=rift_crystal
+
