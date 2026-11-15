@@ -3,6 +3,7 @@
     { "name": "Full game", "about": "The whole game with the built-in Editor", "run": ".\\run.ps1", "package": ".\\build.ps1 -Package", "zip": "build\\dist\\full" },
     { "name": "No Editor", "about": "The whole game without the Editor", "run": ".\\run.ps1 -NoEditor", "package": ".\\build.ps1 -NoEditor -Package", "zip": "build\\dist\\noeditor" },
     { "name": "Demo", "about": "Free demo: no Editor, first chapter only", "run": ".\\run.ps1 -Demo", "package": ".\\build.ps1 -Demo -Package", "zip": "build\\dist\\demo" },
+    { "name": "Browser demo", "about": "The demo for itch.io's play-in-browser (needs Emscripten, see build-web.ps1)", "run": ".\\build-web.ps1 -Serve", "package": ".\\build-web.ps1", "zip": "build\\dist\\web", "install": false },
     { "name": "Debug", "about": "Full game plus the dev console (~) for testing. Never handed out", "run": ".\\run.ps1 -Dev", "install": false }
   ]
 }

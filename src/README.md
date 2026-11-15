@@ -28,6 +28,19 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.3.0 a real soundtrack, a fresh press kit, the browser demo
+
+* **New music:** the whole soundtrack is now the Pixel Fantasy pack by AlkaKrab (30 tracks), matched to each place:
+  a warm theme in Hollowmere, a march in Brasswick, a campfire tune in Thornhollow Camp, a lake theme in Murkwater,
+  snow in Frosthold, chants in the crypts, two battle themes that alternate and a boss theme. Short stings play after
+  a won fight and on game over. Every track is also listed by its own name in the Editor (a map's music field, the
+  Sounds tab), and you can still add your own. The old generated tracks are gone.
+* Store screenshots, key art, capsules and itch.io art were remade from the 1.2.4 game at 16:9 (`press-kit/`), with
+  the store text brought up to date (`press-kit/STORE-TEXT.md`) and a rights check (`press-kit/RIGHTS.md`).
+* The demo's Wishlist icon only shows once a real store page is set (`store=` in `assets/data/demo.txt`).
+* The browser build fills the page like the desktop game fills the window, and `build-web.ps1` builds the itch.io
+  browser demo with a trimmed download (only the music the demo plays).
+
 ## 1.2.4 chases and ambushes on touch maps
 
 * On maps with **touch** ticked (the overworld now has it), a monster group that spots you chases you one step for
@@ -736,16 +749,21 @@ or on any platform:
 
 **The demo:** add `-DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`); see STEAM.md "The demo".
 
-**Browser build (itch.io):** install [Emscripten](https://emscripten.org) (emsdk) and Ninja, load `emsdk_env`, then
+**Browser build (itch.io):** install [Emscripten](https://emscripten.org) (emsdk) and Ninja. On Windows,
+`build-web.ps1` (in the project folder above `src`) does the rest: it trims the assets for the browser
+(`tools/web_assets.py`: only the music the demo plays, re-encoded smaller, no art sources), builds the demo and puts
+`index.html`, `index.js`, `index.wasm` and `index.data` in `build/dist/web` (`-Release` also zips them for upload,
+`-Serve` plays it on a local web server). By hand:
 
-    emcmake cmake -S . -B build-web -G Ninja -DTRIFFALL_DEMO=ON
-    cmake --build build-web
+    python tools/web_assets.py assets ../build/web-assets/assets
+    emcmake cmake -S . -B build-web -G Ninja -DTRIFFALL_DEMO=ON -DTRIFFALL_WEB_ASSETS=<full path>/build/web-assets/assets
+    cmake --build build-web --target Triffall
 
-Zip `index.html`, `index.js`, `index.wasm` and `index.data` from `build-web` and upload the zip to itch.io as an
-HTML game. The browser build uses `src/platform/main_web.cpp` and `web/shell.html`; the game code is the same.
-Saves live in the browser (IndexedDB). Browsers keep Esc for leaving fullscreen, so in the browser Backspace works as
-Esc too (except while typing a name). On itch, set the embed's viewport to fit the page (960 x 720 suits the default
-page width) and tick "Fullscreen button".
+Upload the zip to itch.io as an HTML game. The browser build uses `src/platform/main_web.cpp` and `web/shell.html`;
+the game code is the same, and like the desktop game it takes the page's shape (1.3.0). Saves live in the browser
+(IndexedDB). Browsers keep Esc for leaving fullscreen, so in the browser Backspace works as Esc too (except while
+typing a name). On itch, set the embed's viewport (960 x 540 suits the default page width) and tick "Fullscreen
+button".
 
 Targets: `Triffall` (the game) and `triffall_headless` (a scripted test driver that
 renders frames to PNG without a window - see `tests/`).
@@ -852,17 +870,22 @@ Almost everything is plain text:
 
 ## Audio
 
-All default sounds and music are synthesized by `tools/mksounds.py` (numpy + ffmpeg) into `assets/audio/sfx/*.wav`
-and `assets/audio/music/*.ogg`; re-run it to regenerate them. `assets/data/sounds.txt` maps event ids to files,
+The music is the Pixel Fantasy pack by AlkaKrab (`assets/audio/music/pixel_fantasy/`, 30 loops and 3 short stings).
+The sound effects and ambient loops are synthesized by `tools/mksounds.py` (numpy + ffmpeg) into `assets/audio/sfx/*.wav`
+and `assets/audio/ambient/*.ogg`; re-run it to regenerate them (`music` as an argument still makes the old generated
+tracks, which nothing uses any more). `assets/data/sounds.txt` maps event ids to files,
 so replacing a sound is either dropping a new file over the old one or pointing the event at a different file in
 the Sounds tab. Several files on one event are picked at random; `pitchvar` adds random pitch.
 
 Music is picked automatically: `title` on the desktop, `overworld`, `town` (kind=town/interior), `dungeon`,
 `tech` (tech/ship dungeons), `forest` (other maps), `combat` / `boss` during fights, `gameover`; a map's `music=`
-or a dungeon's `music=` overrides it. Volumes come from the desktop Settings sliders.
+or a dungeon's `music=` overrides it. Volumes come from the desktop Settings sliders. Every track of the pack is also
+in `sounds.txt` under its own name (`old_tavern`, `hidden_glade`, ...), so any map can pick it; the Sounds tab can point
+any track id at another file or add your own tracks (New music, then import a .ogg/.wav/.mp3).
 
 ## Credits
 
 Art: [Urizen 1-bit tileset v2.0](https://vurmux.itch.io/urizen-onebit-tilesets) by vurmux (CC0) and
 [Cute Desktop Icons 32x32](https://mayke-arth.itch.io/cute-desktop-icons-32x32) by Mayke-Arth. Built on raylib.
-Sound and music are generated by `tools/mksounds.py`.
+Music: Pixel Fantasy 30 Tracks and Loops by AlkaKrab (licensed for this game; the tracks may not be redistributed on
+their own). Sound effects are generated by `tools/mksounds.py`.

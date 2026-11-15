@@ -11,7 +11,7 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
   `build_windows.sh` (MinGW, no MinGW here), `Makefile` (Linux)). Its `README.md` is the player/modder manual and the
   per-version changelog; `STEAM.md`, `RELEASE_CHECKLIST.md`, `BALANCE.md` are the author's notes.
 - Optional CMake switches: `TRIFFALL_EDITOR` (default ON), `TRIFFALL_DEMO`, `TRIFFALL_STEAM` (+ `STEAM_SDK`; no
-  Steamworks SDK on this machine). Browser build needs Emscripten (not installed here).
+  Steamworks SDK on this machine). Browser build needs Emscripten (not installed here; `build-web.ps1`, see 1.3.0).
 - `.gitattributes` keeps every file LF as committed (ASCII maps and data files).
 
 ## Build and run
@@ -39,7 +39,8 @@ aimed at Steam (and itch.io). Early builds (0.1-0.7) were called **Riftfall**; t
 - The game reads `assets\` and writes `saves\` next to its exe (falls back to the working folder); `--saves <dir>`
   (in `src\src\platform\main_raylib.cpp`) overrides the saves folder.
 - Headless tests (no window): from `src\`, `..\build\cmake\Release\triffall_headless.exe tests\<name>.txt <outdir>\`
-  (outdir must exist; see `src\tests\README.md`). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
+  (outdir must exist; see `src\tests\README.md`). 1.3.0: all 94 tests but main_quest and fuzz_all_maps pass (8 at a
+  time from a copy of assets without campaigns\test). At 1.1.3 boot_and_setup, tutorial, sprites_1010,
   side_quests_1_0, story_choices, fight_to_victory, main_quest (to the ending, ~55 min), pause_items_1_1_3 and the
   editor_* tests pass (1.2.2: every test but main_quest and fuzz_all_maps (not run), 8 at a time from a copy; 1.2.0: sprite_sheets_1_2_0, every editor_* test, boot_and_setup, sprites_1010, tutorial,
   item_color_1_1_8, npcs_1_1_9, scripts_1_1_10, text_edit_1_1_11, facing, item_details, resource_nodes, fight_to_victory,
@@ -428,6 +429,44 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
 - The owner's installed copy had overworld `touch=1` + `encounter=0` (pulled at 1.2.4); encounter was put back to 4
   since #41 asks for ambushes that spawn at a distance there.
 
+## 1.3.0 (owner's #42-#45: store/press kit, rights, browser demo, music)
+- #45 music: the Pixel Fantasy pack by AlkaKrab (owner bought it; licence PDF in the zip): royalty-free, games OK,
+  **no redistributing the tracks as-is** (and open-source use needs permission). So the .ogg files are git-ignored
+  (`src/assets/audio/music/pixel_fantasy/`); the zip is in `assets\packs\` (ignored) and `tools\unpack-music.ps1`
+  (run by build.ps1) unpacks it when files are missing: `NN_<title>.ogg` from Loops (seamless), `fx_1..3.ogg` stings.
+  sounds.txt: the 20 old ids (title, overworld, overworld_night, town, forest, dungeon, tech, combat, boss, fanfare,
+  gameover, ending, brasswick, ashfall, murkwater, sunscar, frosthold, crypt, swamp, rift) point at pack files
+  (dungeon/combat/swamp have 2 files = random pick), then every track under its own id (`old_tavern`,
+  `hidden_glade`, `sting_1`...) so maps can pick them. Map music= set at 1.3.0: millbrook hidden_glade, hermit_hut
+  ballad_of_ashenwood, bandit_camp tales_by_firelight, barrow call_of_the_raven, wreck tech, tut_watch twilight_march.
+  Volumes were levelled by RMS (target -17 dB, capped so peaks stay < 1), so many are >100 (up to 160): volume is a
+  plain gain and the Editor allows 0-200. `Audio::defaultDefsText` mirrors sounds.txt. The old generated music was
+  deleted; mksounds.py only makes music when asked (`music` arg). Test `tests/music_1_3_0.txt`. Matching was by
+  title + loudness/tempo analysis, nobody has listened yet - the owner may want to swap some in the Sounds tab.
+- Local campaigns: `src/assets/campaigns/test/` (the owner's Editor test, EverRogue tileset of unknown licence) was
+  pulled from the installed copy at 1.3.0 and is git-ignored. It stays in src\assets so builds/installs keep it, but
+  build.ps1 `Remove-LocalCampaigns` drops every git-ignored campaign from -Package and the release zip (the release
+  folder used by install.ps1 keeps it); make-presskit and web_assets.py skip them too.
+- #42: `press-kit/STORE-TEXT.md` (store text checked against the game; Idea Jotter's idea Features still says "a
+  bonus campaign" - not ours to edit, the owner was told), `press-kit/RIGHTS.md`. Screenshots: `tools\make-presskit.ps1`
+  runs `src/tools/presskit_shots.txt` (headless at 960x540, Editor 1280x720) from a temp copy of assets, then
+  `src/tools/promo_kit.py` (rewritten for 16:9) writes `press-kit/screenshots/16x9_1920x1080` and `press-kit/art`
+  (key art, Steam capsules/hero/logo/icons, itch cover/banner/social). 4:3 shots deleted; old art moved to
+  `press-kit/old/` (`old/ai-generated-0.9/` = the AI-made key art/cover/banner: never use). demo.txt `store=` is
+  empty (no store page yet) and the demo's Wishlist icon only appears when it's set.
+- #43: icons have only informal permission (author's itch comments); RIGHTS.md has a message for the owner to post.
+  Trademark: web/Steam/itch/Trademarkia found nothing; USPTO/EUIPO/WIPO couldn't be searched (JS/captcha) - owner to
+  do by hand.
+- #44: Emscripten install was refused by the permission system in the 1.3.0 session (needs the owner). Prepared:
+  `build-web.ps1` (finds emsdk in $env:EMSDK or %USERPROFILE%\emsdk, stages assets with `src/tools/web_assets.py`
+  (demo's music only, re-encoded at compression 0.5 ~60% size, ~36 MB total; tracks left out get an empty file=),
+  emcmake + Ninja into `build\cmake-web`, copies to `build\dist\web`; -Release zips `releases\triffall-v<ver>-web-demo.zip`;
+  -Serve runs python http.server on 8642), CMake `TRIFFALL_WEB_ASSETS`, builds.json "Browser demo". main_web.cpp now
+  calls screenSizeFor/setScreen each frame (fills the page). main_web.cpp was compile-checked with MSVC + a stub
+  emscripten.h only - the real emcc build has never run since 1.0: expect fixes on first build.
+- Gotcha: libsndfile Vorbis writes must be chunked (8192 samples) or Python dies with exit 127 silently.
+- raylib's stb_vorbis decodes all pack files and the re-encoded web files (checked with a small C program).
+
 ## 1.1.2 standing and crafting tiers (standing.cpp)
 - Owner's rule for #16/#17: approval and town rep only change through deliberate player actions, never passively
   (no decay, no chat grind - the +1 "chat" approval was removed).
@@ -458,7 +497,8 @@ the save layout changes and add the step to `Game::migrateSave` (`src\src\game\s
   Gullwatch sample campaign was removed at 1.1.1 by the owner, The Lost Lighthouse at 1.1.7).
 - Art: `src\assets\tiles.png` is the Urizen 1-bit sheet by vurmux (CC0; categories/groups in
   `src\assets\data\sheets\tiles.txt`, campaigns' own sheets in `<campaign>\sheets\`), `icons.png` the desktop icons
-  (Cute Desktop Icons by Mayke-Arth). Sound and music are generated by `src\tools\mksounds.py`.
+  (Cute Desktop Icons by Mayke-Arth). Music: Pixel Fantasy pack by AlkaKrab (1.3.0, see above); sound effects and
+  ambient loops are generated by `src\tools\mksounds.py`.
 - `assets\tilesheets\` - the original Urizen sheets (`urizen_onebit_tileset__v2d0.png` = same file as tiles.png;
   `urizen__2bit__free.png`). Tilebook's saved description of the 1-bit sheet
   (`C:\Apps\Tilebook\assets\saved-work\riftfall-urizen-onebit\tilebook.json`) was used to fix the sprites in 1.0.10.

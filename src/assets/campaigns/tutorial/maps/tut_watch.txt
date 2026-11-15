@@ -4,7 +4,7 @@ name=Wick's Watch
 kind=town
 spawn=5,12
 bg=0,0,0
-music=town
+music=twilight_march
 ambient=amb_forest
 worldmap=self
 

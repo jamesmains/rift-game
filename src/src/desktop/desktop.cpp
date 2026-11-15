@@ -33,7 +33,8 @@ bool Desktop::init(Tileset* ts, Font* font, GameData* gd, Game* g, GameSettings*
         {"Solitaire", 1, 4, "solitaire"},
         {"Achievements", 4, 4, "achievements"},
     };
-    if (game && game->demoMode) iconDefs.push_back({"Wishlist Triffall", 0, 7, "wishlist"});   // demo build: the full game's store page
+    // demo build: the full game's store page (1.3.0: only once demo.txt's store= names one - no icon that opens nothing)
+    if (game && game->demoMode && !game->storeUrl.empty()) iconDefs.push_back({"Wishlist Triffall", 0, 7, "wishlist"});
     fixedIcons = iconDefs.size();
     { size_t p = iconPath.rfind('/'); assetDir = p == std::string::npos ? "assets" : iconPath.substr(0, p); }
     for (auto& d : iconDefs) { d.dc = d.ic; d.dr = d.ir; }
@@ -257,7 +258,7 @@ void Desktop::openWindow(const std::string& type) {
     else if (type == "settings") { w.title = "Settings"; w.w = 420; w.h = 420; }
     else if (type == "readme") { w.title = "Readme.txt - Notepad"; w.w = 460; w.h = 340; }
     else if (type == "discord") { w.title = "Discord"; w.w = 320; w.h = 150; }
-    else if (type == "about") { w.title = "About Triffall"; w.w = 320; w.h = 190; }
+    else if (type == "about") { w.title = "About Triffall"; w.w = 320; w.h = 232; }
     else if (type == "setup") { w.title = "Triffall Setup"; w.w = 420; w.h = 300; w.sel = 1; }
     else if (type == "properties") { w.title = "Display Properties"; w.w = 360; w.h = 250; }
     else if (type == "iconpick") { w.title = "Change Icon"; w.w = 12 * 36 + 28; w.h = 9 * 36 + 76; }
@@ -841,7 +842,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             "THE WORLD", "  Rubble, vines, ice and boulders block some paths: dig with a", "  shovel, blast with a charge (light it and RUN) or a fire spell,", "  burn, melt or shove. Levers open doors and drain water. Glinting", "  spots are ore veins and herb patches - they grow back in a few days.", "  Notice boards post three bounties a day; take up to three at once.", "  Shops sell stacks: Left/Right sets the quantity, E buys the most.", "  Weapons and armour are in limited stock and restock every 3 days.", "",
             "FAVORITES", "  In the Spells or Items menu, highlight something and press 1-8.", "  Utility spells (Light, Knock, Recall, Sense Treasure, Camouflage,", "  healing) can be cast from the Spells menu outside combat.", "",
             "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one.", "",
-            "Made with raylib. Art: Urizen 1-bit tileset (vurmux, CC0) and", "  Cute Desktop Icons 32x32 by Mayke-Arth (mayke-arth.itch.io).",
+            "Made with raylib. Art: Urizen 1-bit tileset (vurmux, CC0) and", "  Cute Desktop Icons 32x32 by Mayke-Arth (mayke-arth.itch.io).", "Music: Pixel Fantasy by AlkaKrab.",
         };
         int n = sizeof(lines) / sizeof(lines[0]);
         int maxShow = (w.h - 56) / 13;
@@ -912,7 +913,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
     } else if (w.type == "about") {
         drawIcon(cv, 0, 7, x + 6, y + 4, 2);
         f.bold = true; f.draw(cv, *ctx.ts, x + 80, y + 4, "Triffall", RGB(0, 0, 128)); f.bold = false;
-        f.drawWrapped(cv, *ctx.ts, x + 80, y + 22, w.w - 100, std::string("Version ") + TRIFFALL_VERSION + "\nAn open-world RPG with tactical turn-based combat, wrapped in a nostalgic desktop.\n\nEngine: C++ software renderer + raylib shell.\nArt: Urizen 1-bit tileset (vurmux) and Cute Desktop Icons by Mayke-Arth.", DKSHADOW);
+        f.drawWrapped(cv, *ctx.ts, x + 80, y + 22, w.w - 100, std::string("Version ") + TRIFFALL_VERSION + "\nAn open-world RPG with tactical turn-based combat, wrapped in a nostalgic desktop.\n\nEngine: C++ software renderer + raylib shell.\nArt: Urizen 1-bit tileset (vurmux) and Cute Desktop Icons by Mayke-Arth.\nMusic: Pixel Fantasy by AlkaKrab.", DKSHADOW);
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "OK", true, true, active)) w.wantClose = true;
     } else if (w.type == "msg" || w.type == "yesno") {
         drawIcon(cv, w.type == "yesno" ? 2 : 2, w.type == "yesno" ? 10 : 3, x + 4, y, 1);

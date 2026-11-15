@@ -448,3 +448,9 @@ name=Quartermaster Unit
 sprite=105,43
 dialogue=ship_vendor
 
+[npc]
+id=villager_2
+name=Villager
+sprite=104,0
+dialogue=
+

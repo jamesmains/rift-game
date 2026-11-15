@@ -53,12 +53,15 @@ option(TRIFFALL_STEAM "Build with Steamworks achievements/overlay support" OFF)
 set(STEAM_SDK "" CACHE PATH "Path to the extracted Steamworks SDK (the folder containing public/ and redistributable_bin/)")
 set(TRIFFALL_STEAM_APPID "480" CACHE STRING "Steam App ID (480 = Spacewar test app)")
 
+# 1.3.0: the folder packed into index.data. build-web.ps1 passes a trimmed copy (tools/web_assets.py: only the music the
+# demo plays, smaller files, no local campaigns); by default the whole assets folder.
+set(TRIFFALL_WEB_ASSETS "${CMAKE_SOURCE_DIR}/assets" CACHE PATH "Assets folder packed into the browser build")
 if(EMSCRIPTEN)
   add_executable(Triffall src/platform/main_web.cpp src/platform/rl_shim.c ${GAME_SRC})
   set_target_properties(Triffall PROPERTIES OUTPUT_NAME index SUFFIX ".html")
   target_link_options(Triffall PRIVATE -sUSE_GLFW=3 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864 -sSTACK_SIZE=4194304
     -sFORCE_FILESYSTEM=1 -lidbfs.js -sEXPORTED_FUNCTIONS=_main,_web_start,_web_saves_persist_again -sEXPORTED_RUNTIME_METHODS=ccall,HEAPF32,UTF8ToString
-    "--preload-file=${CMAKE_SOURCE_DIR}/assets@/assets" "--exclude-file=${CMAKE_SOURCE_DIR}/assets/new-art"
+    "--preload-file=${TRIFFALL_WEB_ASSETS}@/assets" "--exclude-file=${TRIFFALL_WEB_ASSETS}/new-art"
     "--shell-file=${CMAKE_SOURCE_DIR}/web/shell.html")
   set_property(TARGET Triffall APPEND PROPERTY LINK_DEPENDS ${CMAKE_SOURCE_DIR}/web/shell.html)
 else()

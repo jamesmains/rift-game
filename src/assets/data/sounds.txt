@@ -386,68 +386,6 @@ file=sfx/detect.wav
 desc=detect spell
 volume=80
 
-[music]
-id=title
-file=music/title.ogg
-desc=desktop / main menu
-volume=70
-
-[music]
-id=overworld
-file=music/overworld.ogg
-desc=overworld travel
-volume=70
-
-[music]
-id=town
-file=music/town.ogg
-desc=towns and villages
-volume=70
-
-[music]
-id=forest
-file=music/forest.ogg
-desc=wilderness locations
-volume=70
-
-[music]
-id=dungeon
-file=music/dungeon.ogg
-desc=caves, crypts, castles
-volume=70
-
-[music]
-id=tech
-file=music/tech.ogg
-desc=tech ruins, the ship
-volume=70
-
-[music]
-id=combat
-file=music/combat.ogg
-desc=normal combat
-volume=75
-
-[music]
-id=boss
-file=music/boss.ogg
-desc=boss combat
-volume=80
-
-[music]
-id=fanfare
-file=music/victory.ogg
-desc=after a won fight (plays once)
-volume=70
-loop=0
-
-[music]
-id=gameover
-file=music/gameover.ogg
-desc=game over (plays once)
-volume=70
-loop=0
-
 [sound]
 id=thunder
 file=sfx/thunder.wav
@@ -499,66 +437,326 @@ file=sfx/travel.wav
 desc=fast travel
 volume=80
 
-# ---- 1.0: a theme per town and per kind of dungeon, the night overworld, the ending ----
+# ---- 1.3.0: music = the Pixel Fantasy pack by AlkaKrab (audio/music/pixel_fantasy). First the parts the game and the
+# maps ask for (title, overworld, town, combat... and each place's theme), then every track of the pack under its own
+# name, for a map's or dungeon's music= field. Add your own with the Editor's Sounds tab (New music, import a file).
 [music]
-id=brasswick
-file=music/brasswick.ogg
-desc=Brasswick
-volume=70
+id=title
+file=music/pixel_fantasy/01_dawn_of_blades.ogg
+desc=desktop / main menu - Dawn of Blades
+volume=160
 
 [music]
-id=ashfall
-file=music/ashfall.ogg
-desc=Ashfall's ruins
-volume=70
-
-[music]
-id=murkwater
-file=music/murkwater.ogg
-desc=Murkwater
-volume=70
-
-[music]
-id=sunscar
-file=music/sunscar.ogg
-desc=Sunscar Outpost
-volume=70
-
-[music]
-id=frosthold
-file=music/frosthold.ogg
-desc=Frosthold Shrine
-volume=70
-
-[music]
-id=crypt
-file=music/crypt.ogg
-desc=crypts and barrows
-volume=70
-
-[music]
-id=swamp
-file=music/swamp.ogg
-desc=the Drowning Marsh
-volume=70
-
-[music]
-id=rift
-file=music/rift.ogg
-desc=the Scar
-volume=75
+id=overworld
+file=music/pixel_fantasy/22_banners_in_the_wind.ogg
+desc=overworld travel by day - Banners in the Wind
+volume=110
 
 [music]
 id=overworld_night
-file=music/overworld_night.ogg
-desc=overworld at night
-volume=65
+file=music/pixel_fantasy/06_moonlit_vale.ogg
+desc=overworld at night - Moonlit Vale
+volume=160
+
+[music]
+id=town
+file=music/pixel_fantasy/28_tales_of_the_hearth.ogg
+desc=towns and interiors without their own music= - Tales of the Hearth
+volume=115
+
+[music]
+id=forest
+file=music/pixel_fantasy/13_the_forgotten_grove.ogg
+desc=other hand-made maps without music= (wilderness, ruins) - The Forgotten Grove
+volume=115
+
+[music]
+id=dungeon
+file=music/pixel_fantasy/02_echoes_of_the_keep.ogg,music/pixel_fantasy/16_silent_citadel.ogg
+desc=caves, mines, castles (a random one of the two each time) - Echoes of the Keep / Silent Citadel
+volume=105
+
+[music]
+id=tech
+file=music/pixel_fantasy/29_arcane_whispers.ogg
+desc=tech ruins, the metro, the wreck - Arcane Whispers
+volume=110
+
+[music]
+id=combat
+file=music/pixel_fantasy/05_riders_of_the_storm.ogg,music/pixel_fantasy/10_crown_of_thorns.ogg
+desc=normal combat (a random one of the two each time) - Riders of the Storm / Crown of Thorns
+volume=110
+
+[music]
+id=boss
+file=music/pixel_fantasy/24_blood_and_honor.ogg
+desc=combat with a boss - Blood and Honor
+volume=115
+
+[music]
+id=fanfare
+file=music/pixel_fantasy/fx_1.ogg
+desc=after a won fight (a short sting, plays once) - sting 1
+volume=125
+loop=0
+
+[music]
+id=gameover
+file=music/pixel_fantasy/fx_3.ogg
+desc=game over (a short sting, plays once) - sting 3
+volume=110
+loop=0
 
 [music]
 id=ending
-file=music/ending.ogg
-desc=the epilogue and credits
-volume=75
+file=music/pixel_fantasy/17_hymn_of_valor.ogg
+desc=the epilogue and credits - Hymn of Valor
+volume=115
+
+[music]
+id=brasswick
+file=music/pixel_fantasy/12_march_of_iron.ogg
+desc=Brasswick - March of Iron
+volume=105
+
+[music]
+id=ashfall
+file=music/pixel_fantasy/15_legends_of_the_flame.ogg
+desc=Ashfall's ruins - Legends of the Flame
+volume=95
+
+[music]
+id=murkwater
+file=music/pixel_fantasy/21_the_silent_lake.ogg
+desc=Murkwater - The Silent Lake
+
+[music]
+id=sunscar
+file=music/pixel_fantasy/23_the_last_watch.ogg
+desc=Sunscar Outpost - The Last Watch
+
+[music]
+id=frosthold
+file=music/pixel_fantasy/08_frostbound_path.ogg
+desc=Frosthold Shrine - Frostbound Path
+volume=145
+
+[music]
+id=crypt
+file=music/pixel_fantasy/07_chant_of_the_fallen.ogg
+desc=crypts - Chant of the Fallen
+volume=135
+
+[music]
+id=swamp
+file=music/pixel_fantasy/11_whispers_in_the_fog.ogg,music/pixel_fantasy/18_the_dark_moor.ogg
+desc=the Drowning Marsh (a random one of the two each time) - Whispers in the Fog / The Dark Moor
+volume=120
+
+[music]
+id=rift
+file=music/pixel_fantasy/26_echoes_of_eternity.ogg
+desc=the Scar - Echoes of Eternity
+volume=125
+
+# every track of the pack by name
+[music]
+id=dawn_of_blades
+file=music/pixel_fantasy/01_dawn_of_blades.ogg
+desc=Pixel Fantasy track 1: Dawn of Blades (also: title)
+volume=160
+
+[music]
+id=echoes_of_the_keep
+file=music/pixel_fantasy/02_echoes_of_the_keep.ogg
+desc=Pixel Fantasy track 2: Echoes of the Keep (also: dungeon)
+volume=160
+
+[music]
+id=twilight_march
+file=music/pixel_fantasy/03_twilight_march.ogg
+desc=Pixel Fantasy track 3: Twilight March
+volume=150
+
+[music]
+id=ballad_of_ashenwood
+file=music/pixel_fantasy/04_ballad_of_ashenwood.ogg
+desc=Pixel Fantasy track 4: Ballad of Ashenwood
+volume=160
+
+[music]
+id=riders_of_the_storm
+file=music/pixel_fantasy/05_riders_of_the_storm.ogg
+desc=Pixel Fantasy track 5: Riders of the Storm (also: combat)
+volume=110
+
+[music]
+id=moonlit_vale
+file=music/pixel_fantasy/06_moonlit_vale.ogg
+desc=Pixel Fantasy track 6: Moonlit Vale (also: overworld_night)
+volume=160
+
+[music]
+id=chant_of_the_fallen
+file=music/pixel_fantasy/07_chant_of_the_fallen.ogg
+desc=Pixel Fantasy track 7: Chant of the Fallen (also: crypt)
+volume=135
+
+[music]
+id=frostbound_path
+file=music/pixel_fantasy/08_frostbound_path.ogg
+desc=Pixel Fantasy track 8: Frostbound Path (also: frosthold)
+volume=145
+
+[music]
+id=old_tavern
+file=music/pixel_fantasy/09_the_old_tavern.ogg
+desc=Pixel Fantasy track 9: The Old Tavern
+volume=135
+
+[music]
+id=crown_of_thorns
+file=music/pixel_fantasy/10_crown_of_thorns.ogg
+desc=Pixel Fantasy track 10: Crown of Thorns (also: combat)
+volume=160
+
+[music]
+id=whispers_in_the_fog
+file=music/pixel_fantasy/11_whispers_in_the_fog.ogg
+desc=Pixel Fantasy track 11: Whispers in the Fog (also: swamp)
+volume=150
+
+[music]
+id=march_of_iron
+file=music/pixel_fantasy/12_march_of_iron.ogg
+desc=Pixel Fantasy track 12: March of Iron (also: brasswick)
+volume=105
+
+[music]
+id=forgotten_grove
+file=music/pixel_fantasy/13_the_forgotten_grove.ogg
+desc=Pixel Fantasy track 13: The Forgotten Grove (also: forest)
+volume=115
+
+[music]
+id=sacred_springs
+file=music/pixel_fantasy/14_sacred_springs.ogg
+desc=Pixel Fantasy track 14: Sacred Springs
+volume=160
+
+[music]
+id=legends_of_the_flame
+file=music/pixel_fantasy/15_legends_of_the_flame.ogg
+desc=Pixel Fantasy track 15: Legends of the Flame (also: ashfall)
+volume=95
+
+[music]
+id=silent_citadel
+file=music/pixel_fantasy/16_silent_citadel.ogg
+desc=Pixel Fantasy track 16: Silent Citadel (also: dungeon)
+volume=105
+
+[music]
+id=hymn_of_valor
+file=music/pixel_fantasy/17_hymn_of_valor.ogg
+desc=Pixel Fantasy track 17: Hymn of Valor (also: ending)
+volume=115
+
+[music]
+id=dark_moor
+file=music/pixel_fantasy/18_the_dark_moor.ogg
+desc=Pixel Fantasy track 18: The Dark Moor (also: swamp)
+volume=120
+
+[music]
+id=call_of_the_raven
+file=music/pixel_fantasy/19_call_of_the_raven.ogg
+desc=Pixel Fantasy track 19: Call of the Raven
+
+[music]
+id=lament_of_kings
+file=music/pixel_fantasy/20_lament_of_kings.ogg
+desc=Pixel Fantasy track 20: Lament of Kings
+volume=105
+
+[music]
+id=silent_lake
+file=music/pixel_fantasy/21_the_silent_lake.ogg
+desc=Pixel Fantasy track 21: The Silent Lake (also: murkwater)
+
+[music]
+id=banners_in_the_wind
+file=music/pixel_fantasy/22_banners_in_the_wind.ogg
+desc=Pixel Fantasy track 22: Banners in the Wind (also: overworld)
+volume=110
+
+[music]
+id=last_watch
+file=music/pixel_fantasy/23_the_last_watch.ogg
+desc=Pixel Fantasy track 23: The Last Watch (also: sunscar)
+
+[music]
+id=blood_and_honor
+file=music/pixel_fantasy/24_blood_and_honor.ogg
+desc=Pixel Fantasy track 24: Blood and Honor (also: boss)
+volume=115
+
+[music]
+id=tales_by_firelight
+file=music/pixel_fantasy/25_tales_by_firelight.ogg
+desc=Pixel Fantasy track 25: Tales by Firelight
+volume=130
+
+[music]
+id=echoes_of_eternity
+file=music/pixel_fantasy/26_echoes_of_eternity.ogg
+desc=Pixel Fantasy track 26: Echoes of Eternity (also: rift)
+volume=125
+
+[music]
+id=broken_crown
+file=music/pixel_fantasy/27_the_broken_crown.ogg
+desc=Pixel Fantasy track 27: The Broken Crown
+
+[music]
+id=tales_of_the_hearth
+file=music/pixel_fantasy/28_tales_of_the_hearth.ogg
+desc=Pixel Fantasy track 28: Tales of the Hearth (also: town)
+volume=115
+
+[music]
+id=arcane_whispers
+file=music/pixel_fantasy/29_arcane_whispers.ogg
+desc=Pixel Fantasy track 29: Arcane Whispers (also: tech)
+volume=110
+
+[music]
+id=hidden_glade
+file=music/pixel_fantasy/30_the_hidden_glade.ogg
+desc=Pixel Fantasy track 30: The Hidden Glade
+volume=90
+
+[music]
+id=sting_1
+file=music/pixel_fantasy/fx_1.ogg
+desc=Pixel Fantasy sting 1, plays once (also: fanfare)
+volume=125
+loop=0
+
+[music]
+id=sting_2
+file=music/pixel_fantasy/fx_2.ogg
+desc=Pixel Fantasy sting 2, plays once
+volume=140
+loop=0
+
+[music]
+id=sting_3
+file=music/pixel_fantasy/fx_3.ogg
+desc=Pixel Fantasy sting 3, plays once (also: gameover)
+volume=110
+loop=0
 
 # ---- 1.0: ambient loops under the music (they follow Settings > Ambience volume). A map header can pick one with ambient=<id>
 # (or ambient=none). 1.1.6: outdoors, rain/storm/snow replace the map's loop, and town/forest loops turn to night insects at night.

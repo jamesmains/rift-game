@@ -11,6 +11,9 @@ Urizen OneBit tileset by vurmux
 - Desktop icons
 Cute Desktop Icons by Mayke-Arth (mayke-arth.itch.io)
 
+- Music
+Pixel Fantasy by AlkaKrab
+
 - Clear font
 Spleen by Frederic Cambus (BSD licence, see LICENSE-spleen.txt)
 

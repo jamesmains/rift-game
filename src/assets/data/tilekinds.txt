@@ -1,20 +1,7 @@
 # Tile kinds: what each map cell type looks like and how it behaves.
-# 1.0.13: every kind redrawn from the Tilebook description of the Urizen sheet (src/assets/tiles.png, 12x12 cells).
-# ground = one or more tiles (col,row) separated by | - one is picked at random per cell (an empty entry = just the bg).
-# prop = a picture drawn over the ground. tint multiplies the ground colours; recolor=1 paints the ground flat in tint.
-# opaque=1 draws the ground tile with its black background (walls); otherwise the bg colour shows through.
-# Joined pieces: edges = 16 ground tiles picked by which of the four neighbours connect (bit N=1 E=2 S=4 W=8, so the
-# 6th entry is for neighbours N+S, the 16th for all four; empty = the random ground). join = groups this kind is part
-# of, link = groups its pieces connect to (default: its join). under=1 puts the neighbouring ground colour under the
-# piece, so a shore or trail sits on whatever grass, sand or snow is next to it. shift=N draws the joined piece N
-# sheet pixels lower, so people (who stand at the bottom of a cell) walk on the trail instead of over it.
-# 1.0.15: the sheet is drawn for a black background, so every land kind has bg=0,0,0 and its ground picture in a dim
-# tint (characters stand out, floors still show); only water, lava and the like keep a coloured bg. In the game a
-# shifted trail runs shift pixels into the cell below, so feet land inside the trail.
-# 1.1.1: no empty entries in walkable ground lists (floors, dirt, sand...): on black an empty cell reads as unlit void.
-# Only the sparse outdoor decorations (grass tufts, snow) and crop fields keep them.
+# ground = one or more tiles (col,row) separated by | - one is picked at random per cell.
+# opaque=1 draws the ground tile with its black background (walls); otherwise the bg color shows through.
 
-# ---- Overworld terrain (rows 33-34 are the sheet's overworld pictures) ----
 [kind]
 name=grass
 ground=12,34|||||
@@ -178,7 +165,7 @@ under=1
 
 [kind]
 name=water
-ground=9,41|9,41|9,41|9,41|9,41|9,34
+ground=9,41|9,41|9,41|9,41|9,41
 prop=
 walk=0
 sight=0
@@ -196,7 +183,7 @@ under=1
 
 [kind]
 name=deepwater
-ground=9,41|9,41|9,41|9,41|9,34
+ground=9,41|9,41|9,41|9,41
 prop=
 walk=0
 sight=0
@@ -504,8 +491,8 @@ bg=0,0,0
 encounter=0
 biome=rift
 cost=1
+light=2
 
-# ---- Overworld places (walkable: step on one to go in) ----
 [kind]
 name=loc_village
 ground=
@@ -761,7 +748,6 @@ biome=loc
 cost=1
 join=loc
 
-# ---- Town and wild ground for hand-made maps ----
 [kind]
 name=floor_grass
 ground=15,5|16,5
@@ -935,7 +921,6 @@ encounter=0
 biome=
 cost=2
 
-# ---- Indoor and dungeon floors (rows 5-7: dark patterns over a background colour) ----
 [kind]
 name=floor_stone
 ground=5,5|6,5|7,5|6,5
@@ -1182,7 +1167,6 @@ link=asphalt
 edges=64,3|57,3|58,3|67,3|56,3|52,3|65,3|63,3|59,3|68,3|53,3|60,3|66,3|62,3|61,3|64,3
 under=1
 
-# ---- Walls (drawn solid; the black lines between blocks stay black) ----
 [kind]
 name=wall_stone
 ground=0,2|1,2
@@ -1255,7 +1239,21 @@ cost=1
 
 [kind]
 name=wall_log
-ground=26,0|26,0|30,0
+ground=26,0
+prop=
+walk=0
+sight=1
+water=0
+opaque=1
+tint=255,255,255
+bg=0,0,0
+encounter=0
+biome=
+cost=1
+
+[kind]
+name=wall_log_up
+ground=30,0
 prop=
 walk=0
 sight=1
@@ -1493,7 +1491,7 @@ cost=1
 
 [kind]
 name=shop_sign
-ground=0,4
+ground=
 prop=36,20
 walk=0
 sight=1
@@ -1507,7 +1505,7 @@ cost=1
 
 [kind]
 name=inn_sign
-ground=0,4
+ground=
 prop=35,20
 walk=0
 sight=1
@@ -1521,7 +1519,7 @@ cost=1
 
 [kind]
 name=banner_red
-ground=0,2
+ground=
 prop=26,46
 walk=0
 sight=1
@@ -1535,7 +1533,7 @@ cost=1
 
 [kind]
 name=banner_blue
-ground=0,2
+ground=
 prop=30,46
 walk=0
 sight=1
@@ -1549,7 +1547,7 @@ cost=1
 
 [kind]
 name=banner_gold
-ground=0,2
+ground=
 prop=28,46
 walk=0
 sight=1
@@ -1564,7 +1562,7 @@ cost=1
 [kind]
 name=torch_wall
 ground=22,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1579,7 +1577,7 @@ light=4
 [kind]
 name=torch_stone
 ground=0,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1594,7 +1592,7 @@ light=4
 [kind]
 name=torch_brick
 ground=0,3
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1609,7 +1607,7 @@ light=4
 [kind]
 name=torch_wood
 ground=0,4
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1624,7 +1622,7 @@ light=4
 [kind]
 name=torch_cave
 ground=0,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1639,7 +1637,7 @@ light=4
 [kind]
 name=torch_palisade
 ground=33,0
-prop=8,42
+prop=5,42
 walk=0
 sight=1
 water=0
@@ -1726,7 +1724,6 @@ biome=
 cost=1
 light=4
 
-# ---- Doors and stairs ----
 [kind]
 name=door_wood
 ground=
@@ -1832,7 +1829,6 @@ biome=
 cost=1
 under=1
 
-# ---- Light and fire ----
 [kind]
 name=torch
 ground=
@@ -1945,7 +1941,6 @@ cost=1
 light=5
 under=1
 
-# ---- Furniture and props (named in the Tilebook: rows 20-25, 35-40) ----
 [kind]
 name=bed
 ground=
@@ -3211,7 +3206,6 @@ cost=1
 light=1
 under=1
 
-# ---- Modern and sci-fi props ----
 [kind]
 name=computer
 ground=
@@ -3655,7 +3649,6 @@ biome=
 cost=1
 under=1
 
-# ---- Obstacles that world triggers clear, and the empty void ----
 [kind]
 name=rubble_pile
 ground=
@@ -3730,3 +3723,4 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+

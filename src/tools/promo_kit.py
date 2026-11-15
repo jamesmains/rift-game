@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
-"""Builds the itch.io / Steam promo kit from headless screenshots.
+"""Builds the itch.io / Steam promo kit and the store screenshots from headless screenshots.
 
-    python3 tools/promo_kit.py <raw_screenshot_dir> <out_dir>
+    python tools/promo_kit.py <raw_screenshot_dir> <out_dir> <screenshot_dir>
 
-Expects 640x480 PNGs captured by triffall_headless (see tools/promo_shots.txt) plus 00_desktop.png for the logo.
-Everything is pixel-art: screenshots are upscaled with nearest-neighbour only, never filtered.
+1.3.0: expects the shots of tools/presskit_shots.txt: 960x540 game shots (the canvas a 1920x1080 screen gives the
+game) and 1280x720 Editor shots (14_*, 15_*), plus 09_desktop.png for the logo. tools/make-presskit.ps1 runs it all.
+Everything is the game's own pixel art: screenshots are upscaled with nearest-neighbour only, the logo is the
+desktop's TRIFFALL logo, text is a system font. No generated or painted art (Steam asks about AI-made content).
 """
 import os, sys, glob, math
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-RAW, OUT = sys.argv[1], sys.argv[2]
-os.makedirs(OUT, exist_ok=True)
-for sub in ("steam", "itch", "screenshots_4x3_1920x1440", "screenshots_16x9_1920x1080", "icons"):
+RAW, OUT, SHOTDIR = sys.argv[1], sys.argv[2], sys.argv[3]
+for sub in ("steam", "itch", "icons"):
     os.makedirs(os.path.join(OUT, sub), exist_ok=True)
+os.makedirs(SHOTDIR, exist_ok=True)
 
 FONT_CANDIDATES = (
-    ("/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf", "/usr/share/fonts/truetype/google-fonts/Poppins-Regular.ttf"),
     (r"C:\Windows\Fonts\arialbd.ttf", r"C:\Windows\Fonts\arial.ttf"),
+    ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
 )
 FONT_B = FONT_R = None
 for bold_path, regular_path in FONT_CANDIDATES:
@@ -30,36 +32,36 @@ def font(size, bold=False):
 
 # ---------------------------------------------------------------- logo (lifted from the desktop, pixel art)
 def extract_logo():
-    im = Image.open(os.path.join(RAW, "00_desktop.png")).convert("RGB"); px = im.load()
+    im = Image.open(os.path.join(RAW, "09_desktop.png")).convert("RGB"); px = im.load()
+    W, H = im.size
     xs, ys = [], []
-    for y in range(360, 430):
-        for x in range(300, 560):
+    for y in range(H // 2, H - 30):          # the logo sits bottom right, above the taskbar
+        for x in range(W // 2, W):
             r, g, b = px[x, y]
-            if (r > 200 and g > 180 and b < 160) or (r < 20 and g in range(40, 80) and b in range(40, 80)): xs.append(x); ys.append(y)
-    box = (min(xs) - 1, min(ys) - 1, max(xs) + 2, max(ys) + 2)
+            if r > 200 and g > 180 and b < 160: xs.append(x); ys.append(y)
+    box = (min(xs) - 2, min(ys) - 2, max(xs) + 3, max(ys) + 3)
     crop = im.crop(box).convert("RGBA"); p = crop.load()
-    teal = (0, 128, 128)
+    bg = px[box[0], box[1]]
     for y in range(crop.height):
         for x in range(crop.width):
             r, g, b, a = p[x, y]
-            if abs(r - teal[0]) < 10 and abs(g - teal[1]) < 10 and abs(b - teal[2]) < 10: p[x, y] = (0, 0, 0, 0)
+            if abs(r - bg[0]) < 12 and abs(g - bg[1]) < 12 and abs(b - bg[2]) < 12: p[x, y] = (0, 0, 0, 0)
     return crop
-LOGO = extract_logo()   # ~160x26, transparent
+LOGO = extract_logo()
 
 def logo_scaled(h, maxw=None):
     s = max(1, round(h / LOGO.height))
     if maxw: s = max(1, min(s, int(maxw // LOGO.width)))
     return LOGO.resize((LOGO.width * s, LOGO.height * s), Image.NEAREST)
 
-def fit_lines(draw, text, size, maxw, bold):
-    """Shrink the font until the text fits; below 60% of the asked size, break it into two lines instead."""
+def fit(draw, text, size, maxw, bold):
     fnt = font(size, bold)
     while draw.textlength(text, font=fnt) > maxw and size > 10:
         size -= 2; fnt = font(size, bold)
-    return [(text, fnt)]
+    return fnt
 
 def glow(img, radius, color=(255, 200, 80, 110)):
-    """Soft glow behind a transparent pixel logo."""
+    """Soft glow behind the transparent pixel logo."""
     pad = radius * 3
     base = Image.new("RGBA", (img.width + pad * 2, img.height + pad * 2), (0, 0, 0, 0))
     mask = Image.new("L", base.size, 0); mask.paste(img.split()[3], (pad, pad))
@@ -75,78 +77,77 @@ def shadow_text(draw, xy, text, fnt, fill=(255, 255, 255), shadow=(0, 0, 0), off
 
 def scene(name, crop=True):
     im = Image.open(os.path.join(RAW, name)).convert("RGB")
-    if crop:  # keep the map area, drop HUD / turn strip / notifications
-        box = (0, 72, 600, 396) if "combat" in name else (0, 40, 640, 396)
-        if name.startswith("00_") or name.startswith("09_") or name.startswith("1"): box = (0, 0, 640, 480)
-        im = im.crop(box)
+    if crop and im.size == (960, 540):   # keep the map, drop the party bar (and the combat action bar)
+        im = im.crop((0, 30, 960, 466) if "combat" in name else (0, 0, 960, 466))
     return im
 
-def cover_fit(im, w, h, focus=None):
-    """Fill w x h with a pixel-art screenshot: integer nearest upscale, then crop around a focus point (source coords)."""
-    s = max(math.ceil(w / im.width), math.ceil(h / im.height))
+def cover_fit(im, w, h, focus=None, at=(0.5, 0.5), minscale=1):
+    """Fill w x h with a pixel-art screenshot: integer nearest upscale, then crop so the focus point (source coords)
+    lands at the fraction `at` of the picture (as far as the edges allow)."""
+    s = max(math.ceil(w / im.width), math.ceil(h / im.height), minscale)
     big = im.resize((im.width * s, im.height * s), Image.NEAREST)
     fx, fy = (im.width / 2, im.height / 2) if focus is None else focus
-    x = int(min(max(0, fx * s - w / 2), big.width - w)); y = int(min(max(0, fy * s - h / 2), big.height - h))
+    x = int(min(max(0, fx * s - w * at[0]), big.width - w)); y = int(min(max(0, fy * s - h * at[1]), big.height - h))
     return big.crop((x, y, x + w, y + h))
 
 def vignette(im, strength=0.55):
     w, h = im.size
-    m = Image.new("L", (w, h), 0); d = ImageDraw.Draw(m)
-    d.rectangle((0, 0, w, h), fill=int(255 * strength))
-    # lighter centre
     grad = Image.radial_gradient("L").resize((w, h))
     m = Image.eval(grad, lambda v: int(v * strength))
-    dark = Image.new("RGB", (w, h), (0, 0, 0))
-    return Image.composite(dark, im, m)
+    return Image.composite(Image.new("RGB", (w, h), (0, 0, 0)), im, m)
 
-TAGLINE = "An open-world RPG with tactical turn-based combat"
-SUB = "A strange world behind a Windows 98 desktop."
+TAGLINE = "An old-school RPG with turn-based tactical combat"
+SUB = "hiding inside a Windows 98 desktop"
+BATTLE = (665, 185)      # where the fight is in 01_combat.png (after the crop)
+TOWN = (480, 230)
 
-def capsule(w, h, bg_name, logo_h, tag_size, out, tag=True, logo_pos="center", bottom_band=True, focus=None):
-    im = cover_fit(scene(bg_name), w, h, focus)
-    im = vignette(im, 0.6).convert("RGBA")
-    if bottom_band:
-        band = Image.new("RGBA", (w, h), (0, 0, 0, 0)); bd = ImageDraw.Draw(band)
-        for i in range(h // 2, h): bd.line((0, i, w, i), fill=(0, 0, 0, int(200 * (i - h // 2) / (h / 2))))
-        im.alpha_composite(band)
-    lg = glow(logo_scaled(logo_h, w * 0.86), max(6, logo_h // 6))
-    d = ImageDraw.Draw(im)
+def capsule(w, h, bg_name, logo_h, tag_size, out, tag=True, logo_pos="center", bottom_band=True, focus=None, quality=None, minscale=1):
+    """The logo (and tagline) sit in the top part on a dark gradient; the focus point (the fight) lands lower down."""
     portrait = h > w
-    if logo_pos == "center":
-        lx = (w - lg.width) // 2; ly = int(h * (0.16 if portrait else 0.30)) - lg.height // 2
-    else:
-        lx = int(w * 0.05); ly = int(h * 0.12)
-    im.alpha_composite(lg, (lx, ly))
+    at = (0.5, 0.62) if portrait else ((0.62, 0.62) if logo_pos == "left" else (0.5, 0.68 if logo_h else 0.5))
+    im = cover_fit(scene(bg_name), w, h, focus, at, minscale)
+    im = vignette(im, 0.5).convert("RGBA")
+    band = Image.new("RGBA", (w, h), (0, 0, 0, 0)); bd = ImageDraw.Draw(band)
+    if logo_h:   # dark top for the logo and tagline
+        top = int(h * (0.48 if portrait else 0.62 if tag else 0.42))
+        for i in range(top): bd.line((0, i, w, i), fill=(0, 0, 0, int(215 * (1 - (i / top) ** 2))))
+    if bottom_band:
+        for i in range(int(h * 0.8), h): bd.line((0, i, w, i), fill=(0, 0, 0, int(160 * (i - h * 0.8) / (h * 0.2))))
+    im.alpha_composite(band)
+    d = ImageDraw.Draw(im)
+    if logo_h:
+        lg = glow(logo_scaled(logo_h, w * 0.86), max(6, logo_h // 6))
+        if logo_pos == "center":
+            lx = (w - lg.width) // 2; ly = int(h * (0.06 if portrait else 0.05 if tag else 0.08))
+        else:
+            lx = int(w * 0.03); ly = int(h * 0.04)
+        im.alpha_composite(lg, (lx, ly))
     if tag:
         maxw = int(w * 0.9)
-        (t1, fnt), = fit_lines(d, TAGLINE, tag_size, maxw, True)
-        if fnt.size < tag_size * 0.62:   # too narrow: two lines
-            (t1, fnt), = fit_lines(d, "An open-world RPG with", tag_size, maxw, True); t1b = "X-COM style tactical combat"
-        else: t1b = None
-        (t2, fnt2), = fit_lines(d, SUB, int(tag_size * 0.8), maxw, False)
-        ty = int(h * 0.80) - int(fnt.size * 1.3) * (2 if t1b else 1) if portrait else ly + lg.height + int(tag_size * 0.4)
-        shadow_text(d, (w // 2, ty), t1, fnt, fill=(255, 245, 220), anchor="ma"); ty += int(fnt.size * 1.3)
-        if t1b: shadow_text(d, (w // 2, ty), t1b, fnt, fill=(255, 245, 220), anchor="ma"); ty += int(fnt.size * 1.3)
-        shadow_text(d, (w // 2, ty + int(fnt2.size * 0.2)), t2, fnt2, fill=(170, 230, 230), anchor="ma")
-    im.convert("RGB").save(out, optimize=True)
+        fnt = fit(d, TAGLINE, tag_size, maxw, True); fnt2 = fit(d, SUB, int(tag_size * 0.8), maxw, False)
+        ty = ly + lg.height - max(6, logo_h // 6) * 2
+        shadow_text(d, (w // 2, ty), TAGLINE, fnt, fill=(255, 245, 220), anchor="ma")
+        shadow_text(d, (w // 2, ty + int(fnt.size * 1.35)), SUB, fnt2, fill=(170, 230, 230), anchor="ma")
+    im = im.convert("RGB")
+    if quality: im.save(out, quality=quality)
+    else: im.save(out, optimize=True)
     print("wrote", out, im.size)
 
 ST = os.path.join(OUT, "steam"); IT = os.path.join(OUT, "itch")
+# ---- key art (replaces the AI-made triffall-key-art.jpg / -cover / -banner of 0.9)
+capsule(1920, 1080, "01_combat.png", 200, 54, os.path.join(OUT, "key_art_1920x1080.png"), focus=BATTLE)
 # ---- Steam store graphics (sizes per Steamworks "Store graphical assets")
-capsule(920, 430, "02_town.png", 96, 30, f"{ST}/header_capsule_920x430.png", focus=(320, 200))
-capsule(462, 174, "02_town.png", 48, 0, f"{ST}/small_capsule_462x174.png", tag=False, focus=(320, 200))
-capsule(1232, 706, "04_overworld_night.png", 150, 44, f"{ST}/main_capsule_1232x706.png")
-capsule(748, 896, "07_combat_start.png", 130, 36, f"{ST}/vertical_capsule_748x896.png", focus=(190, 120))
-capsule(600, 900, "07_combat_start.png", 110, 30, f"{ST}/library_capsule_600x900.png", focus=(190, 120))
-capsule(3840, 1240, "05_overworld_day.png", 0, 0, f"{ST}/library_hero_3840x1240.png", tag=False, bottom_band=False) if False else None
+capsule(920, 430, "01_combat.png", 96, 28, f"{ST}/header_capsule_920x430.png", focus=BATTLE)
+capsule(462, 174, "01_combat.png", 48, 0, f"{ST}/small_capsule_462x174.png", tag=False, focus=BATTLE)
+capsule(1232, 706, "01_combat.png", 150, 40, f"{ST}/main_capsule_1232x706.png", focus=BATTLE)
+capsule(748, 896, "01_combat.png", 120, 32, f"{ST}/vertical_capsule_748x896.png", focus=BATTLE)
+capsule(600, 900, "01_combat.png", 100, 26, f"{ST}/library_capsule_600x900.png", focus=BATTLE)
 # hero: no logo (Steam overlays the library logo itself)
-hero = vignette(cover_fit(scene("05_overworld_day.png"), 3840, 1240), 0.45); hero.save(f"{ST}/library_hero_3840x1240.png", optimize=True); print("wrote hero")
+hero = vignette(cover_fit(scene("03_overworld.png"), 3840, 1240), 0.45); hero.save(f"{ST}/library_hero_3840x1240.png", optimize=True); print("wrote hero")
 # library logo: transparent PNG 1280x720 with the logo + tagline
 lg = glow(logo_scaled(220), 14, (255, 200, 80, 70)); li = Image.new("RGBA", (1280, 720), (0, 0, 0, 0)); li.alpha_composite(lg, ((1280 - lg.width) // 2, 180))
-d = ImageDraw.Draw(li); shadow_text(d, (640, 180 + lg.height + 10), TAGLINE, font(40, True), fill=(255, 245, 220), anchor="ma"); li.save(f"{ST}/library_logo_1280x720.png"); print("wrote library logo")
-# page background
-pb = vignette(cover_fit(scene("02_town.png"), 1438, 810), 0.75).filter(ImageFilter.GaussianBlur(1.2)); pb.save(f"{ST}/page_background_1438x810.jpg", quality=88); print("wrote page bg")
-# community icon 184x184 (jpg) + client icon 32x32 (ico) from the desktop's "New Game" icon area -> use logo monogram instead: the rift glyph
+d = ImageDraw.Draw(li); shadow_text(d, (640, 180 + lg.height + 10), TAGLINE, fit(d, TAGLINE, 40, 1200, True), fill=(255, 245, 220), anchor="ma"); li.save(f"{ST}/library_logo_1280x720.png"); print("wrote library logo")
+pb = vignette(cover_fit(scene("04_town.png"), 1438, 810, TOWN), 0.75).filter(ImageFilter.GaussianBlur(1.2)); pb.save(f"{ST}/page_background_1438x810.jpg", quality=88); print("wrote page bg")
 def rift_icon(size):
     rift = [".....X.....", "....XPX....", "...XPPPX...", "..XPPWPPX..", ".XPPPWPPPX.", "XPPPPWPPPPX", ".XPPPWPPPX.", "..XPPWPPX..", "...XPPPX...", "....XPX....", ".....X....."]
     im = Image.new("RGBA", (11, 11), (0, 0, 0, 0)); p = im.load()
@@ -159,20 +160,15 @@ rift_icon(184).convert("RGB").save(f"{ST}/community_icon_184x184.jpg", quality=9
 ic = rift_icon(32); ic.save(f"{ST}/client_icon_32x32.ico", sizes=[(32, 32)]); ic.save(f"{OUT}/icons/icon_32.png")
 rift_icon(256).save(f"{OUT}/icons/icon_256.png"); rift_icon(512).save(f"{OUT}/icons/icon_512.png")
 # ---- itch.io
-capsule(630, 500, "02_town.png", 58, 0, f"{IT}/cover_630x500.png", tag=False, logo_pos="left", bottom_band=False, focus=(320, 185))
-capsule(1200, 630, "04_overworld_night.png", 130, 40, f"{IT}/social_1200x630.png")
-capsule(960, 540, "02_town.png", 100, 30, f"{IT}/banner_960x540.png", focus=(320, 185))
-# ---- screenshots
-SHOTS = {"02_town.png": "01_hollowmere", "08_combat_overwatch.png": "02_combat_overwatch", "07_combat_start.png": "03_combat_begins", "04_overworld_night.png": "04_storm_at_night",
-         "06_dungeon.png": "05_greywood_cave", "09_worldmap.png": "06_world_map", "10_bestiary.png": "07_bestiary", "12_craft.png": "08_crafting", "13_bounty.png": "09_notice_board",
-         "15_ashfall_fog.png": "10_ashfall_fog", "16_frosthold_snow.png": "11_frosthold_snow", "00_desktop.png": "12_the_desktop", "11_achievements.png": "13_achievements", "14_party.png": "14_party"}
-for src, name in SHOTS.items():
-    im = scene(src, crop=False)
-    im.resize((1920, 1440), Image.NEAREST).save(f"{OUT}/screenshots_4x3_1920x1440/{name}.png", optimize=True)
-    # 16:9: 2x game (1280x960) centred on a dark frame with a faint scanline pattern
-    canvas = Image.new("RGB", (1920, 1080), (14, 12, 18)); cd = ImageDraw.Draw(canvas)
-    for y in range(0, 1080, 4): cd.line((0, y, 1920, y), fill=(20, 18, 26))
-    canvas.paste(im.resize((1280, 960), Image.NEAREST), (320, 60))
-    cd.rectangle((318, 58, 1601, 1021), outline=(60, 50, 80), width=2)
-    canvas.save(f"{OUT}/screenshots_16x9_1920x1080/{name}.png", optimize=True)
-print("screenshots:", len(SHOTS))
+capsule(630, 500, "01_combat.png", 56, 0, f"{IT}/cover_630x500.png", tag=False, logo_pos="left", bottom_band=False, focus=BATTLE)
+capsule(960, 300, "04_town.png", 64, 0, f"{IT}/banner_960x300.png", tag=False, focus=TOWN)
+capsule(1200, 630, "03_overworld.png", 120, 36, f"{IT}/social_1200x630.png")
+# ---- screenshots, 1920x1080: game shots 2x; Editor shots (1280x720) 3x then halved, so its text stays even
+n = 0
+for src in sorted(glob.glob(os.path.join(RAW, "*.png"))):
+    name = os.path.basename(src); im = Image.open(src).convert("RGB")
+    if im.size == (960, 540): out = im.resize((1920, 1080), Image.NEAREST)
+    elif im.size == (1280, 720): out = im.resize((3840, 2160), Image.NEAREST).resize((1920, 1080), Image.BOX)
+    else: continue
+    out.save(os.path.join(SHOTDIR, name), optimize=True); n += 1
+print("screenshots:", n)

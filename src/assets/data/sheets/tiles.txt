@@ -1,4 +1,4 @@
-# Sprite sheet "tiles" (assets/tiles.png, the Urizen 1-bit sheet by vurmux, CC0) - written by the Editor's Tileset tab.
+# Sprite sheet "tiles" - written by the Editor's Tileset tab.
 # [sheet] = how the picture is cut into tiles. [cells] = each tile's category, one line per row (r<row>=), one letter
 # per column: t terrain, p props, c characters, m creatures, i items, e effects, l letters, x unused, . not sorted.
 # [group] = a named set of tiles (col,row ...) for finding them quickly in the tile picker.
@@ -52,7 +52,7 @@ r38=piipppiipp...............x.........................xpppppppppppp............
 r39=ppppipppp................x.........................xpppppppppppp.............xeeeeeieeeeeieee..........xmmmmmmm
 r40=ppppppppppttppppppppp....x.........................xpppppppppppp.............xeeeeeeeeeeeee............xmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 r41=tttttttttt...............x.........................xppppp....................x.........................xcccccccccccc
-r42=ppipiiiiiieii............xppptttt..................x.........................x.........................xmmmmmmmmmmmmm
+r42=ppippiiiiieii............xppptttt..................x.........................x.........................xmmmmmmmmmmmmm
 r43=iiiiiiiiiiiiiii..........xp.ppeee..................x.........................x.........................xcccccccccccc
 r44=iiiiiiiiiiiiii...........xppppepe..................x.........................xlllllllllllllllllllllllllxccccccccc.cc
 r45=eiiiiiiiiiiiii...........xiiiiiiiiiiii..........eeex.........................xlllllllllllllllllllllllllx
@@ -183,7 +183,7 @@ tiles=26,19 27,19 28,19 29,19 30,19 31,19 32,19 33,19 26,20 27,20 28,20 29,20 30
 
 [group]
 name=Lights and fire
-tiles=26,22 27,22 28,22 29,22 30,22
+tiles=26,22 27,22 28,22 29,22 30,22 4,42 0,42 1,42 2,42 3,42 5,42 6,42 7,42 8,42 10,42
 
 [group]
 name=Shields

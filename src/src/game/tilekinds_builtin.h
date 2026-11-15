@@ -154,7 +154,7 @@ cost=1
 under=1
 [kind]
 name=water
-ground=9,41|9,41|9,41|9,41|9,41|9,34
+ground=9,41|9,41|9,41|9,41|9,41
 prop=
 walk=0
 sight=0
@@ -171,7 +171,7 @@ edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41
 under=1
 [kind]
 name=deepwater
-ground=9,41|9,41|9,41|9,41|9,34
+ground=9,41|9,41|9,41|9,41
 prop=
 walk=0
 sight=0
@@ -460,6 +460,7 @@ bg=0,0,0
 encounter=0
 biome=rift
 cost=1
+light=2
 [kind]
 name=loc_village
 ground=
@@ -1158,7 +1159,20 @@ biome=
 cost=1
 [kind]
 name=wall_log
-ground=26,0|26,0|30,0
+ground=26,0
+prop=
+walk=0
+sight=1
+water=0
+opaque=1
+tint=255,255,255
+bg=0,0,0
+encounter=0
+biome=
+cost=1
+[kind]
+name=wall_log_up
+ground=30,0
 prop=
 walk=0
 sight=1
@@ -1379,7 +1393,7 @@ biome=
 cost=1
 [kind]
 name=shop_sign
-ground=0,4
+ground=
 prop=36,20
 walk=0
 sight=1
@@ -1392,7 +1406,7 @@ biome=
 cost=1
 [kind]
 name=inn_sign
-ground=0,4
+ground=
 prop=35,20
 walk=0
 sight=1
@@ -1405,7 +1419,7 @@ biome=
 cost=1
 [kind]
 name=banner_red
-ground=0,2
+ground=
 prop=26,46
 walk=0
 sight=1
@@ -1418,7 +1432,7 @@ biome=
 cost=1
 [kind]
 name=banner_blue
-ground=0,2
+ground=
 prop=30,46
 walk=0
 sight=1
@@ -1431,7 +1445,7 @@ biome=
 cost=1
 [kind]
 name=banner_gold
-ground=0,2
+ground=
 prop=28,46
 walk=0
 sight=1
@@ -1445,7 +1459,7 @@ cost=1
 [kind]
 name=torch_wall
 ground=22,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1459,7 +1473,7 @@ light=4
 [kind]
 name=torch_stone
 ground=0,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1473,7 +1487,7 @@ light=4
 [kind]
 name=torch_brick
 ground=0,3
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1487,7 +1501,7 @@ light=4
 [kind]
 name=torch_wood
 ground=0,4
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1501,7 +1515,7 @@ light=4
 [kind]
 name=torch_cave
 ground=0,2
-prop=8,42
+prop=3,42
 walk=0
 sight=1
 water=0
@@ -1515,7 +1529,7 @@ light=4
 [kind]
 name=torch_palisade
 ground=33,0
-prop=8,42
+prop=5,42
 walk=0
 sight=1
 water=0
@@ -2388,7 +2402,8 @@ encounter=0
 biome=
 cost=1
 under=1
-[kind]
+)TK",
+R"TK([kind]
 name=sign
 ground=
 prop=26,20
@@ -2402,8 +2417,7 @@ encounter=0
 biome=
 cost=1
 under=1
-)TK",
-R"TK([kind]
+[kind]
 name=signpost
 ground=
 prop=28,20

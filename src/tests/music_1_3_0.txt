@@ -1,0 +1,38 @@
+# 1.3.0 (#45): the music is the Pixel Fantasy pack. Each place still asks for its track id; the ids point at the pack.
+frames 5
+newgame Arin warrior
+frames 120
+expect mode == EXPLORE
+teleport hollowmere 14 14
+frames 60
+audio
+expect music == town
+teleport millbrook 10 10
+frames 60
+audio
+expect music == hidden_glade
+teleport brasswick 10 10
+frames 60
+audio
+expect music == brasswick
+teleport bandit_camp 2 2
+frames 60
+audio
+expect music == tales_by_firelight
+teleport barrow 2 2
+frames 60
+audio
+expect music == call_of_the_raven
+teleport hermit_hut 3 3
+frames 60
+audio
+expect music == ballad_of_ashenwood
+teleport overworld 60 60
+clock 720
+frames 60
+audio
+expect music == overworld
+combat rat
+frames 120
+audio
+expect music == combat

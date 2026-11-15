@@ -120,9 +120,12 @@ static void webFrame() {
     if (padButton || (raw.gamepadActive && mouseRecent <= 0)) in.gamepadActive = true;
     if ((anyKey && !raw.gamepadActive) || mouseUsed) in.gamepadActive = false;
     if (mouseRecent > 0 && !padButton) { in.stickX = in.stickY = in.stick2X = in.stick2Y = 0; }
+    bool integer = app.settings.integerScaling;
+    // 1.3.0: the game takes the page's shape like the desktop build takes the window's (1.2.2, #39): a wide itch.io
+    // frame shows more of the world; Settings > Classic 4:3 keeps 640x480 with bars
+    if (raw.screenW >= 64 && raw.screenH >= 64) { int w, h; App::screenSizeFor(raw.screenW, raw.screenH, app.settings.classic43, integer, w, h); app.setScreen(w, h); }
     // mouse -> framebuffer coordinates (the same rule as rl_present and the desktop build)
     int sw = raw.screenW, sh = raw.screenH, cw = app.canvas.w, chh = app.canvas.h;
-    bool integer = app.settings.integerScaling;
     float fit = std::min((float)sw / cw, (float)sh / chh); int is = (int)fit;
     float fs = (integer && is >= 2) ? (float)is : fit; if (fs < 1.0f && integer) fs = 1.0f;
     int dw = (int)(cw * fs), dh = (int)(chh * fs);

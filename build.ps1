@@ -32,6 +32,8 @@ Write-Host "Building Triffall v$version ($kind)..."
 
 # 1.1.3: Editor edits saved in a built or installed copy go into src\assets first, so this build keeps them
 & "$PSScriptRoot\tools\pull-editor-edits.ps1" | Out-Null
+# 1.3.0: the licensed music isn't in git; unpack it from assets\packs when it's missing
+& "$PSScriptRoot\tools\unpack-music.ps1"
 
 # the built-in tile kinds are compiled from assets\data\tilekinds.txt (src\src\game\tilekinds_builtin.h is committed too)
 if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mktilekinds.py }
@@ -51,11 +53,21 @@ Copy-Item "src\README.md" "$out\README.txt"
 & "$PSScriptRoot\tools\pull-editor-edits.ps1" -ManifestFor $out   # assets-manifest.txt: how assets\ looked as built, to spot Editor edits later
 Write-Host "Built $out\Triffall.exe (v$version, $kind)" -ForegroundColor Green
 
+# 1.3.0: campaigns that git ignores (the owner's own test campaigns, e.g. with a bought tileset) stay in build\game and
+# the installed copy, but never go into a copy to hand out (-Package, the release zip)
+function Remove-LocalCampaigns([string]$assetsDir) {
+    Get-ChildItem (Join-Path $assetsDir "campaigns") -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        git check-ignore -q "src/assets/campaigns/$($_.Name)/campaign.txt" 2>$null
+        if ($LASTEXITCODE -eq 0) { Remove-Item $_.FullName -Recurse -Force; Write-Host "  (left out the local campaign $($_.Name))" -ForegroundColor DarkGray }
+    }
+}
+
 if ($Package) {   # clean copy to hand out: exe, assets, readme - no saves\
     if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
     New-Item -ItemType Directory $dist -Force | Out-Null
     Copy-Item "$out\Triffall.exe", "$out\README.txt" $dist
     Copy-Item "$out\assets" "$dist\assets" -Recurse
+    Remove-LocalCampaigns "$dist\assets"
     Write-Host "Packaged $dist (v$version, $kind)" -ForegroundColor Green
 }
 
@@ -65,7 +77,14 @@ if ($Release) {
     $suffix = ""; if ($NoEditor) { $suffix = "-noeditor" }; if ($Demo) { $suffix = "-demo" }
     $zip = "releases\triffall-v$version$suffix-windows.zip"
     if (Test-Path $zip) { Remove-Item $zip -Force }
-    Compress-Archive -Path "$out\Triffall.exe", "$out\assets", "$out\README.txt" -DestinationPath $zip
+    $stage = Join-Path $env:TEMP "triffall-release-stage"   # the zip is a hand-out copy: without local campaigns
+    if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+    New-Item -ItemType Directory $stage | Out-Null
+    Copy-Item "$out\Triffall.exe", "$out\README.txt" $stage
+    Copy-Item "$out\assets" "$stage\assets" -Recurse
+    Remove-LocalCampaigns "$stage\assets"
+    Compress-Archive -Path "$stage\Triffall.exe", "$stage\assets", "$stage\README.txt" -DestinationPath $zip
+    Remove-Item $stage -Recurse -Force
     $dir = "releases\$version$suffix"
     if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
     New-Item -ItemType Directory $dir | Out-Null

@@ -7,4 +7,7 @@ end=q_main>=3
 blocked=The road on is closed in the demo. In the full game Dunmarrow Crypt, Ashfall, the Wreck, three more towns and the Scar wait beyond it - and your demo save carries over.
 title=Thank you for playing the Triffall demo
 text=Mayor Aldous has sent you north to Dunmarrow Crypt, and the full game picks up exactly here: three more towns, the fallen city of Ashfall, a starship, the cult of the Open Sky and the Scar itself - with every choice you made so far.|Your save carries over to the full game.
-store=https://store.steampowered.com/
+# store= is the full game's store page, opened by the demo desktop's "Wishlist Triffall" icon. 1.3.0: left empty until a
+# real page exists (no Steam app or itch.io page yet; it pointed at Steam's front page) - the icon only shows when set.
+# e.g. store=https://store.steampowered.com/app/<app id>/Triffall/
+store=
