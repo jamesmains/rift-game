@@ -2,7 +2,8 @@
 #   .\build-web.ps1           build it: build\dist\web (index.html/.js/.wasm/.data) + releases\triffall-v<ver>-web-demo.zip with -Release
 #   .\build-web.ps1 -Release  also put the upload zip in releases\
 #   .\build-web.ps1 -Serve    build if needed, then serve build\dist\web on http://localhost:8642 and open the browser
-# Needs Emscripten (emsdk) and Ninja. Emscripten isn't installed on this PC yet; one time, in a terminal:
+# Needs Emscripten (emsdk) and Ninja (both installed on this PC since 1.3.0, emsdk in %USERPROFILE%\emsdk). On another
+# PC, one time, in a terminal:
 #   git clone https://github.com/emscripten-core/emsdk.git $env:USERPROFILE\emsdk
 #   cd $env:USERPROFILE\emsdk; .\emsdk.bat install latest; .\emsdk.bat activate latest
 # This script finds emsdk in $env:EMSDK or %USERPROFILE%\emsdk and loads its environment itself.
