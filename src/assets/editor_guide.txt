@@ -598,7 +598,7 @@ see: concepts.tiles, tilekind.name, tilekind.ground, tilekind.prop, tilekind.wal
 Tile kinds are the building blocks of every map: each map cell is one kind,
 such as grass, wall_stone, door_wood or torch. A kind says what the cell looks
 like (ground tiles, prop, tint, background) and how it behaves (walkable,
-blocks sight, water, encounter weight and biome, move cost, light).
+blocks sight, water, encounter weight and biome, move cost, footsteps, light).
 
 The list on the left shows every kind with a small preview; red names are not
 walkable. The form on the right edits the selected kind. At the bottom of the
@@ -2718,6 +2718,11 @@ Empty: the node uses the first type whose item= matches its own item=, or the
 old behaviour (colour guessed from the item, the map tile under it) if there is
 none.
 
+== obj.gather.sound | Gather harvest sound
+see: obj.gather, resource.sound
+The sound event played when the party harvests this node. Empty: its resource type's sound=, else pickup (by hand) or hit (with a tool).
+  sound=gather_mine
+
 == obj.gather.sprite | Gather node picture
 see: obj.gather, resource.sprite
 Usually left to the node's type. A tile (col,row) drawn for this node instead of the map tile under it, in the node's colour.
@@ -2911,6 +2916,22 @@ locations and turns them into road.
 
 Gotchas: high costs on common ground make fights slow and frustrating; keep
 3 or more for rare patches.
+
+== tilekind.step | Footsteps
+see: tab.tiles, tab.sounds
+
+The sound the party's footsteps make when they walk onto this kind of
+ground. The v button lists every sound event; play tries it.
+
+Format: a sound event id. Default: empty = step (plain boots on dirt).
+
+  step=step_grass
+
+Shipped: step_grass (grass, forest, fields), step_sand (sand, ash, rubble),
+step_snow, step_stone (dungeon and cave floors, with an echo), step_hard
+(streets, tiles, concrete, ice), step_wood (floors, bridges, boardwalks),
+step_metal (metal floors and grates), step_water (shallows, fords, mire).
+A name that isn't a sound event plays the plain step.
 
 == world.preview | World preview
 see: tab.world, location.x, location.y, world.bake
@@ -4007,7 +4028,8 @@ see: tab.sounds, creature.attacksound
 
 The sound event played when the creature dies.
 
-Format: a sound event id (picker). Default: empty = death_enemy.
+Format: a sound event id (picker). Default: empty = death_enemy. Shipped: death_machine,
+death_spirit, death_bones, death_slime, death_big, death_rift (1.3.3).
 
   sound=death_enemy
 
@@ -6620,6 +6642,11 @@ The tile kind a generated dungeon paints under the node (rocks, mushroom2, cryst
 see: tab.resources, tab.dungeons
 The generated dungeon styles that scatter this node: style[:weight[:count]], comma separated. weight = how many lots it gets in the draw (default 1), count overrides count= in that style. The order of the types in the list matters for the draw. Empty: never generated.
   styles=mine:2:2-4,cave
+
+== resource.sound | Harvest sound
+see: tab.resources, tab.sounds
+The sound event played when the party harvests the node. Empty: pickup for nodes worked by hand, hit for nodes that need a tool. Shipped veins use gather_mine, scrap heaps reload.
+  sound=gather_mine
 
 == tab.scripts | Scripts tab
 see: edit.text, scripting.commands, scripting.values, scripting.actions, scripting.hooks, scripting.coachman, editor.usedby

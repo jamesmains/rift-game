@@ -15,6 +15,7 @@ bg=0,0,0
 encounter=2
 biome=plains
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -30,6 +31,7 @@ bg=0,0,0
 encounter=1
 biome=plains
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -45,6 +47,7 @@ bg=0,0,0
 encounter=4
 biome=forest
 cost=2
+step=step_grass
 
 [kind]
 name=forest2
@@ -59,6 +62,7 @@ bg=0,0,0
 encounter=4
 biome=forest
 cost=2
+step=step_grass
 
 [kind]
 name=pine
@@ -73,6 +77,7 @@ bg=0,0,0
 encounter=4
 biome=forest
 cost=2
+step=step_grass
 
 [kind]
 name=deepforest
@@ -101,6 +106,7 @@ bg=0,0,0
 encounter=3
 biome=plains
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -116,6 +122,7 @@ bg=0,0,0
 encounter=3
 biome=plains
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -131,6 +138,7 @@ bg=0,0,0
 encounter=2
 biome=desert
 cost=1
+step=step_sand
 recolor=1
 
 [kind]
@@ -146,6 +154,7 @@ bg=0,0,0
 encounter=2
 biome=desert
 cost=2
+step=step_sand
 under=1
 
 [kind]
@@ -212,6 +221,7 @@ bg=22,28,153
 encounter=1
 biome=water
 cost=2
+step=step_water
 join=water
 link=water,bridge
 edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41|
@@ -230,6 +240,7 @@ bg=0,0,0
 encounter=3
 biome=hills
 cost=2
+step=step_grass
 under=1
 
 [kind]
@@ -245,6 +256,7 @@ bg=0,0,0
 encounter=3
 biome=hills
 cost=2
+step=step_grass
 under=1
 
 [kind]
@@ -302,6 +314,7 @@ bg=0,0,0
 encounter=5
 biome=swamp
 cost=2
+step=step_water
 recolor=1
 
 [kind]
@@ -317,6 +330,7 @@ bg=0,0,0
 encounter=5
 biome=wasteland
 cost=2
+step=step_sand
 under=1
 
 [kind]
@@ -332,6 +346,7 @@ bg=0,0,0
 encounter=5
 biome=wasteland
 cost=2
+step=step_sand
 under=1
 
 [kind]
@@ -347,6 +362,7 @@ bg=0,0,0
 encounter=4
 biome=wasteland
 cost=1
+step=step_sand
 recolor=1
 
 [kind]
@@ -362,6 +378,7 @@ bg=0,0,0
 encounter=3
 biome=wasteland
 cost=1
+step=step_sand
 recolor=1
 
 [kind]
@@ -430,6 +447,7 @@ bg=29,33,153
 encounter=0
 biome=plains
 cost=1
+step=step_wood
 join=bridge,path
 link=water
 edges=11,40|11,40|10,40|11,40|11,40|11,40|11,40|11,40|10,40|11,40|10,40|10,40|11,40|11,40|10,40|11,40
@@ -448,6 +466,7 @@ bg=0,0,0
 encounter=2
 biome=snow
 cost=1
+step=step_snow
 
 [kind]
 name=snowpine
@@ -462,6 +481,7 @@ bg=0,0,0
 encounter=3
 biome=snow
 cost=2
+step=step_snow
 
 [kind]
 name=riftscar
@@ -476,6 +496,7 @@ bg=0,0,0
 encounter=6
 biome=rift
 cost=1
+step=step_sand
 recolor=1
 
 [kind]
@@ -566,6 +587,7 @@ bg=0,0,0
 encounter=0
 biome=loc
 cost=1
+step=step_grass
 join=loc
 
 [kind]
@@ -761,6 +783,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -791,6 +814,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_sand
 recolor=1
 
 [kind]
@@ -806,6 +830,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_snow
 recolor=1
 
 [kind]
@@ -821,6 +846,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 recolor=1
 join=street
 
@@ -837,6 +863,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 recolor=1
 join=street
 
@@ -891,6 +918,7 @@ bg=30,52,48
 encounter=0
 biome=
 cost=2
+step=step_water
 
 [kind]
 name=floor_lava
@@ -920,6 +948,7 @@ bg=22,28,153
 encounter=0
 biome=
 cost=2
+step=step_water
 
 [kind]
 name=floor_stone
@@ -934,6 +963,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 recolor=1
 
 [kind]
@@ -949,6 +979,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 recolor=1
 
 [kind]
@@ -964,6 +995,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 recolor=1
 
 [kind]
@@ -979,6 +1011,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 recolor=1
 
 [kind]
@@ -994,6 +1027,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 recolor=1
 
 [kind]
@@ -1009,6 +1043,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 recolor=1
 
 [kind]
@@ -1039,6 +1074,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 recolor=1
 
 [kind]
@@ -1054,6 +1090,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 recolor=1
 
 [kind]
@@ -1069,6 +1106,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 recolor=1
 
 [kind]
@@ -1084,6 +1122,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_metal
 recolor=1
 
 [kind]
@@ -1099,6 +1138,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_metal
 recolor=1
 
 [kind]
@@ -1114,6 +1154,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 recolor=1
 
 [kind]
@@ -1129,6 +1170,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 recolor=1
 join=asphalt
 
@@ -1145,6 +1187,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 join=asphalt,line
 link=line
 edges=|52,4|||52,4|52,4||52,4||||||52,4||64,4
@@ -1162,6 +1205,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_hard
 join=asphalt
 link=asphalt
 edges=64,3|57,3|58,3|67,3|56,3|52,3|65,3|63,3|59,3|68,3|53,3|60,3|66,3|62,3|61,3|64,3
@@ -1737,6 +1781,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 under=1
 
 [kind]
@@ -1752,6 +1797,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -1767,6 +1813,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_metal
 under=1
 
 [kind]
@@ -1782,6 +1829,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -1797,6 +1845,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -1812,6 +1861,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -1827,6 +1877,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 under=1
 
 [kind]
@@ -2044,6 +2095,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 under=1
 
 [kind]
@@ -2059,6 +2111,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 under=1
 
 [kind]
@@ -2074,6 +2127,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_wood
 under=1
 
 [kind]
@@ -2345,6 +2399,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -2360,6 +2415,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_stone
 under=1
 
 [kind]
@@ -2674,6 +2730,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -2689,6 +2746,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -2704,6 +2762,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -2719,6 +2778,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -2734,6 +2794,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 recolor=1
 
 [kind]
@@ -2794,6 +2855,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2809,6 +2871,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2824,6 +2887,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2839,6 +2903,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2854,6 +2919,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2899,6 +2965,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_grass
 under=1
 
 [kind]
@@ -2914,6 +2981,7 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+step=step_water
 under=1
 
 [kind]
@@ -3125,6 +3193,7 @@ encounter=0
 biome=
 cost=1
 light=3
+step=step_stone
 under=1
 
 [kind]
@@ -3141,6 +3210,7 @@ encounter=0
 biome=
 cost=1
 light=3
+step=step_stone
 under=1
 
 [kind]
@@ -3157,6 +3227,7 @@ encounter=0
 biome=
 cost=1
 light=2
+step=step_stone
 under=1
 
 [kind]
@@ -3204,6 +3275,7 @@ encounter=0
 biome=
 cost=1
 light=1
+step=step_stone
 under=1
 
 [kind]

@@ -190,5 +190,5 @@ void Game::gatherFrom(GatherNode& g) {
     }
     int n = rng.range(g.lo, g.hi);
     giveItem(g.item, n); extra[key] = std::to_string(day); advanceClock(10);
-    gAudio.play(g.tool.empty() ? "pickup" : "hit");
+    gAudio.play(!g.sound.empty() && gAudio.has(g.sound) ? g.sound : g.tool.empty() ? "pickup" : "hit");   // 1.3.3: sound= of the node / its type
 }

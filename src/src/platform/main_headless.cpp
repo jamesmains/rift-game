@@ -166,6 +166,8 @@ int main(int argc, char** argv) {
                 // 1.2.4 (#41): map enemy groups - "groups" = x,y,c(hasing) of each one on the map, "enemydist" = steps to the nearest one (-1 none)
                 if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
+                // 1.3.3: heard:<event> = 1 if that sound played since the last "audio" command (which clears the list)
+                if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
 #ifndef TRIFFALL_NO_EDITOR
                 if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer
                 if (startsWith(key, "sheetcat:")) { auto q = split(key.substr(9), ':'); app.editor.syncBooks(); Tile t = q.size() >= 2 ? parseTile(q[1] + "@" + q[0]) : Tile{}; got = std::string(1, app.editor.cellCat(t)); num = false; return true; }   // sheetcat:<sheet>:c,r

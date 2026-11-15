@@ -77,14 +77,15 @@ Unzip and run Triffall.exe with the assets folder next to it. F11 or Alt+Enter t
 - Tiles: Urizen 1-bit tileset by vurmux (CC0)
 - Desktop icons: Cute Desktop Icons 32x32 by Mayke-Arth
 - Music: Pixel Fantasy 30 Tracks and Loops by AlkaKrab
+- Sound effects: Pixel Combat by Helton Yan (CC BY 4.0)
 - Clear font: Spleen by Frederic Cambus (BSD)
 - Built with raylib
 
 ## Steam content survey: AI-generated content
 
 Answer (as of 1.3.0): **No AI-generated content in the game or on the store page.** The game's art is the Urizen
-tileset, the desktop icons are Mayke-Arth's, the music is AlkaKrab's, the sound effects are made by a script
-(`src/tools/mksounds.py`, plain synthesis, no AI). The store art in `press-kit/art/` is made by a script from the
+tileset, the desktop icons are Mayke-Arth's, the music is AlkaKrab's, most sound effects are Helton Yan's Pixel Combat
+(its page says no generative AI was used), the rest are made by a script (`src/tools/mksounds.py`, plain synthesis, no AI). The store art in `press-kit/art/` is made by a script from the
 game's own screenshots and logo. The 0.9 key art, cover and banner were AI-made: they are in
 `press-kit/old/ai-generated-0.9/` and must not be used. If any AI-made picture goes on the page later, the answer
 has to change.

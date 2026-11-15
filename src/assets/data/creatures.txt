@@ -36,6 +36,7 @@ level=1
 gold=0-3
 loot=slime_gel:60
 ai=melee
+sound=death_slime
 
 [creature]
 id=slime_big
@@ -55,6 +56,7 @@ level=4
 gold=2-7
 loot=slime_gel:90
 ai=melee
+sound=death_slime
 
 [creature]
 id=goblin
@@ -273,6 +275,7 @@ loot=iron_sword:4,iron_helm:2,bone_dust:50
 ai=melee
 undead=1
 faction=undead
+sound=death_bones
 
 [creature]
 id=skeleton_archer
@@ -292,6 +295,7 @@ loot=arrows:40,bone_dust:45
 ai=ranged
 undead=1
 faction=undead
+sound=death_bones
 
 [creature]
 id=zombie
@@ -350,6 +354,7 @@ gold=0-0
 loot=herb_moon:40,venom_sac:30
 ai=caster
 faction=wild
+sound=death_slime
 
 # ================= LEVEL 4-8 =================
 [creature]
@@ -392,6 +397,7 @@ loot=charm_frost:5,potion_blue:12,ectoplasm:60
 ai=caster
 undead=1
 faction=undead
+sound=death_spirit
 
 [creature]
 id=necromancer
@@ -456,6 +462,7 @@ gold=0-0
 loot=bear_claw:60
 ai=melee
 faction=wild
+sound=death_big
 
 [creature]
 id=ogre
@@ -473,6 +480,7 @@ level=6
 gold=9-27
 loot=club:18,battle_axe:6,potion_red2:10,iron_ore:35,mithril_ore:8
 ai=melee
+sound=death_big
 
 [creature]
 id=troll
@@ -492,6 +500,7 @@ level=7
 gold=9-22
 loot=potion_red2:15,ring_str:5,troll_blood:60
 ai=melee
+sound=death_big
 
 [creature]
 id=scorpion
@@ -548,6 +557,7 @@ gold=7-16
 loot=ammo_rifle:40,hunting_rifle:4,scrap:30
 ai=ranged
 faction=bandit
+attacksound=attack_gun
 
 [creature]
 id=cultist
@@ -612,6 +622,7 @@ gold=2-7
 loot=charm_fire:3,ember_cap:40
 ai=coward
 faction=rift
+sound=death_rift
 
 [creature]
 id=demon
@@ -634,6 +645,7 @@ gold=14-32
 loot=flame_sword:3,charm_fire:9,ember_cap:40,rift_dust:15
 ai=caster
 faction=rift
+sound=death_rift
 
 [creature]
 id=frost_wolf
@@ -699,6 +711,8 @@ loot=scrap:70,circuit:25,cell:30
 ai=ranged
 mechanical=1
 faction=machine
+attacksound=attack_laser
+sound=death_machine
 
 [creature]
 id=security_bot
@@ -719,6 +733,8 @@ loot=scrap:80,circuit:40,ammo_pistol:40,power_core:10
 ai=ranged
 mechanical=1
 faction=machine
+attacksound=attack_laser
+sound=death_machine
 
 [creature]
 id=turret
@@ -739,6 +755,8 @@ loot=scrap:90,ammo_rifle:50,power_core:8
 ai=ranged
 mechanical=1
 faction=machine
+attacksound=attack_laser
+sound=death_machine
 
 [creature]
 id=android
@@ -762,6 +780,8 @@ loot=cell:60,circuit:50,laser_pistol:5,power_core:20
 ai=caster
 mechanical=1
 faction=machine
+attacksound=attack_laser
+sound=death_machine
 
 [creature]
 id=mech
@@ -785,6 +805,8 @@ boss=1
 music=boss
 mechanical=1
 faction=machine
+attacksound=attack_laser
+sound=death_machine
 
 [creature]
 id=alien
@@ -808,6 +830,7 @@ gold=0-0
 loot=cell:40,potion_blue:15,rift_dust:15
 ai=caster
 faction=rift
+sound=death_rift
 
 [creature]
 id=alien_warrior
@@ -828,6 +851,7 @@ gold=0-0
 loot=cell:60,plasma_saber:2,rift_dust:20,rift_crystal:8
 ai=melee
 faction=rift
+sound=death_rift
 
 [creature]
 id=rift_wisp
@@ -850,6 +874,7 @@ gold=0-0
 loot=gem_rough:20,rift_dust:40
 ai=caster
 faction=rift
+sound=death_spirit
 
 [creature]
 id=rift_horror
@@ -872,6 +897,7 @@ gold=0-0
 loot=rift_heart:2,potion_red2:20,rift_dust:50,rift_crystal:15
 ai=caster
 faction=rift
+sound=death_rift
 
 [creature]
 id=rift_lord
@@ -896,6 +922,7 @@ ai=boss
 boss=1
 music=boss
 faction=rift
+sound=death_rift
 
 [creature]
 id=giant_spider
@@ -920,6 +947,7 @@ ai=boss
 boss=1
 music=boss
 faction=wild
+sound=death_big
 
 [creature]
 id=hydra
@@ -946,6 +974,7 @@ ai=boss
 boss=1
 music=boss
 faction=wild
+sound=death_big
 
 [creature]
 id=skull_golem
@@ -968,6 +997,7 @@ boss=1
 music=boss
 undead=1
 faction=undead
+sound=death_bones
 
 [creature]
 id=dragon
@@ -993,6 +1023,7 @@ ai=boss
 boss=1
 music=boss
 faction=wild
+sound=death_big
 
 [creature]
 id=golem
@@ -1016,6 +1047,7 @@ boss=1
 music=boss
 mechanical=1
 faction=machine
+sound=death_big
 
 [creature]
 id=guard
@@ -1140,6 +1172,7 @@ ai=boss
 boss=1
 music=boss
 faction=rift
+sound=death_rift
 
 # ================= HESK'S BARROW =================
 [creature]
@@ -1166,4 +1199,5 @@ ai=boss
 boss=1
 music=boss
 faction=undead
+sound=death_spirit
 

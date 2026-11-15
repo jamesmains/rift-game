@@ -218,7 +218,7 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     mk("bounties.txt", "Notice boards & bounties", "board", "id", {"id", "name", "map", "location", "offers", "kinds", "kill", "creatures", "fetch", "deliver", "reward"});   // gens[13]
     mk("factions.txt", "Factions (reputation)", "faction", "id", {"id", "name", "text", "reward", "project"});                                          // gens[14]
     mk("objects.txt", "Object types & templates", "template", "id", {"id", "type", "name"});                                       // gens[15] (1.1.0)
-    mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles"});   // gens[16] (1.1.0)
+    mk("resources.txt", "Resource nodes", "resource", "id", {"id", "name", "item", "count", "tool", "respawn", "sprite", "color", "spentsprite", "spent", "kind", "styles", "sound"});   // gens[16] (1.1.0; sound 1.3.3)
     mk("npcs.txt", "NPCs", "npc", "id", {"id", "name", "sprite", "dialogue"});   // gens[17] (1.1.9 #33): tab 24
     gens[13].altSection = "bounty"; gens[13].altTemplateKeys = {"id", "board", "kind", "target", "need", "where", "reward", "xp", "title", "text", "require", "repeat"};
     gens[15].altSection = "type"; gens[15].altTemplateKeys = {"id"};   // 1.1.1: [type] = what every object of a type uses
@@ -917,7 +917,13 @@ void Editor::drawKinds(InputState& in) {
     if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& e : gens[5].secs) { std::string id = e.get("id"); if (id.size() > 6 && id.substr(id.size() - 6) == "_night") continue; ids.push_back(id); } int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.biome) cur = (int)i; TileKind* kp = &k; openListPicker("Biome = the encounter table random fights on this tile use", ids, cur, [this, ids, kp](int i) { kp->biome = i == 0 ? "" : ids[i]; kindsDirty = true; }); }
     { bool tbl = false; for (auto& e : gens[5].secs) if (e.get("id") == k.biome) tbl = true; ui.text(fx + keyW + 150, cy + 2, k.biome.empty() ? "no biome: fights here use the map's table=" : tbl ? (k.encounter > 0 ? "random fights here use the '" + k.biome + "' table (Encounters tab)" : "encounter weight is 0: no random fights here") : "no encounter table called '" + k.biome + "' - fights fall back to the map's table=", k.biome.empty() || tbl ? DIM : ACCENT2); }
     cy += 22;
-    ui.label(fx + 22, cy + 2, "move cost"); kh("movecost", cy); if (ui.intField(fx + keyW, cy, 80, k.moveCost, 1, 9)) kindsDirty = true; cy += 30;
+    ui.label(fx + 22, cy + 2, "move cost"); kh("movecost", cy); if (ui.intField(fx + keyW, cy, 80, k.moveCost, 1, 9)) kindsDirty = true; cy += 22;
+    // 1.3.3: footstep sound when the party walks onto this kind
+    ui.label(fx + 22, cy + 2, "footsteps"); kh("step", cy); { std::string st = k.step; if (ui.textField(fx + keyW, cy, 124, st, 40)) { k.step = trim(st); kindsDirty = true; } }
+    if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(plain step)"}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") ids.push_back(id); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.step) cur = (int)i; TileKind* kp = &k; openListPicker("Footstep sound when the party walks onto this tile", ids, cur, [this, ids, kp](int i) { kp->step = i == 0 ? "" : ids[i]; kindsDirty = true; gAudio.play(i == 0 ? "step" : ids[i]); }); }
+    if (ui.button(fx + keyW + 144, cy, 40, 16, "play")) gAudio.play(!k.step.empty() && gAudio.has(k.step) ? k.step : "step");
+    ui.text(fx + keyW + 192, cy + 2, k.step.empty() ? "empty = the plain 'step' sound" : gAudio.has(k.step) ? "sound event (Sounds tab)" : "no sound '" + k.step + "' - plays 'step'", k.step.empty() || gAudio.has(k.step) ? DIM : ACCENT2);
+    cy += 30;
     // big preview
     ui.label(fx + 22, cy, "preview (as in game, 2x):"); cy += 14;
     for (int i = 0; i < 6; i++) { int px = fx + 10 + i * 26; ui.cv->fillRect(px, cy, 24, 24, k.bg); Tile g = k.ground[i % k.ground.size()]; if (g.valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, g, px, cy, 2, k.tint); else if (k.opaque) ts->drawOpaque(*ui.cv, g, px, cy, 2, k.tint); else ts->draw(*ui.cv, g, px, cy, 2, k.tint); } if (k.prop.valid()) ts->draw(*ui.cv, k.prop, px, cy, 2); }
@@ -994,7 +1000,7 @@ std::vector<std::string> edObjKeys(const std::string& t) {   // what each object
     if (t == "obstacle") return {"w", "h", "name", "kind", "clear", "needs", "flag", "text", "onclear"};
     if (t == "lever") return {"name", "flag", "toggle", "text", "sprite", "onsprite", "sound", "onuse"};
     if (t == "change") return {"w", "h", "kind", "if"};
-    if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent"};
+    if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent", "sound"};
     return {};
 }
 

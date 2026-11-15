@@ -842,7 +842,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             "THE WORLD", "  Rubble, vines, ice and boulders block some paths: dig with a", "  shovel, blast with a charge (light it and RUN) or a fire spell,", "  burn, melt or shove. Levers open doors and drain water. Glinting", "  spots are ore veins and herb patches - they grow back in a few days.", "  Notice boards post three bounties a day; take up to three at once.", "  Shops sell stacks: Left/Right sets the quantity, E buys the most.", "  Weapons and armour are in limited stock and restock every 3 days.", "",
             "FAVORITES", "  In the Spells or Items menu, highlight something and press 1-8.", "  Utility spells (Light, Knock, Recall, Sense Treasure, Camouflage,", "  healing) can be cast from the Spells menu outside combat.", "",
             "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one.", "",
-            "Made with raylib. Art: Urizen 1-bit tileset (vurmux, CC0) and", "  Cute Desktop Icons 32x32 by Mayke-Arth (mayke-arth.itch.io).", "Music: Pixel Fantasy by AlkaKrab.",
+            "Made with raylib. Art: Urizen 1-bit tileset (vurmux, CC0) and", "  Cute Desktop Icons 32x32 by Mayke-Arth (mayke-arth.itch.io).", "Music: Pixel Fantasy by AlkaKrab.", "Sound effects: Pixel Combat by Helton Yan (CC BY 4.0).",
         };
         int n = sizeof(lines) / sizeof(lines[0]);
         int maxShow = (w.h - 56) / 13;

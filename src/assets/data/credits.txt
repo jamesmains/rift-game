@@ -14,6 +14,9 @@ Cute Desktop Icons by Mayke-Arth (mayke-arth.itch.io)
 - Music
 Pixel Fantasy by AlkaKrab
 
+- Sound effects
+Pixel Combat by Helton Yan (CC BY 4.0)
+
 - Clear font
 Spleen by Frederic Cambus (BSD licence, see LICENSE-spleen.txt)
 

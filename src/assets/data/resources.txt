@@ -23,6 +23,7 @@ color=235,140,60
 spent=85,85,85
 kind=rocks
 styles=mine:2:2-4,cave
+sound=gather_mine
 
 [resource]
 id=ember_cap
@@ -48,6 +49,7 @@ color=110,160,255
 spent=85,85,85
 kind=rocks
 styles=mine
+sound=gather_mine
 
 [resource]
 id=scrap
@@ -60,6 +62,7 @@ color=255,215,90
 spent=85,85,85
 kind=box
 styles=tech,ship
+sound=reload
 
 [resource]
 id=circuit
@@ -72,6 +75,7 @@ color=90,220,255
 spent=85,85,85
 kind=terminal2
 styles=tech,ship
+sound=reload
 
 [resource]
 id=herb_moon
@@ -134,6 +138,7 @@ color=215,235,255
 spent=85,85,85
 kind=rocks
 styles=
+sound=gather_mine
 
 [resource]
 id=rift_crystal
@@ -147,6 +152,7 @@ color=230,100,255
 spent=85,85,85
 kind=rocks
 styles=
+sound=gather_mine
 
 [resource]
 id=sunpetal

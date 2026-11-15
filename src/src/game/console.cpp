@@ -39,7 +39,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "day") { day = std::max(1, argi(1, 1)); out(clockText()); }
     else if (c == "weather") { weather = arg(1, "clear"); weatherSteps = 9999; precip.clear(); out("weather = " + weather); }
     else if (c == "spawn") { if (!map) return; std::vector<std::string> cs; for (auto& s : split(arg(1), ',')) if (gd->creature(trim(s))) cs.push_back(trim(s)); if (cs.empty()) { out("unknown creature"); return; } popMode(); startCombat(cs, px + 2, py, argi(2, 0), {}, ""); out("fight!"); }
-    else if (c == "kill") { if (mode == GMode::COMBAT || (!modeStack.empty() && modeStack.back() == GMode::COMBAT)) { for (auto& u : cb.units) if (!u.friendly() && u.ch.alive) { u.ch.hp = 0; u.ch.alive = false; onKill(u.ch, nullptr); } out("enemies slain"); } else out("not in combat"); }
+    else if (c == "kill") { if (mode == GMode::COMBAT || (!modeStack.empty() && modeStack.back() == GMode::COMBAT)) { std::string ds; for (auto& u : cb.units) if (!u.friendly() && u.ch.alive) { u.ch.hp = 0; u.ch.alive = false; onKill(u.ch, nullptr); if (ds.empty()) ds = deathSound(u.ch, false); } if (!ds.empty()) gAudio.play(ds); out("enemies slain"); } else out("not in combat"); }
     else if (c == "spells") { std::string s; for (auto& sp : gd->spells) s += sp.first + " "; out(s); }
     else if (c == "learn") { if (!gd->spell(arg(1))) { out("unknown spell"); return; } int mi = clampi(argi(2, 0), 0, (int)party.members.size() - 1); party.members[mi].spells.push_back(arg(1)); out("ok"); }
     else if (c == "join") { runAction("join", arg(1)); out("ok"); }

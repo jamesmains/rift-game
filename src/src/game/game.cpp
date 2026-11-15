@@ -282,6 +282,11 @@ std::string Game::weaponSound(const Character& ch) const {
     if (ch.attackRange(*gd) > 1) return "attack_bow";
     return "attack_melee";
 }
+std::string Game::deathSound(const Character& ch, bool friendly) const {
+    if (friendly) return "death_party";
+    if (auto* cd = gd->creature(ch.creatureId)) if (!cd->sound.empty() && gAudio.has(cd->sound)) return cd->sound;
+    return "death_enemy";
+}
 std::string Game::spellSound(const SpellDef& s) const {
     if (!s.sound.empty()) return s.sound;
     if (s.heal > 0 || s.effect == "revive" || s.effect == "cure") return "spell_heal";
@@ -614,7 +619,12 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     { std::string shut = closedShopDoor(nx, ny); if (!shut.empty()) { if (doorMsgCd <= 0) { log(shut); gAudio.play("door_locked"); doorMsgCd = 30; } return; } }
     if (!map->walkable(nx, ny)) { if (contact(map->signAt(nx, ny) != nullptr || map->obstacleAt(nx, ny) != nullptr || map->leverAt(nx, ny) != nullptr || map->gatherAt(nx, ny) != nullptr)) return; return; }
     trail.insert(trail.begin(), {px, py}); if (trail.size() > 8) trail.pop_back();
-    px = nx; py = ny; stepCounter++; gAudio.play("step");
+    px = nx; py = ny; stepCounter++;
+    {   // 1.3.3: the ground picks the footstep (tile kind step=); unknown or empty = the plain one
+        const auto& kinds = allTileKinds(); uint16_t kk = map->at(nx, ny).kind;
+        const std::string& st = kk < kinds.size() ? kinds[kk].step : std::string();
+        gAudio.play(!st.empty() && gAudio.has(st) ? st : "step");
+    }
     advanceClock((map->kind == "overworld" ? 3 : 1) * tileMoveCost(px, py));   // rough ground takes longer to cross
     if (outdoors() && --weatherSteps <= 0) rerollWeather();
     banterTrigger("idle");

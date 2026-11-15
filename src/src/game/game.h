@@ -401,6 +401,7 @@ public:
     std::string ambientWanted() const;          // the map's ambient= loop (1.3.1: none in the base game)
     std::string weaponSound(const Character& ch) const;
     std::string spellSound(const SpellDef& s) const;
+    std::string deathSound(const Character& ch, bool friendly) const;   // 1.3.3: creature sound=, else death_enemy / death_party
     std::string serialize() const;
     bool deserialize(const std::string& text);
     bool saveToSlot(int slot);                     // slot 0-2, or AUTOSAVE_SLOT (saves.cpp)

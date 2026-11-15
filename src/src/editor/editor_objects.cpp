@@ -13,7 +13,7 @@ using namespace ED;
 extern int gEdTop;
 static const int BOTTOM_BAR = 18;
 
-static bool nodeKey(const std::string& k) { return k == "name" || k == "item" || k == "count" || k == "tool" || k == "respawn" || k == "sprite" || k == "color" || k == "spent" || k == "spentsprite"; }
+static bool nodeKey(const std::string& k) { return k == "name" || k == "item" || k == "count" || k == "tool" || k == "respawn" || k == "sprite" || k == "color" || k == "spent" || k == "spentsprite" || k == "sound"; }
 
 // ---------------------------------------------------------------- resolving
 const EdSection* Editor::templateSec(const std::string& id) const {

@@ -18,6 +18,7 @@ struct TileKind {
     std::string biome;           // overworld biome name
     int moveCost = 1;
     int light = 0;               // light radius this tile gives off in dark maps (torches, braziers, crystals...)
+    std::string step;            // 1.3.3: footstep sound event when the party walks onto it (empty = "step")
     // 1.0.13 joined pieces (paths, rivers, shores, bridges, streets): the sheet draws these as sets of pieces that meet
     // their neighbours. edges= lists 16 ground tiles picked by which neighbours connect (mask N=1 E=2 S=4 W=8; an empty
     // entry keeps the random ground). join= names the groups this kind belongs to, link= the groups its own pieces
@@ -156,12 +157,12 @@ struct Lever { int x = 0, y = 0; std::string flag, msg, name; bool toggle = true
 // A part of the map that looks different while a condition holds (a bridge appears, a wall crumbles, water drains).
 struct WorldChange { int x = 0, y = 0, w = 1, h = 1; std::string kind, cond; std::vector<uint16_t> orig; bool applied = false; };
 // A resource you can harvest (ore vein, herb patch); it grows back after some days.
-struct GatherNode { int x = 0, y = 0, lo = 1, hi = 1, respawn = 3; std::string item, tool, name; bool hasColor = false; Color8 color = C::White;   // color= tints the node (default by item)
+struct GatherNode { int x = 0, y = 0, lo = 1, hi = 1, respawn = 3; std::string item, tool, name, sound; bool hasColor = false; Color8 color = C::White;   // sound= (1.3.3) played on harvest; color= tints the node (default by item)
     std::string node; Tile sprite, spentSprite; bool hasSpent = false; Color8 spent = RGB(85, 85, 85); };   // 1.1.0: node= its resource type; sprite = its own picture (empty = the map tile)
 // 1.1.0: resource node types (resources.txt). A [gather] object names one with node= (or matches one by item=) and
 // takes every key it doesn't set itself from it; generated dungeons scatter the ones whose styles= name their style.
 struct ResourceStyle { std::string style; int weight = 1, lo = -1, hi = -1; };   // styles=mine:2:2-4 -> style, weight, count
-struct ResourceDef { std::string id, name, item, tool, kind; int lo = 1, hi = 1, respawn = 3; Tile sprite, spentSprite;
+struct ResourceDef { std::string id, name, item, tool, kind, sound; int lo = 1, hi = 1, respawn = 3; Tile sprite, spentSprite;
     bool hasColor = false, hasSpent = false; Color8 color = C::White, spent = RGB(85, 85, 85); std::vector<ResourceStyle> styles; };
 void setResourceDefs(const std::vector<ConfigSection>& secs);     // later sections replace earlier ones with the same id
 const std::vector<ResourceDef>& resourceDefs();

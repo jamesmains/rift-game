@@ -96,6 +96,7 @@ std::string tileKindsText(const std::vector<TileKind>& kinds) {
         o += "\nprop=" + tileStr(k.prop) + fmt("\nwalk=%d\nsight=%d\nwater=%d\nopaque=%d\n", k.walkable, k.blocksSight, k.water, k.opaque);
         o += "tint=" + colStr(k.tint) + "\nbg=" + colStr(k.bg) + fmt("\nencounter=%d\nbiome=%s\ncost=%d\n", k.encounter, k.biome.c_str(), k.moveCost);
         if (k.light) o += fmt("light=%d\n", k.light);
+        if (!k.step.empty()) o += "step=" + k.step + "\n";   // 1.3.3
         if (k.recolor) o += "recolor=1\n";
         if (!k.join.empty()) o += "join=" + joinList(k.join) + "\n";
         if (!k.link.empty()) o += "link=" + joinList(k.link) + "\n";
@@ -118,6 +119,7 @@ static void parseKindsText(const std::string& text, std::vector<TileKind>& kinds
         k.tint = sec.has("tint") ? parseColor(sec.get("tint")) : C::White; k.bg = sec.has("bg") ? parseColor(sec.get("bg")) : C::Black;
         k.encounter = sec.geti("encounter", 0); k.biome = sec.get("biome"); k.moveCost = sec.geti("cost", 1);
         k.light = sec.has("light") ? sec.geti("light", 0) : defaultLight(k.name);
+        k.step = trim(sec.get("step"));
         readJoinFields(sec, k);
         kinds.push_back(k);
     }
@@ -338,6 +340,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             const ResourceDef* r = resourceFor(gets(kv, "node"), gets(kv, "item"));
             GatherNode g; g.x = geti(kv, "x", 0); g.y = geti(kv, "y", 0); g.node = r ? r->id : gets(kv, "node");
             g.item = has("item") ? gets(kv, "item") : r ? r->item : ""; g.tool = has("tool") ? gets(kv, "tool") : r ? r->tool : ""; g.name = has("name") ? gets(kv, "name") : r ? r->name : "";
+            g.sound = has("sound") ? trim(gets(kv, "sound")) : r ? r->sound : "";
             if (r) { g.lo = r->lo; g.hi = r->hi; g.respawn = r->respawn; applyResource(g, *r); }
             if (has("count")) { auto cnt = split(gets(kv, "count", "1"), '-'); g.lo = atoi(cnt[0].c_str()); g.hi = cnt.size() > 1 ? atoi(cnt[1].c_str()) : g.lo; }
             if (has("respawn")) g.respawn = geti(kv, "respawn", 3);
@@ -358,7 +361,7 @@ void setResourceDefs(const std::vector<ConfigSection>& secs) {
     gResources.clear();
     for (auto& sec : secs) {
         if (sec.name != "resource" || sec.get("id").empty()) continue;
-        ResourceDef r; r.id = sec.get("id"); r.item = sec.get("item"); r.name = sec.get("name"); r.tool = sec.get("tool"); r.kind = sec.get("kind");
+        ResourceDef r; r.id = sec.get("id"); r.item = sec.get("item"); r.name = sec.get("name"); r.tool = sec.get("tool"); r.kind = sec.get("kind"); r.sound = trim(sec.get("sound"));
         parseRange(sec.get("count", "1"), r.lo, r.hi); if (r.hi < r.lo) r.hi = r.lo; r.respawn = sec.geti("respawn", 3);
         r.sprite = parseTile(sec.get("sprite")); r.spentSprite = parseTile(sec.get("spentsprite"));
         if (!sec.get("color").empty()) { r.hasColor = true; r.color = parseColor(sec.get("color")); }

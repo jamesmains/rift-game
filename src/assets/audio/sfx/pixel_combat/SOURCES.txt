@@ -1,0 +1,64 @@
+Sound effects from Helton Yan's Pixel Combat (heltonyan.itch.io/pixelcombat), CC BY 4.0, credit Helton Yan.
+Converted to 44.1 kHz mono OGG, trimmed and levelled for Triffall. File = pack sound name + a number (the softest variations of the six were kept).
+
+attack_melee: WHSH_MOVEMENT-Simple Whoosh, SWSH_MOVEMENT-Bamboo Whip
+attack_bow: DSGNMisc_MOVEMENT-Whoosh Sweep
+attack_gun: DSGNMisc_PROJECTILE-Hollow Point
+attack_laser: DSGNMisc_PROJECTILE-Laser Shot, DSGNMisc_HIT-Mecha Laser Pistol
+hit: FGHTImpt_MELEE-Gut Punch, FGHTImpt_MELEE-Gut Kick, FGHTImpt_HIT-Strong Punch
+crit: DSGNMisc_SKILL IMPACT-Crunchy Burst, FGHTImpt_MELEE-Crunch Kick, DSGNMisc_HIT-Mecha Gore Cruncher
+miss: WHSH_MOVEMENT-Sand Swipe
+block: FGHTImpt_MELEE-Kick Block, DSGNTonl_SKILL IMPACT-Deflected Hit
+spell_cast: MAGSpel_CAST-Casting Buff, MAGSpel_CAST-Hollow Spell
+spell_fire: DSGNMisc_SKILL RELEASE-Flame Ball, DSGNImpt_EXPLOSION-Fire Hit
+spell_lightning: DSGNImpt_EXPLOSION-Voltaic Blast, DSGNImpt_EXPLOSION-Electric Hit
+spell_poison: DSGNMisc_CAST-Slime Ball
+spell_heal: MAGAngl_BUFF-Healing Gusts
+spell_buff: DSGNSynth_BUFF-Generic Buff
+explosion: DSGNImpt_EXPLOSION-Pyro Burst, DSGNImpt_EXPLOSION-Bass Hit, DSGNImpt_EXPLOSION-Cruncher
+death_enemy: DSGNImpt_EXPLOSION-Thud, DSGNImpt_EXPLOSION-Crunching
+grenade_throw: WHSH_MOVEMENT-Wind Shaker
+unlock: UIMisc_INTERFACE-Lock
+reload: UIClick_INTERFACE-Metallic Click
+teleport: MAGSpel_CAST-Teleport Downer
+light: MAGSpel_CAST-Aura Rise
+stealth: MAGSpel_CAST-Underwater
+detect: MAGSpel_CAST-Complex Rise
+flee: WHSH_MOVEMENT-Windy Passby
+step: FEETMisc_STEP-Boots on Generic Ground 1, FEETMisc_STEP-Boots on Generic Ground 2
+step_grass: FEETMisc_STEP-Boots on Grass
+step_sand: FEETMisc_STEP-Boots on Sand
+step_snow: FEETMisc_STEP-Boots on Sand
+step_stone: FEETMisc_STEP-Boots on Concrete Dungeon
+step_hard: FEETMisc_STEP-Boots on Concrete
+step_wood: FEETMisc_STEP-Hard Step
+step_metal: FEETMisc_STEP-Boots on Metal
+step_water: DSGNMisc_MOVEMENT-Sparkly Water
+death_machine: DSGNImpt_EXPLOSION-Mecha Limb Explosion, DSGNImpt_EXPLOSION-Mecha Engine Burst
+death_spirit: DSGNMisc_SKILL IMPACT-Energy Dissipate
+death_bones: DSGNMisc_HIT-Hit Rattle
+death_slime: DSGNMisc_SKILL RELEASE-Wet Splash
+death_big: DSGNImpt_EXPLOSION-Thud
+death_rift: DSGNImpt_EXPLOSION-Mecha Manablast
+spell_summon: MAGSpel_CAST-Noise Summon
+spell_summon_tech: DSGNSynth_CAST-Mecha Energy Movement
+spell_dark: DSGNTonl_SKILL RELEASE-Dark Energy Sphere
+spell_rift: DSGNImpt_EXPLOSION-Magisplosion
+spell_holy: DSGNTonl_SKILL IMPACT-Energetic Impact
+spell_emp: DSGNImpt_EXPLOSION-Forced Shutdown
+spell_meteor: DSGNImpt_EXPLOSION-Eruption
+spell_chain: DSGNImpt_EXPLOSION-Shimmer Electric
+spell_laser: DSGNMisc_SKILL IMPACT-Mecha White Laser
+spell_drone: DSGNImpt_EXPLOSION-Mecha Detonator
+spell_shield: DSGNSynth_BUFF-Bonus Max Shield
+spell_bless: MAGAngl_BUFF-Bonus Regen Rate
+spell_cure: MAGAngl_BUFF-Simple Heal
+spell_revive: MAGSpel_CAST-Energy Riser
+skill_slash: DSGNMisc_MELEE-Sword Slash
+skill_bash: DSGNImpt_EXPLOSION-Mecha Piercing Punch
+skill_volley: DSGNMisc_SKILL RELEASE-Flying Blades
+skill_warcry: MAGSpel_CAST-Growing Strength
+skill_mark: DSGNSynth_BUFF-Mecha Guarantee Hit
+skill_overcharge: DSGNSynth_BUFF-Mecha Stats
+skill_hack: DSGNTonl_USABLE-Scifi Select
+gather_mine: DSGNMisc_HIT-Bitcrusher

@@ -87,6 +87,7 @@ dmg=16-26
 dmgtype=shock
 stat=int
 level=14
+sound=spell_chain
 
 [spell]
 id=meteor
@@ -103,6 +104,7 @@ effect=burn
 duration=3
 stat=int
 level=18
+sound=spell_meteor
 
 [spell]
 id=light
@@ -164,6 +166,7 @@ range=5
 dmg=6-12
 dmgtype=magic
 stat=wis
+sound=spell_holy
 
 [spell]
 id=bless
@@ -178,6 +181,7 @@ duration=3
 target=ally
 stat=wis
 level=3
+sound=spell_bless
 
 [spell]
 id=cure
@@ -191,6 +195,7 @@ effect=cure
 target=ally
 stat=wis
 level=6
+sound=spell_cure
 
 [spell]
 id=smite
@@ -205,6 +210,7 @@ dmgtype=magic
 effect=stun
 stat=wis
 level=9
+sound=spell_holy
 
 [spell]
 id=revive
@@ -218,6 +224,7 @@ effect=revive
 target=ally
 stat=wis
 level=12
+sound=spell_revive
 
 [spell]
 id=sanctuary
@@ -234,6 +241,7 @@ duration=3
 target=ally
 stat=wis
 level=15
+sound=spell_shield
 
 [spell]
 id=sense_treasure
@@ -261,6 +269,7 @@ duration=4
 target=self
 stat=str
 level=3
+sound=skill_warcry
 
 [spell]
 id=shield_bash
@@ -275,6 +284,7 @@ dmgtype=physical
 effect=stun
 stat=str
 level=6
+sound=skill_bash
 
 [spell]
 id=cleave
@@ -289,6 +299,7 @@ dmg=12-20
 dmgtype=physical
 stat=str
 level=10
+sound=skill_slash
 
 [spell]
 id=iron_skin
@@ -303,6 +314,7 @@ duration=4
 target=self
 stat=con
 level=14
+sound=spell_shield
 
 # ---- ranger ----
 [spell]
@@ -318,6 +330,7 @@ duration=3
 target=self
 stat=dex
 level=3
+sound=skill_mark
 
 [spell]
 id=volley
@@ -332,6 +345,7 @@ dmg=8-14
 dmgtype=physical
 stat=dex
 level=6
+sound=skill_volley
 
 [spell]
 id=camouflage
@@ -376,6 +390,7 @@ summon=wolf
 duration=5
 stat=wis
 level=5
+sound=spell_summon
 
 # ---- scavenger ----
 [spell]
@@ -389,6 +404,7 @@ range=0
 target=self
 utility=unlock
 level=4
+sound=skill_hack
 
 [spell]
 id=flashlight
@@ -429,6 +445,7 @@ dmgtype=shock
 effect=stun
 stat=int
 level=6
+sound=spell_emp
 
 [spell]
 id=overcharge
@@ -443,6 +460,7 @@ duration=3
 target=self
 stat=int
 level=10
+sound=skill_overcharge
 
 [spell]
 id=drone_strike
@@ -459,6 +477,7 @@ effect=burn
 duration=2
 stat=int
 level=14
+sound=spell_drone
 
 [spell]
 id=deploy_turret
@@ -473,6 +492,7 @@ summon=turret
 duration=4
 stat=int
 level=8
+sound=spell_summon_tech
 
 # ---- monster spells ----
 [spell]
@@ -487,6 +507,7 @@ target=ground
 summon=skeleton:2
 stat=int
 level=6
+sound=spell_summon
 
 [spell]
 id=dark_bolt
@@ -498,6 +519,7 @@ ap=4
 range=6
 dmg=6-12
 dmgtype=magic
+sound=spell_dark
 
 [spell]
 id=venom_spit
@@ -522,6 +544,7 @@ ap=4
 range=7
 dmg=8-14
 dmgtype=fire
+sound=spell_laser
 
 [spell]
 id=rift_surge
@@ -536,6 +559,7 @@ dmg=12-20
 dmgtype=magic
 effect=weaken
 duration=3
+sound=spell_rift
 
 [spell]
 id=drain
@@ -547,6 +571,7 @@ ap=4
 range=4
 dmg=8-14
 dmgtype=magic
+sound=spell_dark
 
 [spell]
 id=dark_heal
@@ -558,3 +583,4 @@ ap=4
 range=6
 heal=16
 target=ally
+sound=spell_dark

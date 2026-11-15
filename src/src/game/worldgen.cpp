@@ -335,7 +335,7 @@ void generateDungeon(Map& m, const std::string& id, const std::string& style, in
             bool near = false; for (auto& g : m.gathers) if (chebyshev(g.x, g.y, x, y) < 6) near = true; if (near) continue;
             const G& g = rng.pick(opts);
             GatherNode n; n.x = x; n.y = y; n.item = g.item; n.tool = g.tool; n.lo = g.lo; n.hi = g.hi; n.respawn = g.tool.empty() ? 3 : 5;
-            if (g.r) { n.respawn = g.r->respawn; n.name = g.r->name; applyResource(n, *g.r); } else if (const ResourceDef* r = resourceFor("", g.item)) applyResource(n, *r);
+            if (g.r) { n.respawn = g.r->respawn; n.name = g.r->name; n.sound = g.r->sound; applyResource(n, *g.r); } else if (const ResourceDef* r = resourceFor("", g.item)) { n.sound = r->sound; applyResource(n, *r); }
             if (!g.kind.empty()) m.set(x, y, g.kind, rng); m.gathers.push_back(n); i++;
         }
     }

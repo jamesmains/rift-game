@@ -381,7 +381,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
         cb.hitstop = std::max(cb.hitstop, settings && settings->fastCombat ? 0.12f : 0.22f);
         { CombatAnim an; an.kind = 3; an.x0 = an.x1 = t.x; an.y0 = an.y1 = t.y; an.color = t.friendly() ? friendColor() : foeColor(); an.dur = 0.5f; an.tile = Tile{}; cb.anims.push_back(an); }
         addFloat(t.x, t.y - 1, t.friendly() ? "DOWN" : "SLAIN", t.friendly() ? foeColor() : C::Cream);
-        { std::string ds = "death_party"; if (!t.friendly()) { ds = "death_enemy"; if (auto* cd = gd->creature(t.ch.creatureId)) if (!cd->sound.empty()) ds = cd->sound; } gAudio.play(ds); }
+        gAudio.play(deathSound(t.ch, t.friendly()));
         cb.log.push_back(t.ch.name + (t.friendly() ? " is knocked out!" : " is slain!"));
         log(t.ch.name + (t.friendly() ? " is knocked out!" : " dies."));
         if (!t.friendly()) { cb.xpGained += t.ch.xpReward; spawnLoot(t); }
