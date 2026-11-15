@@ -57,7 +57,7 @@ void Game::healerService(const std::string& svc) {
     else if (svc == "bless") { extra["blessing"] = "3"; log("A blessing settles over the party: the next three fights start shielded and mending."); }
     else return;
     party.gold -= cost; stats.goldSpent += cost;
-    gAudio.play("rest");
+    gAudio.play("healer");
     healerReopen = true;   // back to the healer's list (rebuilt next frame, so prices are current)
 }
 

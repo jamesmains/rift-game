@@ -381,6 +381,8 @@ private:
     std::set<std::string> knownFlags();
     // ---- sounds ----
     int sndSel = 0, sndScroll = 0; std::string sndFilter; bool sndDirty = false;
+    int sndGroup = 0; std::string sndTrig;        // 1.3.4 (#52): group filter (0 = All), a selected trigger with no entry of its own
+    std::string sndUsersId, sndUsersText; int sndUsersAge = 0; std::string soundUsers(const std::string& id, bool music);
     void drawSounds(InputState& in);
     // helpers
     void refreshFiles();

@@ -135,11 +135,11 @@ void Game::generateBounties(const std::string& town) {
 void Game::bountyEvent(const std::string& kind, const std::string& id, int n) {
     for (auto& b : bounties) {
         if (b.done) continue;
-        if (b.kind == "kill" && kind == "kill" && b.target == id) { b.have = std::min(b.need, b.have + n); if (b.have >= b.need) { b.done = true; notify("Bounty complete: " + b.targetName + ". Return to " + boardName(b.town) + "."); gAudio.play("quest"); } else notify(fmt("Bounty: %s %d/%d", b.targetName.c_str(), b.have, b.need)); }
-        if (b.kind == "fetch" && (kind == "item" || kind == "craft")) { b.have = std::min(b.need, party.countItem(b.target)); if (b.have >= b.need && !b.done) { b.done = true; notify("Bounty: you have the " + b.targetName + ". Return to " + boardName(b.town) + "."); gAudio.play("quest"); } }
+        if (b.kind == "kill" && kind == "kill" && b.target == id) { b.have = std::min(b.need, b.have + n); if (b.have >= b.need) { b.done = true; notify("Bounty complete: " + b.targetName + ". Return to " + boardName(b.town) + "."); gAudio.play("bounty"); } else notify(fmt("Bounty: %s %d/%d", b.targetName.c_str(), b.have, b.need)); }
+        if (b.kind == "fetch" && (kind == "item" || kind == "craft")) { b.have = std::min(b.need, party.countItem(b.target)); if (b.have >= b.need && !b.done) { b.done = true; notify("Bounty: you have the " + b.targetName + ". Return to " + boardName(b.town) + "."); gAudio.play("bounty"); } }
         if (b.kind == "deliver" && kind == "board" && id == b.target) {
             if (!party.hasItem("courier_letter")) { notify("You've lost the letter for " + b.whereName + "."); continue; }
-            party.removeItem("courier_letter", 1); b.done = true; notify("Letter delivered. Collect the reward in " + boardName(b.town) + "."); gAudio.play("quest");
+            party.removeItem("courier_letter", 1); b.done = true; notify("Letter delivered. Collect the reward in " + boardName(b.town) + "."); gAudio.play("bounty");
         }
     }
 }
@@ -198,7 +198,7 @@ void Game::updateBounty(InputState& in, float dt) {
         if (b.kind == "fetch") { if (party.countItem(b.target) < b.need) { b.done = false; b.have = party.countItem(b.target); log("You no longer have the items."); return; } party.removeItem(b.target, b.need); }
         party.gold += b.reward; stats.goldEarned += b.reward; stats.bounties++; giveXP(b.xp);
         if (startsWith(b.id, "fix:")) extra["bounty_done_" + b.id.substr(4)] = std::to_string(day);
-        log(fmt("Bounty paid: %d gold.", b.reward)); gAudio.play("gold");
+        log(fmt("Bounty paid: %d gold.", b.reward)); gAudio.play("bounty_paid");
         if (const BoardDef* bd = board(b.town)) { int now = repOf(bd->id), d = std::min(bd->rep, 30 - now); if (d > 0) changeRep(bd->id, d); }   // the town remembers who helps it - up to Friendly
         bounties.erase(bounties.begin() + row.first);
     } else if (b.kind == "fetch") { b.have = std::min(b.need, party.countItem(b.target)); if (b.have >= b.need) { b.done = true; log("You already have what they need."); } else log(fmt("Bring %d %s (you have %d).", b.need, b.targetName.c_str(), b.have)); }

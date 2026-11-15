@@ -1,0 +1,35 @@
+# 1.3.4 (#52): triggers without an entry of their own play their fallback (lever -> unlock, exit_locked -> door_locked,
+# gather -> pickup...); one with its own entry plays that; the new sounds.txt keys load. (Crunch needs real audio: not
+# checked here.) Also the combat drawing order of #53: a fallen unit under a living one (shot only).
+newgame Kai warrior 1
+god
+frames 60
+audio
+con run sound:lever
+frames 5
+expect heard:lever == 1
+expect heard:unlock == 1
+audio
+con run sound:exit_locked
+frames 5
+expect heard:exit_locked == 1
+expect heard:door_locked == 1
+audio
+con run sound:gather_tool
+frames 5
+expect heard:hit == 1
+audio
+con run sound:step
+frames 5
+expect heard:step == 1
+expect heard:door_locked == 0
+audio
+con run sound:no_such_sound_here
+frames 5
+expect heard:no_such_sound_here == 0
+combat rat,rat,goblin
+frames 90
+unitkill 2
+unitplace 0 13 10
+frames 30
+shot sfx_1_3_4_corpse.png

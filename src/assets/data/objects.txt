@@ -55,7 +55,7 @@ onuse=
 id=lever
 sprite=57,17
 onsprite=56,17
-sound=unlock
+sound=lever
 onuse=
 
 [template]

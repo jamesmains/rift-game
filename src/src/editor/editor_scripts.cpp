@@ -52,7 +52,7 @@ std::vector<Editor::LintItem> Editor::lintScript(const std::string& text, const 
         if (r.key == "spawn") { std::string c = trim(split(v, ',')[0]); if (!c.empty() && !gd->creature(c)) out.push_back({r.line, "unknown creature '" + c + "'", false}); }
         if (r.key == "shop") { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == v) ok = true; if (!ok) out.push_back({r.line, "unknown shop '" + v + "'", false}); }
         if (r.key == "teleport") { std::string m = trim(split(v, ',')[0]); if (split(v, ',').size() < 3) out.push_back({r.line, "teleport needs map,x,y", false}); else if (std::find(maps.begin(), maps.end(), m) == maps.end()) out.push_back({r.line, "unknown map '" + m + "'", false}); }
-        if (r.key == "sound" && !v.empty() && !gAudio.defs.count(v)) out.push_back({r.line, "unknown sound '" + v + "' (Sounds tab)", true});
+        if (r.key == "sound" && !v.empty() && !gAudio.has(v)) out.push_back({r.line, "unknown sound '" + v + "' (Sounds tab)", true});
     }
     // a say / ask / pick in a script that may run without the party standing still is fine: the game waits for the map
     if (p.code.empty() && p.errors.empty()) out.push_back({-1, "the script is empty", true});

@@ -848,18 +848,24 @@ playtest. The "Used by" box at the bottom of the right panel lists the NPCs,
 scripts, other dialogues and campaign start that open the file.
 
 == tab.sounds | Sounds tab
-see: sound.id, sound.kind, sound.files, sound.volume, item.sound, map.music
+see: sound.triggers, sound.crunch, sound.id, sound.kind, sound.files, sound.volume, item.sound, map.music
 
 Every sound effect and music track the game plays is an entry here
 (sounds.txt): an id that the game or your data asks for, and the audio file(s)
 it plays. The audio files live in assets/audio (sfx/ and music/), shared by all
 campaigns.
 
-The list shows effects, and music tracks marked [music]. The form edits the
-id, kind, description, files, volume, pitch variation (effects) or looping
-(music), and has Play / Stop buttons. "Used by" lists the items, spells,
-creatures, maps and dungeons that use the entry, and what the game itself uses
-it for.
+The list shows effects, and music tracks marked [music]. "group" above it
+narrows it to one kind of sound (Interface, Exploring, Footsteps, Combat,
+Spells, Music...). Below the entries come the game's triggers that have no
+entry of their own, shown as "trigger > the sound it plays" (see
+sound.triggers).
+
+The form edits the id, kind, description, files, volume, pitch and volume
+variation and crunch (effects) or looping (music), and has Play / Stop
+buttons. "Played when" says when the game itself plays it, which triggers
+borrow it, and which items, spells, creatures, objects, tile kinds, maps,
+dialogue and scripts ask for it.
 
 Replacing a sound: either drop a new file over the old one in assets/audio, or
 select the entry and use "change" on its file. Adding a sound: "+ import new
@@ -5605,6 +5611,70 @@ Format: whole number 0-50. Default: 0.
 5-15 suits steps, hits and blips.
 
 Music ignores it. Too much variation (over 20) makes voices and chimes sound wrong.
+
+Works with a single file too: each play picks its own pitch. With several
+files the game also never plays the same file twice in a row.
+
+== sound.volvar | Sound volume variation
+see: sound.pitchvar, sound.volume
+
+Random loudness change on each play, +/- this many percent of the volume, so
+a run of the same sound (footsteps, hits) doesn't sound machine-made.
+Effects only.
+
+Format: whole number 0-50. Default: 0.
+
+  volvar=15
+
+10-20 suits footsteps; keep it at 0 for interface sounds.
+
+== sound.crunch | Sound crunch (lo-fi)
+see: sound.pitchvar, tab.sounds
+
+Plays the file through a lo-fi filter so it sounds like an old sound chip:
+the sample rate is cut down (the sound gets grainy and "pixelated") and the
+bit depth is reduced (it gets crunchy and gritty). Done once when the sound
+loads; the file on disk is not changed. Effects only.
+
+Format: crunchrate= in Hz (0 = off; 4000-22050 makes sense) and crunchbits=
+(0 = off; 3-12 makes sense). Lower = crunchier.
+
+  crunchrate=11025
+  crunchbits=7
+
+The buttons set both at once: Light 16000 Hz / 8 bits, Medium 11025 / 7,
+Heavy 8000 / 5, Chip 5512 / 4, Off. They play the sound so you hear it
+straight away. "Same crunch for N listed" copies this sound's crunch to every
+effect in the list on the left - pick a group (or search) first to choose
+which.
+
+The bits are counted from the file's own loudest point, so quiet and loud
+files crunch the same amount. Very low settings (under 6000 Hz, under 4 bits)
+turn most sounds into buzz.
+
+== sound.triggers | Sound triggers
+see: tab.sounds, sound.id
+
+A trigger is a moment the game plays a sound by itself: a step, a door, a
+hit, a level up, a shop closing... Every one of them is listed in the Sounds
+tab, grouped, with "Played when" saying when it fires.
+
+Some triggers have no entry of their own. They borrow another sound, their
+fallback: exit_locked, shop_closed, chest_locked and door_sealed borrow
+door_locked; lever and door_unlock borrow unlock; gather borrows pickup and
+gather_tool hit; burn borrows spell_fire; fuse_lit borrows grenade_throw;
+unequip borrows equip; load borrows save; respec and craft_skill borrow
+levelup; healer borrows rest; reinforce, enchant and salvage borrow craft;
+bounty, recipe_learned and town_reward borrow quest; bounty_paid borrows
+gold; reinforcements borrows ambush.
+
+They show at the end of the list as "trigger > fallback". Select one and use
+"Give it its own sound": it becomes a normal entry (starting with the
+fallback's files and settings) that you can change without changing the
+fallback. Delete the entry to make it borrow again.
+
+Items, spells, creatures, objects, resources and tile kinds can name their
+own sound (sound=, attacksound=, step=); those win over the trigger.
 
 == sound.loop | Music loop
 see: sound.kind

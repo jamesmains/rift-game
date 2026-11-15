@@ -37,6 +37,8 @@ Write-Host "Building Triffall v$version ($kind)..."
 
 # the built-in tile kinds are compiled from assets\data\tilekinds.txt (src\src\game\tilekinds_builtin.h is committed too)
 if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mktilekinds.py }
+# 1.3.4: likewise the default sounds.txt (src\src\core\sounds_builtin.h is committed too)
+if (Get-Command python -ErrorAction SilentlyContinue) { python src\tools\mksoundsdefault.py }
 
 cmake -S src -B $cmakeDir -A x64 "-DTRIFFALL_EDITOR=$editor" "-DTRIFFALL_DEMO=$demoFlag" "-DTRIFFALL_DEV_CONSOLE=$devFlag"   # quoted: PowerShell leaves $vars unexpanded in a bare -arg
 if ($LASTEXITCODE -ne 0) { Write-Host "CMake configure failed. Is Visual Studio with the C++ workload installed?" -ForegroundColor Red; exit 1 }

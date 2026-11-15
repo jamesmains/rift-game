@@ -12,7 +12,7 @@ still open. Keep it up to date when an asset comes in or goes out.
 | Pixel Fantasy 30 Tracks and Loops by AlkaKrab | `src/assets/audio/music/pixel_fantasy/` | Purchased royalty-free licence (PDF in the pack zip) | Clear for the game. See the music notes below. |
 | Spleen font by Frederic Cambus | the Clear font | BSD 2-clause, `src/assets/LICENSE-spleen.txt` | Clear |
 | raylib | engine | zlib | Clear |
-| Pixel Combat SFX by Helton Yan (1.3.3) | `src/assets/audio/sfx/pixel_combat/` | CC BY 4.0 (heltonyan.itch.io/pixelcombat, checked 2026-11-15) | Clear. Credit required: given (end credits, About, README). Converted/trimmed (CC BY allows it; README says so). |
+| Pixel Combat SFX by Helton Yan (1.3.3) | `src/assets/audio/sfx/pixel_combat/` | CC BY 4.0 (heltonyan.itch.io/pixelcombat, checked 2026-11-15) | Clear. Credit required: given (end credits, About, README). Converted/trimmed, and since 1.3.4 played through a lo-fi filter in the game (CC BY allows changes; README says so). |
 | Other sound effects | `src/assets/audio/sfx/*.wav` | Made by `src/tools/mksounds.py` (plain synthesis, no AI) | Clear (own work) |
 | `src/assets/new-art/*.png` | not shipped (build.ps1 leaves it out) | Unknown | Check before using it |
 | The owner's "Test" campaign (EverRogue tileset) | `src/assets/campaigns/test/` | Unknown | Kept out of git and out of every hand-out build |

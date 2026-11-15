@@ -118,7 +118,7 @@ void Game::updateStanding(InputState& in) {
         extra["project_" + boardTown] = std::to_string(done + 1);
         if (p.gold > 0) { party.gold += p.gold; stats.goldEarned += p.gold; }
         giveXP(p.xp); changeRep(boardTown, p.rep);
-        log("Project complete: " + p.title + (p.gold > 0 ? fmt(". The town pays you %d gold.", p.gold) : ".")); gAudio.play("quest");
+        log("Project complete: " + p.title + (p.gold > 0 ? fmt(". The town pays you %d gold.", p.gold) : ".")); gAudio.play("town_reward");
         setFlag("project_" + boardTown + "_" + std::to_string(done + 1));
     } else if (row >= 0 && f && row < (int)f->rewards.size()) {
         const FactionReward& w = f->rewards[row]; std::string key = fmt("favour_%s_%d", boardTown.c_str(), row);
@@ -127,7 +127,7 @@ void Game::updateStanding(InputState& in) {
         extra[key] = "1";
         for (auto& p : split(w.items, ',')) { auto kv = split(trim(p), ':'); std::string id = trim(kv[0]); int cnt = kv.size() > 1 ? atoi(kv[1].c_str()) : 1; if (id.empty()) continue;
             if (id == "gold") { party.gold += cnt; stats.goldEarned += cnt; } else if (gd->item(id)) giveItem(id, cnt); }
-        log((w.title.empty() ? std::string("A favour from ") + factionName(boardTown) : w.title) + ": " + itemsText(*this, w.items) + "."); gAudio.play("quest");
+        log((w.title.empty() ? std::string("A favour from ") + factionName(boardTown) : w.title) + ": " + itemsText(*this, w.items) + "."); gAudio.play("town_reward");
     }
 }
 

@@ -42,6 +42,10 @@ int rl_monitor_h(void);
 void rl_audio_init(void);
 void rl_audio_close(void);
 int rl_sound_load(const char* path);
+float* rl_wave_load_f32(const char* path, int* frames, int* channels, int* rate);   /* 1.3.4: samples to process (free with rl_wave_free) */
+void rl_wave_free(float* data);
+int rl_sound_from_f32(const float* data, int frames, int channels, int rate);
+void rl_sound_unload(int id);
 void rl_sound_play(int id, float vol, float pitch);
 void rl_audio_unload_all(void);
 int rl_music_play(const char* path, float vol, int loop);

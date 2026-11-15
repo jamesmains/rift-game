@@ -309,7 +309,7 @@ void Game::startDemoEnd() {
     endSlides.clear(); EpilogueSlide sl; sl.title = demoTitle.empty() ? "Thank you for playing" : demoTitle; sl.text = endingText(demoText); sl.tile = T(0, 0); sl.hasTile = false; endSlides.push_back(sl);
 }
 void Game::startTransition(const std::string& to, int x, int y, const std::string& text) {
-    if (demoBlocks(to)) { if (mode == GMode::TRANSITION) popMode(); showMessage("Triffall Demo", demoBlockedText.empty() ? "That way is closed in the demo." : demoBlockedText); gAudio.play("door_locked"); return; }
+    if (demoBlocks(to)) { if (mode == GMode::TRANSITION) popMode(); showMessage("Triffall Demo", demoBlockedText.empty() ? "That way is closed in the demo." : demoBlockedText); gAudio.play("exit_locked"); return; }
     transitionTo = to; transX = x; transY = y; transition = 0.01f; transText = text; pushMode(GMode::TRANSITION); gAudio.play("teleport"); advanceClock(10);
 }
 
@@ -616,7 +616,7 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     if (contact(map->chestAt(nx, ny) != nullptr)) return;
     if (Door* d = map->doorAt(nx, ny)) { if (!d->open) { contact(true); return; } }
     if (contact(map->enemyAt(nx, ny) != nullptr)) return;
-    { std::string shut = closedShopDoor(nx, ny); if (!shut.empty()) { if (doorMsgCd <= 0) { log(shut); gAudio.play("door_locked"); doorMsgCd = 30; } return; } }
+    { std::string shut = closedShopDoor(nx, ny); if (!shut.empty()) { if (doorMsgCd <= 0) { log(shut); gAudio.play("shop_closed"); doorMsgCd = 30; } return; } }
     if (!map->walkable(nx, ny)) { if (contact(map->signAt(nx, ny) != nullptr || map->obstacleAt(nx, ny) != nullptr || map->leverAt(nx, ny) != nullptr || map->gatherAt(nx, ny) != nullptr)) return; return; }
     trail.insert(trail.begin(), {px, py}); if (trail.size() > 8) trail.pop_back();
     px = nx; py = ny; stepCounter++;
@@ -638,8 +638,8 @@ void Game::onStep() {
     revealAround(); updateCamera();
     // exits
     if (Exit* e = map->exitAt(px, py)) {
-        if (!e->requireFlag.empty() && !evalCond(e->requireFlag)) { if (!e->lockedMsg.empty()) { log(e->lockedMsg); gAudio.play("door_locked"); } }
-        else if (!e->requireItem.empty() && !party.hasItem(e->requireItem)) { log(e->lockedMsg.empty() ? "It is locked." : e->lockedMsg); gAudio.play("door_locked"); }
+        if (!e->requireFlag.empty() && !evalCond(e->requireFlag)) { if (!e->lockedMsg.empty()) { log(e->lockedMsg); gAudio.play("exit_locked"); } }
+        else if (!e->requireItem.empty() && !party.hasItem(e->requireItem)) { log(e->lockedMsg.empty() ? "It is locked." : e->lockedMsg); gAudio.play("exit_locked"); }
         else { startTransition(e->to, e->tx, e->ty); return; }
     }
     for (auto& t : map->triggers) {
@@ -826,13 +826,13 @@ void Game::interactAt(int x, int y) {
         if (n->travel) { log(n->name + ": \"Where to? Coach fare is by the league.\""); openWorldMap(true); return; }
         if (!n->craft.empty() && n->dialogue.empty()) { openCraft(n->craft); return; }
         if (!n->dialogue.empty()) startDialogue(n->dialogue, n);
-        else if (!n->shop.empty()) { std::string hrs; if (shopRefuses(n->shop)) return; if (!shopOpen(n->shop, hrs)) { log(n->name + ": \"We're closed. Open " + hrs + ".\""); gAudio.play("door_locked"); return; } shopId = n->shop; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); pushMode(GMode::SHOP); }
+        else if (!n->shop.empty()) { std::string hrs; if (shopRefuses(n->shop)) return; if (!shopOpen(n->shop, hrs)) { log(n->name + ": \"We're closed. Open " + hrs + ".\""); gAudio.play("shop_closed"); return; } shopId = n->shop; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); pushMode(GMode::SHOP); }
         else log(n->name + " has nothing to say.");
         return;
     }
     if (Chest* c = map->chestAt(x, y)) {
         if (c->opened) { log("The chest is empty."); return; }
-        if (!c->locked.empty() && !party.hasItem(c->locked)) { log("Locked. It needs a " + (gd->item(c->locked) ? gd->item(c->locked)->name : c->locked) + "."); gAudio.play("door_locked"); return; }
+        if (!c->locked.empty() && !party.hasItem(c->locked)) { log("Locked. It needs a " + (gd->item(c->locked) ? gd->item(c->locked)->name : c->locked) + "."); gAudio.play("chest_locked"); return; }
         c->opened = true; if (!c->flag.empty()) setFlag(c->flag); gAudio.play(c->sound.empty() ? "chest_open" : c->sound); stats.chests++;
         if (c->gold > 0) { party.gold += c->gold; stats.goldEarned += c->gold; log(fmt("Found %d gold.", c->gold)); gAudio.play("gold"); }
         for (auto& it : c->items) { std::string id = it.first; if (auto* d = gd->item(id)) if (d->equippable()) id = makeAffixed(id, lootTierRoll(party.hero() ? party.hero()->level : 1)); giveItem(id, it.second); }
@@ -843,9 +843,9 @@ void Game::interactAt(int x, int y) {
     if (Door* d = map->doorAt(x, y)) {
         if (d->open) return;
         if (!d->key.empty() && !party.hasItem(d->key)) { log("Locked. It needs a " + (gd->item(d->key) ? gd->item(d->key)->name : d->key) + "."); gAudio.play("door_locked"); return; }
-        if (!d->require.empty() && !evalCond(d->require)) { log(d->lockedMsg.empty() ? "It won't open. Not yet." : d->lockedMsg); gAudio.play("door_locked"); return; }
-        if (!d->openIf.empty() && !evalCond(d->openIf)) { log(d->lockedMsg.empty() ? "It won't open from this side. There must be a mechanism somewhere." : d->lockedMsg); gAudio.play("door_locked"); return; }
-        d->open = true; gAudio.play(!d->sound.empty() ? d->sound : d->key.empty() ? "door_open" : "unlock"); if (!d->flag.empty()) setFlag(d->flag);
+        if (!d->require.empty() && !evalCond(d->require)) { log(d->lockedMsg.empty() ? "It won't open. Not yet." : d->lockedMsg); gAudio.play("door_sealed"); return; }
+        if (!d->openIf.empty() && !evalCond(d->openIf)) { log(d->lockedMsg.empty() ? "It won't open from this side. There must be a mechanism somewhere." : d->lockedMsg); gAudio.play("door_sealed"); return; }
+        d->open = true; gAudio.play(!d->sound.empty() ? d->sound : d->key.empty() ? "door_open" : "door_unlock"); if (!d->flag.empty()) setFlag(d->flag);
         map->at(d->x, d->y).walkable = true; map->at(d->x, d->y).blocksSight = false; map->at(d->x, d->y).prop = d->openTile;
         log(!d->msg.empty() ? d->msg : d->key.empty() ? "The door opens." : "You unlock the door.");
         revealAround();
@@ -1815,7 +1815,7 @@ bool Game::useItemOn(const std::string& itemId, Character& target, bool inCombat
     else if (d->effect == "regen") { target.addEffect("regen", 5, 6); log(target.name + " begins to regenerate."); used = true; }
     else if (d->effect == "aim") { target.addEffect("aim", 3, 25); log(target.name + " steadies their aim."); used = true; }
     else if (d->effect == "focus") { target.addEffect("focus", 5, 4); log(target.name + " focuses."); used = true; }
-    else if (startsWith(d->effect, "learn:")) { learnRecipes(d->effect.substr(6), true); party.removeItem(itemId, 1); gAudio.play("quest"); return true; }
+    else if (startsWith(d->effect, "learn:")) { learnRecipes(d->effect.substr(6), true); party.removeItem(itemId, 1); gAudio.play("recipe_learned"); return true; }
     else if (startsWith(d->effect, "script:")) {   // 1.1.10 (#34): effect=script:<id> (used up) or script:<id>:keep (kept)
         if (Game::inCombat()) { log("Not in the middle of a fight."); return false; }
         auto p = split(d->effect.substr(7), ':'); std::string sid = trim(p[0]); bool keep = p.size() > 1 && trim(p[1]) == "keep";
@@ -1859,7 +1859,7 @@ bool Game::equipItem(int mi, const std::string& itemId) {
 }
 void Game::unequip(int mi, int slot) {
     Character& m = party.members[mi]; if (m.equip[slot].empty()) return;
-    party.addItem(m.equip[slot], 1, *gd); m.equip[slot].clear(); gAudio.play("equip");
+    party.addItem(m.equip[slot], 1, *gd); m.equip[slot].clear(); gAudio.play("unequip");
     m.hp = std::min(m.hp, std::max(1, m.maxHP(*gd))); m.mp = std::min(m.mp, m.maxMP(*gd));
 }
 

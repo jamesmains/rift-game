@@ -10,6 +10,13 @@
 // raylib-backed audio (see rl_shim.c)
 struct RlAudio : AudioBackend {
     int loadSound(const std::string& path) override { return rl_sound_load(path.c_str()); }
+    int loadSoundFx(const std::string& path, int rate, int bits) override {   // 1.3.4 (#52): crunch (Audio::crunch) at load
+        int frames = 0, ch = 0, sr = 0; float* d = rl_wave_load_f32(path.c_str(), &frames, &ch, &sr);
+        if (!d) return -1;
+        Audio::crunch(d, frames, ch, sr, rate, bits);
+        int h = rl_sound_from_f32(d, frames, ch, sr); rl_wave_free(d); return h;
+    }
+    void unloadSound(int h) override { rl_sound_unload(h); }
     void playSound(int h, float vol, float pitch) override { rl_sound_play(h, vol, pitch); }
     bool playMusic(const std::string& path, float vol, bool loop) override { return rl_music_play(path.c_str(), vol, loop ? 1 : 0) != 0; }
     void stopMusic() override { rl_music_stop(); }

@@ -717,7 +717,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
             if (ui.button(x + 130, y, 70, 16, "set colour")) { v = k == "color" ? "255,255,255" : "0,220,220"; g.dirty = true; }
             return;
         }
-        if (k == "sound") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") o.push_back(id); singlePick("sound event (empty = the built-in one)", o); return; }
+        if (k == "sound") { std::vector<std::string> o{""}; for (auto& id : gAudio.sfxChoices()) o.push_back(id); singlePick("sound event (empty = the built-in one)", o); return; }
         if (k == "type" && s.name == "template") { if (ui.choice(x, y, 140, v.empty() ? "(pick a type)" : v)) { auto opts = edObjTypes(); int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("object type", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); } return; }
         if (k == "item" || k == "tool" || k == "key") { singlePick("item", itemIds()); return; }
         if (k == "dialogue") { std::vector<std::string> o{""}; for (auto& d : dlgFiles) o.push_back(d); singlePick("dialogue", o); return; }
@@ -776,7 +776,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     }
     if (k == "spell") { singlePick("spell", spellIds()); return; }
     if (k == "map" || k == "to") { singlePick("map", mapIds()); return; }
-    if (k == "sound" || k == "attacksound") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") o.push_back(id); singlePick("sound event (empty = automatic)", o); return; }
+    if (k == "sound" || k == "attacksound") { std::vector<std::string> o{""}; for (auto& id : gAudio.sfxChoices()) o.push_back(id); singlePick("sound event (empty = automatic)", o); return; }
     if (k == "music" || k == "combatmusic") { std::vector<std::string> o{""}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "music") o.push_back(id); singlePick("music track", o); return; }
     if (k == "ambient") { std::vector<std::string> o{"", "none"}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "ambient") o.push_back(id); singlePick("background loop (empty = none)", o); return; }
     // --- list builders (comma lists) ---
@@ -920,7 +920,7 @@ void Editor::drawKinds(InputState& in) {
     ui.label(fx + 22, cy + 2, "move cost"); kh("movecost", cy); if (ui.intField(fx + keyW, cy, 80, k.moveCost, 1, 9)) kindsDirty = true; cy += 22;
     // 1.3.3: footstep sound when the party walks onto this kind
     ui.label(fx + 22, cy + 2, "footsteps"); kh("step", cy); { std::string st = k.step; if (ui.textField(fx + keyW, cy, 124, st, 40)) { k.step = trim(st); kindsDirty = true; } }
-    if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(plain step)"}; for (auto& id : gAudio.order) if (gAudio.defs.count(id) && gAudio.defs[id].kind == "sfx") ids.push_back(id); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.step) cur = (int)i; TileKind* kp = &k; openListPicker("Footstep sound when the party walks onto this tile", ids, cur, [this, ids, kp](int i) { kp->step = i == 0 ? "" : ids[i]; kindsDirty = true; gAudio.play(i == 0 ? "step" : ids[i]); }); }
+    if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(plain step)"}; for (auto& id : gAudio.sfxChoices()) ids.push_back(id); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.step) cur = (int)i; TileKind* kp = &k; openListPicker("Footstep sound when the party walks onto this tile", ids, cur, [this, ids, kp](int i) { kp->step = i == 0 ? "" : ids[i]; kindsDirty = true; gAudio.play(i == 0 ? "step" : ids[i]); }); }
     if (ui.button(fx + keyW + 144, cy, 40, 16, "play")) gAudio.play(!k.step.empty() && gAudio.has(k.step) ? k.step : "step");
     ui.text(fx + keyW + 192, cy + 2, k.step.empty() ? "empty = the plain 'step' sound" : gAudio.has(k.step) ? "sound event (Sounds tab)" : "no sound '" + k.step + "' - plays 'step'", k.step.empty() || gAudio.has(k.step) ? DIM : ACCENT2);
     cy += 30;

@@ -194,21 +194,81 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
 }
 
 // ---------------- Sounds tab ----------------
+// 1.3.4 (#52): the list shows every trigger the game plays (soundTriggers(), core/sound_triggers.cpp) in groups; a
+// trigger without an entry of its own shows what it falls back to and can be given its own. Effects have volume
+// variation and the lo-fi crunch (rate + bits, applied when the file loads).
+static std::string sndGroupOf(const std::string& id, const SoundDef* d) {
+    if (const SoundTrigger* t = soundTrigger(id)) return t->group;
+    if (d && (d->kind == "music" || d->kind == "ambient")) return "Music";
+    if (startsWith(id, "step")) return "Footsteps";
+    if (startsWith(id, "death_")) return "Deaths";
+    if (startsWith(id, "spell_") || startsWith(id, "skill_")) return "Spells";
+    if (startsWith(id, "attack_")) return "Combat";
+    if (startsWith(id, "gather")) return "Exploring";
+    return "Other";
+}
+
+// where data (not the game's code) asks for a sound: items/spells/creatures/objects/resources..., tile kinds' step=,
+// placed map objects and map headers, dialogue and scripts. Cached per id (reading every file each frame is slow).
+std::string Editor::soundUsers(const std::string& id, bool music) {
+    if (id == sndUsersId && ++sndUsersAge < 180) return sndUsersText;   // looked up again every ~3 s (other tabs may change data)
+    sndUsersId = id; sndUsersAge = 0;
+    std::string u;
+    static const char* keys[] = {"sound", "attacksound", "music", "combatmusic", "step", "ambient"};
+    for (auto& g : gens) for (auto& s : g.secs) for (auto* k : keys) if (s.get(k) == id) { u += "[" + s.name + "] " + s.get("id") + (std::string(k) == "sound" ? "" : std::string(" (") + k + ")") + "   "; }
+    for (auto& k : allTileKinds()) if (k.step == id) u += "tile kind " + k.name + " (step)   ";
+    if (mapScan.empty()) scanMaps();
+    for (auto& m : mapScan) {
+        for (auto& h : m.header) if ((h.first == "music" || h.first == "combatmusic" || h.first == "ambient") && h.second == id) u += "map " + m.id + " (" + h.first + ")   ";
+        int n = 0; for (auto& o : m.raw) if (o.get("sound") == id) n++;
+        if (n) u += fmt("map %s: %d %s   ", m.id.c_str(), n, n == 1 ? "object" : "objects");
+    }
+    std::string t;
+    if (!music) {
+        for (auto& f : dlgFiles) if (readFile(readPath("dialogue/" + f + ".txt"), t) && (t.find("sound=" + id) != std::string::npos || t.find("sound:" + id) != std::string::npos)) u += "dialogue " + f + "   ";
+        for (auto& f : scriptFiles) if (readFile(readPath("scripts/" + f + ".txt"), t) && (t.find("sound " + id) != std::string::npos || t.find("sound=" + id) != std::string::npos || t.find("sound:" + id) != std::string::npos)) u += "script " + f + "   ";
+    }
+    sndUsersText = u;
+    return u;
+}
+
 void Editor::drawSounds(InputState& in) {
     int x = 4, y = TOP + 4, h = H - TOP - BOTTOM - 8, lw = 250;
     ui.panel(x, y, lw, h); ui.header(x, y, lw, fmt("Sounds & music (%d)", (int)gAudio.order.size())); helpBtn(x + lw - 16, y + 1, "tab.sounds");
-    ui.searchField(x + 4, y + 20, lw - 8, sndFilter, "search: music, ambient, a name...");
-    std::vector<int> idx; std::vector<std::string> labels;
-    for (size_t i = 0; i < gAudio.order.size(); i++) { auto it = gAudio.defs.find(gAudio.order[i]); if (it == gAudio.defs.end()) continue; if (edMatch(it->first + " " + it->second.kind + " " + it->second.desc, sndFilter)) { idx.push_back((int)i); labels.push_back((it->second.kind == "music" ? "[music] " : it->second.kind == "ambient" ? "[ambient] " : "") + it->first); } }
-    int lsel = -1; for (size_t i = 0; i < idx.size(); i++) if (idx[i] == sndSel) lsel = (int)i;
-    int hit = ui.listBox(x + 4, y + 40, lw - 8, h - 124, labels, lsel, sndScroll);
-    if (hit >= 0) { sndSel = idx[hit]; ui.blur(); }
+    ui.searchField(x + 4, y + 20, lw - 8, sndFilter, "search: music, step, a name...");
+    std::vector<std::string> groups = soundGroups();
+    std::string grp = sndGroup <= 0 || sndGroup > (int)groups.size() ? "All" : groups[sndGroup - 1];
+    ui.text(x + 6, y + 42, "group", DIM);
+    if (ui.choice(x + 44, y + 40, lw - 52, grp)) { std::vector<std::string> opts{"All"}; for (auto& g : groups) opts.push_back(g); openListPicker("Sound group", opts, sndGroup, [this](int k) { sndGroup = k; sndScroll = 0; }); }
+    // rows: entries of sounds.txt, then triggers that have no entry of their own (they play their fallback)
+    struct Row { std::string id; int orderIdx; };
+    std::vector<Row> rows; std::vector<std::string> labels;
+    for (size_t i = 0; i < gAudio.order.size(); i++) {
+        auto it = gAudio.defs.find(gAudio.order[i]); if (it == gAudio.defs.end()) continue;
+        std::string g = sndGroupOf(it->first, &it->second);
+        if (grp != "All" && g != grp) continue;
+        const SoundTrigger* tr = soundTrigger(it->first);
+        if (!edMatch(it->first + " " + it->second.kind + " " + it->second.desc + " " + g + (tr ? std::string(" ") + tr->when : ""), sndFilter)) continue;
+        rows.push_back({it->first, (int)i}); labels.push_back((it->second.kind == "music" ? "[music] " : it->second.kind == "ambient" ? "[ambient] " : "") + it->first);
+    }
+    for (auto& tr : soundTriggers()) {
+        if (gAudio.defs.count(tr.id)) continue;
+        if (grp != "All" && grp != tr.group) continue;
+        if (!edMatch(std::string(tr.id) + " " + tr.group + " " + tr.when + (tr.fallback ? std::string(" ") + tr.fallback : ""), sndFilter)) continue;
+        rows.push_back({tr.id, -1}); labels.push_back(std::string("  ") + tr.id + (tr.fallback ? std::string(" > ") + tr.fallback : std::string(" (none)")));
+    }
+    int lsel = -1;
+    for (size_t i = 0; i < rows.size(); i++) if ((rows[i].orderIdx >= 0 && rows[i].orderIdx == sndSel && sndTrig.empty()) || (rows[i].orderIdx < 0 && rows[i].id == sndTrig)) lsel = (int)i;
+    int hit = ui.listBox(x + 4, y + 60, lw - 8, h - 144, labels, lsel, sndScroll);
+    if (hit >= 0) { if (rows[hit].orderIdx >= 0) { sndSel = rows[hit].orderIdx; sndTrig.clear(); } else { sndTrig = rows[hit].id; } ui.blur(); }
     int by = y + h - 80;
-    auto newDef = [&](const std::string& kind) { openTextPrompt(kind == "music" ? "New music track id" : "New sound event id", kind == "music" ? "my_track" : "my_sound", [this, kind](const std::string& nm) { std::string n = nm; for (auto& c : n) if (c == ' ') c = '_'; if (gAudio.defs.count(n)) { say("A sound with that id already exists."); return; } SoundDef d; d.id = n; d.kind = kind; d.volume = kind == "music" ? 70 : 90; gAudio.defs[n] = d; gAudio.order.push_back(n); sndSel = (int)gAudio.order.size() - 1; sndScroll = std::max(0, sndSel - 8); sndFilter.clear(); sndDirty = true; }); };
+    auto newDef = [&](const std::string& kind) { openTextPrompt(kind == "music" ? "New music track id" : "New sound event id", kind == "music" ? "my_track" : "my_sound", [this, kind](const std::string& nm) { std::string n = nm; for (auto& c : n) if (c == ' ') c = '_'; if (gAudio.defs.count(n)) { say("A sound with that id already exists."); return; } SoundDef d; d.id = n; d.kind = kind; d.volume = kind == "music" ? 70 : 90; gAudio.defs[n] = d; gAudio.order.push_back(n); sndSel = (int)gAudio.order.size() - 1; sndTrig.clear(); sndScroll = 0; sndFilter.clear(); sndGroup = 0; sndDirty = true; }); };
     if (ui.button(x + 4, by, 76, 20, "New sound")) newDef("sfx");
     if (ui.button(x + 84, by, 76, 20, "New music")) newDef("music");
-    bool have = sndSel >= 0 && sndSel < (int)gAudio.order.size() && gAudio.defs.count(gAudio.order[sndSel]);
-    if (ui.button(x + 164, by, 80, 20, "Delete", have, false, DANGER)) { std::string id = gAudio.order[sndSel]; openConfirm("Delete sound '" + id + "'? Game events that ask for it will be silent.", [this, id]() { gAudio.defs.erase(id); gAudio.order.erase(std::remove(gAudio.order.begin(), gAudio.order.end(), id), gAudio.order.end()); sndSel = std::min(sndSel, (int)gAudio.order.size() - 1); sndDirty = true; }); }
+    bool have = sndTrig.empty() && sndSel >= 0 && sndSel < (int)gAudio.order.size() && gAudio.defs.count(gAudio.order[sndSel]);
+    if (ui.button(x + 164, by, 80, 20, "Delete", have, false, DANGER)) { std::string id = gAudio.order[sndSel]; const SoundTrigger* tr = soundTrigger(id);
+        std::string q = tr && tr->fallback ? "Delete sound '" + id + "'? The game will play '" + tr->fallback + "' for it instead." : tr ? "Delete sound '" + id + "'? The game plays it (" + tr->when + ") - that will be silent." : "Delete sound '" + id + "'? Anything that asks for it will be silent.";
+        openConfirm(q, [this, id]() { gAudio.defs.erase(id); gAudio.order.erase(std::remove(gAudio.order.begin(), gAudio.order.end(), id), gAudio.order.end()); sndSel = std::min(sndSel, (int)gAudio.order.size() - 1); sndDirty = true; }); }
     if (ui.button(x + 4, by + 26, 70, 20, "Save", sndDirty, false, OK)) { if (gAudio.saveDefs()) { sndDirty = false; changed = true; say("Saved sounds.txt"); } else say("Save failed!"); }
     if (ui.button(x + 80, by + 26, 70, 20, "Revert", sndDirty)) { gAudio.loadDefs(); sndDirty = false; say("Reverted."); }
     if (ui.button(x + 156, by + 26, 88, 20, "Stop music", !gAudio.currentMusic.empty())) { gAudio.music(""); previewingMusic = false; }
@@ -217,6 +277,28 @@ void Editor::drawSounds(InputState& in) {
     // form
     int fx = x + lw + 6, fw = W - fx - 4;
     ui.panel(fx, y, fw, h);
+    if (!sndTrig.empty()) {   // a trigger with no entry of its own
+        const SoundTrigger* tr = soundTrigger(sndTrig);
+        if (!tr || gAudio.defs.count(sndTrig)) { sndTrig.clear(); return; }
+        ui.header(fx, y, fw, "Game trigger: " + sndTrig);
+        int cy = y + 28;
+        cy += font->drawWrapped(*ui.cv, *ts, fx + 10, cy, fw - 20, std::string("Plays when: ") + tr->when + ".", TEXT) + 8;
+        std::string res = gAudio.resolve(sndTrig);
+        std::string why = tr->fallback ? (res.empty() ? std::string("It has no entry of its own and its fallback '") + tr->fallback + "' has none either, so it is silent." : "It has no entry of its own, so it plays '" + res + "' (the same files and settings). Give it its own entry to change it without touching '" + res + "'.") : "It has no entry, so it is silent.";
+        cy += font->drawWrapped(*ui.cv, *ts, fx + 10, cy, fw - 20, why, DIM) + 10;
+        if (ui.button(fx + 10, cy, 170, 22, "Give it its own sound", true, false, OK)) {
+            SoundDef nd; nd.id = sndTrig; nd.kind = "sfx"; nd.volume = 90; nd.desc = tr->when;
+            int at = (int)gAudio.order.size();
+            if (const SoundDef* fd = gAudio.def(res)) { nd.files = fd->files; nd.volume = fd->volume; nd.pitchVar = fd->pitchVar; nd.volVar = fd->volVar; nd.crunchRate = fd->crunchRate; nd.crunchBits = fd->crunchBits;
+                for (size_t k = 0; k < gAudio.order.size(); k++) if (gAudio.order[k] == res) at = (int)k + 1; }
+            gAudio.defs[nd.id] = nd; gAudio.order.insert(gAudio.order.begin() + at, nd.id); gAudio.refresh(gAudio.defs[nd.id]);
+            sndSel = at; sndTrig.clear(); sndDirty = true; sndUsersId.clear();
+            return;
+        }
+        if (!res.empty() && ui.button(fx + 186, cy, 70, 22, "Play")) gAudio.play(sndTrig);
+        if (!res.empty() && ui.button(fx + 262, cy, 120, 22, "Open " + res)) { for (size_t k = 0; k < gAudio.order.size(); k++) if (gAudio.order[k] == res) sndSel = (int)k; sndTrig.clear(); sndGroup = 0; }
+        return;
+    }
     if (!have) { ui.text(fx + 10, y + 10, "Select a sound on the left. Every game event plays whatever file(s) its entry points at; music tracks are chosen by map kind, the map's music= field, or a dungeon's music= field.", DIM); return; }
     SoundDef& d = gAudio.defs[gAudio.order[sndSel]];
     ui.header(fx, y, fw, (d.kind == "music" ? "Music track: " : d.kind == "ambient" ? "Ambient loop: " : "Sound event: ") + d.id);
@@ -224,10 +306,10 @@ void Editor::drawSounds(InputState& in) {
     auto sh = [&](const char* key, int yy) { helpBtn(fx + keyW - 18, yy + 1, std::string("sound.") + key, "tab.sounds"); };
     sh("id", cy); sh("kind", cy + 24); sh("desc", cy + 48); sh("files", cy + 72);
     ui.label(fx + 10, cy + 2, "id"); { std::string nid = d.id; if (ui.textField(fx + keyW, cy, 200, nid, 40)) { std::string n = nid; for (auto& c : n) if (c == ' ') c = '_'; if (!n.empty() && !gAudio.defs.count(n)) { SoundDef copy = d; copy.id = n; gAudio.defs.erase(d.id); gAudio.defs[n] = copy; gAudio.order[sndSel] = n; sndDirty = true; return; } } }
-    ui.text(fx + keyW + 210, cy + 2, "game code and items/spells/maps refer to this id", DIM); cy += 24;
+    ui.text(fx + keyW + 210, cy + 2, soundTrigger(d.id) ? "the game plays this id itself - see Played when" : "items/spells/maps/scripts refer to this id", DIM); cy += 24;
     ui.label(fx + 10, cy + 2, "kind"); if (ui.choice(fx + keyW, cy, 100, d.kind)) { d.kind = d.kind == "sfx" ? "music" : d.kind == "music" ? "ambient" : "sfx"; gAudio.refresh(d); sndDirty = true; } cy += 24;
     ui.label(fx + 10, cy + 2, "description"); if (ui.textField(fx + keyW, cy, fw - keyW - 20, d.desc, 120)) sndDirty = true; cy += 24;
-    ui.label(fx + 10, cy + 2, d.kind == "music" ? "file" : "files"); ui.text(fx + keyW, cy + 2, d.kind == "music" ? "(several = a random one each time it starts)" : "(several = a random one per play)", DIM); cy += 18;
+    ui.label(fx + 10, cy + 2, d.kind == "music" ? "file" : "files"); ui.text(fx + keyW, cy + 2, d.kind == "music" ? "(several = a random one each time it starts)" : "(several = a random one per play, never the same twice in a row)", DIM); cy += 18;
     for (size_t i = 0; i < d.files.size(); i++) {
         bool exists = fileExists(gAudio.audioDir() + "/" + d.files[i]);
         ui.text(fx + keyW, cy + 2, d.files[i], exists ? TEXT : DANGER); if (!exists) ui.text(fx + keyW + font->width(d.files[i]) + 8, cy + 2, "missing!", DANGER);
@@ -241,29 +323,41 @@ void Editor::drawSounds(InputState& in) {
     cy += 28;
     ui.label(fx + 10, cy + 2, "volume %"); sh("volume", cy); if (ui.intField(fx + keyW, cy, 70, d.volume, 0, 200)) sndDirty = true; cy += 22;
     if (d.kind == "music") { ui.label(fx + 10, cy + 2, "loop"); sh("loop", cy); if (ui.checkbox(fx + keyW, cy, "loop forever (off = play once, e.g. a jingle)", d.loop)) sndDirty = true; cy += 22; }
-    else { ui.label(fx + 10, cy + 2, "pitch var %"); sh("pitchvar", cy); if (ui.intField(fx + keyW, cy, 70, d.pitchVar, 0, 50)) sndDirty = true; ui.text(fx + keyW + 80, cy + 2, "random +/- pitch so repeats don't sound identical", DIM); cy += 22; }
-    cy += 6;
+    else {
+        ui.label(fx + 10, cy + 2, "pitch var %"); sh("pitchvar", cy); if (ui.intField(fx + keyW, cy, 70, d.pitchVar, 0, 50)) sndDirty = true; ui.text(fx + keyW + 80, cy + 2, "random +/- pitch so repeats don't sound identical (even with one file)", DIM); cy += 22;
+        ui.label(fx + 10, cy + 2, "volume var %"); sh("volvar", cy); if (ui.intField(fx + keyW, cy, 70, d.volVar, 0, 50)) sndDirty = true; ui.text(fx + keyW + 80, cy + 2, "random +/- loudness per play (steps, hits)", DIM); cy += 22;
+        if (d.kind == "sfx") {
+            ui.label(fx + 10, cy + 2, "crunch"); sh("crunch", cy);
+            if (ui.intField(fx + keyW, cy, 80, d.crunchRate, 0, 48000)) sndDirty = true; ui.text(fx + keyW + 84, cy + 2, "Hz", DIM);
+            if (ui.intField(fx + keyW + 106, cy, 50, d.crunchBits, 0, 16)) sndDirty = true; ui.text(fx + keyW + 160, cy + 2, "bits", DIM);
+            ui.text(fx + keyW + 194, cy + 2, d.crunchRate <= 0 && d.crunchBits <= 0 ? "off - the file as it is" : "lo-fi: lower Hz and fewer bits = crunchier (0 = that part off)", DIM); cy += 20;
+            struct Pre { const char* name; int rate, bits; };
+            static const Pre pres[] = {{"Off", 0, 0}, {"Light", 16000, 8}, {"Medium", 11025, 7}, {"Heavy", 8000, 5}, {"Chip", 5512, 4}};
+            int px = fx + keyW;
+            for (auto& p : pres) { bool on = d.crunchRate == p.rate && d.crunchBits == p.bits; if (ui.button(px, cy, 56, 18, p.name, true, on)) { d.crunchRate = p.rate; d.crunchBits = p.bits; sndDirty = true; gAudio.play(d.id); } px += 60; }
+            int nl = 0; for (auto& r : rows) if (r.orderIdx >= 0 && gAudio.defs[r.id].kind == "sfx" && r.id != d.id) nl++;
+            if (ui.button(px + 8, cy, 170, 18, fmt("Same crunch for %d listed", nl), nl > 0)) {
+                std::vector<std::string> ids; for (auto& r : rows) if (r.orderIdx >= 0 && gAudio.defs[r.id].kind == "sfx") ids.push_back(r.id);
+                int rate = d.crunchRate, bits = d.crunchBits;
+                openConfirm(fmt("Give all %d sound effects in the list on the left (group / search) the crunch %d Hz, %d bits?", (int)ids.size(), rate, bits), [this, ids, rate, bits]() { for (auto& id : ids) { auto& dd = gAudio.defs[id]; dd.crunchRate = rate; dd.crunchBits = bits; } sndDirty = true; say(fmt("Crunch set on %d sounds - Save to keep it.", (int)ids.size())); });
+            }
+            cy += 24;
+        }
+    }
+    cy += 4;
     if (ui.button(fx + keyW, cy, 90, 22, d.kind == "music" ? "Play track" : "Play", !d.files.empty(), false, OK)) { if (d.kind == "music") { previewingMusic = true; gAudio.music(d.id); } else gAudio.play(d.id); }
     if (d.kind == "music" && ui.button(fx + keyW + 96, cy, 60, 22, "Stop", !gAudio.currentMusic.empty())) { gAudio.music(""); previewingMusic = false; }
-    ui.text(fx + keyW + 170, cy + 5, d.kind == "music" && gAudio.currentMusic == d.id ? "playing (volume follows the Settings sliders)" : "", DIM);
-    cy += 36;
-    // where it is used
-    ui.header(fx, cy, fw, "Used by"); cy += 20;
-    std::string users;
-    for (auto& g : gens) for (auto& s : g.secs) { if (s.get("sound") == d.id || s.get("attacksound") == d.id) users += "[" + s.name + "] " + s.get("id") + "  "; }
-    if (d.kind == "music") { for (auto& m : mapFiles) { std::string t; if (readFile(readPath("maps/" + m + ".txt"), t) && t.find("music=" + d.id) != std::string::npos) users += "map " + m + "  "; } for (auto& s : gens[7].secs) if (s.get("music") == d.id) users += "dungeon " + s.get("id") + "  "; }
-    static const std::map<std::string, std::string> builtin = {
-        {"ui_move", "menu cursor"}, {"ui_confirm", "menu confirm (keys / pad)"}, {"ui_click", "mouse clicks in game menus"}, {"ui_open", "any game screen opening"}, {"ui_close", "closing it"}, {"ui_error", "not enough gold, desktop error boxes"}, {"text_blip", "each dialogue node"},
-        {"boot", "boot screen"}, {"shutdown", "Shut Down"}, {"desktop_click", "desktop icons / start button"}, {"desktop_open", "desktop windows"}, {"desktop_close", "closing desktop windows"},
-        {"step", "every step"}, {"door_open", "doors"}, {"door_locked", "locked doors, chests and exits"}, {"chest_open", "chests"}, {"pickup", "items received"}, {"gold", "gold received"}, {"equip", "equip / unequip"}, {"potion", "consumables without their own sound="},
-        {"save", "saving and loading"}, {"levelup", "level ups"}, {"quest", "quest= in dialogue"}, {"teleport", "map transitions, recall"}, {"rest", "heal= / rest= in dialogue"}, {"shop_buy", "buying"}, {"shop_sell", "selling"}, {"ambush", "random encounters"},
-        {"combat_start", "combat begins"}, {"turn_player", "party turns"}, {"turn_enemy", "enemy turns"}, {"attack_melee", "melee weapons / monsters without attacksound="}, {"attack_bow", "bows and ranged monsters"}, {"attack_gun", "guns"}, {"attack_laser", "energy guns"},
-        {"hit", "damage"}, {"crit", "critical hits"}, {"miss", "misses"}, {"block", "zero damage"}, {"spell_cast", "spells without a type"}, {"spell_fire", "fire spells"}, {"spell_ice", "cold spells"}, {"spell_lightning", "shock spells"}, {"spell_poison", "poison spells"}, {"spell_heal", "healing / revive / cure"}, {"spell_buff", "buffs and debuffs"},
-        {"explosion", "grenades"}, {"death_enemy", "enemies without sound="}, {"death_party", "party knocked out"}, {"flee", "fleeing"}, {"victory", "combat won"}, {"defeat", "party wiped"}, {"unlock", "keys / unlock spell"}, {"light", "light spell"}, {"stealth", "stealth spell"}, {"detect", "detect spell"},
-        {"title", "the desktop"}, {"overworld", "overworld"}, {"town", "kind=town / interior maps"}, {"forest", "other hand-made maps"}, {"dungeon", "dungeons (default)"}, {"tech", "tech / ship dungeons"}, {"combat", "fights"}, {"boss", "fights with a boss"}, {"gameover", "game over"}};
-    auto bi = builtin.find(d.id);
-    if (bi != builtin.end()) users = "built-in: " + bi->second + "   " + users;
-    if (users.empty()) users = "nothing yet - set sound=" + d.id + " on an item, spell or creature (attacksound= for monsters), or music=" + d.id + " on a map / dungeon.";
-    font->drawWrapped(*ui.cv, *ts, fx + 10, cy, fw - 20, users, DIM); cy += 40;
+    ui.text(fx + keyW + 170, cy + 5, d.kind == "music" && gAudio.currentMusic == d.id ? "playing (volume follows the Settings sliders)" : d.kind == "sfx" ? "plays with its pitch / volume variation and crunch" : "", DIM);
+    cy += 32;
+    // when it plays: the game's own trigger, triggers that fall back to it, and data that names it
+    ui.header(fx, cy, fw, "Played when"); helpBtn(fx + fw - 16, cy + 1, "sound.triggers", "tab.sounds"); cy += 22;
+    std::string when;
+    if (const SoundTrigger* tr = soundTrigger(d.id)) { when = std::string("Game: ") + tr->when + "."; if (tr->fallback) when += std::string(" (Without this entry it plays '") + tr->fallback + "'.)"; }
+    std::string fall; for (auto& tr : soundTriggers()) if (tr.fallback && !gAudio.defs.count(tr.id) && gAudio.resolve(tr.id) == d.id) fall += std::string(fall.empty() ? "" : ", ") + tr.id;
+    if (!fall.empty()) when += (when.empty() ? "" : "  ") + std::string("Also plays for: ") + fall + " (triggers with no entry of their own - pick one in the list, group Exploring etc., to give it its own sound).";
+    std::string users = soundUsers(d.id, d.kind != "sfx");
+    if (!users.empty()) when += (when.empty() ? "" : "  ") + std::string("Data: ") + users;
+    if (when.empty()) when = "Nothing yet - set sound=" + d.id + " on an item, spell, creature, object, resource or tile kind (step=), attacksound= on a monster, a 'sound " + d.id + "' line in a script, or music=" + d.id + " on a map / dungeon.";
+    cy += font->drawWrapped(*ui.cv, *ts, fx + 10, cy, fw - 20, when, DIM) + 8;
     if (!gAudio.missing.empty()) { std::string ms = "events requested by the game but not defined: "; for (auto& m : gAudio.missing) ms += m + " "; font->drawWrapped(*ui.cv, *ts, fx + 10, cy, fw - 20, ms, DANGER); }
 }

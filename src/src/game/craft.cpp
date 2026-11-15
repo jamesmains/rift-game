@@ -107,7 +107,7 @@ void Game::addCraftXP(const std::string& station0, int xp) {
     int before = craftSkill(station);
     extra["cskill_" + st] = std::to_string(std::max(0, craftXP(st) + xp));
     int now = craftSkill(station);
-    if (now > before) { notify(fmt("%s skill rises to %d!", st == "field" ? "Field craft" : st == "forge" ? "Smithing" : st == "alchemy" ? "Alchemy" : "Tinkering", now)); gAudio.play("levelup"); }
+    if (now > before) { notify(fmt("%s skill rises to %d!", st == "field" ? "Field craft" : st == "forge" ? "Smithing" : st == "alchemy" ? "Alchemy" : "Tinkering", now)); gAudio.play("craft_skill"); }
 }
 int Game::craftSkill(const std::string& station) const { int xp = craftXP(station == "any" ? "field" : station), lv = 1; for (int i = 0; i < 6; i++) if (xp >= kSkillXP[i]) lv = i + 1; return lv; }
 int Game::craftStat(const std::string& station) const {
@@ -183,7 +183,7 @@ bool Game::craft(const Recipe& r) {
     party.addItem(id, r.count, *gd); stats.crafted += r.count;
     giveXP(r.difficulty * 4 * std::max(1, (int)party.members.size()) / 2);
     log("Crafted " + itemLabel(*gd->item(id), r.count) + (quality == 2 ? " - a masterwork!" : quality == 1 ? " - fine work." : ".")); gAudio.play("craft");
-    if (craftSkill(r.station) > before) { notify(fmt("%s skill rises to %d!", r.station == "any" ? "Field craft" : r.station == "forge" ? "Smithing" : r.station == "alchemy" ? "Alchemy" : "Tinkering", craftSkill(r.station))); gAudio.play("levelup"); }
+    if (craftSkill(r.station) > before) { notify(fmt("%s skill rises to %d!", r.station == "any" ? "Field craft" : r.station == "forge" ? "Smithing" : r.station == "alchemy" ? "Alchemy" : "Tinkering", craftSkill(r.station))); gAudio.play("craft_skill"); }
     bountyEvent("craft", r.result, r.count);
     return true;
 }
@@ -291,7 +291,7 @@ void Game::updateCraft(InputState& in, float dt) {
         if (!rng.chance(chance)) { extra["cskill_" + st] = std::to_string(craftXP(st) + 6); log("The reinforcement fails; the materials are spent but the item is unharmed."); gAudio.play("ui_error"); return; }
         std::string nid = buildDynItem(base, af, plus + 1); replaceTargetItem(t, nid);
         extra["cskill_" + st] = std::to_string(craftXP(st) + (plus + 2) * 12);
-        log("Reinforced: " + gd->item(nid)->name + "."); gAudio.play("craft"); stats.crafted++;
+        log("Reinforced: " + gd->item(nid)->name + "."); gAudio.play("reinforce"); stats.crafted++;
         if (plus + 1 >= 3) setFlag("reinforced3");
     } else if (craftTab == 2) {
         if (d->unique) { log(d->name + " is one of a kind: no enchantment will take."); gAudio.play("ui_error"); return; }
@@ -304,7 +304,7 @@ void Game::updateCraft(InputState& in, float dt) {
         std::string nid = makeAffixed(t.id, af.empty() ? 2 : 3);
         if (nid == t.id) { log("Nothing takes hold on that item."); return; }
         replaceTargetItem(t, nid); extra["cskill_alchemy"] = std::to_string(craftXP("alchemy") + (af.empty() ? 36 : 60));
-        log("Enchanted: " + gd->item(nid)->name + "."); gAudio.play("craft"); stats.crafted++;
+        log("Enchanted: " + gd->item(nid)->name + "."); gAudio.play("enchant"); stats.crafted++;
     } else if (craftTab == 3) {
         if (t.member >= 0) { log("Unequip it first - salvaging only takes items from the pack."); gAudio.play("ui_error"); return; }
         auto yield = salvageYield(*d);
@@ -312,7 +312,7 @@ void Game::updateCraft(InputState& in, float dt) {
         for (auto& y : yield) if (gd->item(y.first) && y.second > 0) { party.addItem(y.first, y.second, *gd); got += (got.empty() ? "" : ", ") + itemLabel(*gd->item(y.first), y.second); }
         party.removeItem(t.id, 1);
         extra["cskill_" + craftStation] = std::to_string(craftXP(craftStation) + 3);
-        log("Salvaged " + d->name + ": " + (got.empty() ? "nothing useful" : got) + "."); gAudio.play("craft");
+        log("Salvaged " + d->name + ": " + (got.empty() ? "nothing useful" : got) + "."); gAudio.play("salvage");
         craftSel = clampi(craftSel, 0, std::max(0, n - 2));
     }
 }

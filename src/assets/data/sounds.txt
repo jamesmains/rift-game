@@ -1,5 +1,6 @@
 # Triffall sound map. [sound] = effect, [music] = track. file= is relative to assets/audio (several files, comma separated, pick at random).
-# volume= percent, pitchvar= +/- percent random pitch (sfx), loop=0/1 (music). Edit in the Editor > Sounds.
+# volume= percent, pitchvar= +/- percent random pitch (sfx), volvar= +/- percent random volume (sfx), crunchrate= Hz and crunchbits= bit depth (sfx: lo-fi, 0 = off), loop=0/1 (music). Edit in the Editor > Sounds.
+# Game events with no entry of their own play their fallback (Editor > Sounds lists every trigger and what it falls back to).
 #
 # Maps can set music=<track> in their [map] header; items/spells can set sound=<event>; creatures sound=<event> for their death.
 
@@ -94,7 +95,10 @@ id=step
 file=sfx/pixel_combat/boots_on_generic_ground_1_1.ogg,sfx/pixel_combat/boots_on_generic_ground_1_2.ogg,sfx/pixel_combat/boots_on_generic_ground_1_3.ogg,sfx/pixel_combat/boots_on_generic_ground_2_1.ogg,sfx/pixel_combat/boots_on_generic_ground_2_2.ogg,sfx/pixel_combat/boots_on_generic_ground_2_3.ogg
 desc=party footstep on ground whose tile kind has no step= (dirt, paths, carpets...)
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=door_open
@@ -108,12 +112,14 @@ id=door_locked
 file=sfx/door_locked.wav
 desc=locked door / chest
 volume=80
+pitchvar=6
 
 [sound]
 id=chest_open
 file=sfx/chest_open.wav
 desc=chest opened
 volume=90
+pitchvar=6
 
 [sound]
 id=pickup
@@ -166,6 +172,8 @@ id=teleport
 file=sfx/pixel_combat/teleport_downer_1.ogg,sfx/pixel_combat/teleport_downer_2.ogg
 desc=map transition / recall
 volume=70
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=rest
@@ -178,12 +186,14 @@ id=shop_buy
 file=sfx/shop_buy.wav
 desc=bought an item
 volume=80
+pitchvar=6
 
 [sound]
 id=shop_sell
 file=sfx/shop_sell.wav
 desc=sold an item
 volume=80
+pitchvar=6
 
 [sound]
 id=ambush
@@ -202,12 +212,14 @@ id=turn_player
 file=sfx/turn_player.wav
 desc=a party member's turn
 volume=60
+pitchvar=6
 
 [sound]
 id=turn_enemy
 file=sfx/turn_enemy.wav
 desc=an enemy's turn
 volume=50
+pitchvar=6
 
 [sound]
 id=attack_melee
@@ -215,6 +227,9 @@ file=sfx/pixel_combat/simple_whoosh_1.ogg,sfx/pixel_combat/simple_whoosh_2.ogg,s
 desc=melee swing
 volume=90
 pitchvar=10
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=attack_bow
@@ -222,6 +237,9 @@ file=sfx/pixel_combat/whoosh_sweep_1.ogg,sfx/pixel_combat/whoosh_sweep_2.ogg,sfx
 desc=bow / thrown shot
 volume=90
 pitchvar=8
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=attack_gun
@@ -229,6 +247,9 @@ file=sfx/pixel_combat/hollow_point_1.ogg,sfx/pixel_combat/hollow_point_2.ogg,sfx
 desc=gunshot
 volume=90
 pitchvar=6
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=attack_laser
@@ -236,6 +257,9 @@ file=sfx/pixel_combat/laser_shot_1.ogg,sfx/pixel_combat/laser_shot_2.ogg,sfx/pix
 desc=energy weapon
 volume=90
 pitchvar=6
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=hit
@@ -243,12 +267,18 @@ file=sfx/pixel_combat/gut_punch_1.ogg,sfx/pixel_combat/gut_punch_2.ogg,sfx/pixel
 desc=damage lands
 volume=90
 pitchvar=10
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=crit
 file=sfx/pixel_combat/crunchy_burst_1.ogg,sfx/pixel_combat/crunchy_burst_2.ogg,sfx/pixel_combat/crunch_kick_1.ogg,sfx/pixel_combat/crunch_kick_2.ogg,sfx/pixel_combat/mecha_gore_cruncher_1.ogg,sfx/pixel_combat/mecha_gore_cruncher_2.ogg
 desc=critical hit
 pitchvar=5
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=miss
@@ -256,6 +286,9 @@ file=sfx/pixel_combat/sand_swipe_1.ogg,sfx/pixel_combat/sand_swipe_2.ogg,sfx/pix
 desc=attack misses
 volume=70
 pitchvar=10
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=block
@@ -263,6 +296,9 @@ file=sfx/pixel_combat/kick_block_1.ogg,sfx/pixel_combat/kick_block_2.ogg,sfx/pix
 desc=defend / no damage
 volume=70
 pitchvar=5
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_cast
@@ -270,6 +306,8 @@ file=sfx/pixel_combat/casting_buff_1.ogg,sfx/pixel_combat/casting_buff_2.ogg,sfx
 desc=generic spell
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_fire
@@ -277,6 +315,8 @@ file=sfx/pixel_combat/flame_ball_1.ogg,sfx/pixel_combat/flame_ball_2.ogg,sfx/pix
 desc=fire spell
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_ice
@@ -291,6 +331,8 @@ file=sfx/pixel_combat/voltaic_blast_1.ogg,sfx/pixel_combat/voltaic_blast_2.ogg,s
 desc=shock spell
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_poison
@@ -298,12 +340,16 @@ file=sfx/pixel_combat/slime_ball_1.ogg,sfx/pixel_combat/slime_ball_2.ogg,sfx/pix
 desc=poison spell
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_heal
 file=sfx/pixel_combat/healing_gusts_1.ogg,sfx/pixel_combat/healing_gusts_2.ogg,sfx/pixel_combat/healing_gusts_3.ogg
 desc=healing
 volume=90
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_buff
@@ -311,12 +357,16 @@ file=sfx/pixel_combat/generic_buff_1.ogg,sfx/pixel_combat/generic_buff_2.ogg,sfx
 desc=buff / debuff
 volume=80
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=explosion
 file=sfx/pixel_combat/pyro_burst_1.ogg,sfx/pixel_combat/pyro_burst_2.ogg,sfx/pixel_combat/bass_hit_1.ogg,sfx/pixel_combat/bass_hit_2.ogg,sfx/pixel_combat/cruncher_1.ogg,sfx/pixel_combat/cruncher_2.ogg
 desc=grenade / area blast
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_enemy
@@ -324,6 +374,9 @@ file=sfx/pixel_combat/thud_1.ogg,sfx/pixel_combat/thud_2.ogg,sfx/pixel_combat/th
 desc=enemy slain (creatures without sound=)
 volume=90
 pitchvar=10
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_party
@@ -336,6 +389,8 @@ id=flee
 file=sfx/pixel_combat/windy_passby_1.ogg,sfx/pixel_combat/windy_passby_2.ogg
 desc=fled from combat
 volume=80
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=victory
@@ -355,36 +410,48 @@ file=sfx/pixel_combat/wind_shaker_1.ogg,sfx/pixel_combat/wind_shaker_2.ogg,sfx/p
 desc=thrown item
 volume=80
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=reload
 file=sfx/pixel_combat/metallic_click_1.ogg,sfx/pixel_combat/metallic_click_2.ogg,sfx/pixel_combat/metallic_click_3.ogg
 desc=ammo / misc click
 volume=70
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=unlock
 file=sfx/pixel_combat/lock_1.ogg,sfx/pixel_combat/lock_2.ogg,sfx/pixel_combat/lock_3.ogg
 desc=unlock spell / key used
 volume=80
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=light
 file=sfx/pixel_combat/aura_rise_1.ogg,sfx/pixel_combat/aura_rise_2.ogg
 desc=light spell
 volume=80
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=stealth
 file=sfx/pixel_combat/underwater_1.ogg,sfx/pixel_combat/underwater_2.ogg
 desc=stealth spell
 volume=80
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=detect
 file=sfx/pixel_combat/complex_rise_1.ogg,sfx/pixel_combat/complex_rise_2.ogg
 desc=detect spell
 volume=80
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=thunder
@@ -398,6 +465,7 @@ id=craft
 file=sfx/craft.wav
 desc=item crafted
 volume=85
+pitchvar=6
 
 [sound]
 id=achievement
@@ -445,56 +513,80 @@ id=step_grass
 file=sfx/pixel_combat/boots_on_grass_1.ogg,sfx/pixel_combat/boots_on_grass_2.ogg,sfx/pixel_combat/boots_on_grass_3.ogg,sfx/pixel_combat/boots_on_grass_4.ogg,sfx/pixel_combat/boots_on_grass_5.ogg,sfx/pixel_combat/boots_on_grass_6.ogg
 desc=footstep on grass, forest floor, fields (tile kind step=)
 volume=45
-pitchvar=8
+pitchvar=12
+crunchrate=16000
+crunchbits=8
+volvar=15
 
 [sound]
 id=step_sand
 file=sfx/pixel_combat/boots_on_sand_1.ogg,sfx/pixel_combat/boots_on_sand_2.ogg,sfx/pixel_combat/boots_on_sand_3.ogg,sfx/pixel_combat/boots_on_sand_4.ogg,sfx/pixel_combat/boots_on_sand_5.ogg,sfx/pixel_combat/boots_on_sand_6.ogg
 desc=footstep on sand, desert, ash and rubble
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_snow
 file=sfx/pixel_combat/boots_on_sand_snow_1.ogg,sfx/pixel_combat/boots_on_sand_snow_2.ogg,sfx/pixel_combat/boots_on_sand_snow_3.ogg,sfx/pixel_combat/boots_on_sand_snow_4.ogg,sfx/pixel_combat/boots_on_sand_snow_5.ogg,sfx/pixel_combat/boots_on_sand_snow_6.ogg
 desc=footstep in snow
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_stone
 file=sfx/pixel_combat/boots_on_concrete_dungeon_1.ogg,sfx/pixel_combat/boots_on_concrete_dungeon_2.ogg,sfx/pixel_combat/boots_on_concrete_dungeon_3.ogg,sfx/pixel_combat/boots_on_concrete_dungeon_4.ogg,sfx/pixel_combat/boots_on_concrete_dungeon_5.ogg,sfx/pixel_combat/boots_on_concrete_dungeon_6.ogg
 desc=footstep on dungeon stone and cave floors (with an echo)
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_hard
 file=sfx/pixel_combat/boots_on_concrete_1.ogg,sfx/pixel_combat/boots_on_concrete_2.ogg,sfx/pixel_combat/boots_on_concrete_3.ogg,sfx/pixel_combat/boots_on_concrete_4.ogg,sfx/pixel_combat/boots_on_concrete_5.ogg,sfx/pixel_combat/boots_on_concrete_6.ogg
 desc=footstep on streets, tiles, concrete and ice
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_wood
 file=sfx/pixel_combat/hard_step_1.ogg,sfx/pixel_combat/hard_step_2.ogg,sfx/pixel_combat/hard_step_3.ogg,sfx/pixel_combat/hard_step_4.ogg,sfx/pixel_combat/hard_step_5.ogg,sfx/pixel_combat/hard_step_6.ogg
 desc=footstep on wooden floors, bridges and boardwalks
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_metal
 file=sfx/pixel_combat/boots_on_metal_1.ogg,sfx/pixel_combat/boots_on_metal_2.ogg,sfx/pixel_combat/boots_on_metal_3.ogg,sfx/pixel_combat/boots_on_metal_4.ogg,sfx/pixel_combat/boots_on_metal_5.ogg,sfx/pixel_combat/boots_on_metal_6.ogg
 desc=footstep on metal floors and grates
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=step_water
 file=sfx/pixel_combat/sparkly_water_1.ogg,sfx/pixel_combat/sparkly_water_2.ogg,sfx/pixel_combat/sparkly_water_3.ogg,sfx/pixel_combat/sparkly_water_4.ogg
 desc=footstep through shallow water and mire
 volume=45
-pitchvar=8
+pitchvar=12
+volvar=15
+crunchrate=16000
+crunchbits=8
 
 [sound]
 id=death_machine
@@ -502,6 +594,8 @@ file=sfx/pixel_combat/mecha_limb_explosion_1.ogg,sfx/pixel_combat/mecha_limb_exp
 desc=a machine is destroyed (drones, bots, turrets, the mech)
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_spirit
@@ -509,6 +603,8 @@ file=sfx/pixel_combat/energy_dissipate_1.ogg,sfx/pixel_combat/energy_dissipate_2
 desc=a spirit fades (wraiths, wisps, wights)
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_bones
@@ -516,6 +612,8 @@ file=sfx/pixel_combat/hit_rattle_1.ogg,sfx/pixel_combat/hit_rattle_2.ogg,sfx/pix
 desc=a skeleton falls apart
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_slime
@@ -523,6 +621,8 @@ file=sfx/pixel_combat/wet_splash_1.ogg,sfx/pixel_combat/wet_splash_2.ogg,sfx/pix
 desc=a slime or toad bursts
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_big
@@ -530,6 +630,8 @@ file=sfx/pixel_combat/thud_big_1.ogg,sfx/pixel_combat/thud_big_2.ogg,sfx/pixel_c
 desc=a big creature falls (ogres, trolls, bears, dragons, golems)
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=death_rift
@@ -537,6 +639,8 @@ file=sfx/pixel_combat/mecha_manablast_1.ogg,sfx/pixel_combat/mecha_manablast_2.o
 desc=a rift creature is unmade (aliens, demons, horrors)
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_summon
@@ -544,6 +648,8 @@ file=sfx/pixel_combat/noise_summon_1.ogg,sfx/pixel_combat/noise_summon_2.ogg
 desc=a creature is called (Call Wolf, Raise Dead)
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_summon_tech
@@ -551,6 +657,8 @@ file=sfx/pixel_combat/mecha_energy_movement_1.ogg,sfx/pixel_combat/mecha_energy_
 desc=a machine is deployed (Deploy Turret)
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_dark
@@ -558,6 +666,8 @@ file=sfx/pixel_combat/dark_energy_sphere_1.ogg,sfx/pixel_combat/dark_energy_sphe
 desc=dark magic (Dark Bolt, Drain, Dark Heal)
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_rift
@@ -565,6 +675,8 @@ file=sfx/pixel_combat/magisplosion_1.ogg,sfx/pixel_combat/magisplosion_2.ogg,sfx
 desc=rift magic (Rift Surge)
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_holy
@@ -572,6 +684,8 @@ file=sfx/pixel_combat/energetic_impact_1.ogg,sfx/pixel_combat/energetic_impact_2
 desc=holy magic (Holy Light, Smite)
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_emp
@@ -579,6 +693,8 @@ file=sfx/pixel_combat/forced_shutdown_1.ogg,sfx/pixel_combat/forced_shutdown_2.o
 desc=EMP Pulse
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_meteor
@@ -586,6 +702,8 @@ file=sfx/pixel_combat/eruption_1.ogg,sfx/pixel_combat/eruption_2.ogg
 desc=Meteor
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_chain
@@ -593,6 +711,8 @@ file=sfx/pixel_combat/shimmer_electric_1.ogg,sfx/pixel_combat/shimmer_electric_2
 desc=Chain Lightning
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_laser
@@ -600,6 +720,8 @@ file=sfx/pixel_combat/mecha_white_laser_1.ogg,sfx/pixel_combat/mecha_white_laser
 desc=Laser Beam
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_drone
@@ -607,6 +729,8 @@ file=sfx/pixel_combat/mecha_detonator_1.ogg,sfx/pixel_combat/mecha_detonator_2.o
 desc=Drone Strike
 volume=90
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_shield
@@ -614,6 +738,8 @@ file=sfx/pixel_combat/bonus_max_shield_1.ogg,sfx/pixel_combat/bonus_max_shield_2
 desc=protection (Iron Skin, Sanctuary)
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_bless
@@ -621,18 +747,24 @@ file=sfx/pixel_combat/bonus_regen_rate_1.ogg,sfx/pixel_combat/bonus_regen_rate_2
 desc=Bless
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_cure
 file=sfx/pixel_combat/simple_heal_1.ogg,sfx/pixel_combat/simple_heal_2.ogg
 desc=Cure
 volume=90
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=spell_revive
 file=sfx/pixel_combat/energy_riser_1.ogg,sfx/pixel_combat/energy_riser_2.ogg
 desc=Revive
 volume=90
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_slash
@@ -640,6 +772,8 @@ file=sfx/pixel_combat/sword_slash_1.ogg,sfx/pixel_combat/sword_slash_2.ogg,sfx/p
 desc=Cleave
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_bash
@@ -647,6 +781,8 @@ file=sfx/pixel_combat/mecha_piercing_punch_1.ogg,sfx/pixel_combat/mecha_piercing
 desc=Shield Bash
 volume=90
 pitchvar=8
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_volley
@@ -654,6 +790,8 @@ file=sfx/pixel_combat/flying_blades_1.ogg,sfx/pixel_combat/flying_blades_2.ogg
 desc=Volley
 volume=90
 pitchvar=6
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_warcry
@@ -661,6 +799,8 @@ file=sfx/pixel_combat/growing_strength_1.ogg,sfx/pixel_combat/growing_strength_2
 desc=War Cry
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_mark
@@ -668,6 +808,8 @@ file=sfx/pixel_combat/mecha_guarantee_hit_1.ogg,sfx/pixel_combat/mecha_guarantee
 desc=Mark Target
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_overcharge
@@ -675,6 +817,8 @@ file=sfx/pixel_combat/mecha_stats_1.ogg,sfx/pixel_combat/mecha_stats_2.ogg
 desc=Overcharge
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=skill_hack
@@ -682,6 +826,8 @@ file=sfx/pixel_combat/scifi_select_1.ogg,sfx/pixel_combat/scifi_select_2.ogg
 desc=Hack
 volume=85
 pitchvar=5
+crunchrate=11025
+crunchbits=7
 
 [sound]
 id=gather_mine
@@ -689,6 +835,9 @@ file=sfx/pixel_combat/bitcrusher_1.ogg,sfx/pixel_combat/bitcrusher_2.ogg,sfx/pix
 desc=working a vein with a pickaxe (resources.txt sound=)
 volume=85
 pitchvar=8
+volvar=10
+crunchrate=11025
+crunchbits=7
 
 # ---- 1.3.0: music = the Pixel Fantasy pack by AlkaKrab (audio/music/pixel_fantasy). First the parts the game and the
 # maps ask for (title, overworld, town, combat... and each place's theme), then every track of the pack under its own

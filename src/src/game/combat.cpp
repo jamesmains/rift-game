@@ -149,7 +149,7 @@ bool Game::combatAddGroup(int gi, bool announce) {
     if (announce && !names.empty()) {
         std::string s = names[0]; if (names.size() > 1) s += fmt(" and %d more", (int)names.size() - 1);
         cb.log.push_back(s + " join the fight!"); log(s + (names.size() > 1 ? " join" : " joins") + " the fight!");
-        notify("Reinforcements!"); gAudio.play("ambush");
+        notify("Reinforcements!"); gAudio.play("reinforcements");
     }
     return !names.empty();
 }
@@ -1051,13 +1051,24 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
     // attack range ring for the active unit
     if (myTurn && cb.mode == 0) { auto& u = cb.units[cb.selectedUnit]; int r = u.ch.attackRange(*gd); if (r > 1) for (int y = u.y - r; y <= u.y + r; y++) for (int x = u.x - r; x <= u.x + r; x++) if (map->inBounds(x, y) && chebyshev(x, y, u.x, u.y) == r) cv.rect(x * TILE - cx + 10, y * TILE - cy + 10, 4, 4, RGB(255, 200, 80, 120)); }
     for (auto& p : cb.path) cv.fillRect(p.first * TILE - cx + 8, p.second * TILE - cy + 8, 8, 8, RGB(255, 255, 255, 140));
-    // units: solid backdrop so they stand out from the terrain
-    for (size_t i = 0; i < cb.units.size(); i++) {
+    // units, in three passes (1.3.4, #53): bodies of the fallen first, then the living, then every health bar and status
+    // mark on top. Before, a body drawn later in the list covered a living unit standing on it (its health bar too), and
+    // the active unit's yellow ring or a neighbour's status marks could cover the bar of the unit above.
+    auto unitShown = [&](const Combatant& u) { return u.friendly() || !map->dark || visible(u.x, u.y); };   // enemies lurk in the dark
+    auto unitScreen = [&](const Combatant& u, int& sx, int& sy, int& sz) { sx = u.x * TILE - cx + (int)u.offX; sy = u.y * TILE - cy + (int)u.offY; sz = u.ch.size * TILE; };
+    for (auto& u : cb.units) {
+        if (u.ch.alive || u.summoned || !unitShown(u)) continue;   // summons leave no body
+        bool under = false;   // a living unit stands on it: it hides the body
+        for (auto& o : cb.units) if (o.ch.alive && u.x + u.ch.size > o.x && o.x + o.ch.size > u.x && u.y + u.ch.size > o.y && o.y + o.ch.size > u.y) under = true;
+        if (under) continue;
+        int sx, sy, sz; unitScreen(u, sx, sy, sz);
+        if (!u.friendly()) ctx.ts->draw(cv, u.ch.size == 2 ? TL::SKULL : (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(150, 150, 150));
+        else ctx.ts->draw(cv, (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(200, 120, 120));
+    }
+    for (size_t i = 0; i < cb.units.size(); i++) {   // solid backdrop so they stand out from the terrain
         auto& u = cb.units[i];
-        int sx = u.x * TILE - cx + (int)u.offX, sy = u.y * TILE - cy + (int)u.offY, sz = u.ch.size * TILE;
-        if (!u.friendly() && map->dark && !visible(u.x, u.y)) continue;   // lurking in the dark
-        if (!u.ch.alive && u.summoned) continue;   // summons leave no body
-        if (!u.ch.alive) { if (!u.friendly()) ctx.ts->draw(cv, u.ch.size == 2 ? TL::SKULL : (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(150, 150, 150)); else ctx.ts->draw(cv, (u.ch.tile.s ? u.ch.tile : T(TL::CHAR_COL_DEAD, u.ch.tile.r)), sx, sy, 2, RGB(200, 120, 120)); continue; }
+        if (!u.ch.alive || !unitShown(u)) continue;
+        int sx, sy, sz; unitScreen(u, sx, sy, sz);
         bool active = (int)i == cb.selectedUnit && !cb.ending;
         bool enemy = !u.friendly();
         Color8 team = enemy ? foeColor() : u.ally ? allyColor() : friendColor();
@@ -1070,10 +1081,15 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
             if (u.ch.size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) ctx.ts->drawRecolor(cv, tileAt(u.ch.tile, xx, yy), sx + xx * TILE, sy + yy * TILE, 2, fc); }
             else ctx.ts->drawRecolor(cv, u.ch.tile, sx, sy, 2, fc);
         }
-        if (u.overwatch) { cv.fillRect(sx + sz - 9, sy - 1, 9, 7, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, sx + sz - 8, sy - 3, "o", C::Yellow); }
+    }
+    for (auto& u : cb.units) {   // health bars, status marks and overwatch: always on top, inside the unit's own cell
+        if (!u.ch.alive || !unitShown(u)) continue;
+        int sx, sy, sz; unitScreen(u, sx, sy, sz);
+        bool enemy = !u.friendly();
         int hpw = (sz - 2) * u.ch.hp / std::max(1, u.ch.maxHP(*gd));
         cv.fillRect(sx, sy + sz - 3, sz, 3, C::Black); cv.fillRect(sx + 1, sy + sz - 2, hpw, 1, enemy ? foeColor() : friendColor());
-        if (!u.ch.effects.empty()) { int ex = sx; for (auto& e : u.ch.effects) { Color8 ec = e.id == "burn" ? C::Orange : e.id == "poison" ? C::Green : e.id == "freeze" ? C::Cyan : e.id == "stun" ? C::Yellow : e.id == "shield" || e.id == "defend" ? C::Blue : C::Purple; cv.fillRect(ex, sy - 3, 4, 3, ec); ex += 5; } }
+        if (!u.ch.effects.empty()) { int ex = sx + 1; for (auto& e : u.ch.effects) { if (ex + 4 > sx + sz - 1) break; Color8 ec = e.id == "burn" ? C::Orange : e.id == "poison" ? C::Green : e.id == "freeze" ? C::Cyan : e.id == "stun" ? C::Yellow : e.id == "shield" || e.id == "defend" ? C::Blue : C::Purple; cv.fillRect(ex, sy + 1, 4, 3, ec); ex += 5; } }
+        if (u.overwatch) { cv.fillRect(sx + sz - 9, sy, 9, 7, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, sx + sz - 8, sy - 2, "o", C::Yellow); }
     }
     // anims
     for (auto& a : cb.anims) {

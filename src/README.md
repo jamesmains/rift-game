@@ -28,6 +28,23 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.3.4 crunchier sound effects, every sound trigger in the Editor
+
+* **Crunchier, retro sound:** the Pixel Combat effects (fights, spells, footsteps, map changes) now play through a
+  lo-fi "crunch" that lowers the sample rate and bit depth, so they sound like an old sound chip instead of a modern
+  recording. Each effect has its own crunch in the Editor's Sounds tab (Hz + bits, or the Off / Light / Medium /
+  Heavy / Chip buttons, which play the sound at once); "Same crunch for N listed" copies it to a whole group.
+* **Less repetitive:** footsteps and hits vary in pitch and loudness on every play (new **volume var %** field), and
+  a sound with several files never plays the same file twice in a row. Pitch variation works with a single file too.
+* **Every sound trigger is in the Sounds tab:** the list can be narrowed to a group (Interface, Exploring, Footsteps,
+  Combat, Spells, Music...), and each sound says when the game plays it ("Played when") and which items, spells,
+  creatures, objects, tile kinds, maps, dialogue and scripts use it. Moments that used to share a sound now have
+  triggers of their own (barred exits, closed shops, locked chests, levers, gathering, burning, unequipping,
+  loading, healers, reinforcing / enchanting / salvaging, bounties, town rewards, reinforcements...): they borrow
+  the old sound until you press "Give it its own sound".
+* **Fix:** in fights, a fallen enemy's body no longer covers a living unit standing on it (or its health bar), and
+  status marks and the active unit's ring no longer hide the health bar of the unit above.
+
 ## 1.3.3 new sound effects
 
 * **New sound effects:** fights, spells and footsteps now use Helton Yan's Pixel Combat pack (CC BY 4.0): weightier
@@ -918,7 +935,11 @@ resource nodes a harvest `sound=`. The rest (menus, desktop, jingles) are synthe
 (numpy + ffmpeg) into `assets/audio/sfx/*.wav`; re-run it to regenerate them (`music` / `ambient` as arguments still make the old generated tracks and loops, which nothing uses any
 more: the ambient loops were removed at 1.3.1). `assets/data/sounds.txt` maps event ids to files,
 so replacing a sound is either dropping a new file over the old one or pointing the event at a different file in
-the Sounds tab. Several files on one event are picked at random; `pitchvar` adds random pitch.
+the Sounds tab. Several files on one event are picked at random (never the same twice in a row); `pitchvar` adds
+random pitch, `volvar` random loudness, and `crunchrate` / `crunchbits` play an effect lo-fi (the game reduces its
+sample rate and bit depth when it loads; the Pixel Combat sounds use this, so they are played modified). The
+Sounds tab lists every trigger the game plays, grouped, with when it plays; triggers with no entry of their own
+borrow another sound (their fallback) until they are given one.
 
 Music is picked automatically: `title` on the desktop, `overworld`, `town` (kind=town/interior), `dungeon`,
 `tech` (tech/ship dungeons), `forest` (other maps), `combat` / `boss` during fights, `gameover`; a map's `music=`

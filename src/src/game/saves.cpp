@@ -43,7 +43,7 @@ bool Game::loadSaveFile(const std::string& path) {
 }
 bool Game::loadFromSlot(int slot) {
     if (!loadSaveFile(slotPath(slot))) { notify(loadError.empty() ? "Save file is corrupt." : loadError); return false; }
-    notify(slot == AUTOSAVE_SLOT ? std::string("Loaded the autosave.") : fmt("Loaded slot %d.", slot + 1)); gAudio.play("save"); return true;
+    notify(slot == AUTOSAVE_SLOT ? std::string("Loaded the autosave.") : fmt("Loaded slot %d.", slot + 1)); gAudio.play("load"); return true;
 }
 
 // Autosave when the party arrives somewhere new (at most once a minute of play), so a crash or a wipe never costs much.

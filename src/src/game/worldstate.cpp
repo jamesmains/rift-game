@@ -113,7 +113,7 @@ void Game::obstacleAction(const std::string& how) {
     if (how == "charge") {
         party.removeItem("blasting_charge", 1);
         fuseT = 3.0f; fuseX = cx; fuseY = cy; fuseObstacle = curObstacle; fuseMap = mapId;
-        log("The fuse is lit! Get clear - at least three steps away!"); notify("FUSE LIT - RUN!"); gAudio.play("grenade_throw");
+        log("The fuse is lit! Get clear - at least three steps away!"); notify("FUSE LIT - RUN!"); gAudio.play("fuse_lit");
         return;
     }
     if (parts[0] == "spell" || parts[0] == "burnspell" || parts[0] == "utility") {
@@ -131,7 +131,7 @@ void Game::obstacleAction(const std::string& how) {
         return;
     }
     if (how == "torch" || how == "oil") {
-        party.removeItem(how == "torch" ? "torch_item" : "oil_fire", 1); gAudio.play("spell_fire");
+        party.removeItem(how == "torch" ? "torch_item" : "oil_fire", 1); gAudio.play("burn");
         clearObstacle(*map, o, true); log("It catches, crackles, and burns away."); return;
     }
     if (parts[0] == "force") {
@@ -173,7 +173,7 @@ void Game::pullLever(Lever& l) {
     bool on = hasFlag(l.flag);
     if (on && !l.toggle) { log("It's stuck in place."); return; }
     if (on) flags.erase(l.flag); else setFlag(l.flag);
-    gAudio.play(l.sound.empty() ? "unlock" : l.sound); shake = 0.05f;
+    gAudio.play(l.sound.empty() ? "lever" : l.sound); shake = 0.05f;
     if (!l.msg.empty()) log(l.msg); else log(on ? "You push the lever back." : "You pull the lever. Somewhere, something grinds.");
     applyWorldState(*map);
     if (!l.onUse.empty()) runScript(l.onUse);
@@ -190,5 +190,5 @@ void Game::gatherFrom(GatherNode& g) {
     }
     int n = rng.range(g.lo, g.hi);
     giveItem(g.item, n); extra[key] = std::to_string(day); advanceClock(10);
-    gAudio.play(!g.sound.empty() && gAudio.has(g.sound) ? g.sound : g.tool.empty() ? "pickup" : "hit");   // 1.3.3: sound= of the node / its type
+    gAudio.play(!g.sound.empty() && gAudio.has(g.sound) ? g.sound : g.tool.empty() ? "gather" : "gather_tool");   // 1.3.3: sound= of the node / its type; 1.3.4 triggers (fall back to pickup / hit)
 }

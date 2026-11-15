@@ -310,29 +310,59 @@ void rl_message_box(const char* title, const char* text) {
 }
 
 // ---------------- audio ----------------
-#define RL_MAX_SOUNDS 256
+#define RL_MAX_SOUNDS 1024   /* 1.3.4: was 256, and the base game already loaded 252 files */
 #define RL_ALIASES 4
 static Sound gSounds[RL_MAX_SOUNDS][RL_ALIASES];
 static int gSoundCount = 0, gAudioReady = 0;
 static Music gMusic; static int gMusicLoaded = 0;
 void rl_audio_init(void) { if (!gAudioReady) { InitAudioDevice(); gAudioReady = IsAudioDeviceReady(); } }
 void rl_audio_close(void) { if (!gAudioReady) return; rl_ambient_stop(); rl_audio_unload_all(); if (gMusicLoaded) { StopMusicStream(gMusic); UnloadMusicStream(gMusic); gMusicLoaded = 0; } CloseAudioDevice(); gAudioReady = 0; }
-int rl_sound_load(const char* path) {
-    if (!gAudioReady || gSoundCount >= RL_MAX_SOUNDS) return -1;
-    Sound s = LoadSound(path); if (s.frameCount == 0) return -1;
-    int id = gSoundCount++;
+static int rl_sound_slot(Sound s) {   /* a free slot (left by rl_sound_unload) or a new one */
+    int id = -1;
+    for (int i = 0; i < gSoundCount; i++) if (gSounds[i][0].frameCount == 0) { id = i; break; }
+    if (id < 0) { if (gSoundCount >= RL_MAX_SOUNDS) { UnloadSound(s); return -1; } id = gSoundCount++; }
     gSounds[id][0] = s; for (int i = 1; i < RL_ALIASES; i++) gSounds[id][i] = LoadSoundAlias(s);
     return id;
 }
+int rl_sound_load(const char* path) {
+    if (!gAudioReady) return -1;
+    Sound s = LoadSound(path); if (s.frameCount == 0) return -1;
+    return rl_sound_slot(s);
+}
+/* 1.3.4 (#52): the file as 32-bit float samples (interleaved) for the game to process, then made into a sound */
+float* rl_wave_load_f32(const char* path, int* frames, int* channels, int* rate) {
+    Wave w = LoadWave(path); if (w.frameCount == 0 || !w.data) return 0;
+    WaveFormat(&w, w.sampleRate, 32, w.channels);
+    size_t n = (size_t)w.frameCount * w.channels;
+    float* out = (float*)MemAlloc((unsigned int)(n * sizeof(float)));
+    if (out) memcpy(out, w.data, n * sizeof(float));
+    *frames = (int)w.frameCount; *channels = (int)w.channels; *rate = (int)w.sampleRate;
+    UnloadWave(w);
+    return out;
+}
+void rl_wave_free(float* data) { if (data) MemFree(data); }
+int rl_sound_from_f32(const float* data, int frames, int channels, int rate) {
+    if (!gAudioReady || !data || frames <= 0) return -1;
+    Wave w; w.frameCount = (unsigned int)frames; w.sampleRate = (unsigned int)rate; w.sampleSize = 32; w.channels = (unsigned int)channels; w.data = (void*)data;
+    Sound s = LoadSoundFromWave(w); if (s.frameCount == 0) return -1;
+    return rl_sound_slot(s);
+}
+void rl_sound_unload(int id) {
+    if (!gAudioReady || id < 0 || id >= gSoundCount || gSounds[id][0].frameCount == 0) return;
+    for (int a = 0; a < RL_ALIASES; a++) StopSound(gSounds[id][a]);
+    for (int a = 1; a < RL_ALIASES; a++) UnloadSoundAlias(gSounds[id][a]);
+    UnloadSound(gSounds[id][0]);
+    for (int a = 0; a < RL_ALIASES; a++) gSounds[id][a].frameCount = 0;
+}
 void rl_sound_play(int id, float vol, float pitch) {
-    if (!gAudioReady || id < 0 || id >= gSoundCount) return;
+    if (!gAudioReady || id < 0 || id >= gSoundCount || gSounds[id][0].frameCount == 0) return;
     static int rr[RL_MAX_SOUNDS];
     int a = rr[id] = (rr[id] + 1) % RL_ALIASES;       // round-robin aliases so quick repeats overlap instead of cutting off
     SetSoundVolume(gSounds[id][a], vol); SetSoundPitch(gSounds[id][a], pitch); PlaySound(gSounds[id][a]);
 }
 void rl_audio_unload_all(void) {
     if (!gAudioReady) return;
-    for (int i = 0; i < gSoundCount; i++) { for (int a = 1; a < RL_ALIASES; a++) UnloadSoundAlias(gSounds[i][a]); UnloadSound(gSounds[i][0]); }
+    for (int i = 0; i < gSoundCount; i++) { if (gSounds[i][0].frameCount == 0) continue; for (int a = 1; a < RL_ALIASES; a++) UnloadSoundAlias(gSounds[i][a]); UnloadSound(gSounds[i][0]); }
     gSoundCount = 0;
 }
 int rl_music_play(const char* path, float vol, int loop) {

@@ -123,7 +123,7 @@ void Game::updateMenu(InputState& in, float dt) {
             if (party.gold < cost) { log(fmt("The rite costs %d gold.", cost)); gAudio.play("ui_error"); return; }
             party.gold -= cost; stats.goldSpent += cost;
             if (respecFree && respecItem.size()) party.removeItem(respecItem, 1);
-            respecMember(menuMember); menuPrompt.clear(); respecFree = false; respecItem.clear(); popMode(); gAudio.play("levelup");
+            respecMember(menuMember); menuPrompt.clear(); respecFree = false; respecItem.clear(); popMode(); gAudio.play("respec");
         }
         return;
     }
