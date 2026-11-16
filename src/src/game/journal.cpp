@@ -202,6 +202,9 @@ std::string Game::fieldNotesText() const {
         if (!immune.empty()) s += "  Immune to: " + immune + "\n";
         if (!resists.empty()) s += "  Resists: " + resists + "\n";
         if (!normal.empty()) s += "  Takes normal damage from: " + normal + "\n";
+        {   // 1.5.0 (#92): weapon traits that get through its guard (bits 8+)
+            std::string tr; for (auto& kv : cd->traitRes) { int b = 8 + traitIndex(kv.first); if (b >= 8 && (n.res & (1 << b))) add(tr, kv.first + (kv.second < 0 ? " weapons hit it hard" : " weapons get through")); }
+            if (!tr.empty()) s += "  " + tr + "\n"; }
         int untried = 0; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) untried++;
         if (untried) { std::string u; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) add(u, dmgTypeName(d)); s += "  Not tried yet: " + u + "\n"; }
         std::string casts, other;

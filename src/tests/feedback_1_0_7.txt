@@ -28,6 +28,7 @@ frames 3
 setting font 0
 # favorites from the combat Spells list: highlight one and press a number
 con learn heal
+con clearmap goblin_cave
 teleport goblin_cave 12 15
 combat goblin,goblin
 frames 120

@@ -322,9 +322,9 @@ flag=crypt_reliquary
 # 1.5.0 (#95): a lone bone rat past the stairs teaches that blades bounce off bones; the chest and note give the answer
 [enemy]
 group=bone_rat
-x=18
+x=36
 y=22
-aggro=4
+aggro=3
 level=0
 flag=crypt_bonerat
 
