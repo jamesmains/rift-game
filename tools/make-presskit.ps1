@@ -1,8 +1,12 @@
-# Triffall 1.3.0 - remake the store screenshots and promo art from the current game (needs .\build.ps1 first and Python
-# with Pillow). Runs src\tools\presskit_shots.txt with the headless game at 16:9, then src\tools\promo_kit.py:
-#   press-kit\screenshots\16x9_1920x1080\   the store screenshots (combat first)
-#   press-kit\art\                          key art, Steam capsules / hero / logo / icons, itch cover / banner / social
-# Everything comes from the game's own pixels (no generated or painted art). Text for the pages: press-kit\STORE-TEXT.md.
+# Triffall - remake the image kit (press-kit\, listed in press-kit\README.md) from the current game. Needs .\build.ps1
+# first and Python with Pillow. Runs src\tools\presskit_shots.txt with the headless game at 16:9 (960x540; the Editor
+# 1280x720), then src\tools\promo_kit.py, which writes:
+#   press-kit\cover.png                    itch.io cover (also Idea Jotter's project cover)
+#   press-kit\art\                         banner, social card, avatar, background, key art, icons + app.ico, Steam art
+#   press-kit\screenshots\native\          five shots at the size the game draws them
+#   press-kit\screenshots\16x9_1920x1080\  every store screenshot at 1920x1080
+# and the game's own icon (src\src\platform\app.ico, the favicon in src\web\shell.html).
+# Everything comes from the game's own pixels and letters (no generated or painted art). Store text: press-kit\STORE-TEXT.md.
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $exe = Join-Path $root "build\cmake\Release\triffall_headless.exe"
@@ -22,8 +26,9 @@ Get-ChildItem (Join-Path $work "assets\campaigns") -Directory | ForEach-Object {
 }
 Push-Location $work
 try { & $exe (Join-Path $root "src\tools\presskit_shots.txt") "$raw\" | Select-String "^shot" } finally { Pop-Location }
-$shots = Join-Path $root "press-kit\screenshots\16x9_1920x1080"
-if (Test-Path $shots) { Remove-Item $shots -Recurse -Force }
-python (Join-Path $root "src\tools\promo_kit.py") $raw (Join-Path $root "press-kit\art") $shots
+$kit = Join-Path $root "press-kit"
+foreach ($d in "screenshots\16x9_1920x1080", "screenshots\native") { $p = Join-Path $kit $d; if (Test-Path $p) { Remove-Item $p -Recurse -Force } }
+python (Join-Path $root "src\tools\promo_kit.py") $raw $kit
+if ($LASTEXITCODE -ne 0) { throw "promo_kit.py failed" }
 Remove-Item $raw, $work -Recurse -Force
-Write-Host "Press kit remade in press-kit\" -ForegroundColor Green
+Write-Host "Image kit remade in press-kit\ (see press-kit\README.md)" -ForegroundColor Green

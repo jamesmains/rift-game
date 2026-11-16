@@ -1,0 +1,4 @@
+// 1.6.3 (#139): the game's icon (the exe in Explorer, the Start Menu shortcut, and the window and taskbar: GLFW loads
+// the icon named GLFW_ICON for its windows). app.ico is written by src/tools/promo_kit.py (tools/make-presskit.ps1),
+// the same picture as press-kit/art/icons.
+GLFW_ICON ICON "app.ico"

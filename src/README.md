@@ -29,6 +29,13 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A Win98 desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.6.3 an icon of its own
+
+* Triffall has its own icon: an amber T with a violet rift bolt, on the game's exe, its window, the taskbar and the
+  Start Menu shortcut (and the browser demo's tab).
+* A new image kit for the store pages (itch.io cover and banner, social card, avatar, wallpaper, icons, Steam
+  capsules, screenshots), all drawn from the game's own pixels.
+
 ## 1.6.2 a tidier launcher
 
 * The launcher's Field Notes and Files pages are gone. What you learn about monsters is still kept for every save:
