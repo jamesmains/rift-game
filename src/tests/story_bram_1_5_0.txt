@@ -1,0 +1,150 @@
+# 1.5.0 (#87, #102): Bram's ultimatum when Grakk is spared - talked down (CHA / WIS), sent home, dead in the hall, or
+# siding with him (the betrayal). And Bram at the inn when he wasn't there: refuses unless persuaded, then Strained.
+god
+# ================= talked down (CHA) =================
+newgame Mira ranger 1 21
+con flag q_main 1
+con bestiary goblin 4
+con join bram
+expect members == 2
+con setstat cha 12
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+# (the one answer "Bram has not put his sword away" is clicked through: his ultimatum is open)
+expect talk contains After Tobb's boy
+expect answers contains Killing them now saves no farm
+expect answers lacks Hear that hum
+choose Killing them now saves no farm
+expect flag:bram_goblins_ok == 1
+expect members == 2
+expect flag:joined_warrior == 1
+expect approval:warrior == -2
+expect scripterror lacks contradiction
+# ================= talked down (WIS: the crown is doing the talking) =================
+newgame Mira ranger 1 22
+con flag q_main 1
+con bestiary goblin 4
+con join bram
+con setstat wis 12
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+expect answers lacks saves no farm
+choose Hear that hum
+expect flag:bram_goblins_ok == 1
+expect members == 2
+# ================= sent home =================
+newgame Mira ranger 1 23
+con flag q_main 1
+con bestiary goblin 4
+con join bram
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+choose If you can't live with that, go home
+expect members == 1
+expect flag:left_warrior == 1
+expect flag:joined_warrior == 0
+expect flag:bram_left_goblins == 1
+expect flag:fell_warrior == 0
+teleport hollowmere 30 9
+expect npcshown:bram == 1
+talk innkeeper
+expect answers contains Bram looks like he hasn't slept
+choose Bram looks like he hasn't slept
+talk bram
+expect answers contains About the way we parted
+expect answers lacks Want to come
+choose Not yet
+expect epilogue contains Bram never travelled with
+expect scripterror lacks contradiction
+# ================= let him go in alone: he dies =================
+newgame Mira ranger 1 24
+con flag q_main 1
+con bestiary goblin 4
+con join bram
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+choose Do what you have to
+expect members == 1
+expect flag:fell_warrior == 1
+expect flag:bram_fell_goblins == 1
+expect flag:joined_warrior == 0
+expect flag:left_warrior == 0
+expect flag:goblins_packing == 0
+expect flag:goblin_chief_spared == 1
+expect flag:goblin_chief_dead == 0
+expect scripterror lacks contradiction
+# the hall: nobody packing any more, nothing to fight
+walk 35 15
+expect mode == EXPLORE
+teleport hollowmere 30 9
+expect npcshown:bram == 0
+talk innkeeper
+expect answers contains Bram's corner table is empty
+choose Bram's corner table is empty
+talk elder
+expect answers contains Bram is dead
+choose Bram is dead
+expect flag:mara_told_bram == 1
+talk villager1
+expect answers contains He didn't come back
+choose He didn't come back
+expect flag:tobb_told_bram == 1
+expect epilogue contains Bram is buried on the hill above Greywood
+# he can't come back, whatever a dialogue says
+con dialogue bram
+expect answers lacks Want to come
+expect answers lacks About the way we parted
+choose Not yet
+# ================= side with him: the betrayal =================
+newgame Mira ranger 1 25
+con flag q_main 1
+con bestiary goblin 4
+con join bram
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+choose You're right. We finish this
+expect talk contains Grakk's hall is all noise
+choose Attack them anyway
+choose Attack them anyway
+expect flag:goblins_betrayed == 1
+expect flag:goblin_chief_dead == 1
+expect flag:goblin_chief_spared == 0
+expect members == 2
+expect approval:warrior >= 10
+expect scripterror lacks contradiction
+# ================= Bram wasn't there: he refuses, unless persuaded - then Strained =================
+newgame Mira ranger 1 26
+con flag q_main 1
+con bestiary goblin 4
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+expect flag:goblin_chief_spared == 1
+teleport hollowmere 30 9
+talk bram
+expect answers contains Want to come
+con dialogue bram join_spared
+expect talk contains let Grakk walk out of Greywood
+expect answers lacks Nobody else's boy
+choose Suit yourself
+expect members == 1
+con setstat cha 12
+talk bram
+choose Want to come
+choose Nobody else's boy gets shot now
+expect members == 2
+expect flag:joined_warrior == 1
+expect approval:warrior == -15
+expect npcshown:bram == 0
+expect scripterror lacks contradiction

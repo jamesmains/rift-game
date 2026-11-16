@@ -55,7 +55,7 @@ speaker=Tessa
 text=Done. Right. (She shoulders her pack.) Then I'm going back to the market. Somebody has to tell their mothers, and it isn't going to be you.
 approve=scavenger:-20
 set=tessa_left_converts
-leave=scavenger|Tessa goes back to the Ashfall market to tell the converts' families. You could try to make amends with her there.
+leave=scavenger|Tessa goes back to the Ashfall market to tell the converts' families.
 option=(Let her go.)|end
 
 [tessa_fell]

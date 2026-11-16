@@ -234,7 +234,8 @@ public:
     static const char* approvalTier(int a); int approvalOf(const std::string& cls) const; bool companionLoyal(const std::string& cls) const;
     void changeApproval(const std::string& cls, int d); void syncBonds(); void checkCompanionMoods(); void companionLeaves(size_t idx, const std::string& why = "");
     void companionFalls(size_t idx, const std::string& why);   // 1.5.0 (#87/#88): fell=CLASS - gone for good (fell_<class>)
-    int memberOfClass(const std::string& cls) const;           // party index of the companion of that class (-1: not with you)
+    int memberOfClass(const std::string& cls) const;
+    void dropMemberRefs(size_t idx);                            // after a companion leaves: fix level-up queue / banter indexes           // party index of the companion of that class (-1: not with you)
     void fightGroup(const std::string& flag);
     void postBoardNotes(const std::string& town);               // 1.5.0 (#98): bounties.txt kind=note (bounty.cpp)                   // 1.5.0 (#85): fight=FLAG - the map's enemy group with that flag= attacks now
     // 1.5.0 (#89): contradictions.txt - flag combinations that must never all be true; a warning the first time they are

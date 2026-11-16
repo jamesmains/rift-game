@@ -49,7 +49,7 @@ speaker=Orin
 text=Then I am done here. I will be at the shrine in Frosthold, praying for them - and for you, though I am not sure today which prayer is harder.
 approve=cleric:-25
 set=orin_left_goblins
-leave=cleric|Orin walks out of the hall before the first blow. He is going home to Frosthold. You could try to make amends there.
+leave=cleric|Orin walks out of the hall before the first blow. He is going home to Frosthold.
 option=(Draw.)|attack
 
 [attack]

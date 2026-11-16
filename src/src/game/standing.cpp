@@ -102,6 +102,13 @@ void Game::checkCompanionMoods() {
     for (size_t i = party.members.size(); i-- > 1;) if (approvalOf(party.members[i].classId) <= -40) { companionLeaves(i); return; }
 }
 
+// 1.5.0: a member left the party - level-ups waiting for them (or pointing past them) must not point at someone else
+void Game::dropMemberRefs(size_t idx) {
+    levelUpQueue.erase(std::remove(levelUpQueue.begin(), levelUpQueue.end(), (int)idx), levelUpQueue.end());
+    for (auto& q : levelUpQueue) if (q > (int)idx) q--;
+    if (banterMember == (int)idx) banterT = 0; else if (banterMember > (int)idx) banterMember--;
+}
+
 int Game::memberOfClass(const std::string& cls) const { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == cls) return (int)i; return -1; }
 
 // 1.5.0 (#87/#88): a companion's red line crossed and not talked round - fell=CLASS|text. They are gone for good (off
@@ -112,6 +119,7 @@ void Game::companionFalls(size_t idx, const std::string& why) {
     for (int s = 0; s < SL_COUNT; s++) if (!m.equip[s].empty() && gd->item(m.equip[s])) { party.addItem(m.equip[s], 1, *gd); if (auto* d = gd->item(m.equip[s])) kept += (kept.empty() ? "" : ", ") + d->name; }
     party.members.erase(party.members.begin() + idx);
     if (leader == (int)idx) leader = 0; else if (leader > (int)idx) leader--;
+    dropMemberRefs(idx);
     flags.erase("joined_" + cls); setFlag("fell_" + cls);
     log(m.name + " is gone.");
     gAudio.play("death_party");
@@ -126,6 +134,7 @@ void Game::companionLeaves(size_t idx, const std::string& why) {
     for (int s = 0; s < SL_COUNT; s++) if (!m.equip[s].empty() && gd->item(m.equip[s])) { party.addItem(m.equip[s], 1, *gd); if (auto* d = gd->item(m.equip[s])) kept += (kept.empty() ? "" : ", ") + d->name; }
     party.members.erase(party.members.begin() + idx);
     if (leader == (int)idx) leader = 0; else if (leader > (int)idx) leader--;
+    dropMemberRefs(idx);
     flags.erase("joined_" + cls); setFlag("left_" + cls);
     // they walk back to where you met them
     auto h = extra.find("home_" + cls);

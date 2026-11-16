@@ -43,7 +43,7 @@ speaker=Elowen
 text=I'll be in the archive in Brasswick. Don't write.
 approve=mage:-20
 set=elowen_left_seal
-leave=mage|Elowen walks out of the Scar without looking back. She'll be at the Gilded Circle's archive in Brasswick, if you ever want to try to make amends.
+leave=mage|Elowen walks out of the Scar without looking back. She'll be at the Gilded Circle's archive in Brasswick.
 option=(Break them.)|seal
 
 [elowen_fell]

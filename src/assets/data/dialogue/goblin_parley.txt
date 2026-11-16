@@ -101,7 +101,7 @@ speaker=Bram
 text=Home. ...Yeah. I'll go home. I'll be at the Weary Goat when you remember what you came up here to do.
 approve=warrior:-20
 set=bram_left_goblins
-leave=warrior|Bram walks out of Greywood Cave without looking back. He'll be drinking at the Weary Goat in Hollowmere - you could try to make amends there.
+leave=warrior|Bram walks out of Greywood Cave without looking back. He'll be drinking at the Weary Goat in Hollowmere.
 option=(Let him go.)|end
 
 [bram_alone]

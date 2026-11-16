@@ -75,7 +75,7 @@ speaker=Nyx
 text=Let it go. Sure. (She turns for the shaft.) I'm going home. Someone has to tell Frosthold what's coming to roost on their hills.
 approve=ranger:-20
 set=nyx_left_ashwing
-leave=ranger|Nyx heads home to warn the north. She'll be back at the Millbrook trails when she's done - you could try to make amends there.
+leave=ranger|Nyx heads home to warn the north. She'll be back at the Millbrook trails when she's done.
 option=(Let her go.)|end
 
 [nyx_fell]

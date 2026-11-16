@@ -57,6 +57,13 @@ void Game::fightGroup(const std::string& flag) {
         combatExtraGroups.clear();
         if (!e.link.empty()) for (size_t j = 0; j < map->enemies.size(); j++) { auto& e2 = map->enemies[j]; if (j != i && !e2.defeated && !e2.hidden && e2.link == e.link) combatExtraGroups.push_back((int)j); }
         nextSurprise = 0;
+        if (chebyshev(px, py, e.x, e.y) > 5) {   // started from afar (a talk elsewhere on the map): the party walks in first
+            bool moved = false;
+            for (int r = 3; r <= 6 && !moved; r++) for (int dy = -r; dy <= r && !moved; dy++) for (int dx = -r; dx <= r && !moved; dx++) {
+                int x = e.x + dx, y = e.y + dy; if (std::max(abs(dx), abs(dy)) != r || !map->walkable(x, y) || map->occupied(x, y) || map->exitAt(x, y) || !lineOfSight(*map, x, y, e.x, e.y)) continue;
+                px = x; py = y; trail.clear(); for (int k = 0; k < 8; k++) trail.push_back({px, py}); moved = true; }
+            revealAround();
+        }
         startCombat(e.creatures, e.x, e.y, e.levelBonus, {(int)i}, e.onDefeatScript);
         return;
     }
