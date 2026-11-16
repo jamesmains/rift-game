@@ -35,6 +35,9 @@ int main(int argc, char** argv) {
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
             if (cmd == "unitkill") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].ch.hp = 0; u[i].ch.alive = false; app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitkill <unit> (no end-of-fight check)
             if (cmd == "cb") { std::string r = app.game.combatDo(p); printf("  cb %s\n", r.c_str()); step(1); return true; }   // 1.4.0: combat test hooks (combat.cpp combatDo)
+            // 1.5.0 (#99): throwat X Y ITEM - throw a noisemaker there at once (no aiming); groupmove I X Y - put map group I there
+            if (cmd == "throwat" && p.size() >= 4) { Game& g = app.game; g.throwItem = p[3]; bool ok = g.throwTargetOk(atoi(p[1].c_str()), atoi(p[2].c_str())); if (ok) g.throwLure(p[3], atoi(p[1].c_str()), atoi(p[2].c_str())); else g.throwItem.clear(); printf("  throwat ok=%d\n", ok ? 1 : 0); step(1); return true; }
+            if (cmd == "groupmove" && p.size() >= 4) { Game& g = app.game; int i = atoi(p[1].c_str()); if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { g.map->enemies[i].x = atoi(p[2].c_str()); g.map->enemies[i].y = atoi(p[3].c_str()); } step(1); return true; }
             if (cmd == "drop") { std::string path; for (size_t i = 1; i < p.size(); i++) path += (i > 1 ? " " : "") + p[i]; in.dropped = {path}; step(1); in.dropped.clear(); step(2); return true; }   // 1.2.0: a file dropped on the window
 #ifndef TRIFFALL_NO_EDITOR
             if (cmd == "sheetimport") {   // sheetimport <png> <name> <tw> <th> <ox> <oy> <gx> <gy> [black|alpha|r,g,b]
@@ -189,6 +192,12 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "fieldnote:")) { auto it = g.fieldNotes.find(key.substr(10)); got = "none"; if (it != g.fieldNotes.end()) { got = std::to_string(it->second.res) + ";"; for (auto& t : it->second.tags) got += t + ","; } num = false; return true; }
                 if (startsWith(key, "fieldknown:")) { got = std::to_string(g.knownResBits(key.substr(11))); return true; }
                 if (key == "deskfieldnotes") { got = g.fieldNotesText(); num = false; return true; }
+                // 1.5.0 (#99): group:I = "x,y" + ",gone" / ",d<steps>" (at a noise) / ",r" (walking home) / ",h<hurt%>"; trap:X,Y = armed|sprung|none;
+                // aim = "x,y" of the throw cursor ("none" when not aiming); aggro:I = how near group I lets the party come
+                if (startsWith(key, "group:")) { int i = atoi(key.substr(6).c_str()); got = "none"; num = false; if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { auto& e = g.map->enemies[i]; got = fmt("%d,%d", e.x, e.y); if (e.defeated) got += ",gone"; if (e.distractSteps > 0) got += fmt(",d%d", e.distractSteps); if (e.returning) got += ",r"; if (e.hurt > 0) got += fmt(",h%d", e.hurt); } return true; }
+                if (startsWith(key, "trap:")) { auto q = split(key.substr(5), ','); got = "none"; num = false; if (g.map && q.size() > 1) if (Trap* t = g.map->trapAt(atoi(q[0].c_str()), atoi(q[1].c_str()), false)) got = t->sprung ? "sprung" : "armed"; return true; }
+                if (key == "aim") { got = g.throwItem.empty() ? "none" : fmt("%d,%d", g.throwX, g.throwY); num = false; return true; }
+                if (startsWith(key, "aggro:")) { int i = atoi(key.substr(6).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(g.groupAggro(g.map->enemies[i])) : "-1"; return true; }
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
                 // 1.4.0: spells:<member> = the spells member n knows (comma list); answers = the talk box's answers as shown
                 // (only those whose conditions hold, with their [CHA 12] tags), joined by " | "

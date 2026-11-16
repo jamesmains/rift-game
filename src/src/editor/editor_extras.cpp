@@ -271,7 +271,8 @@ void Editor::runCampaignCheck() {
             if (o.type == "npc" && !o.get("shop").empty()) { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == o.get("shop")) ok = true; if (!ok) addF(true, at + " uses unknown shop '" + o.get("shop") + "'", u); }
             if (o.type == "exit" && !isMap(o.get("to"))) addF(true, at + " leads to unknown map '" + o.get("to") + "'", u);
             if (o.type == "npc" && !scriptOk(o.get("script"))) addF(true, at + " runs missing script '" + o.get("script") + "'", u);
-            for (const char* sk : {"script", "onuse", "ondefeat", "onclear", "onpress", "onrelease"}) actRefs(o.get(sk), at, u);
+            for (const char* sk : {"script", "onuse", "ondefeat", "onclear", "onpress", "onrelease", "onspring"}) actRefs(o.get(sk), at, u);
+            if (o.type == "trap" && (trim(o.get("hurt")).empty() ? 100 : atoi(o.get("hurt").c_str())) <= 0 && (trim(o.get("damage")).empty() ? 10 : atoi(o.get("damage").c_str())) <= 0 && trim(o.get("onspring")).empty()) addF(false, at + " has hurt=0, damage=0 and no onspring: it does nothing", u);   // 1.5.0 (#99)
             if (o.type == "obstacle") for (auto& n0 : split(o.get("needs"), '|')) { std::string n = trim(n0);   // 1.4.0 (#75): a needs= value the game doesn't know
                 static const char* known[] = {"rubble", "dig", "blast", "burn", "melt", "freeze", "shock", "emp", "light"};
                 bool ok = n.empty() || startsWith(n, "force:") || startsWith(n, "spell:") || startsWith(n, "item:") || startsWith(n, "flag:"); for (auto k : known) if (n == k) ok = true;
