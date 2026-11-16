@@ -292,3 +292,8 @@ y=33
 title=Carved stone
 text=HERE THE DROWNED KEEP WHAT THE MIRE GAVE BACK. TAKE, AND REMEMBER THEM.
 sprite=27,14
+
+# 1.5.0 (#97): a shrine before the hydra
+[savepoint]
+x=39
+y=23

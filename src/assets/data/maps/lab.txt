@@ -265,3 +265,8 @@ y=29
 items=emp_grenade:2
 gold=35
 flag=lab_lift_cache2
+
+# 1.5.0 (#97): a shrine before the golem
+[savepoint]
+x=30
+y=13

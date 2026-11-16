@@ -40,15 +40,15 @@ X#.b...#..I...I....I...I..#ttttt#X
 X#######s...............b.#ttttt#X
 XXXXXXX#########.##########tbttt#X
 XXXXXXXXXXXXXXX#.#XXXXXXXX#######X
-XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
-XXXXXXXXXXXX####.####XXXXXXXXXXXXX
-XXXXXXXX#####T.....T#XXXXXXXXXXXXX
-XXXXXXXX#...#.......#XXXXXXXXXXXXX
-XXXXXXXX#...#.......#XXXXXXXXXXXXX
-XXXXXXXX#...#...<...#XXXXXXXXXXXXX
-XXXXXXXX#####.......#XXXXXXXXXXXXX
-XXXXXXXXXXXX#########XXXXXXXXXXXXX
+XXXXXXXXXXXXXXX#.#XXXX###########X
+XXXXXXXXXXXXXXX#.#XXXX#U.C.U.C.U#X
+XXXXXXXXXXXX####.####X#.........#X
+XXXXXXXX#####T.....T#X#.b.....b.#X
+XXXXXXXX#...#.......#X#.........#X
+XXXXXXXX#...#.......D...........#X
+XXXXXXXX#...#...<...#X#.s.....b.#X
+XXXXXXXX#####.......#X#U.C.U.C.U#X
+XXXXXXXXXXXX#########X###########X
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 [exit]
@@ -167,3 +167,36 @@ y=18
 title=Scratched letters
 sprite=27,14
 text=FOR THE NEXT WARDEN. LIGHT FINDS WHAT THE DARK KEEPS. - H.
+
+# 1.5.0 (#97): a shrine before the wight's tomb (past the hall's dead)
+[savepoint]
+x=22
+y=8
+
+# 1.5.0 (#97): the Sealed Ossuary - optional, deadly to a party with only steel. The Barrow Dead don't feel blades;
+# fire, Blessed Oil (two chests in this barrow have it) and spells do. The entry shrine (18,20) is two steps away.
+[door]
+x=20
+y=19
+text=The ossuary door grinds open on cold air. Something inside turns its head.
+
+[sign]
+x=20
+y=18
+title=Carved over the ossuary door
+text=THE OSSUARY. THE WARDENS' OWN DEAD KEEP IT. STEEL WILL NOT GIVE THEM REST. Under it, in fresh chalk: our swords went straight through them. Two of us didn't come back. Fire, holy oil or a spell - or leave them be.
+
+[enemy]
+group=barrow_dead,barrow_dead,barrow_dead
+x=28
+y=18
+aggro=4
+flag=barrow_ossuary_dead
+ondefeat=notify:The Barrow Dead lie still at last.
+
+[chest]
+x=30
+y=20
+items=potion_red2:2,oil_blessed:2,gem_rough:2,amulet_life:1
+gold=150
+flag=barrow_ossuary_chest

@@ -42,20 +42,20 @@ X#.....###.m....c.m...#XXX#..........#...#XXXXXX
 X##......B.r..........##XX#........b.....#XXXXXX
 XX#.....m....b..b......#XX######mr...#...#XXXXXX
 XX#......m...r..b.....c##XXXXXX##...######XXXXXX
-XX#....r...br....m.....3#XXXXXXX#####XXXXXXXXXXX
-XX##cw......m...........#XXXXXXXXXXXXXXXXXXXXXXX
-XXX#Br...r.##..........##XXXXXXXXXXXXXXXXXXXXXXX
-XX##...b..##########.m##XXXXXXXXXXXXXXXXXXXXXXXX
-XX#b......######XXX####XXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.....m##....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#b...M.......#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.....###....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.cc.##X######XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X##..b##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#b..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-X##.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#....r...br....m.....3#######X#####XXXXXXXXXXX
+XX##cw......m................w#XXXXXXXXXXXXXXXXX
+XXX#Br...r.##..........######.#XXXXXXXXXXXXXXXXX
+XX##...b..##########.m##XXXX#w#XXXXXXXXXXXXXXXXX
+XX#b......######XXX####XXXXX#.#XXXXXXXXXXXXXXXXX
+XX#.....m##....#XXXXXXXXX####.###############XXX
+XX#b...M.......#XXXXXXXXX#1w.....b....w....3#XXX
+XX#.....###....#XXXXXXXXX#w..b......w.....bw#XXX
+XX#.cc.##X######XXXXXXXXX#.....w.......b....#XXX
+X##..b##XXXXXXXXXXXXXXXXX#..b......w........#XXX
+X#b..##XXXXXXXXXXXXXXXXXX#w.....b.....w....w#XXX
+X#...#XXXXXXXXXXXXXXXXXXX#.w..b......b...w..#XXX
+X#...#XXXXXXXXXXXXXXXXXXX#b...w....b......wb#XXX
+X##.##XXXXXXXXXXXXXXXXXXX####################XXX
 XX###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -138,7 +138,7 @@ flag=goblin_cave_boss_chest
 [chest]
 x=5
 y=18
-items=bandage:1
+items=bandage:1,rattle_stones:3
 gold=7
 flag=goblin_cave_chest_0
 
@@ -246,3 +246,54 @@ y=24
 items=potion_red:2,oil_fire:1,gem_rough:1
 gold=45
 flag=gc_barricade_stash
+
+# 1.5.0 (#99): a scout's advice by the entrance - noise and darkness
+[sign]
+template=paper_sign
+x=2
+y=17
+title=Scout's note
+text=Goblins are curious as cats and half as clever. Throw a rattle stone past them (Items or the hotbar) and they go to look - walk on by while their backs are turned. They see in the dark, so dousing your torch won't hide you from them. Bats and spiders neither. - R.
+
+# 1.5.0 (#97): the Broodmother's nest - optional, deadly early (a level 7 boss in a level 1 cave). Webs that need fire,
+# a warning, and a shrine past the webs so a wipe costs a minute.
+[obstacle]
+x=24
+y=19
+name=Thick webs
+kind=web
+needs=burn
+clear=floor_cave
+flag=gc_nest_webs
+text=Webs as thick as rope seal a side passage, too tough to cut. Bones hang in them - big bones. The air beyond smells of old blood.
+
+[sign]
+template=paper_sign
+x=24
+y=20
+title=Warning, scratched in goblin hand
+text=BIG MOTHER. NO GO. Twelve goblins went in, no goblins came out. Her poison eats you from inside and blades just stick in her. Fire is the only thing she fears. - by order of Grakk
+
+[savepoint]
+x=27
+y=19
+
+[enemy]
+group=giant_spider,spider,spider
+x=37
+y=26
+aggro=6
+flag=gc_brood_dead
+ondefeat=notify:The Broodmother is dead. The nest falls silent.
+
+[chest]
+x=42
+y=29
+items=potion_red2:2,antidote:2,gem_rough:2,arcane_dust:2
+gold=120
+flag=gc_brood_chest
+
+# 1.5.0 (#97): a shrine just before the chief's end of the cave (past the other east-cave groups)
+[savepoint]
+x=27
+y=13

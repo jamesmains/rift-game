@@ -260,3 +260,8 @@ y=21
 items=oil_frost:2,potion_blue:1,rift_dust:1
 gold=70
 flag=troll_stream_cache
+
+# 1.5.0 (#97): a shrine before the bone colossus
+[savepoint]
+x=12
+y=15

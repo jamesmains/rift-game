@@ -349,3 +349,13 @@ items=disk_manifest:1,elixir:1,power_core:1
 gold=140
 flag=metro_vault_chest
 onuse=lorefile:ship_manifest
+
+# 1.5.0 (#97): a shrine before the Vigil platform
+[savepoint]
+x=45
+y=16
+
+# 1.5.0 (#97): a shrine before the Hierophant
+[savepoint]
+x=49
+y=13

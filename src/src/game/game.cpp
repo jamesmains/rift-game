@@ -233,7 +233,11 @@ void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     camFree = false; updateCamera(); camFX = (float)camX; camFY = (float)camY;
     if (fade) fadeIn = 0.6f;
     if (!m->name.empty()) notify(m->name);
-    if (newPlace && running) autosave();
+    if (newPlace && running) {
+        // 1.5.0 (#97): arriving in a dungeon or ruins always autosaves (not once a minute), so a wipe inside costs minutes
+        if (m->kind == "dungeon" || m->kind == "ruins") lastAutosave = -1000;
+        autosave();
+    }
 }
 
 int Game::activeLeader() const {

@@ -260,3 +260,8 @@ x=11
 y=22
 title=Field note, half burnt
 text=The wisps round the King are knitting him together - he shrugs off half of any wound while they live. And when the world starts to tear around you, step out of the circle.
+
+# 1.5.0 (#97): a shrine before the Rift Lord
+[savepoint]
+x=47
+y=11

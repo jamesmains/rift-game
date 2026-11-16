@@ -318,3 +318,38 @@ y=21
 items=oil_blessed:2,elixir:1,amulet_wis:1
 gold=150
 flag=crypt_reliquary
+
+# 1.5.0 (#97): a shrine in the great hall, before the lich's chamber
+[savepoint]
+x=29
+y=17
+
+# 1.5.0 (#99): the south passage's cracked ceiling - a group walking under it (to a noise, after the party, back home)
+# brings it down on itself. The skeletons in the room below come up this passage to a bottle smashed at its top.
+[trap]
+x=20
+y=25
+name=Cracked ceiling
+hurt=100
+damage=12
+flag=crypt_deadfall
+text=The cracked ceiling gives way with a roar of stone and dust.
+
+[sign]
+x=21
+y=23
+title=Chalk marks
+text=An X under the crack in the south passage, and: DON'T STAND HERE. Underneath, in another hand: unless you want the dead to.
+
+[chest]
+x=13
+y=20
+items=clatter_bottle:3,torch_item:1
+flag=crypt_robber_sack
+
+[sign]
+template=paper_sign
+x=14
+y=21
+title=Grave-robber's note
+text=The bony ones don't see in the dark - they listen. Put your torch out and they'll let you walk past at a few paces, as long as you don't bump into them. The necromancers and their master see fine in the dark: light or no light, they know you're there. Smash a bottle down a passage and the dead shamble off to look.

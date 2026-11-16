@@ -1293,3 +1293,27 @@ loot=rift_dust:60
 ai=rift
 faction=rift
 mechanical=0
+
+# 1.5.0 (#97): the Sealed Ossuary in Hesk's Barrow - an optional room meant to be come back to. Steel passes through
+# them (immune to physical; crush:-100 = a crush-trait weapon still breaks them); fire and magic are the key.
+[creature]
+id=barrow_dead
+name=Barrow Dead
+sprite=114,10
+color=150,200,255
+hp=46
+res=crush:-100,physical:100,poison:100,cold:50,fire:-100,magic:-100
+stats=str:13,dex:9,con:12,int:3,wis:3,cha:1
+dmg=7-12
+dmgtype=cold
+def=3
+apmax=6
+move=4
+xp=60
+level=6
+gold=2-8
+loot=bone_dust:80
+ai=melee
+undead=1
+faction=undead
+sound=death_spirit

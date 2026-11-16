@@ -253,3 +253,31 @@ w=5
 h=2
 script=log:Crates stamped PELL'S PROVISIONS are stacked here, but the camp is wide awake - you would never carry them out unseen. (Sneak in with Camouflage on, or deal with the captain.)
 require=q_caravan>=1&!q_caravan_done&!stealthy
+
+# 1.5.0 (#97): a shrine in the main hall, before the leader's house
+[savepoint]
+x=11
+y=13
+
+# 1.5.0 (#99): the bandits' own bear trap in the passage up to the yard. A group lured down it (a bottle thrown into the
+# entrance yard) loses most of its fight before it starts.
+[trap]
+x=28
+y=23
+name=Bear trap
+hurt=60
+damage=8
+text=Steel jaws snap shut. Somebody howls.
+
+[sign]
+template=paper_sign
+x=27
+y=23
+title=Harl's orders
+text=Bear trap's set in the passage up to the yard - use the side way, you dolts. And STOP smashing bottles in the yard: the sergeant's lot go running at every crash and one day it'll be a real raid. It's dark at night here; keep the braziers lit, half of you can't see past your own noses.
+
+[chest]
+x=21
+y=29
+items=clatter_bottle:3
+flag=bandit_bottles
