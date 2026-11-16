@@ -192,6 +192,7 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "fieldnote:")) { auto it = g.fieldNotes.find(key.substr(10)); got = "none"; if (it != g.fieldNotes.end()) { got = std::to_string(it->second.res) + ";"; for (auto& t : it->second.tags) got += t + ","; } num = false; return true; }
                 if (startsWith(key, "fieldknown:")) { got = std::to_string(g.knownResBits(key.substr(11))); return true; }
                 if (key == "deskfieldnotes") { got = g.fieldNotesText(); num = false; return true; }
+                if (key == "bestiaryids") { got.clear(); for (auto& b : g.bestiaryIds()) got += (got.empty() ? "" : ",") + b; if (got.empty()) got = "none"; num = false; return true; }   // the Journal's bestiary list
                 // 1.5.0 (#99): group:I = "x,y" + ",gone" / ",d<steps>" (at a noise) / ",r" (walking home) / ",h<hurt%>"; trap:X,Y = armed|sprung|none;
                 // aim = "x,y" of the throw cursor ("none" when not aiming); aggro:I = how near group I lets the party come
                 if (startsWith(key, "group:")) { int i = atoi(key.substr(6).c_str()); got = "none"; num = false; if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { auto& e = g.map->enemies[i]; got = fmt("%d,%d", e.x, e.y); if (e.defeated) got += ",gone"; if (e.distractSteps > 0) got += fmt(",d%d", e.distractSteps); if (e.returning) got += ",r"; if (e.hurt > 0) got += fmt(",h%d", e.hurt); } return true; }

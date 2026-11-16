@@ -1,0 +1,48 @@
+# 1.5.0 (#86): the masters' trial pieces (tempered blade blank, masterwork hilt, distilled essence, calibrated servo) are
+# known=0 and taught by the dialogue that sets the trial (action recipe=); old saves already on a trial get them on load
+# (migrations.txt [learn] recipe=id|condition). Expect key recipe:ID = 1 if the crafting lists show it.
+newgame Kai warrior 1
+frames 30
+expect recipe:tempered_blank == 0
+expect recipe:master_hilt == 0
+expect recipe:distilled_essence == 0
+expect recipe:calibrated_servo == 0
+# ordinary recipes are still there from the start
+expect recipe:hardened_jerkin == 1
+# ---- Gorran gives the first trial: the blank appears ----
+con dialogue smith_gorran trial1
+frames 120
+expect flag:q_smith == 1
+expect recipe:tempered_blank == 1
+expect recipe:master_hilt == 0
+expect log contains You learn to make Tempered Blade Blank
+key ENTER
+frames 30
+key ENTER
+frames 30
+# his mithril notes no longer teach the hilt; trial 2 does
+give formula_mithril 1
+con flag q_smith 2
+con dialogue smith_gorran trial2
+frames 120
+expect flag:q_smith == 3
+expect recipe:master_hilt == 1
+key ENTER
+frames 30
+# ---- Morrow and Vosk teach theirs when they set the trial ----
+con dialogue arcanist_morrow herb1
+frames 120
+expect recipe:distilled_essence == 1
+key ENTER
+frames 30
+expect recipe:calibrated_servo == 0
+# ---- an old save already on Vosk's trial (flag set, recipe never taught) gets it when loaded ----
+con flag q_tinker 1
+expect recipe:calibrated_servo == 0
+saveslot 1
+frames 10
+loadslot 1
+frames 120
+expect recipe:calibrated_servo == 1
+expect recipe:tempered_blank == 1
+expect recipe:distilled_essence == 1
