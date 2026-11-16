@@ -710,6 +710,12 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
                 openListPicker("Action (added with ;)", labels, 0, [&kvr, &g, acts](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
             return;
         }
+        if (k == "needs") {   // 1.4.0 (#75): an obstacle template's ways to clear it
+            if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true;
+            if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> ids = obstacleNeedChoices(), labels; for (auto& n : ids) labels.push_back(obstacleNeedLabel(n));
+                openListPicker("What clears it (added with |)", labels, 0, [&kvr, &g, ids](int i) { std::string cur = trim(kvr.second); kvr.second = cur.empty() || cur == "rubble" ? ids[i] : cur + "|" + ids[i]; g.dirty = true; }); }
+            return;
+        }
         if (k == "sparkle") { bool b = v != "0"; if (ui.checkbox(x, y + 2, "twinkle above it", b)) { v = b ? "1" : "0"; g.dirty = true; } return; }
         if ((k == "color" || k == "sparklecolor") && trim(v).empty()) {   // empty = its own colours: say so instead of showing 255,255,255
             ui.text(x, y + 2, k == "color" ? "(its own colours)" : "(built-in)", DIM);

@@ -20,6 +20,7 @@ key RIGHT
 frames 10
 expect mode == NAME
 type hello
+shot term_input.png
 key ENTER
 frames 10
 expect log contains ACCESS DENIED

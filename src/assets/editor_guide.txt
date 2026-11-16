@@ -1027,12 +1027,12 @@ see: tab.maps, tab.objects, tab.resources, obj.npc, obj.enemy, obj.chest, obj.ex
 
 Everything that is not plain terrain is an object listed below the map rows:
 npc, enemy, chest, exit, trigger, sign, door, savepoint, obstacle, lever,
-change and gather.
+change, gather, and (1.4.0) crate and plate (see obj.crate, obj.plate).
 
 - 1. Choose the Objects tool and click the object type under "place:".
 - 2. Click an empty cell: the object is created there with a template of its usual keys.
 - 3. The object panel opens at the right of the view. Edit the values; x removes a key; type a key name and press Add for extra keys; Delete removes the object.
-- 4. Helper buttons: "pick dialogue" (npc), "pick map" (exit), "add creature" (enemy), "add item" (chest). Sprite fields have a "..." tile picker.
+- 4. Helper buttons: "pick dialogue" (npc), "pick map" (exit), "add creature" (enemy), "add item" (chest). Sprite fields have a "..." tile picker. 1.4.0: an obstacle's needs= has a + list of every way to clear it; action keys (onuse, onclear, onpress, onrelease, ondefeat, a trigger's script) have a + list of actions and scripts - a script shows its arguments and is added with their names for you to replace (scripting.puzzles).
 - 5. Drag an object to move it. Click another to select it. With the Objects tool active, the Delete key removes the selected object.
 - 6. Templates: pick one under "template:" (below the type buttons) and every click places a copy of it. A copy only writes what belongs to its spot (x, y, an npc's id, a chest's flag) and takes the rest from the template, so editing the template in the Objects tab changes every copy on every map.
 - 7. "make template" in the panel turns the selected object into a template and links it. A copy shows its template's values dimmed under "from template ..."; "own" gives just that copy its own value. "detach" copies the template's values in and unlinks it.
