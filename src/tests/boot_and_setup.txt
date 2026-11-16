@@ -9,13 +9,19 @@ setupwizard
 frames 5
 shot setup_welcome.png
 expect window == setup
-click 390 353
+key ESC
+frames 3
+expect window == setup
+click 480 353
 frames 5
 shot setup_components.png
-click 390 353
+click 480 353
 frames 200
 shot setup_done.png
 expect savefile:installed.ini == 1
-click 390 353
+click 480 353
 frames 5
-expect window == new
+expect window == launcher
+# 1.6.1 (#134): the installer can't be closed, and it put the Triffall icon on the desktop
+expect deskicons == launcher,mycomputer,minesweeper,solitaire,shutdown
+expect launchcampaign == tutorial

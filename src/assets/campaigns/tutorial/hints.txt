@@ -73,6 +73,10 @@ text=Thornwrack has grown across the trail east. Walk into it (or face it and pr
 if=tut_road&tut_rats&tut_fav&item:quarry_key&tut_brambles
 text=The quarry gate is just ahead: walk into it and the key opens it. Then go in.
 
+[hint]
+if=tut_road&tut_rats&tut_fav&item:quarry_key&tut_brambles&tut_quarry_gate
+text=The gate is open. The way down into the quarry is at the back of the yard: walk onto the steps.
+
 # ---------------- the quarry ----------------
 [hint]
 if=tut_inquarry

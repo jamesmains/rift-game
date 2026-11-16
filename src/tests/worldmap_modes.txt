@@ -1,6 +1,6 @@
 # 0.8.5: campaign world map modes (worldmap= in campaign.txt; console worldmap MODE switches it for testing)
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

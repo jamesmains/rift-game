@@ -3,10 +3,11 @@
 # (knownResBits), the bestiary and the desktop's Field Notes.txt still know it. A fresh save folder starts empty.
 # Expect keys: fieldnote:ID ("res bits;tags,"), fieldknown:ID (what the tooltip shows), deskfieldnotes, bestiaryids.
 frames 5
-# the desktop icon opens an empty notepad on a fresh run
-dblclick 130 190
+# the launcher's Field Notes page is empty on a fresh run (1.6.1: it was a desktop notepad)
+deskaction fieldnotes
 frames 5
-expect window == fieldnotes
+expect window == launcher
+expect launcherpage == 3
 expect deskfieldnotes contains Nothing yet
 shot field_notes_empty.png
 key ESC

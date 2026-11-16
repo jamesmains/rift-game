@@ -611,9 +611,10 @@ The pickers (the v buttons) have the same search box: just start typing.
 == concepts.campaigns | Campaigns
 see: tab.campaign, concepts.files, campaign.start, campaign.worldmap
 
-A campaign is a whole separate game with its own desktop icon. The base game
-(Triffall) is one campaign; others live in assets/campaigns/<id>/. Saves
-remember which campaign they belong to.
+A campaign is a whole separate game, listed on the Play page of the Triffall
+launcher. The base game (Triffall) is one campaign; others live in
+assets/campaigns/<id>/. Each campaign keeps its own three save slots and
+autosave (saves/campaigns/<id>/; the main story's stay in saves/).
 
 To make one:
 - 1. Click the Campaign button in the header and choose "+ New campaign...". Type a name.
@@ -6265,16 +6266,18 @@ Format: any text. Default: empty.
 
 Bump it when you share an update, so players can tell which copy they have. The game does not compare versions. For example 0.9 for a test release.
 
-== campaign.icon | Campaign desktop icon
+== campaign.icon | Campaign icon
 see: tab.campaign
 
-The campaign's desktop icon, from assets/icons.png.
+The campaign's icon in the launcher's adventure list, from assets/icons.png.
 
 Format: col,row in icons.png. Default: 0,7 (new campaigns get 3,4).
 
   icon=3,4
 
-Double-clicking the icon on the desktop opens New Game for the campaign.
+Since 1.6.1 campaigns have no desktop icon of their own: they are listed on the
+launcher's Play page (the Triffall icon on the desktop). Double-clicking one
+there opens New Game for it. Each campaign keeps its own save slots.
 
 Open icons.png in an image viewer to choose; cells are counted from 0 at the top left.
 
@@ -7676,10 +7679,11 @@ the log hints that the old computer (My Computer on the desktop) knows more.
 Place it as a sign with no text (Objects tab template terminal):
 onuse=script:terminal,<password>,<solved>,<title>.
 
-== desktop.lorefiles | Desktop files (My Computer)
+== desktop.lorefiles | Recovered files (the launcher's Files page)
 see: puzzle.terminal, scripting.actions
 
-The text files in data/lore show in the desktop's My Computer. A file whose
+The text files in data/lore show on the Files page of the Triffall launcher
+(My Computer until 1.6.1). A file whose
 first line is #locked stays hidden until a game unlocks it with the action
 lorefile:<name> (a chest's onuse=, a dialogue, a script). Unlocked files stay
 for every save slot (files.ini in the save folder, like achievements); the dev

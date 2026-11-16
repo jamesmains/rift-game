@@ -42,6 +42,11 @@ int main(int argc, char** argv) {
 
             // 1.6.0 quests commands
 
+            // 1.6.1 desktop / launcher: run a desktop action (launcher, load, fieldnotes, new...); mark the installer as done
+            if (cmd == "deskaction") { app.desktop.runAction(p[1]); step(2); return true; }
+            if (cmd == "todesktop") { app.game.requestDesktop = true; step(2); return true; }   // the game hands back to the desktop (as Exit does)
+            if (cmd == "installed") { app.desktop.markInstalled(); app.desktop.refreshCampaignIcons(); step(2); return true; }
+            if (cmd == "launchcampaign") { app.desktop.openLauncher(-1, p[1]); step(2); return true; }   // the launcher with this adventure picked
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
             if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
@@ -198,6 +203,13 @@ int main(int argc, char** argv) {
                 // 1.6.0 story expects
 
                 // 1.6.0 builders expects
+                // 1.6.1: the launcher's page (0 Play, 1 Saves, 2 How to Play, 3 Field Notes, 4 Achievements, 5 Files, 6 About), the
+                // desktop's icons (actions), the adventure picked, and which of its slots hold a save (e.g. 1001 = slot 1 + autosave)
+                if (key == "launcherpage") { got = "none"; for (auto& w : app.desktop.windows) if (w.type == "launcher") got = std::to_string(w.page); return true; }
+                if (key == "deskicons") { got.clear(); for (auto& d : app.desktop.iconDefs) got += (got.empty() ? "" : ",") + d.action; num = false; return true; }
+                if (key == "launchcampaign") { got = app.desktop.launchCampaign; num = false; return true; }
+                if (key == "deskslots") { app.desktop.refreshSlots(); got.clear(); for (int i = 0; i < 4; i++) got += app.desktop.slots[i].exists ? "1" : "0"; num = false; return true; }
+                if (startsWith(key, "campaignsave:")) { auto q = split(key.substr(13), ':'); std::error_code ec; got = q.size() == 2 && std::filesystem::exists(campaignSlotPath(app.saveDir, q[0], atoi(q[1].c_str()) - 1), ec) ? "1" : "0"; return true; }   // campaignsave:ID:N (N 1-3, 4 = autosave)
 
                 // 1.6.0 hub expects
 

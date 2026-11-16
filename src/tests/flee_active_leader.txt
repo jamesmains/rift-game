@@ -1,6 +1,6 @@
 # Force successful flee cleanup with a non-slot-0 party leader; final pos should match party=1.
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 354

@@ -7,14 +7,41 @@
 
 namespace fs = std::filesystem;
 
-std::string Game::slotPath(int slot) const { return slot == AUTOSAVE_SLOT ? saveDir + "/autosave.sav" : saveDir + "/slot" + std::to_string(slot + 1) + ".sav"; }
+std::string campaignSaveDir(const std::string& saveDir, const std::string& id) { return id.empty() || id == "triffall" ? saveDir : saveDir + "/campaigns/" + id; }
+std::string campaignSlotPath(const std::string& saveDir, const std::string& id, int slot) {
+    std::string d = campaignSaveDir(saveDir, id);
+    return slot == Game::AUTOSAVE_SLOT ? d + "/autosave.sav" : d + "/slot" + std::to_string(slot + 1) + ".sav";
+}
+std::string Game::slotPath(int slot) const { return campaignSlotPath(saveDir, campaignId, slot); }   // 1.6.1 (#135): this campaign's slots
+
+// 1.6.1 (#135): before, all campaigns shared the 3 slots and the autosave. A save of another campaign found in the shared
+// ones moves to that campaign's folder (same slot if it's free, else the first free one; the autosave only to the
+// autosave). If that campaign's slots are full it stays where it is (and shows under the main story until moved).
+int migrateCampaignSaves(const std::string& saveDir) {
+    int moved = 0; std::error_code ec;
+    for (int s = 0; s < 4; s++) {
+        std::string from = campaignSlotPath(saveDir, "triffall", s);
+        SaveSlotInfo si = readSaveSlotInfo(from);
+        if (!si.exists || si.campaignId.empty() || si.campaignId == "triffall") continue;
+        std::string to;
+        if (s == Game::AUTOSAVE_SLOT) { std::string p = campaignSlotPath(saveDir, si.campaignId, s); if (!fs::exists(p, ec)) to = p; }
+        else for (int k : {s, 0, 1, 2}) { std::string p = campaignSlotPath(saveDir, si.campaignId, k); if (!fs::exists(p, ec)) { to = p; break; } }
+        if (to.empty()) continue;
+        fs::create_directories(fs::path(to).parent_path(), ec); ec.clear();
+        fs::rename(from, to, ec); if (ec) continue;
+        moved++; ec.clear();
+        if (fs::exists(from + ".bak", ec)) { ec.clear(); fs::rename(from + ".bak", to + ".bak", ec); }
+    }
+    return moved;
+}
 
 // Write to a temporary file, read it back, keep the old save as .bak, then swap the new one in. A crash or a full disk
 // half-way through can no longer leave a slot holding half a save.
 bool writeSaveFile(const std::string& path, const std::string& text) {
     std::string tmp = path + ".tmp", check;
-    if (!writeFile(tmp, text)) return false;
     std::error_code ec;
+    { fs::path dir = fs::path(path).parent_path(); if (!dir.empty()) fs::create_directories(dir, ec); ec.clear(); }   // 1.6.1: a campaign's own save folder
+    if (!writeFile(tmp, text)) return false;
     if (!readFile(tmp, check) || check != text) { fs::remove(tmp, ec); return false; }
     // keep the previous save as .bak - but only if it is a whole save: a damaged file must never replace a good backup
     { std::string old; if (readFile(path, old)) { auto secs = parseConfig(old); bool whole = !secs.empty() && secs[0].name == "game"; bool member = false; for (auto& sc : secs) if (sc.name == "member") member = true;

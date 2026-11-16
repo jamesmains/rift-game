@@ -10,7 +10,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * 5 classes (Warrior, Ranger, Mage, Scavenger, Cleric) you **multiclass** into rank by rank, 5 recruitable
   companions (respec at a shrine priest or with a Draught of Forgetting), party of 4
 * Hand-crafted overworld and dungeons (all plain ASCII maps you can edit), 6 towns, an extra
-  chapter (The Open Sky) and side areas; **campaigns** add their own desktop icon (see Campaigns)
+  chapter (The Open Sky) and side areas; **campaigns** show up in the launcher's adventure list (see Campaigns)
 * Darkness that matters: torches, lanterns, light spells and flares; enemies with darkvision
 * World objects: rubble to dig or blast, ice to melt, levers, sluices, NPCs that move when the story says so
 * Deep crafting: station skill, formulas, failure chance, fine/masterwork rolls, reinforcing, enchanting, salvage
@@ -19,14 +19,29 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   main quest with three choices that change the ending (break, bury or keep the shards)
 * Proximity-triggered tactical combat fought in place: AP, movement points, hit chances,
   aimed shots, cover-free line of sight, area spells, grenades, status effects, fleeing
-* Save shrines + 3 named save slots
+* Save shrines + 3 named save slots and an autosave for every adventure
 * Keyboard, mouse and gamepad
 * Chiptune soundtrack and sound effects, all data-driven and replaceable (see Audio)
 * Cover, flanking, overwatch and attacks of opportunity; companions with banter and approval
 * Day/night, weather, shop hours; crafting and random affixes on loot; world map with fast travel
 * Journal with quests (map pins, checklists, branching endings and failure), bestiary, stats, notes; notice-board
   bounties; town reputation that moves shop prices; 33 achievements
-* A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
+* A Win98 desktop with the Triffall launcher (play, saves, How to Play, Field Notes, achievements, recovered files),
+  Minesweeper, Solitaire and a screensaver
+
+## 1.6.1 the Triffall launcher
+
+* First start: Triffall installs itself (the setup can't be skipped) and puts one **Triffall** icon on the desktop.
+* The Triffall icon opens the launcher, the home of everything about the game: pick an adventure (the main story,
+  the Tutorial, any campaign), **Continue** from its newest save, start a **New Game** or load a save; How to Play
+  (the old Readme), Field Notes, Achievements, the recovered Files (the lore documents), Settings, the Editor and
+  the credits.
+* A calmer desktop: Triffall, My Computer, Minesweeper, Solitaire and Shut Down. My Computer shows the PC's drives;
+  the CD in drive D: is Triffall. An older desktop is tidied once (your icon pictures are kept).
+* Every adventure keeps its own three save slots and autosave, so playing a campaign never costs you a main-story
+  save. Saves of other campaigns in the shared slots are moved to their campaign once.
+* Tutorial: the gate in Greywood now leads to the quarry (the way in used to be in Dace's clearing, so the key
+  opened onto an empty yard).
 
 ## 1.5.2 fixes
 

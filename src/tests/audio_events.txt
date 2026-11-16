@@ -1,6 +1,6 @@
 # sound events and music switching (headless: recorded, not played)
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

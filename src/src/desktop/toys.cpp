@@ -183,7 +183,7 @@ void Desktop::drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool acti
     (void)dbl;
 }
 
-// ======================================================================= My Computer (lore files)
+// ======================================================================= My Computer (drives) + the lore files (shown in the launcher)
 // 1.4.0 (#77): a file whose first line is "#locked" stays hidden until a game unlocks it (action lorefile:<name>)
 std::vector<std::string> Desktop::loreFiles() const {
     std::string loreDir = assetDir + "/data/lore"; std::error_code ec;
@@ -193,65 +193,32 @@ std::vector<std::string> Desktop::loreFiles() const {
     return files;
 }
 void Desktop::drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
+    // 1.6.1 (#133): the lore files moved into the launcher (Files); My Computer is the PC's drives now. The CD in D: is
+    // Triffall: opening it opens the launcher, like a game disc's autorun.
     Font& f = *ctx.font;
-    std::string loreDir = assetDir + "/data/lore";
-    std::vector<std::string> files = loreFiles();
-    int lx = w.x + 6, ly = w.y + 26, lw = 150, lh = w.h - 34;
+    int lx = w.x + 6, ly = w.y + 26, lw = w.w - 12, lh = w.h - 50;
     bevelBox(cv, lx, ly, lw, lh, true); cv.fillRect(lx + 2, ly + 2, lw - 4, lh - 4, HILITE);
-    f.draw(cv, *ctx.ts, lx + 6, ly + 4, "(C:) TRIFFALL-HDD", DKSHADOW);
-    f.draw(cv, *ctx.ts, lx + 6, ly + 18, "+ My Documents", DKSHADOW);
-    for (size_t i = 0; i < files.size(); i++) {
-        int ry = ly + 32 + (int)i * 14; bool sel = (int)i == w.sel;
-        if (ry > ly + lh - 14) break;
-        hot(lx + 2, ry - 1, lw - 4, 14);
-        bool hover = active && !mouseUsed && in.mouseX >= lx + 2 && in.mouseX < lx + lw - 2 && in.mouseY >= ry - 1 && in.mouseY < ry + 13;
-        if (sel) cv.fillRect(lx + 2, ry - 1, lw - 4, 14, TITLE_A);
-        else if (hover) cv.fillRect(lx + 2, ry - 1, lw - 4, 14, RGB(210, 225, 255));
-        cv.fillRect(lx + 7, ry + 1, 7, 9, HILITE); cv.rect(lx + 7, ry + 1, 7, 9, SHADOW); cv.hline(lx + 9, ry + 4, 3, SHADOW); cv.hline(lx + 9, ry + 6, 3, SHADOW);
-        std::string label = files[i] + ".txt";
-        const int labelWidth = lw - 24;
-        if (f.width(label) > labelWidth) {
-            std::string stem = files[i];
-            do { stem.pop_back(); label = stem + "...txt"; } while (!stem.empty() && f.width(label) > labelWidth);
-        }
-        f.draw(cv, *ctx.ts, lx + 18, ry, label, sel ? HILITE : DKSHADOW);
-        if (active && !mouseUsed && in.mousePressed[0] && in.mouseX >= lx && in.mouseX < lx + lw && in.mouseY >= ry - 1 && in.mouseY < ry + 13) { w.sel = (int)i; w.page = 0; mouseUsed = true; gAudio.play("desktop_click"); }
+    struct Drive { const char* label; int ic, ir; };
+    static const Drive drives[] = {{"3.5 Floppy (A:)", 0, 3}, {"TRIFFALL-HDD (C:)", 0, 5}, {"TRIFFALL (D:)", 2, 7}};
+    for (int i = 0; i < 3; i++) {
+        int ix = lx + 14 + i * 102, iy = ly + 10; bool sel = w.sel == i;
+        bool hv = active && !mouseUsed && in.mouseX >= ix && in.mouseX < ix + 94 && in.mouseY >= iy && in.mouseY < iy + 62;
+        if (active) hot(ix, iy, 94, 62);
+        int ic = drives[i].ic, ir = drives[i].ir; if (i == 2) iconCell("launcher", ic, ir);
+        drawIcon(cv, ic, ir, ix + 31, iy, 1);
+        std::string label = drives[i].label;
+        int tw = f.width(label); if (sel) cv.fillRect(ix + 47 - tw / 2 - 2, iy + 36, tw + 4, 14, TITLE_A);
+        f.draw(cv, *ctx.ts, ix + 47 - tw / 2, iy + 37, label, sel ? HILITE : DKSHADOW);
+        if (hv && in.mousePressed[0]) { mouseUsed = true;
+            if (sel && dblTimer > 0 && dblIcon == 400 + i) { dblTimer = 0;
+                if (i == 0) { showDialog("A:\\", "A:\\ is not accessible. The device is not ready."); return; }
+                if (i == 1) { showDialog("TRIFFALL-HDD (C:)", "Local Disk - 2.1 GB, 1.3 GB free. Nothing in here you need: Triffall is on the CD in drive D:."); return; }
+                runAction("launcher"); return; }
+            w.sel = i; dblTimer = 0.4f; dblIcon = 400 + i; gAudio.play("desktop_click"); }
     }
-    int tx = lx + lw + 6, tw = w.w - (tx - w.x) - 6;
-    bevelBox(cv, tx, ly, tw, lh, true); cv.fillRect(tx + 2, ly + 2, tw - 4, lh - 4, HILITE);
-    if (w.sel >= 0 && w.sel < (int)files.size()) {
-        std::string text; readFile(loreDir + "/" + files[w.sel] + ".txt", text);
-        if (startsWith(text, "#locked")) { size_t nl = text.find('\n'); text = nl == std::string::npos ? std::string() : text.substr(nl + 1); }
-        std::vector<std::string> lines; for (auto& raw : split(text, '\n')) { std::string l = raw; if (!l.empty() && l.back() == '\r') l.pop_back(); if (l.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(l, tw - 16)) lines.push_back(wl); }
-        int maxShow = (lh - 8) / 13; if (active && in.wheel && in.mouseX >= tx) w.page = clampi(w.page - in.wheel * 2, 0, std::max(0, (int)lines.size() - maxShow));
-        w.page = clampi(w.page, 0, std::max(0, (int)lines.size() - maxShow));
-        for (int i = 0; i < maxShow && w.page + i < (int)lines.size(); i++) f.draw(cv, *ctx.ts, tx + 6, ly + 4 + i * 13, lines[w.page + i], DKSHADOW);
-        if (game && game->running && (w.status != files[w.sel])) { w.status = files[w.sel]; game->addNote("File " + files[w.sel] + ".txt", lines.empty() ? "" : lines[0]); }
-    } else f.draw(cv, *ctx.ts, tx + 6, ly + 4, "Select a file to read it.", SHADOW);
-    f.draw(cv, *ctx.ts, w.x + 6, w.y + w.h - 6, "", SHADOW);
-}
-
-// ======================================================================= Achievements window
-void Desktop::drawAchievementsWindow(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
-    Font& f = *ctx.font;
-    int lx = w.x + 6, ly = w.y + 26, lw = w.w - 12, lh = w.h - 50;   // the progress line sits below the list, not on it
-    bevelBox(cv, lx, ly, lw, lh, true); cv.fillRect(lx + 2, ly + 2, lw - 4, lh - 4, HILITE);
-    auto& A = game->achievements; int n = (int)A.size();
-    int rowH = 30, maxShow = std::max(1, (lh - 8) / rowH);
-    if (active && in.wheel) w.page = clampi(w.page - in.wheel, 0, std::max(0, n - maxShow));
-    w.page = clampi(w.page, 0, std::max(0, n - maxShow));
-    if (n > maxShow) { int sx = lx + lw - 10, sy = ly + 3, sh = lh - 6, th = std::max(12, sh * maxShow / n), ty = sy + (sh - th) * w.page / std::max(1, n - maxShow); cv.fillRect(sx, sy, 7, sh, RGB(220, 220, 220)); bevelBox(cv, sx, ty, 7, th, false); }
-    for (int i = 0; i < maxShow && w.page + i < n; i++) {
-        auto& a = A[w.page + i]; bool got = game->unlocked.count(a.id) > 0; int ry = ly + 4 + i * rowH;
-        cv.fillRect(lx + 6, ry + 1, 26, 26, got ? RGB(255, 240, 180) : RGB(220, 220, 220)); cv.rect(lx + 6, ry + 1, 26, 26, got ? RGB(180, 140, 40) : SHADOW);
-        ctx.ts->draw(cv, a.tile, lx + 7, ry + 2, 2, got ? C::White : RGB(140, 140, 140));
-        bool hide = a.hidden && !got;
-        f.bold = true; f.draw(cv, *ctx.ts, lx + 40, ry + 1, hide ? "???" : a.name, got ? DKSHADOW : SHADOW); f.bold = false;
-        f.draw(cv, *ctx.ts, lx + 40, ry + 14, hide ? "Hidden achievement" : a.desc, got ? RGB(40, 40, 40) : SHADOW);
-        if (got) f.draw(cv, *ctx.ts, lx + lw - 78, ry + 8, "unlocked", RGB(0, 128, 0));
-    }
-    f.draw(cv, *ctx.ts, w.x + 8, w.y + w.h - 20, fmt("%d of %d unlocked (all save slots)", (int)game->unlocked.size(), n), SHADOW);
-    if (n > maxShow) { std::string h = in.gamepadActive ? "D-pad: scroll" : "wheel: scroll"; f.draw(cv, *ctx.ts, w.x + w.w - 10 - f.width(h), w.y + w.h - 20, h, SHADOW); }
+    const char* status = w.sel == 0 ? "3.5 inch floppy drive - no disk" : w.sel == 1 ? "Local Disk, 1.3 GB free" : w.sel == 2 ? "CD-ROM: Triffall - double-click to open" : "3 object(s)";
+    bevelBox(cv, w.x + 6, w.y + w.h - 22, w.w - 12, 16, true);
+    f.draw(cv, *ctx.ts, w.x + 10, w.y + w.h - 21, status, DKSHADOW);
 }
 
 // ======================================================================= Screensaver

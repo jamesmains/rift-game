@@ -11,4 +11,4 @@ frames 200
 expect savefile:installed.ini == 1
 key ENTER
 frames 5
-expect window == new
+expect window == launcher

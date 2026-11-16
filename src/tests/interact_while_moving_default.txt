@@ -1,6 +1,6 @@
 # Enabling auto-interaction opens a chest reached during a held movement sequence.
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 354

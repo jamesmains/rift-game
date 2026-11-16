@@ -19,6 +19,8 @@ c = cart
 O = campfire
 # = palisade
 Q = door_wood
+X = wall_cave
+H = stairs_down
 
 [rows]
 TTTTtTTTTTTtTTTTTTTTtTTTTTTTtTTTTTTTTTtTTTTTTT
@@ -31,11 +33,11 @@ TTTTTTTtTTTTtTTTT.%.............TTtTTTTTTTTTTT
 TTTTtTTTTTTTTTTTTT.......,.....TTTTTTTTtTTTTTT
 TtTTTTTTTtTTTTTTTTTT....,...TTTTTTTTTTTTTTTTTT
 TTTTTTtTTTTTTT..%.TTTT..,.TTTTTTTtTTTTT#######
-TTTtTTTTTTTT.......TTTTT,TTTTTTTTTTTTTTT#,,,,,
-TTTTTTTTT%.....%.....TT.,.TTTTtTTTTTT..T#,,,,,
-YYYYYYYYY...........YYYYYYYYYYYYYYYYYYYYQ,,,,,
-YYTTTTTT.%.........%TTTTTTTTTTTTTTTTTTTT#,,,,,
-TTTTTtTTT..%.....%.TTtTTTTTTtTTTTTTTTTTT#,,,,,
+TTTtTTTTTTTT.......TTTTT,TTTTTTTTTTTTTTT#c,,XX
+TTTTTTTTT%.....%.....TT.,.TTTTtTTTTTT..T#,,,XX
+YYYYYYYYY...........YYYYYYYYYYYYYYYYYYYYQ,,,,H
+YYTTTTTT.%.........%TTTTTTTTTTTTTTTTTTTT#,,,XX
+TTTTTtTTT..%.....%.TTtTTTTTTtTTTTTTTTTTT#k,,XX
 TTtTTTTTTTT.......TTTTTTTTTTTTTTTTTtTTTT######
 TTTTTTTTtTTTTT..TTTTTTtTTTTTTTTTTTTTTTTTTTTTTT
 TTTTtTTTTTTTTTTTTTTTTTTTTTTtTTTTTTTTTtTTTTTTTT
@@ -96,9 +98,11 @@ key=quarry_key
 flag=tut_quarry_gate
 text=The key turns, stiff with rust. The quarry gate groans open.
 
+# 1.6.1 (#132): the way into the quarry is behind the key gate (it used to be in Dace's clearing at 25,7, so the
+# gate opened onto an empty yard and the key did nothing)
 [exit]
-x=25
-y=7
+x=45
+y=12
 to=tut_quarry
 tx=1
 ty=11

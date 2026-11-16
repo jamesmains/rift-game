@@ -28,6 +28,8 @@ struct DeskWindow {
     int focusX = -1, focusY = -1;        // controller: move the cursor here on the next frame (a window just opened, a slot was picked)
     bool focusFirst = true;              // controller: put the cursor on the window's first control once it has been drawn
     bool oskShift = true;                // New Game on-screen keyboard: capitals
+    bool noClose = false;                // 1.6.1: no close button and Esc does nothing (the first-run installer)
+    int scroll = 0, pick = 0;            // 1.6.1 launcher: the page's scroll and its picked row (save slot, file)
 };
 
 // toy state (toys.cpp)
@@ -71,7 +73,15 @@ public:
     float bootTime = 0; bool booted = false;
     float startMenuT = 0;
     std::string lastMessage;
-    SaveSlotInfo slots[4];   // 3 save slots + the autosave
+    SaveSlotInfo slots[4];   // 3 save slots + the autosave of slotsCampaign
+    std::string slotsCampaign = "triffall";   // 1.6.1 (#135): whose saves slots[] holds (each campaign has its own)
+    std::string launchCampaign = "triffall";  // 1.6.1 (#134): the adventure picked in the launcher (desktop.ini campaign=)
+    enum { LP_PLAY, LP_SAVES, LP_HELP, LP_NOTES, LP_ACHIEV, LP_FILES, LP_ABOUT, LP_COUNT };   // launcher pages
+    void openLauncher(int page = -1, const std::string& campaign = "");
+    int newestSlot() const;                   // the newest of slots[] (-1: none)
+    std::string iconFlash; float iconFlashT = 0;   // an icon that just appeared (the installer's shortcut) sparkles a while
+    bool tidyIcons = false;                   // 1.6.1: a desktop.ini from before the slimmer desktop is packed once
+    bool modal() const { return !windows.empty() && windows.back().noClose; }
     std::string assetDir;
     MineState mine; SolState sol; std::vector<std::array<float, 3>> stars;
     float idleT = 0; bool screensaver = false; float ssT = 0;
@@ -125,7 +135,10 @@ private:
     void solReset(); void solDrawCard(Canvas& cv, int x, int y, int card, bool faceUp, bool hi); bool solCanStack(int moving, int onto, bool foundation);
     void drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool active);
     void drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool active);
-    void drawAchievementsWindow(Canvas& cv, DeskWindow& w, InputState& in, bool active);
+    void drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool active);          // launcher.cpp
+    void drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh);
+    bool launchButton(Canvas& cv, InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled, bool primary, bool active);
+    void launchScrollText(Canvas& cv, InputState& in, DeskWindow& w, int x, int y, int bw, int bh, const std::vector<std::string>& lines, bool active);
 public:
     void drawScreensaver(Canvas& cv, float dt);
     void screenChanged();   // 1.2.2: the screen size changed (App::setScreen)
@@ -134,7 +147,7 @@ private:
     bool snapIconCursor(int dx, int dy);
     void setIconPosition(int index, int x, int y);
     void dropIcon(int index);
-    std::string slotPath(int slot) const { return slot == 3 ? saveDir + "/autosave.sav" : saveDir + "/slot" + std::to_string(slot + 1) + ".sav"; }
+    std::string slotPath(int slot) const { return campaignSlotPath(saveDir, slotsCampaign, slot); }
 
     int activeWindow() const { return windows.empty() ? -1 : (int)windows.size() - 1; }
     bool mouseInWindow(const InputState& in, const DeskWindow& w) const { return in.mouseX >= w.x && in.mouseY >= w.y && in.mouseX < w.x + w.w && in.mouseY < w.y + w.h; }

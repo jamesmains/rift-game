@@ -164,3 +164,7 @@ what can be made). Command: `craftsel RECIPE` (select a recipe on the open craft
 <!-- 1.6.0 hub -->
 
 <!-- 1.6.0 quests -->
+- 1.6.1 desktop / launcher: commands `installed` (setup done: the Triffall icon appears), `deskaction ACTION` (launcher,
+  new, load, readme, fieldnotes, achievements, mycomputer...), `launchcampaign ID`, `todesktop`; expects `launcherpage`,
+  `deskicons`, `launchcampaign`, `deskslots` (e.g. 0100), `campaignsave:ID:N`. Desktop icons no longer include New Game:
+  tests start a game with `deskaction new` (or `newgame`). Test `launcher_saves_1_6_1`.

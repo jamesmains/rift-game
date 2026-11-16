@@ -1,8 +1,7 @@
 frames 5
-dblclick 50 86
+deskaction new
 frames 5
-click 200 160
-click 280 319
+key ENTER
 frames 60
 flag q_main
 god

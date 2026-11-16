@@ -18,37 +18,19 @@ static const char* DISCORD_INVITE = "https://discord.gg/BnPjBWZMaS";
 bool Desktop::init(Tileset* ts, Font* font, GameData* gd, Game* g, GameSettings* s, PlatformRequests* r, const std::string& saveDirectory, const std::string& iconPath) {
     ctx.ts = ts; ctx.font = font; ctx.gd = gd; game = g; settings = s; req = r; saveDir = saveDirectory;
     if (!icons.load(iconPath)) return false;
-    iconDefs = {
-        {"New Game", 0, 7, "new"},
-        {"Load Game", 4, 0, "load"},
-        {"Settings", 4, 3, "settings"},
-        {"Discord", 1, 6, "discord"},
-        {"Readme.txt", 2, 3, "readme"},
-#ifndef TRIFFALL_NO_EDITOR
-        {"Editor", 0, 8, "editor"},
-#endif
-        {"Shut Down", 0, 0, "shutdown"},
-        {"My Computer", 1, 12, "mycomputer"},
-        {"Minesweeper", 0, 14, "minesweeper"},
-        {"Solitaire", 1, 4, "solitaire"},
-        {"Achievements", 4, 4, "achievements"},
-        {"Field Notes.txt", 3, 3, "fieldnotes"},   // 1.5.0 (#96): what the party learned about monsters, for every save slot
-    };
-    // demo build: the full game's store page (1.3.0: only once demo.txt's store= names one - no icon that opens nothing)
-    if (game && game->demoMode && !game->storeUrl.empty()) iconDefs.push_back({"Wishlist Triffall", 0, 7, "wishlist"});
-    fixedIcons = iconDefs.size();
     { size_t p = iconPath.rfind('/'); assetDir = p == std::string::npos ? "assets" : iconPath.substr(0, p); }
-    for (auto& d : iconDefs) { d.dc = d.ic; d.dr = d.ir; }
-    std::string desktopConfig;
-    if (readFile(saveDir + "/desktop.ini", desktopConfig)) for (const auto& sec : parseConfig(desktopConfig)) {
-        if (sec.name == "desktop") wallpaper = clampi(sec.geti("wallpaper", 0), 0, 3);
+    std::string desktopConfig; int layout = 0; bool hadIni = false;
+    if (readFile(saveDir + "/desktop.ini", desktopConfig)) { hadIni = true; for (const auto& sec : parseConfig(desktopConfig)) {
+        if (sec.name == "desktop") { wallpaper = clampi(sec.geti("wallpaper", 0), 0, 3); layout = sec.geti("layout", 0); launchCampaign = sec.get("campaign", "triffall"); }
         if (sec.name == "icons") for (auto& kv : sec.kv) {   // pos.<action>=x,y  icon.<action>=col,row
             auto p = split(kv.second, ','); if (p.size() != 2) continue; std::array<int, 2> v{atoi(p[0].c_str()), atoi(p[1].c_str())};
             if (startsWith(kv.first, "pos.")) savedPos[kv.first.substr(4)] = v; else if (startsWith(kv.first, "icon.")) customIcon[kv.first.substr(5)] = v;
         }
-    }
+    } }
+    tidyIcons = hadIni && layout < 2;   // 1.6.1: most of the old icons moved into the launcher - pack what's left once
+    if (migrateCampaignSaves(saveDir) > 0) showToast("Saves sorted by adventure.");   // 1.6.1 (#135)
     refreshCampaignIcons();
-    refreshSlots();
+    slotsCampaign = launchCampaign; refreshSlots();
     return true;
 }
 
@@ -101,13 +83,17 @@ void Desktop::arrangeIcons() {
 
 void Desktop::saveDesktopSettings() {
     for (size_t i = 0; i < iconDefs.size() && i < iconPositions.size(); i++) savedPos[iconDefs[i].action] = iconPositions[i];
-    std::string o = fmt("[desktop]\nwallpaper=%d\n\n[icons]\n", wallpaper);
-    for (auto& kv : savedPos) o += fmt("pos.%s=%d,%d\n", kv.first.c_str(), kv.second[0], kv.second[1]);
+    std::string o = fmt("[desktop]\nwallpaper=%d\nlayout=2\ncampaign=%s\n\n[icons]\n", wallpaper, launchCampaign.c_str());
+    for (auto& kv : savedPos) { bool shown = false; for (auto& d : iconDefs) if (d.action == kv.first) shown = true; if (shown) o += fmt("pos.%s=%d,%d\n", kv.first.c_str(), kv.second[0], kv.second[1]); }
     for (auto& kv : customIcon) o += fmt("icon.%s=%d,%d\n", kv.first.c_str(), kv.second[0], kv.second[1]);
     writeFile(saveDir + "/desktop.ini", o);
 }
 void Desktop::iconCell(const std::string& action, int& c, int& r) const {
     for (auto& d : iconDefs) if (d.action == action) { c = d.ic; r = d.ir; return; }
+    // 1.6.1 (#133): the owner's pictures are the defaults (settings 2,3, achievements 3,8...)
+    static const std::map<std::string, std::array<int, 2>> def = {{"launcher", {2, 7}}, {"settings", {2, 3}}, {"achievements", {3, 8}}, {"mycomputer", {0, 0}},
+        {"minesweeper", {1, 7}}, {"solitaire", {1, 7}}, {"shutdown", {2, 2}}, {"discord", {1, 6}}, {"editor", {0, 8}}, {"resume", {0, 7}}, {"about", {3, 3}}};
+    auto it = def.find(action); if (it != def.end()) { c = it->second[0]; r = it->second[1]; }
 }
 void Desktop::setIconPicture(int index, int c, int r) {
     if (index < 0 || index >= (int)iconDefs.size()) return;
@@ -253,23 +239,19 @@ void Desktop::slider(Canvas& cv, InputState& in, int x, int y, int w, const std:
 void Desktop::openWindow(const std::string& type) {
     for (size_t i = 0; i < windows.size(); i++) if (windows[i].type == type) { DeskWindow w = windows[i]; windows.erase(windows.begin() + i); windows.push_back(w); return; }
     DeskWindow w; w.type = type;
-    int n = (int)windows.size();
+    int n = 0; for (auto& o : windows) if (!o.wantClose) n++;   // a window that is closing doesn't push the new one aside
     if (type == "new") { w.title = "New Game - Triffall"; w.w = 420; w.h = 386; w.text = gPlatform->userName().substr(0, 14); w.page = 1; }
-    else if (type == "load") { w.title = "Load Game"; w.w = 380; w.h = 274; }
+    else if (type == "launcher") { w.title = "Triffall"; w.w = 608; w.h = 432; }   // 1.6.1 (#134)
     else if (type == "settings") { w.title = "Settings"; w.w = 420; w.h = 420; }
-    else if (type == "readme") { w.title = "Readme.txt - Notepad"; w.w = 460; w.h = 340; }
     else if (type == "discord") { w.title = "Discord"; w.w = 320; w.h = 150; }
-    else if (type == "about") { w.title = "About Triffall"; w.w = 320; w.h = 232; }
-    else if (type == "setup") { w.title = "Triffall Setup"; w.w = 420; w.h = 300; w.sel = 1; }
+    else if (type == "setup") { w.title = "Triffall Setup"; w.w = 420; w.h = 300; w.sel = 1; w.noClose = true; }   // 1.6.1 (#134): no way out but through
     else if (type == "properties") { w.title = "Display Properties"; w.w = 360; w.h = 250; }
     else if (type == "iconpick") { w.title = "Change Icon"; w.w = 12 * 36 + 28; w.h = 9 * 36 + 76; }
-    else if (type == "mycomputer") { w.title = "My Computer"; w.w = 460; w.h = 320; w.sel = -1; }
+    else if (type == "mycomputer") { w.title = "My Computer"; w.w = 330; w.h = 196; w.sel = -1; }
     else if (type == "minesweeper") { w.title = "Minesweeper"; w.w = 168; w.h = 220; }
     else if (type == "solitaire") { w.title = "Solitaire"; w.w = 286; w.h = 340; }
-    else if (type == "achievements") { w.title = "Achievements"; w.w = 420; w.h = 330; }
-    else if (type == "fieldnotes") { w.title = "Field Notes.txt - Notepad"; w.w = 460; w.h = 340; }   // 1.5.0 (#96)
     else { w.title = type; w.w = 300; w.h = 150; }
-    w.x = (UI::SCREEN_W - w.w) / 2 + n * 12; w.y = (UI::SCREEN_H - TASKBAR_H - w.h) / 2 + n * 12;
+    w.x = (UI::SCREEN_W - w.w) / 2 + n * 12; w.y = std::max(0, (UI::SCREEN_H - TASKBAR_H - w.h) / 2 + n * 12);
     windows.push_back(w);
     startOpen = false;
     gAudio.play("desktop_open");
@@ -284,21 +266,39 @@ void Desktop::showDialog(const std::string& title, const std::string& text, std:
 
 void Desktop::refreshCampaignIcons() {
     // remember where every icon is now (by action), rebuild the list, then put each icon back: where it is, where it was
-    // saved, or (a new campaign) in the first free spot of the grid
+    // saved, or (new) in its default spot / the first free spot of the grid
     std::map<std::string, std::array<int, 2>> now = savedPos;
     for (size_t i = 0; i < iconDefs.size() && i < iconPositions.size(); i++) now[iconDefs[i].action] = iconPositions[i];
-    iconDefs.resize(fixedIcons);
-    for (auto& c : listCampaigns(assetDir)) if (c.id != "triffall") { IconDef d{c.name, c.iconC, c.iconR, "campaign:" + c.id}; d.dc = d.ic; d.dr = d.ir; iconDefs.push_back(d); }
-    for (auto& d : iconDefs) { auto it = customIcon.find(d.action); if (it != customIcon.end()) { d.ic = it->second[0]; d.ir = it->second[1]; } else { d.ic = d.dc; d.ir = d.dr; } }
+    // 1.6.1 (#133 #134): a calmer desktop. The game is one icon - Triffall, the launcher, put there by the installer - and
+    // New Game, Load, Settings, the Editor, campaigns, Achievements and the text files live in the launcher. The rest is
+    // the PC's own. Pictures: the owner's choices (1.5.2 desktop.ini) are the defaults.
+    iconDefs.clear();
+    if (!firstRun()) iconDefs.push_back({"Triffall", 2, 7, "launcher"});
+    iconDefs.push_back({"My Computer", 0, 0, "mycomputer"});
+    iconDefs.push_back({"Minesweeper", 1, 7, "minesweeper"});
+    iconDefs.push_back({"Solitaire", 1, 7, "solitaire"});
+    iconDefs.push_back({"Shut Down", 2, 2, "shutdown"});
+    fixedIcons = iconDefs.size();
+    for (auto& d : iconDefs) { d.dc = d.ic; d.dr = d.ir; auto it = customIcon.find(d.action); if (it != customIcon.end()) { d.ic = it->second[0]; d.ir = it->second[1]; } }
     iconPositions.assign(iconDefs.size(), {-1, -1});
+    auto grid = [](int slot) { return std::array<int, 2>{16 + (slot / 8) * 84, 8 + (slot % 8) * 54}; };
+    if (tidyIcons) {   // once, for a desktop from before 1.6.1: keep the icons' old order (column by column), Triffall first
+        tidyIcons = false;
+        auto key = [&](size_t i) -> long long { if (iconDefs[i].action == "launcher") return -1; auto it = now.find(iconDefs[i].action); if (it == now.end()) return 100000000LL + (long long)i; return (long long)(it->second[0] / 84) * 100000 + it->second[1]; };
+        std::vector<size_t> order; for (size_t i = 0; i < iconDefs.size(); i++) order.push_back(i);
+        std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) { return key(a) < key(b); });
+        for (size_t k = 0; k < order.size(); k++) iconPositions[order[k]] = grid((int)k);
+        saveDesktopSettings();
+        return;
+    }
     for (size_t i = 0; i < iconDefs.size(); i++) { auto it = now.find(iconDefs[i].action); if (it != now.end()) iconPositions[i] = {std::max(0, it->second[0]), std::max(0, it->second[1])}; }   // 1.2.2: kept where they were (a wide screen may show them); screenChanged pulls them into view
+    static const std::map<std::string, int> defSlot = {{"launcher", 0}, {"mycomputer", 1}, {"minesweeper", 2}, {"solitaire", 3}, {"shutdown", 4}};
+    auto freeAt = [&](size_t i, std::array<int, 2> p) { for (size_t j = 0; j < iconDefs.size(); j++) if (j != i && iconPositions[j][0] >= 0 && abs(iconPositions[j][0] - p[0]) < 60 && abs(iconPositions[j][1] - p[1]) < 40) return false; return true; };
     for (size_t i = 0; i < iconDefs.size(); i++) {
         if (iconPositions[i][0] >= 0) continue;
-        for (int slot = 0; slot < 64; slot++) {
-            std::array<int, 2> p{16 + (slot / 8) * 84, 8 + (slot % 8) * 54}; bool used = false;
-            for (size_t j = 0; j < iconDefs.size(); j++) if (j != i && iconPositions[j][0] >= 0 && abs(iconPositions[j][0] - p[0]) < 60 && abs(iconPositions[j][1] - p[1]) < 40) used = true;
-            if (!used) { iconPositions[i] = p; break; }
-        }
+        auto ds = defSlot.find(iconDefs[i].action);
+        if (ds != defSlot.end() && freeAt(i, grid(ds->second))) { iconPositions[i] = grid(ds->second); continue; }
+        for (int slot = 0; slot < 64; slot++) if (freeAt(i, grid(slot))) { iconPositions[i] = grid(slot); break; }
         if (iconPositions[i][0] < 0) iconPositions[i] = {16, 8};
     }
 }
@@ -308,25 +308,39 @@ void Desktop::openNewGame(const std::string& id) {
         game->running = false;
         if (!game->switchCampaign(id)) { showDialog("New Game", "That campaign could not be loaded."); return; }
         for (size_t i = 0; i < windows.size(); i++) if (windows[i].type == "new") { windows.erase(windows.begin() + i); break; }
+        launchCampaign = id;   // 1.6.1: the launcher (if it's open) shows this adventure picked
         openWindow("new"); windows.back().campaign = id; windows.back().title = "New Game - " + game->campaign.name;
     };
     if (game->running) showDialog("New Game", "A game is already running. Starting a new game will discard unsaved progress. Continue?", go, true); else go();
 }
 void Desktop::runAction(const std::string& a) {
     startOpen = false;
-    if (a == "new") openNewGame("triffall");
+    if (a == "launcher") openLauncher();
+    else if (a == "new") openNewGame("triffall");
     else if (startsWith(a, "campaign:")) openNewGame(a.substr(9));
-    else if (a == "load") openWindow("load");
+    // 1.6.1 (#133 #134): these live in the launcher now (F1 / F9 and old action names still work)
+    else if (a == "load" || a == "saves") openLauncher(LP_SAVES, game->running ? game->campaignId : "");
+    else if (a == "readme" || a == "help") openLauncher(LP_HELP);
+    else if (a == "fieldnotes") openLauncher(LP_NOTES);
+    else if (a == "achievements") openLauncher(LP_ACHIEV);
+    else if (a == "files") openLauncher(LP_FILES);
+    else if (a == "about") openLauncher(LP_ABOUT);
     else if (a == "settings") openWindow("settings");
     else if (a == "wishlist") { if (req && game && !game->storeUrl.empty()) req->openURL = game->storeUrl; showToast("Opening the Triffall store page..."); }
     else if (a == "discord") { if (req) req->openURL = discordUrl(); openWindow("discord"); }
-    else if (a == "readme") openWindow("readme");
-    else if (a == "about") openWindow("about");
-    else if (a == "mycomputer" || a == "minesweeper" || a == "solitaire" || a == "achievements" || a == "fieldnotes") openWindow(a);
+    else if (a == "mycomputer" || a == "minesweeper" || a == "solitaire") openWindow(a);
     else if (a == "worldmap") { if (!game->running) showDialog("World Map", "The map shows the world of a running game. Start or load a game first."); else { game->openWorldMap(); launchGame = true; } }
     else if (a == "editor") { launchEditor = true; windows.clear(); }
     else if (a == "resume") { if (game->running) launchGame = true; }
     else if (a == "shutdown") showDialog("Shut Down Windows", "Are you sure you want to shut down the computer? Unsaved progress will be lost.", [this]() { quit = true; }, true);
+}
+
+// 1.6.1: one list for the Start menu (update and draw used to keep two copies)
+struct StartItem { const char* label; const char* action; int ic, ir; };
+static const std::vector<StartItem>& startMenuItems() {
+    static const std::vector<StartItem> items = {{"Resume Triffall", "resume", 0, 7}, {"Triffall", "launcher", 2, 7}, {"Settings", "settings", 2, 3}, {"My Computer", "mycomputer", 0, 0},
+        {"Minesweeper", "minesweeper", 1, 7}, {"Solitaire", "solitaire", 1, 7}, {"About Triffall", "about", 3, 3}, {"Shut Down...", "shutdown", 2, 2}};
+    return items;
 }
 
 // ---------------- update ----------------
@@ -334,6 +348,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     ctx.cv = &cv; ctx.frame++; ctx.time += dt; clockT += dt; mouseUsed = false; bool clickInWin = false;
     if (toastT > 0) toastT -= dt;
     if (dblTimer > 0) dblTimer -= dt;
+    if (iconFlashT > 0) iconFlashT -= dt;
     // screensaver after 90s idle on the desktop
     { bool anyKey = false; for (int k = 0; k < K_COUNT; k++) if (in.pressed[k]) anyKey = true;
       bool input = anyKey || in.mouseDX || in.mouseDY || in.mousePressed[0] || in.mousePressed[1] || in.mousePressed[2] || in.wheel || fabsf(in.stickX) > 0.2f || fabsf(in.stickY) > 0.2f;
@@ -351,7 +366,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     bool bindingKey = !windows.empty() && windows.back().type == "settings" && windows.back().page == 1 && windows.back().sub >= 0;
     // keyboard users steer the same cursor with the arrow keys inside windows that have no list of their own
     std::string topType = windows.empty() ? "" : windows.back().type;
-    bool kbNav = !in.gamepadActive && !windows.empty() && !startOpen && (topType == "settings" || topType == "about" || topType == "discord" || topType == "mycomputer" || topType == "achievements" || topType == "minesweeper" || topType == "solitaire");
+    bool kbNav = !in.gamepadActive && !windows.empty() && !startOpen && (topType == "settings" || topType == "about" || topType == "discord" || topType == "mycomputer" || topType == "launcher" || topType == "minesweeper" || topType == "solitaire");
     padNavWindows = (in.gamepadActive || kbNav) && !windows.empty();
     bool padActivated = false;   // the pad's confirm was consumed by a shortcut (icon / start menu), do not also click
     if (in.gamepadActive) {
@@ -414,7 +429,8 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         else { in.mouseX = cursorX; in.mouseY = cursorY; if (onHot && !bindingKey && actP(in, A_CONFIRM) && !in.typed.size()) { in.mousePressed[0] = true; in.mouseDown[0] = true; in.eatKeys(); } }
     }
     else { cursorX = in.mouseX; cursorY = in.mouseY; }
-    if (actP(in, A_CANCEL) && !bindingKey) {
+    const bool isModal = modal();   // 1.6.1 (#134): the first-run installer can't be closed, and nothing behind it reacts
+    if (actP(in, A_CANCEL) && !bindingKey && !isModal) {
         if (startOpen) startOpen = false;
         else if (!windows.empty() && windows.back().type == "new" && windows.back().sub == 2) windows.back().sub = 0;   // close the on-screen keyboard first
         else if (!windows.empty() && windows.back().type == "solitaire" && sol.selPile >= 0) { sol.selPile = -1; sol.sel = -1; }
@@ -424,9 +440,11 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     int sbW = startBtnW;
     bool overStart = in.mouseX >= 2 && in.mouseX < 2 + sbW && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3;
     bool justOpened = false;
-    if (in.mousePressed[0] && overStart) { startOpen = !startOpen; mouseUsed = true; gAudio.play("desktop_click"); if (startOpen) { startSel = 0; justOpened = true; } }
+    if (isModal) { startOpen = false; contextOpen = false; }
+    if (in.mousePressed[0] && overStart && !isModal) { startOpen = !startOpen; mouseUsed = true; gAudio.play("desktop_click"); if (startOpen) { startSel = 0; justOpened = true; } }
     if (startOpen) padOnStart = false;
-    if (actP(in, A_MENU) && !bindingKey) { contextOpen = false; startOpen = !startOpen; if (startOpen) { startSel = 0; justOpened = true; } gAudio.play("desktop_click"); in.eatKeys(); }
+    bool tabInWindow = in.pressed[K_TAB] && (topType == "launcher" || topType == "new");   // 1.6.1: Tab belongs to the window there (launcher pages, name / class)
+    if (actP(in, A_MENU) && !bindingKey && !isModal && !tabInWindow) { contextOpen = false; startOpen = !startOpen; if (startOpen) { startSel = 0; justOpened = true; } gAudio.play("desktop_click"); in.eatKeys(); }
     if (contextOpen) {
         const int rowTop[] = {contextY + 4, contextY + 26, contextY + 55};
         if (in.mouseDX || in.mouseDY) for (int i = 0; i < 3; i++) if (in.mouseX >= contextX + 4 && in.mouseX < contextX + 164 && in.mouseY >= rowTop[i] && in.mouseY < rowTop[i] + 22) contextSel = i;
@@ -441,23 +459,20 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         return;
     }
     if (startOpen) {
-        std::vector<std::pair<std::string, std::string>> items = {{"Resume Triffall", "resume"}, {"New Game", "new"}, {"Load Game", "load"}, {"Settings", "settings"}, {"Discord", "discord"}, {"Readme", "readme"}, {"Editor", "editor"}, {"My Computer", "mycomputer"}, {"Minesweeper", "minesweeper"}, {"Solitaire", "solitaire"}, {"Achievements", "achievements"}, {"About", "about"}, {"Shut Down...", "shutdown"}};
-    #ifdef TRIFFALL_NO_EDITOR
-        items.erase(std::remove_if(items.begin(), items.end(), [](const std::pair<std::string, std::string>& p) { return p.second == "editor"; }), items.end());
-#endif
+        const auto& items = startMenuItems();
         int mx = 2, mh = (int)items.size() * 22 + 8, my = UI::SCREEN_H - TASKBAR_H - mh;
         int n = (int)items.size();
         // the menu keeps the controller in: up/down wrap around it, left/right do nothing; Start or Back closes it
         if (actP(in, A_UP)) startSel = (startSel + n - 1) % n; if (actP(in, A_DOWN)) startSel = (startSel + 1) % n;
         startSel = clampi(startSel, 0, n - 1);
-        for (int i = 0; i < n; i++) { int iy = my + 4 + i * 22; if (in.mouseX >= mx + 24 && in.mouseX < mx + 180 && in.mouseY >= iy && in.mouseY < iy + 22) { if (in.mouseDX || in.mouseDY) startSel = i; if (in.mousePressed[0] && !justOpened) { mouseUsed = true; runAction(items[i].second); return; } } }
+        for (int i = 0; i < n; i++) { int iy = my + 4 + i * 22; if (in.mouseX >= mx + 24 && in.mouseX < mx + 180 && in.mouseY >= iy && in.mouseY < iy + 22) { if (in.mouseDX || in.mouseDY) startSel = i; if (in.mousePressed[0] && !justOpened) { mouseUsed = true; runAction(items[i].action); return; } } }
         if (in.gamepadActive && (justOpened || actP(in, A_UP) || actP(in, A_DOWN))) { cursorX = mx + 100; cursorY = my + 4 + startSel * 22 + 11; }
-        if (actP(in, A_CONFIRM) && !justOpened) { runAction(items[startSel].second); return; }
+        if (actP(in, A_CONFIRM) && !justOpened) { runAction(items[startSel].action); return; }
         if (in.mousePressed[0] && !overStart && !(in.mouseX >= mx && in.mouseX < mx + 180 && in.mouseY >= my && in.mouseY < my + mh)) startOpen = false;
         if (startOpen) { mouseUsed = true; }
     }
     // taskbar app button (resume game)
-    if (game->running) { int bx = 2 + sbW + 6; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + 160 && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { launchGame = true; mouseUsed = true; } }
+    if (game->running && !isModal) { int bx = 2 + sbW + 6; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + 160 && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { launchGame = true; mouseUsed = true; } }
     // windows: topmost gets input
     for (int i = (int)windows.size() - 1; i >= 0; i--) {
         bool active = i == activeWindow();
@@ -465,10 +480,11 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         if (active && in.mousePressed[0] && mouseInWindow(in, windows[i])) clickInWin = true;
     }
     // clicking a non-active window brings it to front
-    if (in.mousePressed[0] && !mouseUsed && !clickInWin) {
+    if (in.mousePressed[0] && !mouseUsed && !clickInWin && !isModal) {
         for (int i = (int)windows.size() - 1; i >= 0; i--) if (mouseInWindow(in, windows[i])) { DeskWindow w = windows[i]; windows.erase(windows.begin() + i); windows.push_back(w); mouseUsed = true; break; }
     }
     for (size_t i = 0; i < windows.size(); i++) if (windows[i].wantClose) { windows.erase(windows.begin() + i); i--; gAudio.play("desktop_close"); }
+    if (isModal) { hoverIcon = -1; iconPress = iconDrag = -1; return; }
     // desktop icons
     // nothing behind an open menu, a window or the taskbar reacts to the pointer
     bool overAnyWindow = false; for (const auto& w : windows) if (mouseInWindow(in, w)) { overAnyWindow = true; break; }
@@ -524,8 +540,8 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         }
     }
     // shortcuts
-    if (in.pressed[K_F1]) openWindow("readme");
-    if (in.pressed[K_F9]) openWindow("load");
+    if (in.pressed[K_F1]) runAction("readme");
+    if (in.pressed[K_F9]) runAction("load");
 }
 
 void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active) {
@@ -538,7 +554,7 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
     if (w.dragging) { if (!in.mouseDown[0]) w.dragging = false; else { w.x = clampi(in.mouseX - w.dragDX, -w.w + 40, UI::SCREEN_W - 40); w.y = clampi(in.mouseY - w.dragDY, 0, UI::SCREEN_H - TASKBAR_H - 20); } }
     // close button
     int cx = w.x + w.w - 20, cy = w.y + 5;
-    if (in.mousePressed[0] && in.mouseX >= cx && in.mouseX < cx + 16 && in.mouseY >= cy && in.mouseY < cy + 14) { w.wantClose = true; mouseUsed = true; return; }
+    if (!w.noClose && in.mousePressed[0] && in.mouseX >= cx && in.mouseX < cx + 16 && in.mouseY >= cy && in.mouseY < cy + 14) { w.wantClose = true; mouseUsed = true; return; }
     // keyboard for text windows
     if (w.type == "new") {
         if (w.sub == 3) { std::string t; bool cancelled = false; if (gPlatform->pollTextInput(t, cancelled)) { if (!cancelled) { std::string clean; for (char c : t) if (clean.size() < 14 && (isalnum((unsigned char)c) || c == ' ' || c == '-' || c == '\'')) clean += c; w.text = clean; } w.sub = 1; } return; }
@@ -555,19 +571,11 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
         // only Enter starts from the keyboard: Space is a letter in a name
         if (in.pressed[K_ENTER] && !w.text.empty() && !in.gamepadActive && w.sub != 2) { w.status = "start"; }
     }
-    if (w.type == "achievements") {
-        int n = (int)game->achievements.size(), maxShow = std::max(1, (w.h - 58) / 30);
-        if (actP(in, A_UP)) w.page = std::max(0, w.page - 1); if (actP(in, A_DOWN)) w.page = std::min(std::max(0, n - maxShow), w.page + 1);
-        if (actP(in, A_PAGEUP)) w.page = std::max(0, w.page - maxShow); if (actP(in, A_PAGEDOWN)) w.page = std::min(std::max(0, n - maxShow), w.page + maxShow);
-        if (in.gamepadActive && fabsf(in.stickY) > 0.5f) { w.timer += 0; }
-    }
-    if (w.type == "load") {
-        if (actP(in, A_UP)) w.sel = (w.sel + 3) % 4; if (actP(in, A_DOWN)) w.sel = (w.sel + 1) % 4;
-        if (actP(in, A_CONFIRM) && !in.gamepadActive) w.status = "go";
+    if (w.type == "launcher") {   // 1.6.1: Tab / Shift+Tab change the page, PgUp / PgDn scroll it (the arrows hop between buttons)
+        if (in.pressed[K_TAB]) { w.page = (w.page + (in.shift() ? LP_COUNT - 1 : 1)) % LP_COUNT; w.scroll = 0; w.pick = 0; gAudio.play("ui_move"); }
+        if (actP(in, A_PAGEDOWN)) w.scroll += 10; if (actP(in, A_PAGEUP)) w.scroll = std::max(0, w.scroll - 10);
     }
     if (w.type == "yesno" || w.type == "msg") { if (actP(in, A_CONFIRM) && !in.gamepadActive) w.status = "yes"; }
-    if (w.type == "fieldnotes") { if (in.wheel) w.page = std::max(0, w.page - in.wheel * 2); if (actP(in, A_UP)) w.page = std::max(0, w.page - 1); if (actP(in, A_DOWN)) w.page++; if (actP(in, A_PAGEDOWN)) w.page += 15; if (actP(in, A_PAGEUP)) w.page = std::max(0, w.page - 15); }   // 1.5.0: clamped when drawn
-    if (w.type == "readme") { if (in.wheel) w.page = clampi(w.page - in.wheel * 2, 0, 200); if (actP(in, A_UP)) w.page = std::max(0, w.page - 1); if (actP(in, A_DOWN)) w.page = std::min(200, w.page + 1); if (actP(in, A_PAGEDOWN)) w.page = std::min(200, w.page + 15); if (actP(in, A_PAGEUP)) w.page = std::max(0, w.page - 15); }
 }
 
 // ---------------- drawing ----------------
@@ -583,6 +591,7 @@ void Desktop::drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool ac
     ctx.font->draw(cv, *ctx.ts, w.x + 8, w.y + 7, w.title, active ? HILITE : FACE);
     // close button
     int cx = w.x + w.w - 20, cy = w.y + 5;
+    if (w.noClose) return;   // 1.6.1 (#134): the installer
     if (active) hot(cx, cy, 16, 14);
     bool closeHover = active && !startOpen && !contextOpen && in.mouseX >= cx && in.mouseX < cx + 16 && in.mouseY >= cy && in.mouseY < cy + 14;
     bevelBox(cv, cx, cy, 16, 14, closeHover && in.mouseDown[0]);
@@ -678,31 +687,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         f.draw(cv, *ctx.ts, x, w.y + w.h - 60, "Every level you pick a class rank: multiclass freely.", SHADOW);
         { const CampaignInfo& c = game->campaign; std::string cd = c.desc.empty() ? c.name : c.name + ": " + c.desc; if (!c.author.empty() && c.id != "triffall") cd += "  (by " + c.author + ")";
           auto ls = f.wrap(cd, w.w - 24); for (size_t i = 0; i < ls.size() && i < 2; i++) f.draw(cv, *ctx.ts, x, ly + 166 + (int)i * 12, ls[i], RGB(0, 0, 128)); }
-    } else if (w.type == "load") {
-        for (int i = 0; i < 4; i++) {
-            int sy = y + i * 44; bool sel = w.sel == i;
-            bool hover = in.mouseX >= x && in.mouseX < x + w.w - 20 && in.mouseY >= sy && in.mouseY < sy + 40; hot(x, sy, w.w - 20, 40);
-            if (hover && in.mousePressed[0]) { if (w.sel == i && dblTimer > 0 && dblIcon == 200 + i && !in.gamepadActive) w.status = "go"; w.sel = i; dblTimer = 0.4f; dblIcon = 200 + i; mouseUsed = true;
-                if (in.gamepadActive) { bool has = slots[i].exists; w.focusX = has ? w.x + w.w - 270 + 40 : w.x + w.w - 90 + 40; w.focusY = w.y + w.h - 34 + 12; } }   // picked: straight to Load (or Cancel)
-            bevelBox(cv, x, sy, w.w - 20, 40, true);
-            cv.fillRect(x + 2, sy + 2, w.w - 24, 36, sel ? TITLE_A : HILITE);
-            Color8 tc = sel ? HILITE : DKSHADOW;
-            drawIcon(cv, slots[i].exists ? 3 : 1, slots[i].exists ? 10 : 1, x + 6, sy + 4, 1);
-            std::string label = i == 3 ? std::string("Autosave") : fmt("Slot %d", i + 1);
-            if (slots[i].exists) {
-                f.draw(cv, *ctx.ts, x + 44, sy + 5, label + fmt(": %s  (Lv %d)", slots[i].hero.c_str(), slots[i].level) + (slots[i].campaign.empty() ? "" : "  [" + slots[i].campaign + "]"), tc);
-                f.draw(cv, *ctx.ts, x + 44, sy + 20, fmt("%s - %02d:%02d played", slots[i].mapName.c_str(), slots[i].playtime / 3600, (slots[i].playtime / 60) % 60), tc);
-            } else { f.draw(cv, *ctx.ts, x + 44, sy + 12, label + (i == 3 ? ": <none yet - made when you travel>" : ": <empty>"), tc); }
-        }
-        bool ok = slots[w.sel].exists;
-        if (win98Button(cv, in, w.x + w.w - 270, w.y + w.h - 34, 80, 24, "Load", ok, true, active) || (w.status == "go" && ok)) {
-            w.status.clear();
-            int slot = w.sel;
-            if (game->running) { showDialog("Load Game", "Loading will discard unsaved progress in the running game. Continue?", [this, slot]() { loadSlot(slot); }, true); } else loadSlot(slot);
-            return;
-        }
-        if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "Delete", slots[w.sel].exists, false, active)) { int slot = w.sel; showDialog("Delete Save", slot == 3 ? std::string("Delete the autosave permanently?") : fmt("Delete slot %d permanently?", slot + 1), [this, slot]() { remove(slotPath(slot).c_str()); remove((slotPath(slot) + ".bak").c_str()); refreshSlots(); }, true); }
-        if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Cancel", true, false, active)) w.wantClose = true;
+    } else if (w.type == "launcher") { drawLauncher(cv, w, in, active);
     } else if (w.type == "iconpick") {
         // every picture in the icon sheet; click one to use it for that icon (saved at once)
         int idx = -1; for (size_t i = 0; i < iconDefs.size(); i++) if (iconDefs[i].action == w.text) idx = (int)i;
@@ -822,64 +807,26 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         { static const char* bl[] = {"Companion chatter: off", "Companion chatter: rare", "Companion chatter: normal", "Companion chatter: often"}; if (win98Button(cv, in, x + 10, cy, 190, 18, bl[clampi(s.banter, 0, 3)], true, false, active)) s.banter = (s.banter + 1) % 4; cy += 22; }
         if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "OK", true, true, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); w.wantClose = true; }
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Apply", true, false, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); }
-    } else if (w.type == "readme") {
-        bevelBox(cv, w.x + 4, w.y + 26, w.w - 8, w.h - 30, true); cv.fillRect(w.x + 6, w.y + 28, w.w - 12, w.h - 34, HILITE);
-        static const char* lines[] = {
-            "TRIFFALL - README", "=================", "",
-            "An old-school open-world RPG with X-COM style tactical combat.", "",
-            "HOW TO PLAY - THE FIRST TEN MINUTES", "  New to Triffall? Double-click Tutorial first: a short adventure", "  with old Wick that teaches everything below by doing it.", "", "  1. Double-click New Game, name your hero, pick a class. (You can", "     add ranks in any class later, so don't agonise.)",
-            "  2. Walk out of the cottage and talk to Elder Mara at the north-west", "     edge of the village. Your journal (J) always says where to go", "     next; M shows it on the world map.",
-            "  3. Recruit Bram at the inn. Buy torches and potions - caves are dark.", "  4. When you meet monsters the fight happens right where you stand.",
-            "     Move, attack, end turn. Stand next to walls for cover; hit things", "     from two sides to flank them. Fleeing is allowed and often smart.",
-            "  5. Save at shrines (in towns and in most dungeons). The game", "     also autosaves whenever you reach a new place (Load Game >", "     Autosave), so a bad fight never costs more than a few minutes.",
-            "  6. Talk to everyone. Most towns have three or four people who need", "     help, and a few choices in the story change how the world ends.",
-            "  Stuck? Settings > Access has large text, slower or instant text,", "  colour-blind friendly colours and no flashing. Settings > Controls", "  rebinds everything, keyboard or gamepad.", "",
-            "DESKTOP", "  Double-click an icon to open it. Right-click it (or E / pad X)", "  to change its picture. Drag icons anywhere: the desktop keeps", "  their places, pictures and the wallpaper for next time.", "  Use the Start menu for the same options.", "  Every campaign in assets/campaigns gets its own icon: double-click", "  it to start that adventure. Make your own in the Editor.", "",
-            "EXPLORING (defaults - rebind in Settings > Controls)", "  Arrow keys / WASD or left stick ........ move", "  E / Enter / A button .................... talk, open, interact", "  Tab / Start button ....................... party, items, spells, quests", "  B / Q ..................................... spell menu / item menu", "  1-8 ....................................... favorites hotbar", "  Esc / B button ........................... pause (save, load, settings)", "  F5 ....................................... quick save (on a save shrine)", "  Mouse: click a neighbouring tile to step or interact.", "",
-            "YOUR CHARACTER", "  Every level gives 3 stat points and one CLASS RANK. Put the rank", "  in any class (multiclassing): each rank adds that class's HP and", "  MP and teaches its spells at the rank listed in classes.txt.", "  STR  melee damage with STR weapons (+1 per 2 points over 8)", "  DEX  +2% to hit, +1 evasion, crits; +1 AP per 5, +1 Move per 3;", "       damage with bows, guns, daggers and rapiers", "  CON  +3 max HP per point", "  INT  +2 MP; arcane/tech spell damage (+1 per 2 over 8)", "  WIS  +2 MP; healing power (+1 per point over 8)", "  CHA  shop prices (the hero's CHA counts)", "  The level-up screen previews HP, MP, AP, Move, damage and more", "  before you confirm. Changed your mind? Brother Caul (Brasswick)", "  and Abbot Tyr (Frosthold) perform the Rite of Renewal for gold,", "  and a Draught of Forgetting does it anywhere.", "",
-            "COMBAT (turn based, fought in place)", "  Each character has AP (actions) and MV (tiles of movement).", "  Move: pick a highlighted tile (arrows or mouse) and confirm.", "  Attack: pick an enemy in range; hit chance is shown.", "  A toggles normal / aimed attack. S spells, Q items, D defend,", "  F flee, T end turn, R action menu, C center camera, 1-8 favorites.", "  The box in the top-left describes the tile under the cursor.", "  AREA SPELLS AND BOMBS HIT EVERYONE in the blast - you too.", "  The preview flashes any ally (or you) who would be caught.", "  Hitting a monster with an element shows WEAK / resists / immune", "  and the info box remembers it. Weapon oils change your element.", "  Other monsters hear a fight and join it if they're close by.", "  Drinking or applying an item costs 4 AP; throwing one costs 3.", "",
-            "DARKNESS", "  Caves, crypts and ruins are dark. Your party only lights a few", "  tiles around itself; past that you see the shape of the room but", "  not who stands in it, and you can't aim at what you can't see.", "  Attacks into shadow are 25% harder unless you see in the dark", "  (undead, machines and many cave dwellers do). Torches (use them", "  from the Items menu), the Light spell, flares, burning foes,", "  braziers and wall torches all push the dark back.", "",
-            "CRAFTING", "  Smiths (forge), alchemists (alchemy) and tinkers (workbench) in", "  towns open a crafting screen; field recipes work from the Items", "  menu (C). Each station has a skill that grows as you use it.", "  Recipes have a difficulty: above your skill they can fail and", "  ruin half the materials; well below it they can come out fine or", "  masterwork. Forges and workbenches also Reinforce gear (+1 to +3)", "  and Salvage it for parts; alchemy benches Enchant it with rift", "  dust. Boss trophies unlock masterwork recipes; formulas teach more.", "",
-            "THE WORLD", "  Rubble, vines, ice and boulders block some paths: dig with a", "  shovel, blast with a charge (light it and RUN) or a fire spell,", "  burn, melt or shove. Levers open doors and drain water. Glinting", "  spots are ore veins and herb patches - they grow back in a few days.", "  Notice boards post three bounties a day; take up to three at once.", "  Shops sell stacks: Left/Right sets the quantity, E buys the most.", "  Weapons and armour are in limited stock and restock every 3 days.", "",
-            "SNEAKING AND NOISE", "  Not every fight has to happen. Throw Rattle Stones or a bottle", "  (Items > Throw..., or the hotbar) where monsters can hear it:", "  they go to look and barely notice you while they do. Lead them", "  over a trap and they may never reach you. In the dark, with no", "  light, people and beasts that can't see in the dark notice you", "  later - the dead and machines see you anyway.", "",
-            "FIELD NOTES", "  What you find out about a monster - what hurts it, what it", "  casts - goes into Field Notes.txt on this desktop, for every", "  save slot. Lost a fight? Reload: you still know what you learned.", "  Hesk's Barrow and Greywood Cave hide places marked as deadly:", "  come back with the right weapon or element. There is always a", "  save shrine close by.", "",
-            "FAVORITES", "  In the Spells or Items menu, highlight something and press 1-8.", "  Utility spells (Light, Knock, Recall, Sense Treasure, Camouflage,", "  healing) can be cast from the Spells menu outside combat.", "",
-            "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one.", "",
-            "Made with raylib. Art: Urizen 1-bit tileset (vurmux, CC0) and", "  Cute Desktop Icons 32x32 by Mayke-Arth (mayke-arth.itch.io).", "Music: Pixel Fantasy by AlkaKrab.", "Sound effects: Pixel Combat by Helton Yan (CC BY 4.0).",
-        };
-        int n = sizeof(lines) / sizeof(lines[0]);
-        int maxShow = (w.h - 56) / 13;
-        w.page = clampi(w.page, 0, std::max(0, n - maxShow));
-        for (int i = 0; i < maxShow && w.page + i < n; i++) f.draw(cv, *ctx.ts, w.x + 10, w.y + 30 + i * 13, lines[w.page + i], DKSHADOW);
-        { std::string hint = fmt("%d / %d  -  wheel or arrows to scroll", std::min(n, w.page + maxShow), n); cv.fillRect(w.x + 6, w.y + w.h - 20, w.w - 12, 14, FACE); f.draw(cv, *ctx.ts, w.x + w.w - 10 - f.width(hint), w.y + w.h - 18, hint, SHADOW); }
     } else if (w.type == "discord") {
         drawIcon(cv, 1, 6, x + 6, y, 1);
         f.drawWrapped(cv, *ctx.ts, x + 48, y, w.w - 70, std::string("Opening the Triffall Discord in your browser:\n\n") + discordUrl(), DKSHADOW);
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "OK", true, true, active)) w.wantClose = true;
-    } else if (w.type == "fieldnotes") {   // 1.5.0 (#96): Field Notes.txt, written from the game's fieldnotes.ini
-        bevelBox(cv, w.x + 4, w.y + 26, w.w - 8, w.h - 30, true); cv.fillRect(w.x + 6, w.y + 28, w.w - 12, w.h - 34, HILITE);
-        std::vector<std::string> lines; for (auto& raw : split(game ? game->fieldNotesText() : std::string(), '\n')) { if (raw.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(raw, w.w - 24)) lines.push_back(wl); }
-        int n = (int)lines.size(), maxShow = (w.h - 56) / 13;
-        w.page = clampi(w.page, 0, std::max(0, n - maxShow));
-        for (int i = 0; i < maxShow && w.page + i < n; i++) f.draw(cv, *ctx.ts, w.x + 10, w.y + 30 + i * 13, lines[w.page + i], DKSHADOW);
-        { std::string hint = fmt("%d / %d  -  wheel or arrows to scroll", std::min(n, w.page + maxShow), n); cv.fillRect(w.x + 6, w.y + w.h - 20, w.w - 12, 14, FACE); f.draw(cv, *ctx.ts, w.x + w.w - 10 - f.width(hint), w.y + w.h - 18, hint, SHADOW); }
     } else if (w.type == "mycomputer") { drawMyComputer(cv, w, in, active);
     } else if (w.type == "minesweeper") { drawMinesweeper(cv, w, in, active);
     } else if (w.type == "solitaire") { drawSolitaire(cv, w, in, active);
-    } else if (w.type == "achievements") { drawAchievementsWindow(cv, w, in, active);
     } else if (w.type == "setup") {
         // first launch: a Win98 setup wizard. The components are for fun; the two options at the end are real settings.
         GameSettings& s = *settings;
         cv.fillRect(w.x + 4, w.y + 24, 110, w.h - 64, RGB(0, 0, 128));
         for (int k = 0; k < 8; k++) { uint32_t h = (uint32_t)(k * 2654435761u); cv.put(w.x + 10 + (int)(h % 98), w.y + 30 + (int)((h >> 9) % 80), RGB(200, 200, 255)); }
-        drawIcon(cv, 0, 7, w.x + 27, w.y + 120, 2);
+        { int ic = 2, ir = 7; iconCell("launcher", ic, ir); drawIcon(cv, ic, ir, w.x + 27, w.y + 120, 2); }   // 1.6.1: the disc the shortcut will show
         f.bold = true; f.draw(cv, *ctx.ts, w.x + 4 + (110 - f.width("TRIFFALL")) / 2, w.y + 200, "TRIFFALL", RGB(255, 210, 90)); f.bold = false;
         int tx = w.x + 126, ty = w.y + 32, tw = w.w - 140;
         // Enter presses the default button (Next / Finish), as in a real setup wizard, so a keyboard alone gets through it
         bool kbNext = active && !in.gamepadActive && in.pressed[K_ENTER];
-        auto next = [&](const char* label, bool enabled = true) { bool c = win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, label, enabled, true, active); if (enabled && kbNext) { kbNext = false; in.pressed[K_ENTER] = false; c = true; } return c; };
-        auto cancel = [&]() { return win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Cancel", w.page < 3, false, active); };
-        auto back = [&]() { return win98Button(cv, in, w.x + w.w - 266, w.y + w.h - 34, 80, 24, "< Back", w.page > 0 && w.page < 2, false, active); };
+        auto next = [&](const char* label, bool enabled = true) { bool c = win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, label, enabled, true, active); if (enabled && kbNext) { kbNext = false; in.pressed[K_ENTER] = false; c = true; } return c; };
+        // 1.6.1 (#134): no Cancel - the first launch always goes through the installer
+        auto back = [&]() { return win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "< Back", w.page > 0 && w.page < 2, false, active); };
         if (w.page == 0) {
             f.bold = true; f.draw(cv, *ctx.ts, tx, ty, "Welcome to Triffall Setup", DKSHADOW); f.bold = false;
             f.drawWrapped(cv, *ctx.ts, tx, ty + 22, tw, std::string("This program will install Triffall ") + TRIFFALL_VERSION + " on your computer.\n\nIt is strongly recommended that you exit all Windows programs before running this Setup program. (It is 1998. You have plenty of time.)\n\nClick Next to continue.", DKSHADOW);
@@ -902,29 +849,22 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             if (next("Next >")) { w.page = 2; w.timer = 0; s.save(saveDir + "/settings.ini"); gAudio.play("ui_click"); }
         } else if (w.page == 2) {
             f.bold = true; f.draw(cv, *ctx.ts, tx, ty, "Installing...", DKSHADOW); f.bold = false;
-            static const char* files[] = {"TRIFFALL.EXE", "TILES.PNG", "ICONS.PNG", "DATA\\ITEMS.TXT", "DATA\\CREATURES.TXT", "DATA\\SPELLS.TXT", "DATA\\QUESTS.TXT", "MAPS\\HOLLOWMERE.TXT", "MAPS\\BRASSWICK.TXT", "MAPS\\ASHFALL.TXT", "MAPS\\THE_SCAR.TXT", "DIALOGUE\\ELDER_MARA.TXT", "AUDIO\\MUSIC\\TITLE.OGG", "AUDIO\\MUSIC\\BOSS.OGG", "EPILOGUE.TXT", "README.TXT"};
+            static const char* files[] = {"TRIFFALL.EXE", "TILES.PNG", "ICONS.PNG", "DATA\\ITEMS.TXT", "DATA\\CREATURES.TXT", "DATA\\SPELLS.TXT", "DATA\\QUESTS.TXT", "MAPS\\HOLLOWMERE.TXT", "MAPS\\BRASSWICK.TXT", "MAPS\\ASHFALL.TXT", "MAPS\\THE_SCAR.TXT", "DIALOGUE\\ELDER_MARA.TXT", "AUDIO\\MUSIC\\TITLE.OGG", "AUDIO\\MUSIC\\BOSS.OGG", "EPILOGUE.TXT", "LAUNCHER.EXE", "DESKTOP\\TRIFFALL.LNK"};
             int nf = sizeof(files) / sizeof(files[0]); float p = std::min(1.0f, w.timer / 2.6f);
             f.draw(cv, *ctx.ts, tx, ty + 24, "Copying files:", DKSHADOW);
             f.draw(cv, *ctx.ts, tx, ty + 40, std::string("C:\\GAMES\\TRIFFALL\\") + files[std::min(nf - 1, (int)(p * nf))], RGB(0, 0, 128));
             bevelBox(cv, tx, ty + 62, tw - 10, 18, true); for (int k = 0; k + 9 <= (int)((tw - 14) * p); k += 11) cv.fillRect(tx + 3 + k, ty + 65, 9, 12, RGB(0, 0, 128));
             f.draw(cv, *ctx.ts, tx, ty + 88, fmt("%d%% complete", (int)(p * 100)), DKSHADOW);
             next("Next >", false);
-            if (p >= 1.0f) { w.page = 3; markInstalled(); gAudio.play("desktop_open"); }
+            if (p >= 1.0f) { w.page = 3; markInstalled(); refreshCampaignIcons(); iconFlash = "launcher"; iconFlashT = 8; gAudio.play("desktop_open"); }   // the shortcut appears now
         } else {
             f.bold = true; f.draw(cv, *ctx.ts, tx, ty, "Setup Complete", DKSHADOW); f.bold = false;
-            f.drawWrapped(cv, *ctx.ts, tx, ty + 22, tw, "Triffall has been installed on your computer.\n\nThe Readme on the desktop explains how to play. Settings has controls, text size and colours.", DKSHADOW);
-            static bool startNow = true; checkbox(cv, in, tx, ty + 110, "Start a new game now", startNow, active);
-            // new players start with the tutorial (a short campaign that teaches by playing) when the game has one
+            f.drawWrapped(cv, *ctx.ts, tx, ty + 22, tw, "Triffall has been installed on your computer.\n\nThe Triffall icon on your desktop opens the launcher: start or continue an adventure, load your saves, read How to Play and change settings.", DKSHADOW);
+            static bool openNow = true; checkbox(cv, in, tx, ty + 120, "Open Triffall now", openNow, active);
+            // new players are pointed at the tutorial (a short campaign that teaches by playing) when the game has one
             bool hasTutorial = false; for (auto& c : listCampaigns(assetDir)) if (c.id == "tutorial") hasTutorial = true;
-            static bool tutorialFirst = true; if (hasTutorial && startNow) checkbox(cv, in, tx + 16, ty + 128, "Begin with the Tutorial (recommended)", tutorialFirst, active);
-            if (next("Finish")) { w.wantClose = true; if (startNow) openNewGame(hasTutorial && tutorialFirst ? std::string("tutorial") : game ? game->campaignId : "triffall"); }
+            if (next("Finish")) { w.wantClose = true; if (openNow) openLauncher(LP_PLAY, hasTutorial ? std::string("tutorial") : std::string("triffall")); return; }
         }
-        if (cancel()) { markInstalled(); w.wantClose = true; }
-    } else if (w.type == "about") {
-        drawIcon(cv, 0, 7, x + 6, y + 4, 2);
-        f.bold = true; f.draw(cv, *ctx.ts, x + 80, y + 4, "Triffall", RGB(0, 0, 128)); f.bold = false;
-        f.drawWrapped(cv, *ctx.ts, x + 80, y + 22, w.w - 100, std::string("Version ") + TRIFFALL_VERSION + "\nAn open-world RPG with tactical turn-based combat, wrapped in a nostalgic desktop.\n\nEngine: C++ software renderer + raylib shell.\nArt: Urizen 1-bit tileset (vurmux) and Cute Desktop Icons by Mayke-Arth.\nMusic: Pixel Fantasy by AlkaKrab.", DKSHADOW);
-        if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "OK", true, true, active)) w.wantClose = true;
     } else if (w.type == "msg" || w.type == "yesno") {
         drawIcon(cv, w.type == "yesno" ? 2 : 2, w.type == "yesno" ? 10 : 3, x + 4, y, 1);
         f.drawWrapped(cv, *ctx.ts, x + 44, y + 2, w.w - 64, w.text, DKSHADOW);
@@ -966,10 +906,8 @@ void Desktop::drawTaskbar(Canvas& cv, InputState& in) {
 }
 
 void Desktop::drawStartMenu(Canvas& cv, InputState& in) {
-    std::vector<std::pair<std::string, std::pair<int, int>>> items = {{"Resume Triffall", {1, 7}}, {"New Game", {0, 7}}, {"Load Game", {4, 0}}, {"Settings", {4, 3}}, {"Discord", {1, 6}}, {"Readme", {2, 3}}, {"Editor", {0, 8}}, {"My Computer", {1, 12}}, {"Minesweeper", {0, 14}}, {"Solitaire", {1, 4}}, {"Achievements", {4, 4}}, {"About", {3, 3}}, {"Shut Down...", {0, 0}}};
-#ifdef TRIFFALL_NO_EDITOR
-    items.erase(items.begin() + 6);   // "Editor" (keep in sync with the list in update())
-#endif
+    (void)in;
+    const auto& items = startMenuItems();
     int mx = 2, mh = (int)items.size() * 22 + 8, my = UI::SCREEN_H - TASKBAR_H - mh;
     bevelBox(cv, mx, my, 180, mh, false);
     cv.fillRect(mx + 3, my + 3, 20, mh - 6, TITLE_A);
@@ -978,15 +916,12 @@ void Desktop::drawStartMenu(Canvas& cv, InputState& in) {
     for (size_t i = 0; i < items.size(); i++) {
         int iy = my + 4 + (int)i * 22;
         bool sel = (int)i == startSel;
-        bool enabled = !(i == 0 && !game->running);
+        bool enabled = !(std::string(items[i].action) == "resume" && !game->running);
         if (sel) cv.fillRect(mx + 24, iy, 153, 22, TITLE_A);
-        // icon drawn at half scale: blit 32px icon scaled down by sampling
-        int ic = items[i].second.first, ir = items[i].second.second;   // the same picture as its desktop icon (the player may have changed it)
-        { static const std::pair<const char*, const char*> act[] = {{"New Game", "new"}, {"Load Game", "load"}, {"Settings", "settings"}, {"Discord", "discord"}, {"Readme", "readme"}, {"Editor", "editor"}, {"My Computer", "mycomputer"}, {"Minesweeper", "minesweeper"}, {"Solitaire", "solitaire"}, {"Achievements", "achievements"}};
-          for (auto& a : act) if (items[i].first == a.first) iconCell(a.second, ic, ir); }
+        int ic = items[i].ic, ir = items[i].ir; iconCell(items[i].action, ic, ir);   // the same picture as its desktop icon (the player may have changed it)
         for (int yy = 0; yy < 16; yy++) for (int xx = 0; xx < 16; xx++) { Color8 c = icons.get(32 + ic * 32 + xx * 2, 32 + ir * 32 + yy * 2); if (c.a) cv.put(mx + 28 + xx, iy + 3 + yy, c); }
-        ctx.font->draw(cv, *ctx.ts, mx + 50, iy + 5, items[i].first, !enabled ? SHADOW : sel ? HILITE : DKSHADOW);
-        if (i == 11) { cv.hline(mx + 26, iy + 21, 150, SHADOW); cv.hline(mx + 26, iy + 22, 150, HILITE); }
+        ctx.font->draw(cv, *ctx.ts, mx + 50, iy + 5, items[i].label, !enabled ? SHADOW : sel ? HILITE : DKSHADOW);
+        if (i + 2 == items.size()) { cv.hline(mx + 26, iy + 21, 150, SHADOW); cv.hline(mx + 26, iy + 22, 150, HILITE); }
     }
 }
 
@@ -1040,11 +975,17 @@ void Desktop::draw(Canvas& cv, InputState& in) {
         if ((int)i != fullLabel) drawLabel(i, false);
     }
     if (fullLabel >= 0 && fullLabel < (int)iconDefs.size()) drawLabel((size_t)fullLabel, ctx.font->width(iconDefs[fullLabel].label) > LABEL_W);
+    // 1.6.1 (#134): the shortcut the installer just made twinkles for a few seconds
+    if (iconFlashT > 0) for (size_t i = 0; i < iconDefs.size(); i++) if (iconDefs[i].action == iconFlash) {
+        int ix = iconPositions[i][0] + 18, iy = iconPositions[i][1];
+        for (int k = 0; k < 6; k++) { float a = ctx.time * 2.2f + k * 1.047f; int sx = ix + 16 + (int)(cosf(a) * 24), sy = iy + 16 + (int)(sinf(a) * 20);
+            Color8 c = (k % 2) ? RGB(255, 230, 120) : RGB(200, 150, 255); cv.put(sx, sy, c); cv.put(sx - 1, sy, c); cv.put(sx + 1, sy, c); cv.put(sx, sy - 1, c); cv.put(sx, sy + 1, c); }
+    }
     // welcome text when idle
     if (!game->running && windows.empty()) {
         { int keep = ctx.font->style; ctx.font->style = Font::STYLE_CLASSIC;   // the logo always keeps the game's own letters
           ctx.font->bold = true; ctx.font->drawShadow(cv, *ctx.ts, UI::SCREEN_W - 300, UI::SCREEN_H - TASKBAR_H - 60, "TRIFFALL", RGB(255, 230, 120), RGB(0, 60, 60), 2); ctx.font->bold = false; ctx.font->style = keep; }
-        ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 300, UI::SCREEN_H - TASKBAR_H - 28, "Double-click New Game to begin.", RGB(200, 240, 240));
+        ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 300, UI::SCREEN_H - TASKBAR_H - 28, firstRun() ? "Setting up..." : "Double-click Triffall to begin.", RGB(200, 240, 240));
     }
     // windows
     for (size_t i = 0; i < windows.size(); i++) {

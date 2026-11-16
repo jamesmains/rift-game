@@ -1,6 +1,6 @@
 # Input given while an attack plays out is not lost: Defend pressed during the swing still happens afterwards.
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

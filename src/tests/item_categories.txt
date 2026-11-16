@@ -1,6 +1,6 @@
 # 0.8.8: item categories / sorting in the inventory and shops; quest items can't be dropped or sold
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

@@ -4,7 +4,7 @@
 #   solved    the flag set when it accepts: a door's openif=, an obstacle's needs=flag:, a change's if=...
 #   title     the machine's name, shown on the box (optional)
 # Place it as a sign with no text (Objects tab template terminal) and onuse=script:terminal,<password>,<solved>,<title>
-# The base game hides its passwords in the desktop's lore files (My Computer); a file whose first line is #locked
+# The base game hides its passwords in the desktop's lore files (the launcher's Files page); a file whose first line is #locked
 # only appears once a game runs lorefile:<name> (a chest's onuse=, a dialogue, a script).
 let title = "TERMINAL"
 if args >= 3
@@ -31,6 +31,6 @@ else
   notify ACCESS DENIED
   log {title}: ACCESS DENIED.
   if flag(arg2 + "_tries") >= 2
-    log (Machines like this kept their secrets on disk. The old computer you started from - My Computer on the desktop - might know more.)
+    log (Machines like this kept their secrets on disk. The old computer you started from - the Files page of the Triffall launcher on its desktop - might know more.)
   end
 end

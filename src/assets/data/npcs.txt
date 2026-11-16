@@ -498,3 +498,9 @@ name=Villager
 sprite=104,0
 dialogue=
 
+[npc]
+id=villager_4
+name=Villager
+sprite=104,0
+dialogue=
+

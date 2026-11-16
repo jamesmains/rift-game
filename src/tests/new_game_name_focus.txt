@@ -1,6 +1,6 @@
 # S is both a name character and the down movement binding; class should move only after Tab.
 frames 5
-dblclick 50 28
+deskaction new
 frames 3
 type Te
 key S

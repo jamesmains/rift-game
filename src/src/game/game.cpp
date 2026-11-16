@@ -1375,6 +1375,7 @@ SaveSlotInfo readSaveSlotInfo(const std::string& path) {
     SaveSlotInfo si; std::string t; if (!readFile(path, t)) return si;
     auto secs = parseConfig(t); if (secs.empty() || secs[0].name != "game") return si;
     si.exists = true; si.hero = secs[0].get("hero", "?"); si.campaign = secs[0].get("campaign", "triffall") == "triffall" ? "" : unescName(secs[0].get("campaignname", secs[0].get("campaign"))); si.level = secs[0].geti("level", 1); si.playtime = secs[0].geti("playtime", 0); si.mapName = secs[0].get("mapname", secs[0].get("map"));
+    si.campaignId = secs[0].get("campaign", "triffall"); si.saved = atoll(secs[0].get("saved", "0").c_str());
     return si;
 }
 void Game::refreshSlots() { for (int i = 0; i < 3; i++) slots[i] = readSaveSlotInfo(slotPath(i)); }
@@ -1828,7 +1829,7 @@ bool Game::loadQuests() {
     for (auto& sec : mergedConfig("quests.txt")) {
         if (sec.name != "quest") continue;
         QuestDef q; q.id = sec.get("id"); q.name = sec.get("name", q.id);
-        for (auto& kv : sec.kv) if (kv.first == "stage") { auto p = split(kv.second, '|'); if (p.size() == 2) q.stages.push_back({trim(p[0]), trim(p[1])}); }
+        for (auto& kv : sec.kv) if (kv.first == "stage") { auto p = split(kv.second, '|'); if (p.size() == 2 && !trim(p[1]).empty()) q.stages.push_back({trim(p[0]), trim(p[1])}); }   // 1.6.1: a stage with no text (a blank quest just made in the Editor) never shows
         for (auto& kv : sec.kv) if (kv.first == "fail") { auto p = split(kv.second, '|'); q.fails.push_back({trim(p[0]), p.size() > 1 ? trim(p[1]) : "The chance has passed."}); }
         for (auto& kv : sec.kv) if (kv.first == "objective") { auto p = split(kv.second, '|'); if (p.size() >= 3) { QuestObjective o; o.stage = atoi(trim(p[0]).c_str()); o.cond = trim(p[1]); o.text = trim(p[2]); for (size_t i = 3; i < p.size(); i++) o.text += "|" + p[i]; q.objectives.push_back(o); } }
         bool dup = false; for (auto& o : quests) if (o.id == q.id) { o = q; dup = true; } if (!dup) quests.push_back(q);

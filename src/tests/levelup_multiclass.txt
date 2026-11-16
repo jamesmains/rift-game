@@ -1,6 +1,6 @@
 # 0.8: see tests/README.md
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 shot newgame.png
 type Arin

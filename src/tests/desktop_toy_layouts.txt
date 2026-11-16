@@ -1,10 +1,10 @@
 # Check that Beginner Minesweeper controls and Solitaire instructions fit their windows.
 frames 5
-dblclick 134 25
+deskaction minesweeper
 frames 5
 shot minesweeper_beginner.png
 key ESC
 frames 2
-dblclick 134 79
+deskaction solitaire
 frames 5
 shot solitaire_layout.png

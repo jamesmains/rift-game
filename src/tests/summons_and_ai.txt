@@ -1,6 +1,6 @@
 # 0.9.0: summon spells (party and monster side) and the smarter combat AI (cover, focus fire)
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

@@ -1,7 +1,7 @@
 # 0.9.0: the opening (New Game from the desktop, the intro) and the opening quest stage. (1.0.7: the one-time tips are
 # gone - the Tutorial campaign teaches instead, see tutorial.txt)
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

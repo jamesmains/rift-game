@@ -6,6 +6,11 @@ frames 2
 key PADDOWN
 key PADA
 frames 8
+# 1.6.1: Start menu > Triffall opens the launcher with the pad on New Game (no saves yet)
+expect window == launcher
+key PADA
+frames 8
+expect window == new
 key PADDOWN
 key PADRIGHT
 frames 2

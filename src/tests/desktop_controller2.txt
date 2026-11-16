@@ -28,7 +28,7 @@ key PADB
 key PADB
 frames 4
 pad 0
-dblclick 50 28
+deskaction new
 frames 5
 type Sir Ivo
 frames 2

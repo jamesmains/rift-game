@@ -1,5 +1,5 @@
 # Open My Computer using its current desktop icon position and capture the filename list.
 frames 5
-dblclick 50 405
+deskaction mycomputer
 frames 5
 shot mycomputer_filenames.png

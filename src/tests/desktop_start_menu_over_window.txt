@@ -1,6 +1,6 @@
 # Controller Start should open the desktop menu over an open My Computer window.
 frames 5
-dblclick 50 405
+deskaction mycomputer
 frames 3
 pad 1
 key PADSTART

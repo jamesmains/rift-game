@@ -1,7 +1,7 @@
 # Returning from the RPG to the desktop should stop music and end the active run.
 frames 5
 audio
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 354

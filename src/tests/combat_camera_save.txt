@@ -1,6 +1,6 @@
 frames 5
 shot desktop.png
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

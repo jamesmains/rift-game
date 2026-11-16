@@ -138,7 +138,7 @@ struct WorldPlace { std::string name, mapId; int x = 0, y = 0; bool known = fals
 
 struct EpilogueSlide { std::string group, title, text; Tile tile; bool hasTile = false, recolor = false; Color8 color = C::White; };   // epilogue.txt (ending.cpp)
 
-struct SaveSlotInfo { bool exists = false; std::string hero, mapName, campaign; int level = 0, playtime = 0; };
+struct SaveSlotInfo { bool exists = false; std::string hero, mapName, campaign, campaignId; int level = 0, playtime = 0; long long saved = 0; };   // campaign = its name ("" = the main story)
 
 // A campaign: the base game (assets/data, id "triffall") or a folder under assets/campaigns/<id>/ holding its own
 // campaign.txt plus any data files and maps/ dialogue/ folders. Files it has add to / replace the base game's by id;
@@ -158,6 +158,12 @@ struct CampaignInfo {
 std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base game first
 CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, const std::string& dir);
 SaveSlotInfo readSaveSlotInfo(const std::string& path);
+// 1.6.1 (#135): every campaign keeps its own 3 slots + autosave. The main story's stay in the save folder itself (as
+// before); another campaign's are in <saves>/campaigns/<id>/. migrateCampaignSaves moves older saves of other
+// campaigns out of the shared slots once (saves.cpp).
+std::string campaignSaveDir(const std::string& saveDir, const std::string& campaignId);
+std::string campaignSlotPath(const std::string& saveDir, const std::string& campaignId, int slot);   // slot 0-2, 3 = autosave
+int migrateCampaignSaves(const std::string& saveDir);
 bool writeSaveFile(const std::string& path, const std::string& text);   // atomic, keeps the previous file as path.bak
 int creatureResistance(const CreatureDef& cd, int dmgType);   // 1.5.0 (#96): res= plus the undead / machine rules (journal.cpp)
 

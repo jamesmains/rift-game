@@ -1,15 +1,18 @@
-# 1.0.8: the desktop remembers itself. Change the Editor's icon (right-click > Change Icon...), drag New Game somewhere
+# 1.0.8: the desktop remembers itself. Change Minesweeper's icon (right-click > Change Icon...), drag Solitaire somewhere
 # else and pick a wallpaper; then a fresh desktop reads saves/desktop.ini back (reloaddesktop) and everything is where it was.
+# 1.6.1: the desktop is Triffall (after setup), My Computer, Minesweeper, Solitaire and Shut Down.
+installed
 frames 5
-rclick 49 290
+expect iconpos:minesweeper == 16,116
+rclick 49 136
 frames 3
-click 80 330
+click 80 176
 frames 5
 expect window == iconpick
 click 120 80
 frames 3
 expect window == none
-drag 49 30 400 200
+drag 49 186 400 200
 frames 3
 rclick 300 180
 frames 2
@@ -23,7 +26,7 @@ shot persist_before.png
 expect savefile:desktop.ini == 1
 reloaddesktop
 frames 3
-expect iconpos:new == 352,170
-expect icon:editor == 0,0
+expect iconpos:solitaire == 352,170
+expect icon:minesweeper == 0,0
 expect wallpaper == 1
 shot persist_after.png

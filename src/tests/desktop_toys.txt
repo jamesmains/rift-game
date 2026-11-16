@@ -1,13 +1,13 @@
 # desktop toys: My Computer, Minesweeper, Solitaire, Achievements, World Map icon
 frames 5
 shot desk.png
-dblclick 134 30
+deskaction mycomputer
 frames 5
 click 190 200
 frames 3
 shot mycomputer.png
 key ESC
-dblclick 134 84
+deskaction minesweeper
 frames 5
 click 200 250
 frames 3
@@ -15,7 +15,7 @@ click 230 270
 frames 3
 shot mines.png
 key ESC
-dblclick 134 138
+deskaction solitaire
 frames 5
 click 260 170
 frames 3
@@ -23,11 +23,11 @@ click 260 170
 frames 3
 shot solitaire.png
 key ESC
-dblclick 134 192
+deskaction achievements
 frames 5
 shot achievements.png
 key ESC
 frames 2
-dblclick 134 246
+deskaction worldmap
 frames 5
 shot worldmap_nogame.png

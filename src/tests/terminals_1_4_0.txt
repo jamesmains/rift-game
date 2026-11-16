@@ -30,7 +30,7 @@ frames 10
 type password
 key ENTER
 frames 10
-expect log contains My Computer on the desktop
+expect log contains Files page of the Triffall launcher
 key RIGHT
 frames 10
 type rift-0
@@ -65,7 +65,7 @@ expect item:disk_dispatch == 1
 expect lorefile:metro_dispatch == 1
 expect deskfiles contains metro_dispatch
 expect deskfiles lacks ship_manifest
-expect log contains My Computer > metro_dispatch.txt
+expect log contains Files > metro_dispatch
 shot term_lab_vault.png
 # ---- the metro dispatch terminal (45,20): 1407 MARGOT, from metro_dispatch ----
 con clearmap metro

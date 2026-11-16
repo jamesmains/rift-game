@@ -1,0 +1,5 @@
+# Editor playtest state (Campaign tab > Play from a state). The game itself never reads this file.
+[playtest]
+on=0
+level=1
+gold=500

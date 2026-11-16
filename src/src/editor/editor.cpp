@@ -15,6 +15,8 @@ static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Sp
 static const char* TAB_LONG[] = {"Maps", "Tile kinds", "World map", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achievements", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs", "Scripts",
                                  "Lore files", "Epilogue", "Credits", "Hints", "Contradictions", "Dungeon styles", "Healers", "Combat rules", "Formulas"};
 static const int NTABS = 35;
+// 1.6.1: the 1.6.0 tabs (26-34) are still stubs, so the bars leave them out until they're built: raise NSHOWN as they land
+static const int NSHOWN = 26;
 // 1.6.0 (#108): the tabs grouped into workspaces (first row of the header); each lists its tabs in sub-tab order
 struct EdWorkspace { const char* name; std::vector<int> tabs; const char* tip; };
 static const std::vector<EdWorkspace>& workspaces() {
@@ -27,7 +29,9 @@ static const std::vector<EdWorkspace>& workspaces() {
         {"Things", {3, 14, 15, 23, 22}, "Items, crafting recipes, item affixes, resource nodes and object types."},
         {"Sound & Scripts", {12, 25}, "Music and sound effects, and scripts."},
     };
-    return ws;
+    static std::vector<EdWorkspace> shown;
+    if (shown.empty()) for (auto w : ws) { std::vector<int> t; for (int x : w.tabs) if (x < NSHOWN) t.push_back(x); w.tabs = t; shown.push_back(w); }
+    return shown;
 }
 static int workspaceOf(int t) { auto& ws = workspaces(); for (size_t i = 0; i < ws.size(); i++) for (int x : ws[i].tabs) if (x == t) return (int)i; return 0; }
 int gEdTop = 28;                      // tab bar height: 28 for one row of tabs, 50 when they need two rows
@@ -440,19 +444,19 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     const char* flatLbl = flatTabs ? "Workspaces" : "All tabs";
     int flatW = font->width(flatLbl) + 8;
     if (flatTabs) {
-        int tabsW = 4; for (int i = 0; i < NTABS; i++) tabsW += font->width(TABS[i]) + 10;
+        int tabsW = 4; for (int i = 0; i < NSHOWN; i++) tabsW += font->width(TABS[i]) + 10;
         tabsW += flatW + 10;
         hdrWide = tabsW <= W - 382;
         int lim = hdrWide ? W - 382 : W - 250;
-        int rows = 1, fx = 4; for (int i = 0; i <= NTABS; i++) { int tw = (i < NTABS ? font->width(TABS[i]) + 8 : flatW); if (fx + tw > lim) { rows++; fx = 4; } fx += tw + 2; }
+        int rows = 1, fx = 4; for (int i = 0; i <= NSHOWN; i++) { int tw = (i < NSHOWN ? font->width(TABS[i]) + 8 : flatW); if (fx + tw > lim) { rows++; fx = 4; } fx += tw + 2; }
         if (!hdrWide && rows < 2) rows = 2;
         gEdTop = 6 + 22 * rows;   // 28 / 50 / 72
         cv.fillRect(0, 0, W, TOP, PANEL);
         int tx = 4, trow = 0;
-        for (int i = 0; i <= NTABS; i++) {
-            int tw = i < NTABS ? font->width(TABS[i]) + 8 : flatW;
+        for (int i = 0; i <= NSHOWN; i++) {
+            int tw = i < NSHOWN ? font->width(TABS[i]) + 8 : flatW;
             if (tx + tw > lim) { trow++; tx = 4; }
-            if (i == NTABS) {
+            if (i == NSHOWN) {
                 if (ui.button(tx, 4 + trow * 22, tw, 20, flatLbl, true, false, DIM)) { flatTabs = false; savePrefs(); }
                 if (ui.hover(tx, 4 + trow * 22, tw, 20)) ui.tip("Group the tabs into workspaces again (World, People, Story...).");
                 break;

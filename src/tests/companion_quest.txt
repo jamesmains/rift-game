@@ -1,6 +1,6 @@
 # companion talk (Party menu, T) and Bram's personal quest via console flags
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

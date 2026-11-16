@@ -1,0 +1,45 @@
+# 1.6.1 (#133 #134 #135): the slimmer desktop, the launcher, and saves kept per adventure (campaign).
+# Before setup has run there is no Triffall icon; the installer (or "installed") puts it on the desktop.
+expect deskicons == mycomputer,minesweeper,solitaire,shutdown
+installed
+expect deskicons == launcher,mycomputer,minesweeper,solitaire,shutdown
+expect icon:launcher == 2,7
+expect icon:minesweeper == 1,7
+# every campaign saves into its own slots: the tutorial's go to campaigns/tutorial/, the main story's stay where they were
+campaign tutorial
+newgame Kai warrior 1
+saveslot 2
+expect campaignsave:tutorial:2 == 1
+expect savefile:slot2.sav == 0
+campaign triffall
+newgame Tess mage 1
+saveslot 1
+expect savefile:slot1.sav == 1
+expect campaignsave:tutorial:1 == 0
+todesktop
+frames 3
+expect running == 0
+# the launcher shows the picked adventure's saves; Continue loads the newest of them
+launchcampaign tutorial
+expect window == launcher
+expect launchcampaign == tutorial
+expect deskslots == 0100
+shot launcher_tutorial.png
+click 480 360
+frames 10
+expect running == 1
+expect map == tut_watch
+todesktop
+frames 3
+launchcampaign triffall
+expect deskslots == 1000
+# old shortcuts lead into the launcher's pages
+deskaction fieldnotes
+expect launcherpage == 3
+deskaction load
+expect launcherpage == 1
+deskaction readme
+expect launcherpage == 2
+key ESC
+frames 3
+expect window == none

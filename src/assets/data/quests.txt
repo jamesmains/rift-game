@@ -267,3 +267,9 @@ name=The Tinker's Trial
 stage=q_tinker>=1 | Junk-Dealer Vosk in Ashfall wants a calibrated servo (workbench, Tinkering 3). @ashfall
 objective=1 | itemn:calibrated_servo:1 | Calibrated servo ({itemn:calibrated_servo}/1)
 stage=q_tinker>=2 | DONE Vosk gave you his blueprints. Rift crystals grow in the Scar, the Wreck and the Annex.
+
+[quest]
+id=new_30
+name=
+stage= | 
+

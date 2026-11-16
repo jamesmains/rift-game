@@ -1,6 +1,6 @@
 # tour of the v2.4 systems: journal, world map, console, crafting, bounty board, weather, combat cover/overwatch, achievements
 frames 5
-dblclick 50 28
+deskaction new
 frames 5
 type Arin
 click 390 380

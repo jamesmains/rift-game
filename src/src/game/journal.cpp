@@ -138,7 +138,7 @@ void Game::loadAchievementState() {
     loadFieldNotes();   // 1.5.0 (#96)
 }
 // 1.4.0 (#77): desktop files a game has unlocked (data/lore files whose first line is #locked). Global like the
-// achievements: once found, the file stays in My Computer for every save slot (files.ini in the save folder).
+// achievements: once found, the file stays in the launcher's Files for every save slot (files.ini in the save folder).
 void Game::loadFoundFiles() {
     foundFiles.clear(); std::string t;
     if (readFile(saveDir + "/files.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "found") for (auto& kv : sec.kv) if (kv.second != "0") foundFiles.insert(kv.first);
@@ -231,7 +231,7 @@ void Game::unlockLoreFile(const std::string& name) {
     foundFiles.insert(name);
     std::string s = "# Triffall desktop files found while playing (global, not per save slot)\n[found]\n"; for (auto& f : foundFiles) s += f + "=1\n";
     writeFile(saveDir + "/files.ini", s);
-    log("A new file appeared on the desktop: My Computer > " + name + ".txt"); notify("New desktop file: " + name + ".txt");
+    log("A new file turned up in the Triffall launcher: Files > " + name + "."); notify("New file in the launcher: " + name);   // 1.6.1: lore moved from My Computer
     gAudio.play("achievement");
 }
 void Game::saveAchievementState() const {
