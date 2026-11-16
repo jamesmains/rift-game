@@ -30,4 +30,38 @@ gold=150
 xp=150
 quest=The Open Sky - Vell's followers go to Brasswick's court
 approve=warrior:5,scavenger:-5,cleric:-3
-option=Go, then.|end
+option=Go, then.|end|!party:scavenger
+option=(Tessa is staring at you.)|tessa|party:scavenger
+
+# 1.5.0 (#88): Tessa's red line - Ashfall people handed to the Mayor's court. Talk her round (CHA 13 / INT 13), or she
+# leaves for Ashfall (leave=) or goes after the escort on the Brasswick road and does not come back (fell=).
+[tessa]
+speaker=Tessa
+text=Brasswick's court. You know what the Mayor's court does to Ashfall people? It hangs them. Ilse SANG, $hero. That's all she did. Half of those nine are kids I grew up with in the market.
+option=The Mayor gave me his word. If one of them hangs, I'll answer for it in front of his whole hall.|tessa_ok|stat:cha>=13
+option=Read the bounty: 150 for the lot, alive. He wants hands for his roads, not bodies for his gallows.|tessa_ok|stat:int>=13
+option=It's done, Tessa.|tessa_leave
+option=Then go and stop them, if you're so sure.|tessa_fell
+
+[tessa_ok]
+speaker=Tessa
+text=(She stares at you, then at Ilse's back.) ...You'd do it, too. You actually would. Fine. I'm writing to Ilse every week - and if a letter comes back unopened, I'm coming to find you.
+set=tessa_converts_ok
+approve=scavenger:-3
+option=Fair.|end
+
+[tessa_leave]
+speaker=Tessa
+text=Done. Right. (She shoulders her pack.) Then I'm going back to the market. Somebody has to tell their mothers, and it isn't going to be you.
+approve=scavenger:-20
+set=tessa_left_converts
+leave=scavenger|Tessa goes back to the Ashfall market to tell the converts' families. You could try to make amends with her there.
+option=(Let her go.)|end
+
+[tessa_fell]
+speaker=$hero
+text=She does. Three days later a Brasswick guard brings the news to Ashfall: someone tried to cut the prisoners loose on the north road, at night, with a crowbar and a drone. The escort fired first. The converts reached Brasswick. Tessa did not.
+approve=scavenger:-30
+set=tessa_fell_road
+fell=scavenger|Tessa went after the escort on the Brasswick road and was shot by the Mayor's guards. Ashfall will not forget whose choice sent them there.
+option=(...)|end

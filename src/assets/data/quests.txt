@@ -7,7 +7,9 @@ name=The Rift Stirs
 stage=hero_awake | Elder Mara sent her runner before dawn. Her house is at the north-west edge of Hollowmere - leave your cottage and head there. @hollowmere
 stage=q_main>=1 | Elder Mara asked you to deal with the goblins in Greywood Cave, north-east of Hollowmere. @greywood
 stage=q_goblins_done | The goblin chief is dead. Report back to Elder Mara in Hollowmere. @hollowmere
-stage=goblin_chief_spared&!q_main>=2 | Grakk, the goblin chief, gave up his crown of violet glass and led his tribe out of Greywood. Tell Elder Mara in Hollowmere. @hollowmere
+stage=goblin_chief_spared&!goblin_chief_dead&!q_main>=2 | Grakk, the goblin chief, gave up his crown of violet glass and led his tribe out of Greywood. Tell Elder Mara in Hollowmere. @hollowmere
+stage=goblins_betrayed&!goblin_chief_dead&!q_main>=2 | You turned on Grakk's tribe as it packed up to leave, and Grakk still stands. Finish it in Greywood Cave - or tell Elder Mara in Hollowmere what you did. @greywood
+stage=goblins_betrayed&goblin_chief_dead&!q_main>=2 | Grakk gave up his crown and you killed him anyway, with the last of his tribe. Report to Elder Mara in Hollowmere. @hollowmere
 stage=q_main>=2 | Carry the Elder's letter to Mayor Aldous in Brasswick, east along the road. @brasswick
 stage=q_main>=3 | The Mayor believes a Rift Shard lies in Dunmarrow Crypt, north of Brasswick. Retrieve it. @dunmarrow
 stage=rift_shard_found | You hold a Rift Shard. Show it to Mayor Aldous in Brasswick. @brasswick

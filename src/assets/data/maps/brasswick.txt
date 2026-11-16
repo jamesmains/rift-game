@@ -179,6 +179,7 @@ npc=elowen
 x=43
 y=19
 hide=joined_mage
+show=!fell_mage
 
 [npc]
 id=arcanist

@@ -1,9 +1,9 @@
 [start]
 speaker=Tessa
 text=Mayor Aldous sent you? Figures. He sends a letter every spring asking me to "secure the Annex", like I've got a key. I've got a crowbar and a bad attitude.
-option=About the way we parted...|sorry|left_scavenger
-option=I need the shard inside the Annex.|annex|q_main>=4&!q_main>=5
-option=Come with me.|join|q_main>=5&!left_scavenger
+option=About the way we parted...|sorry|left_scavenger&!fell_scavenger
+option=I need the shard inside the Annex.|annex|q_main>=4&!q_main>=5&!fell_scavenger
+option=Come with me.|join|q_main>=5&!left_scavenger&!fell_scavenger
 option=Who are you?|who
 option=Can you build something from this scrap?|workbench
 option=Goodbye.|end

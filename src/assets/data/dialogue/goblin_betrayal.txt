@@ -1,0 +1,62 @@
+# 1.5.0 (#85): after sparing Grakk, the tribe packs up in the chief's hall (goblins_packing, until the party next enters
+# Greywood Cave). Walking back into the hall (trigger) or talking to Grakk or a packer offers the betrayal - only through
+# an explicit prompt. Attacking sets goblins_betrayed, clears goblin_chief_spared (so his groups show again) and fights
+# the chief's group (fight=goblin_chief_dead). Orin's red line (#88): he won't stand for killing people who surrendered.
+[start]
+speaker=$hero
+text=Grakk's hall is all noise and torchlight: pots, bedrolls, spears bundled with string, the old ones being lifted onto backs. Grakk sees you and goes very still. "Tall-folk. Grakk gave you the crown. Grakk is going. Is there more?"
+option=No. Go.|end
+option=(Attack them anyway.)|confirm|goblin_chief_spared&!goblins_allies
+
+[confirm]
+speaker=$hero
+text=They surrendered to you, and they are leaving. If you draw now, every goblin in this hall fights for its life - and everyone who hears of it will know you broke your word. There is no taking it back.
+option=(Put your weapon away.)|end
+option=(Attack them anyway.)|attack|!party:cleric
+option=(Attack them anyway.)|orin|party:cleric
+
+# Orin's red line: killing people who surrendered
+[orin]
+speaker=Orin
+text=(Orin steps in front of you, mace lowered.) No. They SURRENDERED, $hero. They are carrying their grandmothers. If you do this, you do it without me. I will not stand in that hall and call it justice.
+option=(Put your weapon away.) You're right.|orin_relief
+option=They raided three farms and shot a boy. A promise made to save my own neck isn't a vow, Orin.|orin_cha|stat:cha>=13
+option=That crown sang to them for a year. Their young know nothing but raiding. They'll be back by spring.|orin_wis|stat:wis>=13
+option=Then go, Orin.|orin_leave
+
+[orin_relief]
+speaker=Orin
+text=(He lets out a breath he seems to have held since the parley.) Thank you. Mercy is a hard road. It is still a road.
+approve=cleric:3
+option=(Leave them to their packing.)|end
+
+[orin_cha]
+speaker=Orin
+text=(A long silence.) ...I do not agree with you. But I hear you, and I will not leave you to do it alone. God forgive us both.
+set=orin_goblins_ok
+approve=cleric:-10
+option=(Draw.)|attack
+
+[orin_wis]
+speaker=Orin
+text=(He looks past you at the young ones, at the spears bundled with string.) ...You may be right. I hate that you may be right. I will stand with you - and I will say the words over them after.
+set=orin_goblins_ok
+approve=cleric:-10
+option=(Draw.)|attack
+
+[orin_leave]
+speaker=Orin
+text=Then I am done here. I will be at the shrine in Frosthold, praying for them - and for you, though I am not sure today which prayer is harder.
+approve=cleric:-25
+set=orin_left_goblins
+leave=cleric|Orin walks out of the hall before the first blow. He is going home to Frosthold. You could try to make amends there.
+option=(Draw.)|attack
+
+[attack]
+speaker=Grakk, Goblin Chief
+text=(The hall goes silent. Then Grakk spits on the stone between you.) Tall-folk word is WIND. Hunters! For the old ones - FIGHT!
+set=goblins_betrayed
+clear=goblin_chief_spared,goblins_packing
+approve=warrior:5,ranger:-3
+quest=The Rift Stirs - you turned on Grakk's tribe
+fight=goblin_chief_dead

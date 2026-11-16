@@ -187,7 +187,8 @@ item=ranger_cloak
 item=ring_dex
 item=band_speed
 
-# 1.0: Snig the goblin peddler (Millbrook), only if Grakk's tribe was spared in Greywood
+# 1.0: Snig the goblin peddler (Millbrook), only if Grakk's tribe was spared in Greywood. 1.5.0: the shop has no condition
+# of its own - Snig (millbrook.txt show=) only appears if Grakk was spared, lived, and was not betrayed.
 [shop]
 id=snig_wares
 hours=6-22

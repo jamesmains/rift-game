@@ -384,11 +384,13 @@ void Editor::boardProblems(const EdSection& s, std::vector<std::pair<bool, std::
     } else {
         std::string kd = s.get("kind", "kill"), t = s.get("target");
         if (!isBoard(s.get("board"))) out.push_back({true, "board '" + s.get("board") + "' is not a notice board"});
-        if (kd == "kill" && !gd->creature(t)) out.push_back({true, "target: unknown creature '" + t + "'"});
+        if (kd == "note") {}
+        else if (kd == "kill" && !gd->creature(t)) out.push_back({true, "target: unknown creature '" + t + "'"});
         if (kd == "fetch" && !gd->item(t)) out.push_back({true, "target: unknown item '" + t + "'"});
         if (kd == "deliver" && !isBoard(t)) out.push_back({true, "target: '" + t + "' is not a notice board - the letter could never be delivered"});
         if (kd == "deliver" && t == s.get("board")) out.push_back({true, "a letter to the board that posts it"});
-        if (kd != "kill" && kd != "fetch" && kd != "deliver") out.push_back({true, "kind must be kill, fetch or deliver"});
+        if (kd != "kill" && kd != "fetch" && kd != "deliver" && kd != "note") out.push_back({true, "kind must be kill, fetch, deliver or note"});
+        if (kd == "note" && trim(s.get("text")).empty()) out.push_back({true, "a note needs text="});   // 1.5.0 (#98): a notice with no job, while require= holds
         if (!s.get("where").empty() && !isDungeon(s.get("where")) && !isLoc(s.get("where"))) out.push_back({false, "where '" + s.get("where") + "' is not a dungeon or location"});
     }
 }

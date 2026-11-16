@@ -200,8 +200,8 @@ tile=33,25
 [achievement]
 id=grakk_owes_you
 name=Grakk Owes You
-desc=Let the goblins of Greywood walk away.
-cond=flag:goblin_chief_spared
+desc=Let the goblins of Greywood walk away - and keep your word.
+cond=flag:goblin_chief_spared&!goblin_chief_dead&!goblins_betrayed&q_main>=2
 tile=113,4
 hidden=1
 

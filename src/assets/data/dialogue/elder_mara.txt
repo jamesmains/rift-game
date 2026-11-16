@@ -3,8 +3,11 @@ speaker=Elder Mara
 text=Ah, $hero. Sit. No, stand, there's no time. The goblins of Greywood have grown bold - three farms raided this week, and Tobb's boy came home with an arrow in his leg.
 option=What do you need from me?|ask|!q_main>=1
 option=I'll handle it.|accept|!q_main>=1
-option=The goblin chief is dead.|done|q_goblins_done&!goblin_chief_spared&!q_main>=2
-option=The goblins are gone. Their chief surrendered this crown.|done_spared|goblin_chief_spared&!q_main>=2
+option=The goblin chief is dead.|done|q_goblins_done&!goblin_chief_spared&!goblins_betrayed&!q_main>=2
+option=The goblins are gone. Their chief surrendered this crown.|done_spared|goblin_chief_spared&!goblin_chief_dead&!q_main>=2
+option=The goblin chief is dead.|done_betrayed|goblins_betrayed&goblin_chief_dead&!q_main>=2
+option=The goblins are... dealt with. Here is the crown.|done_betrayed_alive|goblins_betrayed&!goblin_chief_dead&!q_main>=2
+option=Bram is dead. He went after the goblins alone.|bram_fell|bram_fell_goblins&!mara_told_bram
 option=About the letter...|letter|q_main>=2&!q_main>=3
 option=Anything else?|chat|q_main>=1
 option=Goodbye.|end
@@ -32,6 +35,26 @@ speaker=Elder Mara
 text=Surrendered? A goblin? ...You let them walk. Tobb will spit when he hears it, and I can't say he'd be wrong. But nobody else's boy comes home with an arrow in him - and this crown... violet glass. That is no goblin matter. That is the Rift.
 take=goblin_crown
 next=done2
+
+# 1.5.0 (#85): Grakk surrendered, then the party went back and killed him anyway
+[done_betrayed]
+speaker=Elder Mara
+text=Dead. Good. ...And yet the tale got here before you did - a chief who gave up his crown, and a tribe cut down while they packed their pots. (She takes the crown without meeting your eyes.) Hollowmere will sleep tonight. I am not sure I will. Whatever you are, $hero, be careful what you become.
+take=goblin_crown
+next=done2
+
+[done_betrayed_alive]
+speaker=Elder Mara
+text=Dealt with. A goblin came to the fence at dawn to say the tall-folk broke their word and Grakk got away bleeding. (She takes the crown.) So now there is a chief in the hills who knows our faces and has nothing left to lose. Well. This crown is still the Rift's doing.
+take=goblin_crown
+next=done2
+
+# 1.5.0 (#87)
+[bram_fell]
+speaker=Elder Mara
+text=(She sits down heavily.) Bram. That fool boy. He used to steal apples off my tree and apologise with his mouth full. ...Thank you for telling me yourself. I'll see that Doss keeps his corner at the Goat.
+set=mara_told_bram
+option=I'm sorry, Mara.|end
 
 [done2]
 speaker=Elder Mara

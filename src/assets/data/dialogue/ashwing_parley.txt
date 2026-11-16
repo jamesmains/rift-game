@@ -50,4 +50,38 @@ option=(Draw your weapon.)|end
 [gone]
 speaker=$hero
 text=Wings fill the cavern - then the light from the old shaft goes out, and comes back, and the dragon is gone. Somewhere far above, Sunscar's goats are going to have a very confusing afternoon.
-option=(Leave the lair.)|end
+option=(Leave the lair.)|end|!party:ranger
+option=(Nyx has not lowered her bow.)|nyx|party:ranger
+
+# 1.5.0 (#88): Nyx's red line - a man-eater let go. Talk her round (CHA 12 / WIS 12), or she goes home to Frosthold
+# (leave=) or follows Ashwing into the high snow alone and does not come back (fell=).
+[nyx]
+speaker=Nyx
+text=It ate a child, $hero. And you just let it fly north. North is the high snow. North is Frosthold - my father's hills. (The bowstring creaks.) Give me one reason not to go after it.
+option=It swore off people. A dragon's word lasts longer than ours - ask any of its old victims' towns.|nyx_ok|stat:cha>=12
+option=Listen to it, Nyx. The glass made it hungry. Without the glass it's just old and tired.|nyx_ok|stat:wis>=12
+option=Let it go, Nyx.|nyx_leave
+option=Then hunt it, if you must.|nyx_fell
+
+[nyx_ok]
+speaker=Nyx
+text=(A long breath. The arrow goes back in the quiver.) ...If it ever comes down off those peaks, I'm going up. And you're carrying the spare arrows.
+set=nyx_ashwing_ok
+approve=ranger:-3
+option=Deal.|end
+
+[nyx_leave]
+speaker=Nyx
+text=Let it go. Sure. (She turns for the shaft.) I'm going home. Someone has to tell Frosthold what's coming to roost on their hills.
+approve=ranger:-20
+set=nyx_left_ashwing
+leave=ranger|Nyx heads home to warn the north. She'll be back at the Millbrook trails when she's done - you could try to make amends there.
+option=(Let her go.)|end
+
+[nyx_fell]
+speaker=$hero
+text=She's gone up the old shaft before the dust settles. Weeks later a Frosthold trapper comes down the mountain with a grey cloak, scorched at the hem, and a bow snapped in two. Nobody finds anything else.
+approve=ranger:-30
+set=nyx_fell_ashwing
+fell=ranger|Nyx followed Ashwing into the high snow alone and never came back. A trapper found her cloak and her broken bow.
+option=(...)|end

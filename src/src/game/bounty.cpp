@@ -66,7 +66,7 @@ void Game::generateBounties(const std::string& town) {
     int tx = 0, ty = 0; if (auto* l = locOf(def)) { tx = l->x; ty = l->y; }
     // ---- hand-written notices first ----
     for (auto& f : fixedBounties) {
-        if (f.board != town || have >= 3) continue;   // at most three hand-written notices up at once
+        if (f.board != town || have >= 3 || f.kind == "note") continue;   // at most three hand-written notices up at once (1.5.0: notes go up in postBoardNotes)
         if (!f.repeat && extra.count("bounty_done_" + f.id)) continue;
         if (!f.require.empty() && !evalCond(f.require)) continue;
         bool busy = false; for (auto& o : bounties) if (o.id == "fix:" + f.id) busy = true; if (busy) continue;
@@ -148,7 +148,22 @@ void Game::openBoard(const std::string& town) {
     boardTown = town; bountySel = 0; boardPage = 0; standSel = 0;
     bountyEvent("board", town);
     generateBounties(town);
+    postBoardNotes(town);
     pushMode(GMode::BOUNTY);
+}
+
+// 1.5.0 (#98): hand-written notes (bounties.txt kind=note) - news pinned to the board while their require= holds, no job
+// to take. Put up again every time the board is read (at most two, first in the list), so they follow the story at once.
+void Game::postBoardNotes(const std::string& town) {
+    bountyOffers.erase(std::remove_if(bountyOffers.begin(), bountyOffers.end(), [&](const Bounty& b) { return b.town == town && b.kind == "note"; }), bountyOffers.end());
+    std::vector<Bounty> notes;
+    for (auto& f : fixedBounties) {
+        if (f.board != town || f.kind != "note" || notes.size() >= 2) continue;
+        if (!f.require.empty() && !evalCond(f.require)) continue;
+        Bounty b; b.id = "note:" + f.id; b.town = town; b.kind = "note"; b.need = 0; b.reward = 0; b.xp = 0; b.posted = day; b.title = f.title.empty() ? "NOTICE" : f.title; b.text = f.text;
+        notes.push_back(b);
+    }
+    bountyOffers.insert(bountyOffers.begin(), notes.begin(), notes.end());
 }
 
 // rows on a board: bounties from this town you've taken (in progress / complete), then today's offers
@@ -182,6 +197,7 @@ void Game::updateBounty(InputState& in, float dt) {
         return;
     }
     if (!(actP(in, A_CONFIRM) || click)) return;
+    if (row.second && bountyOffers[row.first].kind == "note") { log(bountyOffers[row.first].text); return; }   // 1.5.0 (#98): just news
     if (row.second) {
         int taken = 0; for (auto& b : bounties) if (!b.done) taken++;
         if (taken >= MAX_TAKEN) { log(fmt("You already carry %d bounties. Finish or drop one first.", MAX_TAKEN)); gAudio.play("ui_error"); return; }
@@ -228,7 +244,10 @@ void Game::drawBounty(Canvas& cv, InputState& in) {
         ctx.font->bold = true; UI::text(ctx, 40, y + 5, title, RGB(40, 25, 10)); ctx.font->bold = false;
         std::string body = b.kind == "kill" ? "They have been seen around " + b.whereName + "." : b.kind == "fetch" ? (b.whereName.empty() ? "Any source will do." : "Scavengers report some in " + b.whereName + ".") : "Pin it to the notice board there, then come back for the pay.";
         if (!b.text.empty()) body = b.text;
-        UI::text(ctx, 40, y + 20, body, RGB(60, 45, 25));
+        if (b.kind != "note") UI::text(ctx, 40, y + 20, body, RGB(60, 45, 25));
+        if (b.kind == "note") {   // 1.5.0 (#98): news, wrapped over two lines, nothing to take
+            auto ls = ctx.font->wrap(b.text, SCREEN_W - 80); for (size_t k = 0; k < ls.size() && k < 2; k++) UI::text(ctx, 40, y + 20 + (int)k * 14, ls[k], RGB(60, 45, 25));
+            continue; }
         std::string st = rows[i].second ? "OFFER - Enter to take it" : b.done ? "COMPLETE - Enter to collect" : b.kind == "kill" ? fmt("taken - progress %d/%d", b.have, b.need) : b.kind == "fetch" ? fmt("taken - you carry %d/%d", party.countItem(b.target), b.need) : "taken - in progress";
         UI::text(ctx, 40, y + 36, st, b.done ? RGB(20, 120, 40) : rows[i].second ? RGB(120, 60, 20) : RGB(40, 90, 60));
         textRight(ctx, SCREEN_W - 40, y + 36, fmt("Reward: %d gold, %d XP", b.reward, b.xp), RGB(120, 80, 10));

@@ -2,8 +2,10 @@
 speaker=Farmer Tobb
 text=Those goblins took my best sow and put an arrow in my boy. If you're going up to Greywood, give 'em one from me.
 option=I will.|end|!q_goblins_done
-option=The chief is dead. It's over.|killed|q_goblins_done&!goblin_chief_spared
-option=The goblins are gone. I let them leave.|spared|goblin_chief_spared
+option=The chief is dead. It's over.|killed|q_goblins_done&!goblin_chief_spared&!goblins_betrayed
+option=The goblins are gone. I let them leave.|spared|goblin_chief_spared&!goblin_chief_dead
+option=The chief is dead. It's over.|betrayed|goblins_betrayed&goblin_chief_dead
+option=Bram... went after the goblins. He didn't come back.|bram_fell|bram_fell_goblins&!tobb_told_bram
 
 [killed]
 speaker=Farmer Tobb
@@ -16,3 +18,18 @@ option=Thank you, Tobb.|end
 speaker=Farmer Tobb
 text=Let them LEAVE? After my boy - ... no. No. Mara says it's done and I'll keep my peace. But don't expect me to shake your hand.
 option=I understand.|end
+
+# 1.5.0 (#85): spared, then killed anyway
+[betrayed]
+speaker=Farmer Tobb
+text=Dead. Good. (He doesn't smile.) Folk are saying they'd given up. Packing their pots, and you went back in. ...I wanted them dead. I did. I didn't want to hear how. Here - turnips. Don't tell my boy where they came from.
+give=bread:2
+set=tobb_thanked
+option=...|end
+
+# 1.5.0 (#87): Bram died going after the spared tribe
+[bram_fell]
+speaker=Farmer Tobb
+text=Bram? ...He came by the farm the night before you went up there. Said he'd bring me the chief's ear. (He looks at his hands.) Daft lad. He was the only one in Hollowmere who ever said my boy's name like it mattered.
+set=tobb_told_bram
+option=He meant it.|end

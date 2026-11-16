@@ -350,6 +350,21 @@ name=Snig the Peddler
 sprite=113,4
 dialogue=snig
 
+# 1.5.0 (#85): Grakk's tribe packing up in Greywood Cave after the spare (goblin_cave.txt); talking offers the betrayal
+[npc]
+id=grakk
+name=Grakk, Goblin Chief
+sprite=147,4
+dialogue=goblin_betrayal
+notes=Only while the spared tribe packs up (goblins_packing).
+
+[npc]
+id=goblin_packer
+name=Goblin
+sprite=113,4
+dialogue=goblin_betrayal
+notes=Grakk's tribe packing up after the spare.
+
 # ---- murkwater ----
 [npc]
 id=old_fenwick
