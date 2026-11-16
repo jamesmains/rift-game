@@ -9,6 +9,7 @@ bg=0,0,0
 music=dungeon
 
 [legend]
+W = floor_water
 # = wall_ice
 . = floor_ice
 < = stairs_up
@@ -41,11 +42,11 @@ XXXXXX##.....######..r....##XXXXXX##I.##XXXX
 XXXXXXX##...##XXXX##....m##XXXXXX##...##XXXX
 XXXXXXXX##..#XXXXXX##..###XXXXXXX#b....##XXX
 XXXXXXXX##I.#XXXXXXX####XXXXXXXX##......##XX
-XXXXXXX##...#XXXXXXXXXXXXXX####X#.....m..#XX
-XXXXXXX#....#XXX####XXXXXX##..###.....b..#XX
-XXXXXXX#....##XX#..###XX###.....m..m.....#XX
-XXXXXXX##....##X#....####..b.c...........##X
-XXXXXXX##.....####....#...........w...#...#X
+X########...#XXXXXXXXXXXXXX####X#.....m..#XX
+X#....##....#XXX####XXXXXX##..###.....b..#XX
+X#....WW....##XX#..###XX###.....m..m.....#XX
+X#....###....##X#....####..b.c...........##X
+X########.....####....#...........w...#...#X
 XXXXX###.......###..........mm.......######X
 XXX###..............m......m..M.......#XXXXX
 XXX#.................................##XXXXX
@@ -243,3 +244,19 @@ x=25
 y=30
 title=Chalk marks
 text=BONES BREAK UNDER HAMMERS. (A mace or a war hammer gets through what a sword skates off.)
+
+[obstacle]
+x=6
+y=21
+w=2
+h=1
+name=Underground stream
+needs=freeze
+text=A fast black stream pours out of a crack in the wall and away under the ice. Past it, a crevice glitters with frost - and something that is not ice.
+
+[chest]
+x=2
+y=21
+items=oil_frost:2,potion_blue:1,rift_dust:1
+gold=70
+flag=troll_stream_cache

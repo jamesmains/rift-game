@@ -87,7 +87,7 @@ void Editor::buildUseIndex() {
         if (o.type == "npc") { add("board", o.get("board"), where, "is the notice board", u); add("dialogue", o.get("dialogue"), where, "talks with it", u); add("shop", o.get("shop"), where, "sells from it", u); for (auto& c : idList(o.get("hostile"))) add("creature", c, where, "turns into it when attacked", u); }
         for (auto& n : split(o.get("needs"), '|')) if (startsWith(trim(n), "item:")) add("item", trim(n).substr(5), where, "clears the obstacle", u);
         for (const char* ck : {"show", "hide", "moveif", "openif", "require", "if"}) condRefs(o.get(ck), where, std::string(ck) + "= condition", u);
-        for (const char* sk : {"script", "ondefeat", "onclear", "onuse"}) scriptRefs(o.get(sk), where, u);
+        for (const char* sk : {"script", "ondefeat", "onclear", "onuse", "onpress", "onrelease"}) scriptRefs(o.get(sk), where, u);
     }
     for (auto& ms : mapScan) for (auto& kv : ms.header) if (kv.first == "onenter") { FlagUse u; u.tab = 0; u.file = ms.id; scriptRefs(kv.second, "map " + ms.id + " onenter=", u); }
     auto gu = [](int gen, int sec, int tab) { FlagUse u; u.gen = gen; u.sec = sec; u.tab = tab; return u; };
@@ -191,7 +191,7 @@ void Editor::renameFlag(const std::string& from, const std::string& to) {
     // maps
     for (auto& f : mapFiles) {
         EdMap m; if (!m.load(readPath("maps/" + f + ".txt"))) continue; bool ch = false;
-        for (auto& o : m.objs) for (auto& kv : o.kv) { if (kv.first == "flag" || kv.first == "show" || kv.first == "hide" || kv.first == "moveif" || kv.first == "openif" || kv.first == "require" || kv.first == "if" || kv.first == "needs" || kv.first == "script" || kv.first == "ondefeat" || kv.first == "onclear" || kv.first == "onuse") {
+        for (auto& o : m.objs) for (auto& kv : o.kv) { if (kv.first == "flag" || kv.first == "show" || kv.first == "hide" || kv.first == "moveif" || kv.first == "openif" || kv.first == "require" || kv.first == "if" || kv.first == "needs" || kv.first == "script" || kv.first == "ondefeat" || kv.first == "onclear" || kv.first == "onuse" || kv.first == "onpress" || kv.first == "onrelease") {
             std::string nv = kv.first == "flag" ? (kv.second == from ? to : kv.second) : renameWord(kv.second, from, to); if (nv != kv.second) { kv.second = nv; ch = true; n++; } } }
         if (ch) { m.path = dataRoot + "/maps/" + f + ".txt"; m.save(); }
     }
@@ -271,7 +271,13 @@ void Editor::runCampaignCheck() {
             if (o.type == "npc" && !o.get("shop").empty()) { bool ok = false; for (auto& s : gens[4].secs) if (s.get("id") == o.get("shop")) ok = true; if (!ok) addF(true, at + " uses unknown shop '" + o.get("shop") + "'", u); }
             if (o.type == "exit" && !isMap(o.get("to"))) addF(true, at + " leads to unknown map '" + o.get("to") + "'", u);
             if (o.type == "npc" && !scriptOk(o.get("script"))) addF(true, at + " runs missing script '" + o.get("script") + "'", u);
-            for (const char* sk : {"script", "onuse", "ondefeat", "onclear"}) actRefs(o.get(sk), at, u);
+            for (const char* sk : {"script", "onuse", "ondefeat", "onclear", "onpress", "onrelease"}) actRefs(o.get(sk), at, u);
+            if (o.type == "obstacle") for (auto& n0 : split(o.get("needs"), '|')) { std::string n = trim(n0);   // 1.4.0 (#75): a needs= value the game doesn't know
+                static const char* known[] = {"rubble", "dig", "blast", "burn", "melt", "freeze", "shock", "emp", "light"};
+                bool ok = n.empty() || startsWith(n, "force:") || startsWith(n, "spell:") || startsWith(n, "item:") || startsWith(n, "flag:"); for (auto k : known) if (n == k) ok = true;
+                if (!ok) addF(false, at + " needs '" + n + "', which nothing in the game clears (rubble dig blast burn melt freeze shock emp light force:N spell: item: flag:)", u);
+                if (startsWith(n, "item:") && !item(n.substr(5))) addF(true, at + " needs unknown item '" + n.substr(5) + "'", u); }
+            if (o.type == "plate" && trim(o.get("group")).empty() && trim(o.get("onpress")).empty()) addF(false, at + " has no group and no onpress: pressing it does nothing", u);
             if (o.type == "enemy") for (auto& c : ids(o.get("group"))) if (!crea(c)) addF(true, at + " has unknown creature '" + c + "'", u);
             if (o.type == "chest") for (auto& c : ids(o.get("items"))) if (!item(c)) addF(true, at + " holds unknown item '" + c + "'", u);
             if (o.type == "gather" && (o.get("item").empty() || !item(o.get("item")))) addF(true, at + " gathers unknown item '" + o.get("item") + "'", u);

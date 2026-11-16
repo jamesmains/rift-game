@@ -123,3 +123,13 @@ play the campaign's fight music or the map's own (console `combatmusic ID|-`, #4
 
 1.3.2: `music_1_3_2` - a boss plays its own creatures.txt `music=` (goblin_chief: boss) even on a map with its own fight
 music; an ordinary fight there plays the map's.
+
+1.4.0 (#75-#77): `obstacles_1_4_0` (needs=freeze/shock/emp/light, force by a utility=force spell, the Frost Flask,
+Charged Cell, EMP Grenade and torch; frozen water thaws when the party leaves), `puzzles_1_4_0` (the crypt's lever
+sequence, the old mine's pressure plates and crates, the bandit camp's combination lock), `terminals_1_4_0` (the
+Annex, metro and ship terminals; desktop lore files unlocked by the vault chests). Console: `testspell ID UTILITY
+[COST] [MEMBER]` (a made-up spell with that utility=, until the class spells exist), `castout SPELL [MEMBER]` (cast it
+outside a fight, as from the Spells menu), `clearmap [MAP]` (the map's enemy groups gone for this visit - use it
+before teleporting there), `reset_files` (lock the desktop files again). Expect keys: `obstacle:X,Y` (1 while an
+obstacle blocks it), `kind:X,Y` (tile kind), `crate:ID` (x,y), `plate:X,Y` (1 while down), `lorefile:NAME` (1 once
+unlocked), `deskfiles` (what My Computer lists), `inputtext` (the text box). The text box is mode NAME; `type` fills it.

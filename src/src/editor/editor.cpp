@@ -680,7 +680,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     if (k == "effect" && s.name == "item") {
         if (ui.textField(x, y, w - 60, v, 80)) g.dirty = true;
         if (ui.hover(x, y, w - 60, 16)) ui.tip("What using it does. script:<id> runs a script (the item is used up); script:<id>:keep runs it and keeps the item. Only consumables can be used.");
-        if (ui.button(x + w - 56, y, 52, 16, "pick...")) { std::vector<std::string> opts = choiceTable().at("effect"); for (const char* e : {"torch", "dig", "blast", "flare", "respec"}) opts.push_back(e); for (auto& sf : scriptFiles) { opts.push_back("script:" + sf); opts.push_back("script:" + sf + ":keep"); }
+        if (ui.button(x + w - 56, y, 52, 16, "pick...")) { std::vector<std::string> opts = choiceTable().at("effect"); for (const char* e : {"torch", "dig", "blast", "flare", "respec", "frost", "power"}) opts.push_back(e); for (auto& sf : scriptFiles) { opts.push_back("script:" + sf); opts.push_back("script:" + sf + ":keep"); }
             int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("effect", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); }
         return;
     }
@@ -710,9 +710,14 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (k == "onuse") {
             if (ui.textField(x, y, w - 60, v, 300)) g.dirty = true;
             if (ui.hover(x, y, w - 60, 16)) ui.tip("Script run when it is used: actions separated by ; e.g. heal;message:Rested|You feel better. (as a trigger's script=)");
-            if (ui.button(x + w - 56, y, 52, 16, "+ action")) { std::vector<std::string> acts = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2"};
-                for (auto& sf : scriptFiles) acts.push_back("script:" + sf);
-                openListPicker("Action (added with ;)", acts, 0, [&kvr, &g, acts](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
+            if (ui.button(x + w - 56, y, 52, 16, "+ action")) { std::vector<std::string> acts, labels; actionChoices(acts, labels);   // 1.4.0: scripts with their args
+                openListPicker("Action (added with ;)", labels, 0, [&kvr, &g, acts](int i) { kvr.second = trim(kvr.second).empty() ? acts[i] : trim(kvr.second) + ";" + acts[i]; g.dirty = true; }); }
+            return;
+        }
+        if (k == "needs") {   // 1.4.0 (#75): an obstacle template's ways to clear it
+            if (ui.textField(x, y, w - 60, v, 200)) g.dirty = true;
+            if (ui.button(x + w - 56, y, 52, 16, "+ add")) { std::vector<std::string> ids = obstacleNeedChoices(), labels; for (auto& n : ids) labels.push_back(obstacleNeedLabel(n));
+                openListPicker("What clears it (added with |)", labels, 0, [&kvr, &g, ids](int i) { std::string cur = trim(kvr.second); kvr.second = cur.empty() || cur == "rubble" ? ids[i] : cur + "|" + ids[i]; g.dirty = true; }); }
             return;
         }
         if (k == "sparkle") { bool b = v != "0"; if (ui.checkbox(x, y + 2, "twinkle above it", b)) { v = b ? "1" : "0"; g.dirty = true; } return; }
@@ -994,8 +999,8 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     drawGroundPiece(*ui.cv, *ts, k, g, sx, sy, scale, k->tint, k->recolor, k->opaque, mask, corners);
     if (k->prop.valid()) ts->draw(*ui.cv, k->prop, sx, sy, scale);
 }
-static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather"};
-static const int NOBJ = 12;
+static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather", "crate", "plate"};   // 1.4.0: crate, plate (keep new types at the end: tests click by index)
+static const int NOBJ = 14;
 static std::vector<std::pair<std::string, std::string>> objTemplate(const std::string& t, int x, int y) {
     std::vector<std::pair<std::string, std::string>> kv{{"x", std::to_string(x)}, {"y", std::to_string(y)}};
     if (t == "npc") { kv.insert(kv.begin(), {{"id", "npc1"}, {"name", "Villager"}}); kv.push_back({"sprite", "104,0"}); kv.push_back({"dialogue", ""}); kv.push_back({"wander", "0"}); }
@@ -1009,7 +1014,43 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
     else if (t == "lever") { kv.push_back({"name", "Lever"}); kv.push_back({"flag", "lever_" + std::to_string(x) + "_" + std::to_string(y)}); kv.push_back({"toggle", "1"}); kv.push_back({"text", ""}); }
     else if (t == "change") { kv.push_back({"w", "1"}); kv.push_back({"h", "1"}); kv.push_back({"kind", "floor_stone"}); kv.push_back({"if", "some_flag"}); }
     else if (t == "gather") { kv.push_back({"item", "herb_moon"}); kv.push_back({"count", "1-2"}); kv.push_back({"tool", ""}); kv.push_back({"respawn", "3"}); }
+    else if (t == "crate") { kv.insert(kv.begin(), {"id", "crate_" + std::to_string(x) + "_" + std::to_string(y)}); kv.push_back({"name", "Crate"}); kv.push_back({"heavy", "0"}); }   // 1.4.0 (#76)
+    else if (t == "plate") { kv.push_back({"group", "plates1"}); kv.push_back({"onpress", "script:pressure_plates,plates1,plates1_open"}); }
     return kv;
+}
+// 1.4.0 (#75): every needs= value an obstacle understands (worldstate.cpp obstacleMenu), for the object panel's + list
+std::vector<std::string> Editor::obstacleNeedChoices() const { return {"rubble", "dig", "blast", "burn", "melt", "freeze", "shock", "emp", "light", "force:15", "spell:detect", "spell:unlock", "spell:", "item:", "flag:SOME_FLAG"}; }
+std::string Editor::obstacleNeedLabel(const std::string& n) const {
+    if (n == "rubble") return "rubble - a shovel or a blast";
+    if (n == "dig") return "dig - a shovel";
+    if (n == "blast") return "blast - a blasting charge or a blast spell";
+    if (n == "burn") return "burn - a torch, fire oil or a fire spell";
+    if (n == "melt") return "melt - fire, as burn";
+    if (n == "freeze") return "freeze - water: a freeze spell or a Frost Flask (this visit only)";
+    if (n == "shock") return "shock - a dead machine: a shock spell or a Charged Cell";
+    if (n == "emp") return "emp - a sealed tech door: an emp spell or an EMP Grenade";
+    if (n == "light") return "light - hidden until a lit party comes close";
+    if (n == "force:15") return "force:N - STR N, or a force spell (edit the number)";
+    if (n == "spell:detect") return "spell:detect - a detect spell nearby finds it";
+    if (n == "spell:unlock") return "spell:unlock - a knock / hack spell";
+    if (n == "spell:") return "spell:UTILITY - a spell with that utility...";
+    if (n == "item:") return "item:ID - uses up that item...";
+    return "flag:COND - clears itself once the condition holds (edit it)";
+}
+// 1.4.0 (#76): the "+" list for action keys: common actions, then every script with the argument names its "# args:" line gives
+std::string Editor::scriptArgs(const std::string& id) const {
+    std::string t; if (!readFile(readPath("scripts/" + id + ".txt"), t)) return "";
+    for (auto& raw : split(t, '\n')) { std::string l = trim(raw); if (l.empty()) continue; if (l[0] != '#') break; l = trim(l.substr(1)); if (startsWith(toLower(l), "args:")) return trim(l.substr(5)); }
+    return "";
+}
+void Editor::actionChoices(std::vector<std::string>& ids, std::vector<std::string>& labels) const {
+    static const char* acts[] = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2", "resetcrates:", "lorefile:NAME"};
+    for (auto a : acts) { ids.push_back(a); labels.push_back(a); }
+    for (auto& sf : scriptFiles) {
+        std::string args = scriptArgs(sf), id = "script:" + sf;
+        if (!args.empty()) for (auto& a : split(args, ',')) { std::string an = trim(a); if (!an.empty()) id += "," + an; }
+        ids.push_back(id); labels.push_back("script:" + sf + (args.empty() ? "" : "   args: " + args));
+    }
 }
 const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
@@ -1025,6 +1066,8 @@ std::vector<std::string> edObjKeys(const std::string& t) {   // what each object
     if (t == "lever") return {"name", "flag", "toggle", "text", "sprite", "onsprite", "sound", "onuse"};
     if (t == "change") return {"w", "h", "kind", "if"};
     if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent", "sound"};
+    if (t == "crate") return {"name", "heavy", "sprite", "color"};          // 1.4.0 (#76); id is per placement
+    if (t == "plate") return {"group", "onpress", "onrelease", "sprite", "color"};
     return {};
 }
 
@@ -1085,7 +1128,7 @@ void Editor::drawMaps(InputState& in) {
     ty += 24;
     if (mapTool == 3) {
         ui.label(x + 4, ty, "place:"); helpBtn(x + 44, ty - 1, "obj." + std::string(OBJ_TYPES[objType]), "maps.objects"); for (int i = 0; i < NOBJ; i++) { int bw = 46, bx = x + 4 + (i % 4) * 48, byy = ty + 14 + (i / 4) * 20; if (ui.button(bx, byy, bw, 18, OBJ_TYPES[i], true, objType == i && placeTmpl.empty())) { objType = i; placeTmpl.clear(); } }
-        ty += 76;
+        ty += 16 + (NOBJ + 3) / 4 * 20;
         {   // 1.1.0: place copies of a template from the Objects tab
             const EdSection* pt = placeTmpl.empty() ? nullptr : templateSec(placeTmpl); if (!pt) placeTmpl.clear();
             ui.label(x + 4, ty + 2, "template:");
@@ -1226,6 +1269,8 @@ void Editor::drawMaps(InputState& in) {
         else if (o.type == "obstacle") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(150, 110, 60, 110)); ts->draw(*ui.cv, TL::ROCKS, sx, sy, zoom); col = C::Orange; }
         else if (o.type == "change") { ui.cv->fillRect(sx, sy, ow * cell, oh * cell, RGB(180, 80, 255, 70)); col = C::Purple; }
         else if (o.type == "gather") { if (ox >= 0 && oy >= 0 && ox < em.w && oy < em.h) drawGatherNode(o, sx, sy, zoom, em.at(ox, oy)); col = C::Green; }   // as the game draws it
+        else if (o.type == "crate") { Tile t = parseTile(o.get("sprite")); if (!t.valid()) t = T(8, 36); Color8 cc = !trim(o.get("color")).empty() ? parseColor(o.get("color")) : atoi(o.get("heavy").c_str()) > 0 ? RGB(190, 150, 110) : RGB(225, 180, 110); ts->drawRecolor(*ui.cv, t, sx, sy, zoom, cc); col = C::Orange; }   // 1.4.0
+        else if (o.type == "plate") { Tile t = parseTile(o.get("sprite")); if (t.valid()) ts->draw(*ui.cv, t, sx, sy, zoom); else { int in2 = 3 * zoom / 2; ui.cv->fillRect(sx + in2, sy + in2, cell - 2 * in2, cell - 2 * in2, RGB(75, 70, 60)); ui.cv->rect(sx + in2, sy + in2, cell - 2 * in2, cell - 2 * in2, RGB(150, 140, 120)); } col = C::Cream; }
         ui.cv->rect(sx, sy, ow * cell, oh * cell, (int)i == objSel ? C::White : Color8{col.r, col.g, col.b, 160});
         if (overView && in.mouseX >= sx && in.mouseY >= sy && in.mouseX < sx + ow * cell && in.mouseY < sy + oh * cell) hoverObj = (int)i;
     }
@@ -1395,13 +1440,27 @@ void Editor::drawMaps(InputState& in) {
             helpBtn(px + 5, ry + 1, "obj." + ro.type + "." + key, "obj." + ro.type);
             ui.label(px + 22, ry + 2, key);
             bool flagKey = key == "flag", condKey = key == "require" || key == "openif" || key == "show" || key == "hide" || key == "moveif" || key == "if";
-            int vw2 = pw - 116 - (isTileKey(key) ? 30 : 0) - (flagKey || condKey ? 30 : 0);
+            // 1.4.0 (#75/#76): needs= gets a list of what clears an obstacle; action lists get the actions and the scripts (with their args)
+            bool needsKey = key == "needs" && ro.type == "obstacle";
+            bool actKey = key == "onuse" || key == "onclear" || key == "onpress" || key == "onrelease" || key == "ondefeat" || (key == "script" && ro.type == "trigger");
+            if (needsKey || actKey) { flagKey = condKey = false; }
+            int vw2 = pw - 116 - (isTileKey(key) ? 30 : 0) - (flagKey || condKey || needsKey || actKey ? 30 : 0);
             if (ui.textField(px + 88, ry, vw2, o.kv[i].second, 300)) mapDirty = true;
             if (condKey && ui.hover(px + 88, ry, vw2, 16) && !o.kv[i].second.empty()) ui.tip("Reads: " + condEnglish(o.kv[i].second));
             if (flagKey && ui.hover(px + 88, ry, vw2, 16) && !o.kv[i].second.empty()) { std::string w = flagSetSummary(o.kv[i].second); ui.tip(o.kv[i].second + (w.empty() ? " - only this object sets it" : " - also set by " + w)); }
             if (isTileKey(key)) { Tile t = parseTile(o.kv[i].second); if (ui.button(px + 88 + vw2 + 4, ry, 22, 16, "...")) { auto& kvr = o.kv[i]; openTilePicker(t, [&kvr, this](Tile nt) { kvr.second = nt.valid() ? tileText(nt) : ""; mapDirty = true; }, o.type == "npc" || key == "partysprite" ? 'c' : 'p'); } }
             if (flagKey || condKey) { auto* kvp = &o.kv[i]; bool app = condKey;
                 flagPicker(px + 88 + vw2 + 4, ry, 26, app, [kvp, app, this](const std::string& f) { kvp->second = app && !trim(kvp->second).empty() ? trim(kvp->second) + "&" + f : f; mapDirty = true; }, "f"); }
+            if (needsKey) { auto* kvp = &o.kv[i];
+                if (ui.button(px + 88 + vw2 + 4, ry, 26, 16, "+")) { std::vector<std::string> ids = obstacleNeedChoices(), labels; for (auto& n : ids) labels.push_back(obstacleNeedLabel(n));
+                    openListPicker("What clears it (added with |)", labels, 0, [this, kvp, ids](int j) { std::string v = ids[j]; std::string cur = trim(kvp->second);
+                        if (v == "item:" || v == "spell:") { openTextPrompt(v == "item:" ? "Item id that clears it (used up)" : "Spell utility that clears it", "", [this, kvp, v](const std::string& t) { if (trim(t).empty()) return; kvp->second = trim(kvp->second).empty() ? v + trim(t) : trim(kvp->second) + "|" + v + trim(t); mapDirty = true; }); return; }
+                        kvp->second = cur.empty() || cur == "rubble" ? v : cur + "|" + v; mapDirty = true; }); }
+                if (ui.hover(px + 88 + vw2 + 4, ry, 26, 16)) ui.tip("Add a way to clear it: rubble, burn, freeze, shock, emp, light, force:N, spell:, item:, flag: (right-click the name: guide)"); }
+            if (actKey) { auto* kvp = &o.kv[i];
+                if (ui.button(px + 88 + vw2 + 4, ry, 26, 16, "+")) { std::vector<std::string> ids, labels; actionChoices(ids, labels);
+                    openListPicker("Action (added with ;) - scripts show their arguments", labels, 0, [this, kvp, ids](int j) { kvp->second = trim(kvp->second).empty() ? ids[j] : trim(kvp->second) + ";" + ids[j]; mapDirty = true; }); }
+                if (ui.hover(px + 88 + vw2 + 4, ry, 26, 16)) ui.tip("Add an action or a script (with its argument names filled in for you to replace)"); }
             if (ui.button(px + pw - 22, ry, 16, 16, "x", true, false, DANGER)) { o.kv.erase(o.kv.begin() + i); mapDirty = true; ui.blur(); break; }
             if (ui.hover(px + pw - 22, ry, 16, 16) && (tsec || ro.type == "gather")) ui.tip("Remove this key (a copy then takes it from its template / resource type again)");
             ry += 20;

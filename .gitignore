@@ -20,3 +20,4 @@ src/assets/audio/music/pixel_fantasy/
 src/assets/campaigns/test/
 # the project notes stay on this PC (owner's rule)
 CLAUDE.md
+.claude/

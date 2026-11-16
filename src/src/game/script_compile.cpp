@@ -24,7 +24,9 @@ const std::vector<std::string>& scriptActionKeys() {
         "travel", "revealmap", "rep", "approve", "amends", "craftxp", "note", "win", "savepoint", "finish", "respec", "healer",
         "healsvc", "obstacle", "npcmove", "mapset",
         // 1.1.10, for scripts and dialogue alike
-        "time", "sound", "encounter", "weather", "stat", "script"};
+        "time", "sound", "encounter", "weather", "stat", "script",
+        // 1.4.0 (#76/#77)
+        "resetcrates", "lorefile"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }
@@ -43,12 +45,13 @@ static const std::map<std::string, std::pair<int, int>>& fnTable() {
         {"flag", {1, 1}}, {"cond", {1, 1}}, {"has", {1, 1}}, {"visited", {1, 1}}, {"inparty", {1, 1}}, {"rep", {1, 1}}, {"approval", {1, 1}}, {"kills", {1, 1}},
         {"random", {1, 2}}, {"chance", {1, 1}}, {"places", {0, 0}}, {"placename", {1, 1}}, {"placemap", {1, 1}}, {"placex", {1, 1}}, {"placey", {1, 1}},
         {"distance", {1, 1}}, {"leagues", {1, 1}}, {"mapname", {1, 1}}, {"itemname", {1, 1}}, {"count", {1, 1}}, {"at", {2, 2}}, {"contains", {2, 2}},
-        {"add", {2, 2}}, {"len", {1, 1}}, {"upper", {1, 1}}, {"lower", {1, 1}}, {"find", {2, 2}}, {"min", {2, 2}}, {"max", {2, 2}}, {"abs", {1, 1}}, {"var", {1, 1}}};
+        {"add", {2, 2}}, {"len", {1, 1}}, {"upper", {1, 1}}, {"lower", {1, 1}}, {"find", {2, 2}}, {"min", {2, 2}}, {"max", {2, 2}}, {"abs", {1, 1}}, {"var", {1, 1}},
+        {"mid", {2, 3}}, {"squash", {1, 1}}, {"plates", {0, 1}}, {"platesdown", {0, 1}}, {"crateat", {2, 2}}, {"lorefile", {1, 1}}};   // 1.4.0
     return t;
 }
 const std::vector<std::string>& scriptFunctions() { static std::vector<std::string> k; if (k.empty()) for (auto& f : fnTable()) k.push_back(f.first); return k; }
 const std::vector<std::string>& scriptKeywords() {
-    static const std::vector<std::string> k = {"let", "keep", "if", "elif", "elseif", "else", "end", "endif", "endwhile", "endfor", "while", "for", "break", "continue", "stop", "return", "call", "start", "say", "speaker", "option", "ask", "pick", "wait", "and", "or", "not", "in"};
+    static const std::vector<std::string> k = {"let", "keep", "if", "elif", "elseif", "else", "end", "endif", "endwhile", "endfor", "while", "for", "break", "continue", "stop", "return", "call", "start", "say", "speaker", "option", "ask", "pick", "wait", "and", "or", "not", "in", "input"};
     return k;
 }
 static bool isKeyword(const std::string& w) { auto& k = scriptKeywords(); return std::find(k.begin(), k.end(), w) != k.end(); }
@@ -282,10 +285,10 @@ ScriptProg compileScript(const std::string& id, const std::string& text) {
             s.op = SO_OPTION; std::string x; if (!parseTextArg(lab, s.a, x)) { err(ln, x); continue; } s.hasA = true;
             if (ar != std::string::npos) { if (!expr(rest.substr(ar + 2), s.b)) continue; s.hasB = true; }
             emit(s);
-        } else if (word == "ask" || word == "pick") {
+        } else if (word == "ask" || word == "pick" || word == "input") {
             size_t k = 0; while (k < rest.size() && identChar(rest[k])) k++;
             std::string n = toLower(rest.substr(0, k)); if (!nameOk(ln, n, true)) continue;
-            s.op = word == "ask" ? SO_ASK : SO_PICK; s.name = n;
+            s.op = word == "ask" ? SO_ASK : word == "input" ? SO_INPUT : SO_PICK; s.name = n;
             std::string pr = trim(rest.substr(k)); if (!pr.empty()) { std::string x; if (!parseTextArg(pr, s.a, x)) { err(ln, x); continue; } s.hasA = true; }
             emit(s);
         } else if (word == "wait") {

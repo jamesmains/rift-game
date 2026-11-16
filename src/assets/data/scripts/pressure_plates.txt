@@ -1,0 +1,25 @@
+# Pressure plates (1.4.0, #76): every plate of a group down at the same time = solved.
+# args: group, solved, message
+#   group    the plates' group= (on each [plate] object)
+#   solved   the flag set once every plate of the group is down at once (it stays set)
+#   message  what the log says when it is solved (optional)
+# Place each plate with group=<group> and onpress=script:pressure_plates,<group>,<solved>
+# A plate is down while a crate or the party's leader stands on it. Walking into a crate pushes it one tile. Crates
+# go back to their spots whenever the party arrives on the map; a lever with onuse=resetcrates puts them back at once.
+if flag(arg2)
+  stop
+end
+let total = plates(arg1)
+let down = platesdown(arg1)
+if total > 0 and down >= total
+  set {arg2}
+  sound unlock
+  notify Something unlocks.
+  if args >= 3
+    log {arg3}
+  else
+    log Every plate is down. Close by, a mechanism grinds open.
+  end
+else
+  log {down} of {total} plates down.
+end

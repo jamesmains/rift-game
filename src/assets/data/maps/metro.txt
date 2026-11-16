@@ -50,10 +50,10 @@ XXXXXXXXXXXXX#mmmmmmmmmmm#XXXXXXX#mmmmmmmmmmm##RRRRRRRRRR#X
 XXXXXXXXXXXXX#|mmmmmmmm|m#XXXXXXX#mmmmmmmmmmm##RRRRRRRRRR#X
 XXXXXXXXXXXXX######.######XXXXXXX#mmmmmmmmmmm##RORRRRRRRO#X
 XXXXXXXXXXXXXXXXXX#.#XXXXXXXXXXXX#BmmmmmmmmmS##RRRRRRRRRR#X
-XXXXXXXXXXXXXXXXXX#.#XXXXXXXXXXXX#######.###########..####X
-X#############XXXX#.#XXXXXXXXXXXXXXXXXX#.#XXXXXXXXX#..#XXXX
-X#T.........T#XXXX#.#XXXXXXXXXXXXXXXXXX#.#XXXXX#####..###XX
-X#..<........######.####################.#######I......I#XX
+XXXXXXXXXXXXXXXXXX#.#XXXXXXXXXX#########.###########..####X
+X#############XXXX#.#XXXXXXXXXX#.....#X#.#XXXXXXXXX#..#XXXX
+X#T.........T#XXXX#.#XXXXXXXXXX#.....#X#.#XXXXX#####..###XX
+X#..<........######.##############.#####.#######I......I#XX
 X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
 X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
 X#..........rrrrrrrrrrrr~~~~~~rrrrrrrrrrrrrrrrrD........#XX
@@ -61,11 +61,11 @@ X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
 X#..........,,,,,,,,,,,,~~~~~~,,,,,,,,,,,,,,,,,C........#XX
 X#.k......G..##.###############.l...........l.##I......I#XX
 X#...z...z...##.#XXXXXXXXXXXXX#...............###########XX
-X##############.#XXXXXXXXXXXXX#...............#XXXXXXXXXXXX
-XXXXXXXXXXXXXX#.#XXXXXXXXXXXXX#..A..A..A..A...#XXXXXXXXXXXX
-XXXXXXXXXXXX###.#####XXXXXXXXX#...............#XXXXXXXXXXXX
-XXXXXXXXXXXX#______k#XXXXXXXXX#...............#XXXXXXXXXXXX
-XXXXXXXXXXXX#_______#XXXXXXXXX#B...G..z..k.B..#XXXXXXXXXXXX
+X###.##########.#XXXXXXXXXXXXX#...............######XXXXXXX
+XX#......#XXXX#.#XXXXXXXXXXXXX#..A..A..A..A...#....#XXXXXXX
+XX#......#XX###.#####XXXXXXXXX#...............D....#XXXXXXX
+XX#......#XX#______k#XXXXXXXXX#...............#....#XXXXXXX
+XX########XX#_______#XXXXXXXXX#B...G..z..k.B..######XXXXXXX
 XXXXXXXXXXXX#_______#XXXXXXXXX#################XXXXXXXXXXXX
 XXXXXXXXXXXX#b______#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXXXXX#########XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -281,3 +281,71 @@ x=2
 y=15
 title=Cult hymn sheet
 text='While the acolytes sing, the Hierophant cannot be harmed.' Underneath, in another hand: so stop them singing. They hate the light - keep a torch burning.
+
+[obstacle]
+x=34
+y=12
+name=Security shutter
+needs=emp
+clear=floor_concrete
+text=A steel shutter, sealed by a machine lock. Its little red eye still watches the platform.
+
+[chest]
+x=32
+y=10
+items=emp_grenade:1,oil_shock:2,keycard_red:1
+gold=85
+flag=metro_security_office
+
+[chest]
+x=36
+y=10
+items=power_core:1,potion_red2:1
+gold=40
+flag=metro_security_locker
+
+[obstacle]
+x=4
+y=20
+name=Dead freight lift
+needs=shock
+clear=floor_concrete
+text=A freight lift cage, stopped a hand-width below the floor. The motor is intact - it just has no power.
+
+[chest]
+x=7
+y=23
+items=charged_cell:1,scrap:3,circuit:2
+gold=60
+flag=metro_freight_lift
+
+[chest]
+x=3
+y=23
+items=blasting_charge:1,flare:2
+gold=25
+flag=metro_freight_lift2
+
+[sign]
+template=terminal
+x=45
+y=20
+title=Dispatch terminal
+text=
+onuse=script:terminal,1407MARGOT,metro_vault_open,METRO DISPATCH - LINE 3
+
+[door]
+x=46
+y=22
+openif=metro_vault_open
+metal=1
+locked=DISPATCH VAULT - AUTHORISED STAFF. The lock answers to the terminal in the corner.
+flag=metro_vault_door
+
+[chest]
+x=50
+y=21
+items=disk_manifest:1,elixir:1,power_core:1
+gold=140
+flag=metro_vault_chest
+onuse=lorefile:ship_manifest

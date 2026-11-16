@@ -201,6 +201,9 @@ private:
     int zoom = 1; int viewX = 0, viewY = 0;         // scroll in tiles * px
     std::string brush = "grass"; int paletteSel = 0, paletteScroll = 0; std::string paletteFilter;
     int objSel = -1, objType = 0, objScroll = 0; bool dragObj = false;
+    std::vector<std::string> obstacleNeedChoices() const; std::string obstacleNeedLabel(const std::string& n) const;   // 1.4.0 (#75)
+    std::string scriptArgs(const std::string& id) const;                       // 1.4.0 (#76): a script's "# args:" line
+    void actionChoices(std::vector<std::string>& ids, std::vector<std::string>& labels) const;
     int rectX0 = -1, rectY0 = -1; bool rectDragging = false;
     int resizeW = 0, resizeH = 0; bool showGrid = true, showObjs = true;
     int mapScrollDragX = 0, mapScrollDragY = 0; bool mapPanning = false;

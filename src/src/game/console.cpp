@@ -41,6 +41,9 @@ void Game::runConsole(const std::string& line) {
     else if (c == "spawn") { if (!map) return; std::vector<std::string> cs; for (auto& s : split(arg(1), ',')) if (gd->creature(trim(s))) cs.push_back(trim(s)); if (cs.empty()) { out("unknown creature"); return; } popMode(); startCombat(cs, px + 2, py, argi(2, 0), {}, ""); out("fight!"); }
     else if (c == "kill") { if (mode == GMode::COMBAT || (!modeStack.empty() && modeStack.back() == GMode::COMBAT)) { std::string ds; for (auto& u : cb.units) if (!u.friendly() && u.ch.alive) { u.ch.hp = 0; u.ch.alive = false; onKill(u.ch, nullptr); if (ds.empty()) ds = deathSound(u.ch, false); } if (!ds.empty()) gAudio.play(ds); out("enemies slain"); } else out("not in combat"); }
     else if (c == "spells") { std::string s; for (auto& sp : gd->spells) s += sp.first + " "; out(s); }
+    else if (c == "testspell") { if (p.size() < 3) { out("testspell ID UTILITY [COST] [MEMBER]: a made-up spell with that utility= (tests)"); return; } SpellDef d; d.id = arg(1); d.name = arg(1); d.utility = arg(2); d.cost = argi(3, 3); d.target = "self"; d.dmgMax = 0; gd->spells[d.id] = d; int mi = clampi(argi(4, 0), 0, (int)party.members.size() - 1); party.members[mi].spells.push_back(d.id); out("ok"); }   // 1.4.0: test-only utility spells
+    else if (c == "clearmap") { Map* cm = p.size() > 1 ? loadMap(arg(1)) : map; int n = 0; if (cm) for (auto& e : cm->enemies) if (!e.defeated) { e.defeated = true; n++; } out(fmt("%d groups removed (this visit)", n)); }   // clearmap [MAP]: before teleporting there   // 1.4.0: tests walk dungeons without fights
+    else if (c == "castout") { int mi = clampi(argi(2, 0), 0, (int)party.members.size() - 1); if (!gd->spell(arg(1))) { out("unknown spell"); return; } popMode(); out(castUtility(mi, arg(1), mi) ? "cast" : "nothing happened"); }   // 1.4.0: a spell cast from the menu outside a fight
     else if (c == "learn") { if (!gd->spell(arg(1))) { out("unknown spell"); return; } int mi = clampi(argi(2, 0), 0, (int)party.members.size() - 1); party.members[mi].spells.push_back(arg(1)); out("ok"); }
     else if (c == "join") { runAction("join", arg(1)); out("ok"); }
     else if (c == "questfail") {   // questfail QUEST COND | TEXT  - add a fail condition for this session (testing branches)
@@ -63,6 +66,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }
     else if (c == "achieve") { unlockAchievement(arg(1)); out("ok"); }
     else if (c == "reset_achievements") { unlocked.clear(); saveAchievementState(); out("achievements reset"); }
+    else if (c == "reset_files") { foundFiles.clear(); writeFile(saveDir + "/files.ini", "[found]\n"); out("desktop files locked again"); }   // 1.4.0 (#77)
     else if (c == "bounty") { popMode(); openBoard(arg(1, lastTownMap.empty() ? "hollowmere" : lastTownMap)); }
     else if (c == "craft") { popMode(); openCraft(arg(1, "all")); }
     else if (c == "shop") { popMode(); runAction("shop", arg(1, "hollowmere_general")); }

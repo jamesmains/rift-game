@@ -1,0 +1,34 @@
+# Lever sequence (1.4.0, #76): pull the levers in the right order; a wrong one springs them all back up.
+# args: puzzle, lever, order, solved
+#   puzzle  a short name for the puzzle. Each lever's flag= must be <puzzle>_<lever> (crypt_seq_1, crypt_seq_2...)
+#   lever   which lever this is: 1, 2, 3 ... 9
+#   order   the right order as digits, e.g. 3142 (lever numbers start at 1, so it never starts with 0)
+#   solved  the flag set once it is solved: a door's openif=, a change's if=, an obstacle's needs=flag:...
+# Place each lever with toggle=0, flag=<puzzle>_<n> and onuse=script:lever_sequence,<puzzle>,<n>,<order>,<solved>
+# The progress is kept in the flag <puzzle>_step (saved with the game).
+let p = arg1
+let order = "" + arg3
+if flag(arg4)
+  log Nothing more happens. The mechanism has done its work.
+  stop
+end
+let step = flag(p + "_step")
+if mid(order, step + 1, 1) == "" + arg2
+  step += 1
+  set {p}_step={step}
+  if step >= len(order)
+    set {arg4}
+    sound unlock
+    notify Something heavy unlocks.
+    log With a deep, satisfied clunk, something heavy unlocks.
+  else
+    log The lever locks into place. ({step} of {len(order)})
+  end
+else
+  for i in len(order)
+    clear {p}_{i}
+  end
+  clear {p}_step
+  sound ui_error
+  log With a clatter, every lever springs back up. That was the wrong order.
+end

@@ -493,8 +493,26 @@ public:
     void blastAt(int cx, int cy, int lo, int hi, const std::string& what, int radius);
     void updateFuse(float dt);
     void pullLever(Lever& l); void gatherFrom(GatherNode& g);
+    // 1.4.0 (#75/#76): freeze/shock/emp/light obstacles, crates and pressure plates (worldstate.cpp)
+    bool obstacleNeeds(const Obstacle& o, const std::string& what) const;   // its needs= lists this (freeze, shock, emp, light, force, spell:X...)
+    int utilityCaster(const std::string& utility, std::string* spellId, bool needMp = false) const;   // a party member knowing a spell with that utility= (-1 none)
+    bool utilityOnObstacles(const std::string& utility, int mi, const std::string& spellId);   // a utility spell cast from the menu next to an obstacle it clears
+    void revealHidden(const std::string& by, int radius);                // light / detect: hidden things near the party show themselves
+    void resetVisitObstacles(Map& m);                                     // frozen water thaws when the party leaves
+    void resetCrates(Map& m);                                             // crates back to their placed spots (on arrival, action resetcrates)
+    bool pushCrate(Crate& c, int dx, int dy);                             // one tile; false = blocked
+    void crateMenu(int idx, int dx, int dy);                              // a heavy crate: heave it (STR / force spell) or leave it
+    void updatePlates(bool fire);                                         // plates down under crates / the leader; fire = run onpress / onrelease
+    int platesIn(const std::string& group, bool downOnly) const;
+    // 1.4.0 (#76/#77): the text box (GMode::NAME): script input statement, terminals, combination locks
+    std::string inputBuf, inputTitle, inputPrompt; int inputOwner = 0, inputMax = 24;
+    void openTextInput(const std::string& title, const std::string& prompt, int owner);
+    void textInputDone(bool ok);
+    // 1.4.0 (#77): desktop files (data/lore) that a game unlocks (first line #locked); kept in files.ini, like achievements, for every save slot
+    std::set<std::string> foundFiles;
+    void loadFoundFiles(); void unlockLoreFile(const std::string& name);
     bool gatherReady(const GatherNode& g) const { auto it = extra.find("gather_" + mapId + "_" + std::to_string(g.x) + "_" + std::to_string(g.y)); return it == extra.end() || day - atoi(it->second.c_str()) >= g.respawn; }
-    bool interactable(int x, int y) { return map->npcAt(x, y) || map->chestAt(x, y) || map->doorAt(x, y) || map->signAt(x, y) || map->enemyAt(x, y) || map->obstacleAt(x, y) || map->leverAt(x, y) || map->gatherAt(x, y); }
+    bool interactable(int x, int y) { return map->crateAt(x, y) || map->npcAt(x, y) || map->chestAt(x, y) || map->doorAt(x, y) || map->signAt(x, y) || map->enemyAt(x, y) || map->obstacleAt(x, y) || map->leverAt(x, y) || map->gatherAt(x, y); }
     void respawnParty();
     void hideNpcForGood(NPC& n);   // hidenpc= / join= / combat= / hostile=: stays hidden (saved)
     std::string questStatus(const QuestDef& q) const;

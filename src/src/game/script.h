@@ -3,10 +3,14 @@
 //   let x = 5 / keep visits = visits + 1 / x += 1        variables (keep = saved with the game)
 //   if / elif / else / end, while ... end, for p in places() ... end, break, continue
 //   say <text>, speaker <name>, option <text> -> <value>, ask <var> <prompt>, pick <var> <prompt>, wait <seconds>
+//   input <var> <prompt>   (1.4.0) a box to type into (codes, passwords); var = the text typed, "" if cancelled
 //   call <id> [args], start <id> [args], return [value], stop
 //   any dialogue action: give potion:2, gold -{fare}, set met_mara, teleport overworld,10,20, dialogue elder ...
 // Text in quotes or after say/option/actions can hold {expressions}. Expressions: numbers, "text", variables, flags,
 // built-in values (gold, day, hour, here...), functions (cond("item:key"), random(1,6), placename(p)...), + - * / %,
+// 1.4.0: mid(text, start[, length]) (1-based), squash(text) (letters and digits only, upper case: compare codes), plates(group) / platesdown(group) (pressure plates on this map),
+// crateat(x, y) (1 if a crate stands there), lorefile(name) (1 if that desktop file is unlocked); actions resetcrates,
+// lorefile <name> (a desktop file appears).
 // == != < <= > >=, and / or / not.
 // compileScript turns the text into a flat list of statements with jumps (the Editor's Check uses it too); the game
 // runs them in Game::resumeScript (script.cpp), pausing on say / ask / pick / wait and on actions that open a screen.
@@ -31,7 +35,7 @@ enum { SX_NUM, SX_STR, SX_INTERP, SX_VAR, SX_CALL, SX_NOT, SX_NEG, SX_BIN };
 struct SExpr { int kind = SX_NUM; long long n = 0; std::string s; std::vector<SExpr> kids; };
 
 enum { SO_LET, SO_KEEP, SO_SET, SO_JF, SO_JMP, SO_FORINIT, SO_FORNEXT, SO_CALL, SO_START, SO_RETURN, SO_STOP,
-       SO_SAY, SO_SPEAKER, SO_OPTION, SO_ASK, SO_PICK, SO_WAIT, SO_ACTION };
+       SO_SAY, SO_SPEAKER, SO_OPTION, SO_ASK, SO_PICK, SO_WAIT, SO_ACTION, SO_INPUT };
 struct SStmt {
     int op = 0, line = 0, target = -1, slot = -1;
     std::string name, key;           // variable / script id / action key; key also holds = += -= for SO_SET
@@ -63,8 +67,8 @@ struct ScriptFrame {
     struct Loop { std::vector<std::string> items; size_t i = 0; };
     std::map<int, Loop> loops;
 };
-enum { SW_NONE, SW_IDLE, SW_DIALOGUE, SW_TIMER };
-enum { SP_NONE, SP_ASK, SP_PICK };
+enum { SW_NONE, SW_IDLE, SW_DIALOGUE, SW_TIMER, SW_INPUT };
+enum { SP_NONE, SP_ASK, SP_PICK, SP_INPUT };
 struct ScriptRun {
     int id = 0; std::vector<ScriptFrame> frames;
     int wait = SW_NONE; float timer = 0;

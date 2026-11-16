@@ -824,5 +824,41 @@ void Game::drawLevelUp(Canvas& cv, InputState& in) {
 }
 
 // name entry is handled by the desktop "New Game" dialog; these remain for completeness
-void Game::updateName(InputState& in, float dt) { (void)in; (void)dt; popMode(); }
-void Game::drawName(Canvas& cv, InputState& in) { (void)cv; (void)in; }
+// 1.4.0 (#76/#77): the text box a script's input statement opens (terminal passwords, combination locks). Keyboard:
+// type, Backspace (Ctrl = clear), Enter, Esc. Pad: up/down change the last character, right adds one, left deletes,
+// A enters, B cancels.
+void Game::updateName(InputState& in, float dt) {
+    (void)dt;
+    for (char ch : in.typed) if (ch >= 32 && ch < 127 && (int)inputBuf.size() < inputMax) { inputBuf += ch; gAudio.play("text_key"); }
+    if (in.pressed[K_BACKSPACE] && !inputBuf.empty()) { if (in.ctrl()) inputBuf.clear(); else inputBuf.pop_back(); gAudio.play("text_key"); }
+    if (in.gamepadActive) {
+        static const std::string CH = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        if (in.pressed[K_PAD_RIGHT] && (int)inputBuf.size() < inputMax) { inputBuf += '0'; gAudio.play("text_key"); }
+        if (in.pressed[K_PAD_LEFT] && !inputBuf.empty()) { inputBuf.pop_back(); gAudio.play("text_key"); }
+        if ((in.pressed[K_PAD_UP] || in.pressed[K_PAD_DOWN]) ) {
+            if (inputBuf.empty()) inputBuf += '0';
+            char& c = inputBuf.back(); size_t i = CH.find((char)toupper((unsigned char)c)); if (i == std::string::npos) i = 0;
+            i = (i + (in.pressed[K_PAD_UP] ? 1 : CH.size() - 1)) % CH.size(); c = CH[i]; gAudio.play("text_key");
+        }
+        if (in.pressed[K_PAD_A]) { textInputDone(true); in.eatKeys(); return; }
+        if (in.pressed[K_PAD_B]) { textInputDone(false); in.eatKeys(); return; }
+    }
+    if (in.pressed[K_ENTER]) { textInputDone(true); in.eatKeys(); return; }
+    if (in.pressed[K_ESCAPE]) { textInputDone(false); in.eatKeys(); return; }
+    if (in.mousePressed[2]) { textInputDone(false); return; }
+}
+void Game::drawName(Canvas& cv, InputState& in) {
+    (void)in;
+    int ts = textScale(), bw = ts == 2 ? 560 : 400, lh = 12 * ts + 1;
+    auto lines = ctx.font->wrap(inputPrompt.empty() ? std::string("Enter the code:") : inputPrompt, bw - 40, ts);
+    int h = 30 + (int)lines.size() * lh + 12 + (16 * ts + 8) + 30;
+    int x = (SCREEN_W - bw) / 2, y = std::max(4, (SCREEN_H - 72 - h) / 2);
+    cv.dim(0, 0, SCREEN_W, SCREEN_H, 90); uiRect(0, 0, SCREEN_W, SCREEN_H);
+    panelTitle(ctx, x, y, bw, h, inputTitle.empty() ? std::string("Enter") : inputTitle);
+    int cy = y + 24; for (auto& l : lines) { UI::text(ctx, x + 20, cy, l, C::White, ts); cy += lh; }
+    cy += 8;
+    int fh = 16 * ts + 4; cv.fillRect(x + 20, cy, bw - 40, fh, RGB(10, 14, 10)); cv.rect(x + 20, cy, bw - 40, fh, C::Gray);
+    std::string shown = inputBuf; bool caret = (ctx.frame / 20) % 2 == 0;
+    UI::text(ctx, x + 26, cy + 3, shown + (caret ? "_" : " "), RGB(120, 255, 140), ts);
+    textCenter(ctx, SCREEN_W / 2, y + h - 18, gPadGlyphs ? "D-pad: letters   A: enter   B: cancel" : "[Enter] OK    [Esc] Cancel", C::Gray);
+}

@@ -46,11 +46,11 @@ XX#....r...br....m.....3#XXXXXXX#####XXXXXXXXXXX
 XX##cw......m...........#XXXXXXXXXXXXXXXXXXXXXXX
 XXX#Br...r.##..........##XXXXXXXXXXXXXXXXXXXXXXX
 XX##...b..##########.m##XXXXXXXXXXXXXXXXXXXXXXXX
-XX#b......#XXXXXXXX####XXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.....m##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#b...M.#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.....##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX#.cc.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#b......######XXX####XXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.....m##....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#b...M.......#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.....###....#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX#.cc.##X######XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X##..b##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X#b..##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 X#...#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -231,3 +231,18 @@ x=6
 y=14
 title=Goblin drawing
 text=A big goblin with a crown, and many small goblins. The big one is crossed out - and all the small ones are running away.
+
+[obstacle]
+x=9
+y=24
+name=Goblin barricade
+needs=force:16|burn
+clear=floor_cave
+text=Crates, cart planks and a door nailed together, wedged into a crack in the wall. Goblin-sized gaps show a stash behind it. It is heavy - and very dry.
+
+[chest]
+x=13
+y=24
+items=potion_red:2,oil_fire:1,gem_rough:1
+gold=45
+flag=gc_barricade_stash

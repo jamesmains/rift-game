@@ -171,6 +171,18 @@ int main(int argc, char** argv) {
                 if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
                 // 1.3.3: heard:<event> = 1 if that sound played since the last "audio" command (which clears the list)
                 if (startsWith(key, "cb:")) { got = app.game.combatProbe(key.substr(3)); num = !got.empty() && (isdigit((unsigned char)got[0]) || (got[0] == '-' && got.size() > 1)) && got.find_first_of(",;:") == std::string::npos; return true; }   // 1.4.0
+
+                // 1.4.0 (#75-#77): obstacle:X,Y = 1 while an uncleared obstacle covers it; kind:X,Y = its tile kind; crate:ID = x,y;
+                // plate:X,Y = 1 while down; lorefile:NAME = 1 once unlocked; inputtext = what the text box holds
+                if (startsWith(key, "obstacle:") || startsWith(key, "kind:") || startsWith(key, "plate:")) { auto q = split(key.substr(key.find(':') + 1), ','); int qx = q.size() > 1 ? atoi(q[0].c_str()) : -1, qy = q.size() > 1 ? atoi(q[1].c_str()) : -1;
+                    if (startsWith(key, "obstacle:")) got = g.map && g.map->obstacleAt(qx, qy) ? "1" : "0";
+                    else if (startsWith(key, "plate:")) { Plate* pl = g.map ? g.map->plateAt(qx, qy) : nullptr; got = pl && pl->down ? "1" : "0"; }
+                    else { got = g.map && g.map->inBounds(qx, qy) && g.map->at(qx, qy).kind < allTileKinds().size() ? allTileKinds()[g.map->at(qx, qy).kind].name : "none"; num = false; }
+                    return true; }
+                if (startsWith(key, "crate:")) { got = "none"; if (g.map) for (auto& c : g.map->crates) if (c.id == key.substr(6)) got = fmt("%d,%d", c.x, c.y); num = false; return true; }
+                if (startsWith(key, "lorefile:")) { got = g.foundFiles.count(key.substr(9)) ? "1" : "0"; return true; }
+                if (key == "inputtext") { got = g.inputBuf; num = false; return true; }
+                if (key == "deskfiles") { got.clear(); for (auto& f : app.desktop.loreFiles()) got += (got.empty() ? "" : ",") + f; num = false; return true; }   // My Computer's list
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
 #ifndef TRIFFALL_NO_EDITOR
                 if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer

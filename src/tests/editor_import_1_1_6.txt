@@ -34,16 +34,16 @@ expect asset:campaigns/test_isle/dialogue/tut_arrive.txt == 1
 edimport camp 0 triffall start,gold
 # search and filter over every item
 edimport gen 0 triffall all
-expect edcount:0 == 222
+expect edcount:0 == 226
 edsearch 0 iron
 expect edshown:0 > 2
-expect edshown:0 < 222
+expect edshown:0 < 226
 edsearch 0 zzzz_nothing
 expect edshown:0 == 0
 edfilter 0 type weapon
 expect edshown:0 == 40
 edsearch 0
-expect edshown:0 == 222
+expect edshown:0 == 226
 # the Import window itself
 tab 0
 frames 3

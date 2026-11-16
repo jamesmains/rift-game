@@ -54,11 +54,11 @@ XXXXXX#.....~.3#######T####XXXXXXXXX#T#.###XXXXXXX
 XXXXXX#........##.........#XXXXXXXXX#.....#XXXXXXX
 XXXXXX#..~.....##.........###########.....#XXXXXXX
 XXXXXX#......o.........~..................#XXXXXXX
-XXXXXX###########....~....######.####.....#XXXXXXX
-XXXXXXXXXXXXXXXX###########XX#AAAAA##.....#XXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX#AAAAA##.....#XXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX#AAAAA##o....#XXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX#AAAAA########XXXXXXX
+XXXXXX####A######....~....######.####.....#XXXXXXX
+XXXXXXX###A###XX###########XX#AAAAA##.....#XXXXXXX
+XXXXXXX#.....#XXXXXXXXXXXXXXX#AAAAA##.....#XXXXXXX
+XXXXXXX#.....#XXXXXXXXXXXXXXX#AAAAA##o....#XXXXXXX
+XXXXXXX#######XXXXXXXXXXXXXXX#AAAAA########XXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX#######XXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -268,3 +268,27 @@ x=12
 y=5
 title=Fisherman's warning
 text=The hydra never leaves the water. Neither does lightning - one bolt in the mire runs through everything standing in it.
+
+[obstacle]
+x=10
+y=31
+w=1
+h=2
+name=Black channel
+needs=freeze
+text=A channel of black, bottomless water runs down into a sunken alcove. Something pale glimmers at the far end. Too deep to wade, too wide to jump.
+onclear=
+
+[chest]
+x=10
+y=34
+items=frost_flask:1,amulet_wis:1,potion_purple:1
+gold=95
+flag=marsh_drowned_alcove
+
+[sign]
+x=8
+y=33
+title=Carved stone
+text=HERE THE DROWNED KEEP WHAT THE MIRE GAVE BACK. TAKE, AND REMEMBER THEM.
+sprite=27,14

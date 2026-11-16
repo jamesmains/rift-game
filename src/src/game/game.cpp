@@ -211,12 +211,15 @@ void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     bool newPlace = id != mapId;
     if (newPlace) revertFightChanges();   // 1.4.0 (#58): smashed furniture and snuffed braziers last for the visit
     Map* m = loadMap(id);
+    if (map && map != m) resetVisitObstacles(*map);   // 1.4.0 (#75): frozen water thaws behind the party
     map = m; mapId = id;
+    if (newPlace) resetCrates(*m);                     // 1.4.0 (#76): crates back where they were placed
     for (auto& e : m->enemies) { e.chasing = false; if (e.temp) e.defeated = true; }   // 1.2.4 (#41): chases end when the party leaves
     if (x == 0 && y == 0) { x = m->spawnX; y = m->spawnY; }
     if (!m->walkable(x, y)) { int ox, oy; if (m->findFree(x, y, 6, ox, oy, rng)) { x = ox; y = oy; } }
     px = x; py = y;
     trail.clear(); for (int i = 0; i < 8; i++) trail.push_back({px, py});
+    updatePlates(false);
     visited.insert(id);
     // overworld locations with reveal=N uncover the overworld around them when their map is entered, so a campaign
     // played mostly indoors still fills in its world map
@@ -617,6 +620,12 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     if (contact(map->chestAt(nx, ny) != nullptr)) return;
     if (Door* d = map->doorAt(nx, ny)) { if (!d->open) { contact(true); return; } }
     if (contact(map->enemyAt(nx, ny) != nullptr)) return;
+    // 1.4.0 (#76): walking into a crate pushes it one tile (a heavy one needs the STR, else a menu offers a force spell)
+    if (Crate* cr = map->crateAt(nx, ny)) {
+        int best = 0; for (auto& m : party.members) if (m.alive) best = std::max(best, m.stat(ST_STR, *gd));
+        if (cr->heavy > best) { if (interactOnBlocked) crateMenu((int)(cr - &map->crates[0]), dx, dy); return; }
+        if (!pushCrate(*cr, dx, dy)) { if (doorMsgCd <= 0) { log("The " + toLower(cr->name) + " won't go that way - something is behind it."); doorMsgCd = 30; } return; }
+    }
     { std::string shut = closedShopDoor(nx, ny); if (!shut.empty()) { if (doorMsgCd <= 0) { log(shut); gAudio.play("shop_closed"); doorMsgCd = 30; } return; } }
     if (!map->walkable(nx, ny)) { if (contact(map->signAt(nx, ny) != nullptr || map->obstacleAt(nx, ny) != nullptr || map->leverAt(nx, ny) != nullptr || map->gatherAt(nx, ny) != nullptr)) return; return; }
     trail.insert(trail.begin(), {px, py}); if (trail.size() > 8) trail.pop_back();
@@ -633,7 +642,10 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     if (lightSteps > 0) { lightSteps--; if (map->dark && lightSteps == 30) log("Your light is guttering - light another torch soon."); else if (map->dark && lightSteps == 0) { log("Your light burns out. The dark closes in."); notify("Light out"); } }   // 1.4.0 (#79)
     if (stealthSteps > 0) stealthSteps--; if (detectSteps > 0) detectSteps--;
     touchChase();   // 1.2.4 (#41) touch=1: groups chasing the party take their step with it
-    onStep();
+    GMode before = mode;
+    updatePlates(true);   // 1.4.0 (#76): plates under the leader / pushed crates
+    if (evalCond("lit")) revealHidden("light", 2);   // 1.4.0 (#75): needs=light things show themselves to a lit party
+    if (mode == before) onStep(); else { revealAround(); updateCamera(); }   // a plate's onpress opened a screen
 }
 
 void Game::onStep() {
@@ -857,6 +869,14 @@ void Game::interactAt(int x, int y) {
         if (!d->onUse.empty()) runScript(d->onUse);
         return;
     }
+    if (Crate* cr = map->crateAt(x, y)) {   // 1.4.0 (#76)
+        int dx = x - px, dy = y - py; if (abs(dx) + abs(dy) != 1) return;
+        int best = 0; for (auto& m : party.members) if (m.alive) best = std::max(best, m.stat(ST_STR, *gd));
+        if (cr->heavy > best) crateMenu((int)(cr - &map->crates[0]), dx, dy); else log("A " + toLower(cr->name) + ". Walk into it to push it.");
+        return;
+    }
+    // 1.4.0 (#76/#77): a sign without text but with onuse= (a terminal, a combination lock) only runs its onuse
+    if (SignPost* s = map->signAt(x, y)) if (trim(s->text).empty() && !s->onUse.empty()) { if (!s->sound.empty()) gAudio.play(s->sound); runScript(s->onUse); return; }
     if (SignPost* s = map->signAt(x, y)) { if (!s->sound.empty()) gAudio.play(s->sound); std::string title = s->title.empty() ? "Sign" : s->title; showMessage(title, s->text); addNote(map->name + " " + toLower(title), s->text); if (!s->onUse.empty()) runScript(s->onUse); return; }
     if (Obstacle* o = map->obstacleAt(x, y)) { obstacleMenu((int)(o - &map->obstacles[0])); return; }
     if (Lever* l = map->leverAt(x, y)) { pullLever(*l); return; }
@@ -1031,6 +1051,22 @@ void Game::runAction(const std::string& k, const std::string& v) {
 }
 void Game::runActionInner(const std::string& k, const std::string& v) {
     if (k == "obstacle") { obstacleAction(v); return; }
+    if (k == "crate") {   // 1.4.0 (#76): the heavy crate menu: idx,dx,dy,str | idx,dx,dy,spell:member:spell
+        if (mode == GMode::DIALOGUE) popMode();
+        auto p = split(v, ','); if (p.size() < 4 || !map) return; int idx = atoi(p[0].c_str()), dx = atoi(p[1].c_str()), dy = atoi(p[2].c_str());
+        if (idx < 0 || idx >= (int)map->crates.size()) return; Crate& c = map->crates[idx];
+        auto q = split(p[3], ':');
+        if (q[0] == "spell" && q.size() >= 3) { int mi = atoi(q[1].c_str()); const SpellDef* sp = gd->spell(q[2]); if (!sp || mi < 0 || mi >= (int)party.members.size()) return;
+            if (party.members[mi].mp < sp->cost) { log(party.members[mi].name + " doesn't have the MP."); gAudio.play("ui_error"); return; }
+            if (!pushCrate(c, dx, dy)) { log("It won't go that way - something is behind it."); return; }
+            party.members[mi].mp -= sp->cost; gAudio.play(spellSound(*sp)); log(party.members[mi].name + " heaves it aside."); updatePlates(true); return; }
+        int best = 0; for (auto& m : party.members) if (m.alive) best = std::max(best, m.stat(ST_STR, *gd));
+        if (best < c.heavy) { log("It won't budge. Someone stronger might shift it."); gAudio.play("ui_error"); return; }
+        if (!pushCrate(c, dx, dy)) log("It won't go that way - something is behind it."); else updatePlates(true);
+        return;
+    }
+    if (k == "resetcrates") { if (map) { resetCrates(*map); log(trim(v).empty() ? "With a rumble, the crates slide back where they started." : trim(v)); } return; }   // 1.4.0 (#76)
+    if (k == "lorefile") { for (auto& f : split(v, ',')) if (!trim(f).empty()) unlockLoreFile(trim(f)); return; }   // 1.4.0 (#77): a desktop file appears
     if (k == "healer") { healerMenu(v); return; }
     if (k == "healsvc") { if (mode == GMode::DIALOGUE) popMode(); healerService(v); return; }
     if (k == "npcmove") { auto p = split(v, ','); if (p.size() >= 3 && map) { extra["npcpos_" + mapId + "_" + trim(p[0])] = trim(p[1]) + "," + trim(p[2]); applyWorldState(*map); } return; }
@@ -1375,9 +1411,9 @@ bool Game::castUtility(int mi, const std::string& spellId, int target) {
     int power = caster.stat(s->scaleStat, *gd);
     Character& t = party.members[clampi(target, 0, (int)party.members.size() - 1)];
     bool did = false;
-    if (s->utility == "light") { lightSteps = std::min(600, lightSteps + 120 + power * 6); lightPower = std::max(lightPower, 6); log(fmt("A soft light surrounds the party (%d steps of light).", lightSteps)); did = true; }   // 1.4.0 (#79): adds to a burning torch
+    if (s->utility == "light") { lightSteps = std::min(600, lightSteps + 120 + power * 6); lightPower = std::max(lightPower, 6); log(fmt("A soft light surrounds the party (%d steps of light).", lightSteps)); did = true; revealHidden("light", 2); }   // 1.4.0 (#79): adds to a burning torch
     else if (s->utility == "stealth") { stealthSteps = 80 + power * 4; log("The party moves unseen. Monsters will keep their distance for a while."); did = true; }
-    else if (s->utility == "detect") { detectSteps = 60 + power * 3; int n = 0; for (auto& c : map->chests) if (!c.opened) n++; log(fmt("You sense %d unopened treasure%s on this map. Chests now glow through the dark.", n, n == 1 ? "" : "s")); did = true; }
+    else if (s->utility == "detect") { detectSteps = 60 + power * 3; int n = 0; for (auto& c : map->chests) if (!c.opened) n++; log(fmt("You sense %d unopened treasure%s on this map. Chests now glow through the dark.", n, n == 1 ? "" : "s")); did = true; revealHidden("detect", 8); }
     else if (s->utility == "unlock") {
         bool any = false;
         for (int d = 0; d < 4; d++) { int nx = px + (d == 0) - (d == 1), ny = py + (d == 2) - (d == 3);
@@ -1385,6 +1421,10 @@ bool Game::castUtility(int mi, const std::string& spellId, int target) {
             if (Chest* c = map->chestAt(nx, ny)) if (!c->locked.empty()) { c->locked.clear(); any = true; } }
         if (!any) { log("There is nothing locked next to you."); return false; }
         log("The lock clicks open."); revealAround(); did = true;
+    }
+    else if (s->utility == "freeze" || s->utility == "shock" || s->utility == "emp" || s->utility == "force") {   // 1.4.0 (#75)
+        if (!utilityOnObstacles(s->utility, mi, spellId)) { log(s->utility == "freeze" ? "There is no water here worth freezing." : s->utility == "shock" ? "There is nothing dead here to wake." : s->utility == "emp" ? "There is no machine lock next to you." : "There is nothing here to heave."); return false; }
+        did = true;
     }
     else if (s->utility == "recall") {
         if (lastTownMap.empty() || mapId == lastTownMap) { log("There is nowhere to recall to from here."); return false; }
@@ -1489,6 +1529,25 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     }
     for (auto& t : trails) drawGroundPiece(cv, *ctx.ts, t.k, t.g, t.sx, t.sy, 2, t.tint, t.recolor, t.opaque, t.mask, t.corners, t.spill);
     for (auto& p : props) ctx.ts->draw(cv, p.p, p.sx, p.sy, 2, p.t);
+    // 1.4.0 (#76): pressure plates (a stone square, sunk while something stands on it) and crates
+    for (auto& pl : map->plates) {
+        if (!map->inBounds(pl.x, pl.y) || !map->at(pl.x, pl.y).explored) continue;
+        int sx = pl.x * TILE - cx, sy = pl.y * TILE - cy; bool vis = visible(pl.x, pl.y);
+        if (pl.sprite.valid()) { if (pl.hasColor) ctx.ts->drawRecolor(cv, pl.sprite, sx, sy, 2, pl.color); else ctx.ts->draw(cv, pl.sprite, sx, sy, 2); continue; }
+        Color8 rim = pl.hasColor ? pl.color : RGB(150, 140, 120); if (!vis) rim = RGB(rim.r / 3, rim.g / 3, rim.b / 3);
+        int in = pl.down ? 5 : 3;
+        cv.fillRect(sx + in, sy + in, TILE - 2 * in, TILE - 2 * in, pl.down ? RGB(rim.r / 3, rim.g / 3, rim.b / 3) : RGB(rim.r / 2, rim.g / 2, rim.b / 2));
+        cv.rect(sx + in, sy + in, TILE - 2 * in, TILE - 2 * in, rim);
+        if (!pl.down) cv.hline(sx + in + 1, sy + in + 1, TILE - 2 * in - 2, RGB(std::min(255, rim.r + 50), std::min(255, rim.g + 50), std::min(255, rim.b + 50)));
+    }
+    for (auto& cr : map->crates) {
+        if (!map->inBounds(cr.x, cr.y) || !(visible(cr.x, cr.y) || (map->dark && map->at(cr.x, cr.y).explored))) continue;
+        int sx = cr.x * TILE - cx, sy = cr.y * TILE - cy;
+        Tile pic = cr.sprite.valid() ? cr.sprite : (cr.heavy > 0 ? T(20, 36) : T(8, 36));
+        Color8 col = cr.hasColor ? cr.color : cr.heavy > 0 ? RGB(190, 150, 110) : RGB(225, 180, 110);
+        if (!visible(cr.x, cr.y)) col = RGB(col.r / 3, col.g / 3, col.b / 3);
+        ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, col);
+    }
     // objects
     for (auto& ch : map->chests) {
         bool detect = detectSteps > 0 && !ch.opened;
@@ -1836,6 +1895,11 @@ bool Game::useItemOn(const std::string& itemId, Character& target, bool inCombat
         if (Game::inCombat() && d->effect == "dig") { log("Not in the middle of a fight."); return false; }
         for (int k = 0; k < 4; k++) { int nx = px + (k == 0) - (k == 1), ny = py + (k == 2) - (k == 3); if (Obstacle* o = map->obstacleAt(nx, ny)) { if (mode == GMode::MENU) popMode(); obstacleMenu((int)(o - &map->obstacles[0])); return false; } }
         log(d->effect == "dig" ? "There's nothing here worth digging through. Stand next to rubble or loose earth." : "Stand next to rubble or a weak wall to set the charge."); return false;
+    }
+    else if (d->effect == "frost" || d->effect == "power") {   // 1.4.0 (#75): Frost Flask (freezes water) / Charged Cell (wakes a dead machine): used next to the obstacle
+        if (Game::inCombat()) { log("Not in the middle of a fight."); return false; }
+        for (int k = 0; k < 4; k++) { int nx = px + (k == 0) - (k == 1), ny = py + (k == 2) - (k == 3); if (Obstacle* o = map->obstacleAt(nx, ny)) if (obstacleNeeds(*o, d->effect == "frost" ? "freeze" : "shock")) { while (mode == GMode::MENU || mode == GMode::PAUSE) popMode(); obstacleMenu((int)(o - &map->obstacles[0])); return false; } }
+        log(d->effect == "frost" ? "Stand next to water you want to freeze, then use it." : "Stand next to a dead machine, lift or door, then use it."); return false;
     }
     else if (d->effect == "flare") { log("Throw it during a fight to light up the battlefield."); return false; }
     else if (d->effect == "torch") { lightSteps = std::max(lightSteps, 220); lightPower = std::max(lightPower, 5); log(map && map->dark ? "You light a torch. The dark pulls back a few steps." : "You light a torch. (It matters most underground.)"); revealAround(); used = true; }

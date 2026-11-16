@@ -43,11 +43,11 @@ XXXXXXXXXXXXXXX#.#XXXXXXXX#######X
 XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXX#.#XXXXXXXXXXXXXXXX
 XXXXXXXXXXXX####.####XXXXXXXXXXXXX
-XXXXXXXXXXXX#T.....T#XXXXXXXXXXXXX
-XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
-XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
-XXXXXXXXXXXX#...<...#XXXXXXXXXXXXX
-XXXXXXXXXXXX#.......#XXXXXXXXXXXXX
+XXXXXXXX#####T.....T#XXXXXXXXXXXXX
+XXXXXXXX#...#.......#XXXXXXXXXXXXX
+XXXXXXXX#...#.......#XXXXXXXXXXXXX
+XXXXXXXX#...#...<...#XXXXXXXXXXXXX
+XXXXXXXX#####.......#XXXXXXXXXXXXX
 XXXXXXXXXXXX#########XXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -145,3 +145,25 @@ x=17
 y=17
 title=Grave inscription
 text=Here lies one who would not lie still. The cold in him fears fire.
+
+[obstacle]
+x=12
+y=19
+name=Scratched wall
+needs=light|spell:detect
+clear=floor_stone
+text=Old stone, scored with faint marks you cannot read in this gloom.
+
+[chest]
+x=9
+y=19
+items=torch_item:2,potion_red:2,oil_blessed:1
+gold=35
+flag=barrow_warden_cache
+
+[sign]
+x=10
+y=18
+title=Scratched letters
+sprite=27,14
+text=FOR THE NEXT WARDEN. LIGHT FINDS WHAT THE DARK KEEPS. - H.
