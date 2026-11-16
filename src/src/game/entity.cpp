@@ -31,6 +31,7 @@ std::string Character::classSummary(const GameData& gd) const {
 int Character::maxHP(const GameData& gd) const {
     int v = baseHP > 0 ? baseHP : 8 + stat(ST_CON, gd) * 3 + rankSum(*this, gd, true);
     for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) v += it->bonusHP;
+    if (wounds > 0) v = std::max(1, v * (100 - 15 * std::min(3, wounds)) / 100);   // 1.5.0 (#94)
     return v;
 }
 int Character::maxMP(const GameData& gd) const {
@@ -64,12 +65,14 @@ int Character::evasion(const GameData& gd) const {
     for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) v += it->evasion;
     if (hasEffect("stun") || hasEffect("freeze")) v -= 15;
     v += bond * 5;
+    // 1.5.0 (#93): armour heavier than the class wears -5 a step; armour whose req= isn't met -3 a point (max 30)
+    if (baseHP <= 0) { v -= armorOver(gd) * 5; int sh = 0; for (int i = SL_OFFHAND; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) sh += reqShort(*it, gd); v -= std::min(30, sh * 3); }
     return v;
 }
 int Character::resist(int dt, const GameData& gd) const {
     int v = baseRes[dt];
     for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) v += it->res[dt];
-    return std::min(90, v);
+    return std::min(baseHP > 0 ? 100 : 90, v);   // 1.5.0 (#92): creatures can be immune; gear stops at 90
 }
 int Character::accuracy(const GameData& gd) const {
     int v = baseHP > 0 ? mAcc : 0;
@@ -83,10 +86,41 @@ const ItemDef* Character::weapon(const GameData& gd) const {
     if (equip[SL_WEAPON].empty()) return nullptr;
     return gd.item(equip[SL_WEAPON]);
 }
-int Character::attackRange(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait == "reach" && w->range <= 1 ? 2 : w->range; return baseHP > 0 ? mRange : 1; }
-int Character::attackAP(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait == "quick" ? std::max(1, w->ap - 1) : w->ap; return baseHP > 0 ? mAp : 3; }
+int Character::attackRange(const GameData& gd) const { if (auto* w = weapon(gd)) return trait(gd) == "reach" && w->range <= 1 ? 2 : w->range; return baseHP > 0 ? mRange : 1; }
+// 1.5.0 (#93): a weapon the character isn't trained in costs 1 AP more and loses its family trait
+int Character::attackAP(const GameData& gd) const { if (auto* w = weapon(gd)) return (trait(gd) == "quick" ? std::max(1, w->ap - 1) : w->ap) + (trainedWith(*w, gd) ? 0 : 1); return baseHP > 0 ? mAp : 3; }
 bool Character::meleeWeapon(const GameData& gd) const { if (auto* w = weapon(gd)) return w->range <= 1; return (baseHP > 0 ? mRange : 1) <= 1; }
-std::string Character::trait(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait; return ""; }
+std::string Character::trait(const GameData& gd) const { if (auto* w = weapon(gd)) return trainedWith(*w, gd) ? w->trait : std::string(); return ""; }
+bool Character::trainedWith(const ItemDef& d, const GameData& gd) const {
+    if (baseHP > 0 || d.family.empty()) return true;
+    if (ranks.empty()) { const ClassDef* c = gd.cls(classId); return !c || c->trained(d.family); }
+    bool any = false; for (auto& r : ranks) if (r.second > 0) if (const ClassDef* c = gd.cls(r.first)) { any = true; if (c->trained(d.family)) return true; }
+    return !any;
+}
+bool Character::wearsWell(const ItemDef& d, const GameData& gd) const {
+    if (baseHP > 0 || d.weight <= 0 || d.type == IT_WEAPON || d.type == IT_ACCESSORY) return true;
+    int best = -1; std::vector<std::string> cls; if (ranks.empty()) cls.push_back(classId); else for (auto& r : ranks) if (r.second > 0) cls.push_back(r.first);
+    for (auto& id : cls) { for (auto& w : d.wornby) if (w == id) return true; if (const ClassDef* c = gd.cls(id)) best = std::max(best, c->wears); }
+    return best < 0 || d.weight <= best;
+}
+int Character::armorOver(const GameData& gd) const {
+    if (baseHP > 0) return 0;
+    int best = -1; std::vector<std::string> cls; if (ranks.empty()) cls.push_back(classId); else for (auto& r : ranks) if (r.second > 0) cls.push_back(r.first);
+    for (auto& id : cls) if (const ClassDef* c = gd.cls(id)) best = std::max(best, c->wears);
+    if (best < 0) return 0;
+    int over = 0;
+    for (int i = SL_OFFHAND; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) if (!wearsWell(*it, gd)) over += std::max(0, it->weight - best);
+    return over;
+}
+int Character::reqShort(const ItemDef& d, const GameData& gd) const {
+    if (baseHP > 0) return 0;
+    int sh = 0; for (int s = 0; s < ST_COUNT; s++) if (d.req[s] > 0) { int have = stat(s, gd); bool worn = false; for (int i = 0; i < SL_COUNT; i++) if (equip[i] == d.id) worn = true; if (worn) have -= d.bonus[s]; sh += std::max(0, d.req[s] - have); }
+    return sh;
+}
+int Character::gearHitPenalty(const GameData& gd) const {
+    const ItemDef* w = weapon(gd); if (!w || baseHP > 0) return 0;
+    return (trainedWith(*w, gd) ? 0 : 10) + std::min(30, reqShort(*w, gd) * 4);
+}
 bool Character::hasShield(const GameData& gd) const { if (equip[SL_OFFHAND].empty()) return false; const ItemDef* d = gd.item(equip[SL_OFFHAND]); return d && d->type == IT_OFFHAND && d->def > 0; }
 int Character::fx(const std::string& key, const GameData& gd) const {
     int v = 0;
@@ -133,7 +167,7 @@ void Character::initFromCreature(const GameData& gd, const CreatureDef& c, int l
     for (int i = 0; i < DT_COUNT; i++) baseRes[i] = c.res[i];
     mDmgMin = c.dmgMin + lvlBonus; mDmgMax = c.dmgMax + lvlBonus; mDmgType = c.dmgType; mRange = c.range; mAp = c.ap; mApMax = c.apMax; mMove = c.move; mAcc = c.accuracy;
     ai = c.ai; spells = c.spells; boss = c.boss; undead = c.undead; mechanical = c.mechanical; darkvision = c.darkvision; faction = c.faction;
-    role = c.role; windup = c.windup; ward = c.ward; snuff = c.snuff; cfx = c.fx;
+    role = c.role; windup = c.windup; ward = c.ward; snuff = c.snuff; cfx = c.fx; traitRes = c.traitRes; wounds = 0;
     onHitEffect = c.onHitEffect; xpReward = c.xp + lvlBonus * 8; lootGold = c.lootGold; loot = c.loot;
     for (int i = 0; i < SL_COUNT; i++) equip[i].clear();
     isPlayerSide = false; alive = true; effects.clear();

@@ -116,7 +116,7 @@ bool Game::init(GameData* data, GameSettings* s, const std::string& assets, Tile
 }
 
 void Game::newGame(const std::string& hn, const std::string& classId, int diff) {
-    difficulty = clampi(diff, 0, 2);
+    difficulty = 2; (void)diff;   // 1.5.0 (#90): one fixed difficulty
     party = Party(); flags.clear(); visited.clear(); maps.clear(); exploredSave.clear(); map = nullptr; msgLog.clear(); msgTime.clear(); floats.clear();
     modeStack.clear(); mode = GMode::EXPLORE; trail.clear(); levelUpQueue.clear(); gameOver = false; running = true; requestDesktop = false;
     playtimeSec = 0; lastAutosave = 0; stepCounter = 0; heroName = hn; worldSeed = 1337; rng.reseed(fixedSeed ? fixedSeed : (uint64_t)time(nullptr));
@@ -1085,7 +1085,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "take") { for (auto& it : split(v, ',')) { auto p = split(trim(it), ':'); party.removeItem(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1); if (auto* d = gd->item(trim(p[0]))) log("Gave " + d->name + "."); } }
     else if (k == "gold") { int g = atoi(v.c_str()); party.gold = std::max(0, party.gold + g); if (g > 0) stats.goldEarned += g; else stats.goldSpent -= g; log(g >= 0 ? fmt("Received %d gold.", g) : fmt("Paid %d gold.", -g)); gAudio.play("gold"); }
     else if (k == "xp") giveXP(atoi(v.c_str()));
-    else if (k == "heal") { for (auto& m : party.members) m.fullHeal(*gd); log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; }
+    else if (k == "heal") { for (auto& m : party.members) { m.wounds = 0; m.fullHeal(*gd); } log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; }
     else if (k == "shop") { std::string hrs; if (shopRefuses(v)) return; if (!shopOpen(v, hrs)) { if (mode == GMode::DIALOGUE) popMode(); showMessage("Closed", "The shop is closed right now. Opening hours: " + hrs + "."); } else { shopId = v; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); if (mode == GMode::DIALOGUE) popMode(); pushMode(GMode::SHOP); } }
     else if (k == "join") {
         // 1.1.9 (#33): join=<npc id> takes class, name, party picture, level, stats, gear and spells from the NPC (npcs.txt);
@@ -1152,7 +1152,8 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "stat") { auto p = split(v, ':'); std::string sn = toLower(trim(p[0])); int d = p.size() > 1 ? atoi(p[1].c_str()) : 1;
         int* f = sn == "travels" ? &stats.travels : sn == "kills" ? &stats.kills : sn == "chests" ? &stats.chests : sn == "crafted" ? &stats.crafted : sn == "bounties" ? &stats.bounties : sn == "fights" ? &stats.fightsWon : nullptr;
         if (f) *f += d; }
-    else if (k == "rest") { for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; }
+    else if (k == "rest") { bool hadW = false; for (auto& m : party.members) { if (m.wounds) hadW = true; m.wounds = 0; } if (hadW) log("A night in a real bed: the Wounded are on their feet again.");   // 1.5.0 (#94): an inn night cures wounds
+        for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; }
     else if (k == "teach") teachAction(v);   // 1.4.0 (#81): teach=bram:spell|loyal_spell - a lasting ability (standing.cpp)
 }
 
@@ -1961,7 +1962,7 @@ std::string Game::serialize() const {
         for (int i = 0; i < SL_COUNT; i++) if (!m.equip[i].empty()) o << "equip" << i << "=" << m.equip[i] << "\n";
         o << "spells="; for (size_t i = 0; i < m.spells.size(); i++) o << (i ? "," : "") << m.spells[i]; o << "\n";
         o << "favs="; for (int i = 0; i < 8; i++) o << (i ? "," : "") << m.favs[i]; o << "\n";
-        o << "ranks="; { bool f = true; for (auto& r : m.ranks) { o << (f ? "" : ",") << r.first << ":" << r.second; f = false; } } o << "\nrankpoints=" << m.rankPoints << "\nstartclass=" << m.startClass << "\n";
+        o << "ranks="; { bool f = true; for (auto& r : m.ranks) { o << (f ? "" : ",") << r.first << ":" << r.second; f = false; } } o << "\nrankpoints=" << m.rankPoints << "\nstartclass=" << m.startClass << "\nwounds=" << m.wounds << "\n";
     }
     o << "[extra]\ntown=" << lastTownMap << "\ntownx=" << lastTownX << "\ntowny=" << lastTownY << "\nclock=" << clockMin << "\nday=" << day << "\nweather=" << weather << "\nweathersteps=" << weatherSteps << "\n";
     for (auto& kv : extra) o << kv.first << "=" << kv.second << "\n";
@@ -1992,7 +1993,7 @@ bool Game::deserialize(const std::string& text) {
     struct LoadingGuard { bool& b; LoadingGuard(bool& x) : b(x) { b = true; } ~LoadingGuard() { b = false; } } guard(loadingSave);
     int dropped = 0;
     if (!switchCampaign(secs[0].get("campaign", "triffall"))) return false;   // a save from another campaign loads that campaign's data first
-    party = Party(); flags.clear(); visited.clear(); maps.clear(); exploredSave.clear(); map = nullptr; msgLog.clear(); msgTime.clear(); modeStack.clear(); mode = GMode::EXPLORE; levelUpQueue.clear(); difficulty = 1;
+    party = Party(); flags.clear(); visited.clear(); maps.clear(); exploredSave.clear(); map = nullptr; msgLog.clear(); msgTime.clear(); modeStack.clear(); mode = GMode::EXPLORE; levelUpQueue.clear(); difficulty = 2;
     gameOver = false; running = true; requestDesktop = false; floats.clear(); notifications.clear(); notifTime.clear(); hintShown = -1; hintFade = 0; desktopAction.clear();
     notes.clear(); dynItems.clear(); bounties.clear(); bountyOffers.clear(); stats = GameStats(); bestiary.clear(); approval.clear(); reputation.clear(); leader = 0; banterT = 0;
     for (auto& sec : secs) if (sec.name == "dynitem") dynItems[sec.get("id")] = sec.get("spec");
@@ -2004,7 +2005,7 @@ bool Game::deserialize(const std::string& text) {
                 if (kv.first == "hero") heroName = unesc(kv.second); else if (kv.first == "map") mid = kv.second; else if (kv.first == "x") sx = atoi(kv.second.c_str());
                 else if (kv.first == "y") sy = atoi(kv.second.c_str()); else if (kv.first == "playtime") playtimeSec = atoi(kv.second.c_str()); else if (kv.first == "seed") worldSeed = atoi(kv.second.c_str());
                 else if (kv.first == "gold") party.gold = atoi(kv.second.c_str()); else if (kv.first == "steps") stepCounter = atoi(kv.second.c_str());
-                else if (kv.first == "difficulty") difficulty = clampi(atoi(kv.second.c_str()), 0, 2);
+                else if (kv.first == "difficulty") difficulty = 2;   // 1.5.0 (#90): old saves' Story/Normal load as the one difficulty
                 else if (startsWith(kv.first, "flag.")) flags[kv.first.substr(5)] = atoi(kv.second.c_str());
                 else if (kv.first == "visited") visited.insert(kv.second);
                 else if (kv.first == "inv") { auto p = split(kv.second, ':'); if (gd->item(p[0])) party.inventory.push_back({p[0], p.size() > 1 ? atoi(p[1].c_str()) : 1}); else dropped++; }
@@ -2019,7 +2020,7 @@ bool Game::deserialize(const std::string& text) {
             { auto fv = split(sec.get("favs"), ','); for (int i = 0; i < 8 && i < (int)fv.size(); i++) m.favs[i] = trim(fv[i]); }
             for (auto& r : split(sec.get("ranks"), ',')) { auto p = split(trim(r), ':'); if (p.size() == 2 && !trim(p[0]).empty()) m.ranks[trim(p[0])] = atoi(p[1].c_str()); }
             if (m.ranks.empty()) m.ranks[m.classId] = m.level;   // saves from before multiclassing: every level was in the starting class
-            m.rankPoints = sec.geti("rankpoints", 0); m.startClass = sec.get("startclass", m.classId);
+            m.rankPoints = sec.geti("rankpoints", 0); m.startClass = sec.get("startclass", m.classId); m.wounds = clampi(sec.geti("wounds", 0), 0, 3);   // 1.5.0 (#94)
             m.hp = std::min(sec.geti("hp", 1), m.maxHP(*gd)); m.mp = std::min(sec.geti("mp", 0), m.maxMP(*gd));
             if (m.alive && m.hp <= 0) m.hp = 1;
             // 1.4.0 (#66 #70): spells that moved to earlier ranks, and the new class abilities, come at once for ranks already held

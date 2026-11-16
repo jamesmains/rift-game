@@ -8,6 +8,7 @@
 # 1.1.2 - what standing is good for, and what it costs (the notice board's Standing page, Tab):
 #   reward=REP|item:n,gold:n|title           a favour, claimed once at the town's notice board when standing reaches REP
 #   project=title|item:n,...|rep|gold|text   civic projects, delivered one after another at the board (+rep, gold, XP)
+#                                            (1.5.0: a negative gold is what the party pays towards it)
 #   Bounties raise standing only up to 30 (Friendly); past that it takes projects and story choices. Dropping a taken
 #   notice costs 2. Disliked (-10): the board posts no work. Hated (-50): the town's shops won't trade. Below 0 the
 #   board offers to make amends for gold (back to 0, never higher). A shop's item=id:stock:REP only shows from REP up.
@@ -22,6 +23,7 @@ reward=60|elders_mantle:1|The Elder's Mantle
 project=Mend the mill wheel|iron_ingot:4,tanned_leather:2|8|60|The mill by the lake has stood still since the goblin raids. New iron bands and leather belts would set it turning.
 project=Stock the healer's shelves|potion_red:5,antidote:4,bandage:6|10|80|Healer Wren is down to her last bandage. Brewed potions, antidotes and dressings for the winter.
 project=Rebuild the watchtower|steel_ingot:4,iron_ingot:6,tanned_leather:3|14|150|A watchtower on the north road, so the next raid is seen coming.
+project=Raise a stone wall|iron_ingot:4|12|-450|Hollowmere has only ever had a fence. The masons from Brasswick will build a wall around the green - for a price the village can't raise alone.
 
 [faction]
 id=brasswick
@@ -33,6 +35,7 @@ reward=60|guild_signet:1|The Guild Signet
 project=Repair the tram line|iron_ingot:6,circuit:2|8|100|The old clockwork tram to the east gate has jammed. Rails, bolts and a working control board.
 project=Arm the militia|steel_ingot:4,hardened_leather:4|10|160|Captain Reyna's militia drills with broom handles. Steel and hardened leather for real kit.
 project=Wind the great clock|power_core:2,steel_ingot:3,circuit:4|14|260|The tower clock that gives Brasswick its name has stopped. It needs power cores to run again.
+project=Relight the foundry|steel_ingot:2|12|-650|The guild foundry went cold when the coal barges stopped. Pay for the coal and the guild will forge again.
 
 [faction]
 id=frosthold
@@ -44,6 +47,7 @@ reward=60|clan_mantle:1|The Clan Fur Mantle
 project=Furs for the winter|wolf_pelt:6,tanned_leather:4|8|70|The outer huts lose someone every winter. Pelts and leather to line them.
 project=Light the shrine lamps|ember_cap:6,slime_gel:4|10|90|The shrine's lamps burn ember oil. The old stores ran out the year the Rift opened.
 project=Reforge the clan spears|mithril_ingot:2,steel_ingot:3|14|200|The clans' spears are older than the hold. Mithril heads would see them through another hundred winters.
+project=Bring a healer up the pass|herb_moon:4|12|-400|The hold has no healer since old Ysa died. A wage and a warm house would bring one up from the lowlands.
 
 [faction]
 id=murkwater
@@ -55,6 +59,7 @@ reward=60|bogwalker_boots:1|Bogwalker Boots
 project=Mend the stilts|iron_ingot:3,spider_silk:4|8|60|Half the walkways sag into the bog. Iron pins and silk rope to lash them.
 project=Fever remedies|antidote:5,herb_moon:6|10|90|Marsh fever every summer. Antidotes now, and moonleaf for Keeper Aldra's own brews.
 project=Bloodroot tinctures|potion_purple:2,bloodroot:4|14|180|Regeneration draughts for the sick, and bloodroot for the keepers to grow their own.
+project=Dredge the channel|spider_silk:2|12|-380|The channel to the river silts up every spring. Pay the dredgers and the barges come back.
 
 [faction]
 id=sunscar
@@ -66,6 +71,7 @@ reward=60|sunscar_veil:1|The Sunscar Veil
 project=Water barrels|iron_ingot:4,tanned_leather:3|8|70|Iron-bound barrels so the outpost can store water against the dry months.
 project=Sand screens|spider_silk:6,scrap:6|10|100|Screens of silk and scrap around the market, so the wind stops burying it.
 project=Stoneskin for the riders|potion_shield:3,sunpetal:4|14|180|Stoneskin draughts for the riders who guard the oasis road, and sunpetal for the next batch.
+project=Dig a second well|iron_ingot:3|12|-520|One well for the whole outpost. A second, deeper one needs drillers from Brasswick, and drillers want paying.
 
 [faction]
 id=ashfall
@@ -77,6 +83,7 @@ reward=60|scrapper_goggles:1|Scrapper's Goggles
 project=Scrap barricade|scrap:12,iron_ingot:3|8|70|A barricade across the south street, against whatever crawls out of the Annex.
 project=Power the market|circuit:4,power_core:1|10|120|Lights for the night market, so the traders stop getting robbed in the dark.
 project=Sky Wardens' lenses|rift_crystal:2,circuit:3|14|220|Lenses ground from rift crystal, to watch the sky over the Scar.
+project=Pay the Sky Wardens' watch|circuit:2|12|-500|The Wardens on the watchtower have gone unpaid since spring. Wages keep the lenses turned toward the Scar.
 
 [faction]
 id=millbrook
@@ -86,3 +93,4 @@ reward=10|bread:4,cheese:2|A basket from the fields
 reward=30|harvest_charm:1|The Harvest Charm
 project=Fence the fields|iron_ingot:2,tanned_leather:3|8|50|Wolves keep getting at the sheep. A proper fence with iron posts.
 project=Mend the granary|iron_ingot:4,spider_silk:3|12|100|The granary roof leaks and the rats have moved in. Nails, bands and netting.
+project=Rebuild the burned barns|tanned_leather:2|10|-300|Two barns burned in the goblin raids. Timber and carpenters cost coin the farmers don't have.

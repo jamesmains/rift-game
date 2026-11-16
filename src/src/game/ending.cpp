@@ -105,7 +105,6 @@ void Game::drawEnding(Canvas& cv, InputState& in) {
             {"Party knock-outs", std::to_string(stats.knockouts)}, {"Damage dealt", std::to_string(stats.damageDealt)}, {"Critical hits", std::to_string(stats.crits)},
             {"Gold earned", std::to_string(stats.goldEarned)}, {"Chests opened", std::to_string(stats.chests)}, {"Items crafted", std::to_string(stats.crafted)},
             {"Bounties paid", std::to_string(stats.bounties)}, {"Achievements", fmt("%d of %d", (int)unlocked.size(), (int)achievements.size())}};
-        if (difficulty != 1) rows.push_back({"Difficulty", difficulty == 0 ? "Easy" : "Hard"});
         int y = 110;
         for (auto& r : rows) { textRight(ctx, SCREEN_W / 2 - 10, y, r.first, C::LtGray); UI::text(ctx, SCREEN_W / 2 + 10, y, r.second, C::White); y += 18; }
         int px0 = SCREEN_W / 2 - (int)party.members.size() * 30;

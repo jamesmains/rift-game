@@ -635,13 +635,11 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             ctx.ts->draw(cv, T(c->spriteCol, c->spriteRow), x + 6, ly + 4 + i * 17, 1);
             f.draw(cv, *ctx.ts, x + 22, ly + 4 + i * 17, c->name, sel ? HILITE : DKSHADOW);
         }
-        // difficulty
+        // 1.5.0 (#90): one fixed difficulty - the game is meant to be hard; no choice here
         {
-            static const char* dn[3] = {"Story", "Normal", "Hard"};
-            static const char* dd[3] = {"Weaker foes, for the tale.", "The intended challenge.", "Tougher, harder-hitting foes."};
-            int dy = ly + 118; f.draw(cv, *ctx.ts, x, dy + 5, "Difficulty:", DKSHADOW);
-            for (int i = 0; i < 3; i++) if (win98Button(cv, in, x + 80 + i * 74, dy, 70, 20, dn[i], true, w.page == i, active)) w.page = i;
-            f.draw(cv, *ctx.ts, x + 80, dy + 24, dd[clampi(w.page, 0, 2)], SHADOW);
+            int dy = ly + 118;
+            f.draw(cv, *ctx.ts, x, dy + 5, "Triffall is a hard game: use cover, flank, and bring", SHADOW);
+            f.draw(cv, *ctx.ts, x, dy + 19, "the right weapon. A wipe teaches you something.", SHADOW);
         }
         if (w.sub == 2) {   // ---- on-screen keyboard (controller / touch): every key is a button the D-pad can reach ----
             int kx = x, ky = ly - 2; bevelBox(cv, kx, ky, 400, 112, false);
@@ -670,7 +668,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "Start", canStart, true, active) || (w.status == "start" && canStart)) {
             w.status.clear();
             std::string cls = n > 0 ? ctx.gd->classOrder[clampi(w.sel, 0, n - 1)] : "";
-            game->switchCampaign(w.campaign); game->newGame(w.text, cls, clampi(w.page, 0, 2)); launchGame = true; windows.clear(); return;
+            game->switchCampaign(w.campaign); game->newGame(w.text, cls); launchGame = true; windows.clear(); return;
         }
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Cancel", true, false, active)) w.wantClose = true;
         f.draw(cv, *ctx.ts, x, w.y + w.h - 46, in.gamepadActive ? "A on the name opens a keyboard; Random picks a name." : "Tab: name / class. Enter: start.", SHADOW);

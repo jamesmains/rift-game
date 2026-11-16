@@ -43,7 +43,7 @@ And it all starts on a lovingly faked Windows 98 desktop - Minesweeper and Solit
 - A Windows 98 desktop with Minesweeper, Solitaire, lore files and a screensaver
 - A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
 - Fills any screen shape, wide monitors included (a classic 4:3 mode is in Settings)
-- Keyboard, mouse and gamepad, fully rebindable; Easy / Normal / Hard; 33 achievements
+- Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
 - Accessibility: large text, clear font, text speed, colour-blind colours, reduced flashing
 - Soundtrack: the Pixel Fantasy music pack by AlkaKrab
 

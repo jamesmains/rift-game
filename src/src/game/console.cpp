@@ -26,7 +26,7 @@ void Game::runConsole(const std::string& line) {
         out("party: give ITEM [N] | gold N | xp N | level N | heal | hurt N [poison] | god | auto | spells | learn SPELL [MEMBER] | join CLASS | item?");
         out("1.4.0: stealth [N] | setstat STAT N [MEMBER] | spellsof [MEMBER] | run teach:bram:SPELL");
         out("story: flag NAME [V] | unflag NAME | flags | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | achieve ID | reset_achievements");
-        out("fights: spawn CREATURE[,CREATURE] | kill | touch [0|1] | combatmusic [ID|-] | cast SPELL [DX DY] | bestiary CREATURE N | difficulty 0-2");
+        out("fights: spawn CREATURE[,CREATURE] | kill | touch [0|1] | combatmusic [ID|-] | cast SPELL [DX DY] | bestiary CREATURE N");
         out("screens: bounty [TOWN] | bounties | craft [STATION] | cskill STATION XP | shop ID | dialogue ID [NODE] | run SCRIPT");
         out("misc: stats | hint | doors | demo 0|1 | autosave | crashtest | reload | clear");
     }
@@ -40,7 +40,6 @@ void Game::runConsole(const std::string& line) {
     else if (c == "flags") { std::string s; for (auto& f : flags) s += f.first + "=" + std::to_string(f.second) + " "; out(s.empty() ? "(none)" : s); }
     else if (c == "god") { godMode = !godMode; out(godMode ? "god mode ON" : "god mode off"); }
     else if (c == "auto") { autoCombat = !autoCombat; out(autoCombat ? "the party fights on its own" : "manual combat"); }
-    else if (c == "difficulty") { difficulty = clampi(argi(1, 1), 0, 2); out(fmt("difficulty %d", difficulty)); }
     else if (c == "heal") { for (auto& m : party.members) m.fullHeal(*gd); out("party healed"); }
     else if (c == "time") { auto t = split(arg(1, "8:00"), ':'); clockMin = clampi(atoi(t[0].c_str()), 0, 23) * 60 + (t.size() > 1 ? clampi(atoi(t[1].c_str()), 0, 59) : 0); out(clockText()); }
     else if (c == "day") { day = std::max(1, argi(1, 1)); out(clockText()); }

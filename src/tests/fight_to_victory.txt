@@ -16,6 +16,8 @@ keys ENTER ENTER ENTER
 frames 20
 expect mode == EXPLORE
 combat rat,rat
+# 1.5.0: hits are ~70% now; make this walkthrough deterministic
+cb forcehit 1
 frames 60
 target
 frames 30

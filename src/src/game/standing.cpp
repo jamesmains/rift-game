@@ -169,11 +169,13 @@ void Game::updateStanding(InputState& in) {
         const FactionProject& p = f->projects[done];
         if (r <= -10) { log("They won't take your help while they dislike you. Make amends first."); gAudio.play("ui_error"); return; }
         for (auto& m : p.mats) if (party.countItem(m.first) < m.second) { const ItemDef* d = gd->item(m.first); log(fmt("The project needs %d %s (you have %d).", m.second, d ? d->name.c_str() : m.first.c_str(), party.countItem(m.first))); gAudio.play("ui_error"); return; }
+        if (p.gold < 0 && party.gold < -p.gold) { log(fmt("The project needs %d gold from you (you have %d).", -p.gold, party.gold)); gAudio.play("ui_error"); return; }   // 1.5.0 (#100)
         for (auto& m : p.mats) party.removeItem(m.first, m.second);
         extra["project_" + boardTown] = std::to_string(done + 1);
         if (p.gold > 0) { party.gold += p.gold; stats.goldEarned += p.gold; }
+        if (p.gold < 0) { party.gold += p.gold; stats.goldSpent -= p.gold; }
         giveXP(p.xp); changeRep(boardTown, p.rep);
-        log("Project complete: " + p.title + (p.gold > 0 ? fmt(". The town pays you %d gold.", p.gold) : ".")); gAudio.play("town_reward");
+        log("Project complete: " + p.title + (p.gold > 0 ? fmt(". The town pays you %d gold.", p.gold) : p.gold < 0 ? fmt(". You paid %d gold towards it.", -p.gold) : ".")); gAudio.play("town_reward");
         setFlag("project_" + boardTown + "_" + std::to_string(done + 1));
     } else if (row >= 0 && f && row < (int)f->rewards.size()) {
         const FactionReward& w = f->rewards[row]; std::string key = fmt("favour_%s_%d", boardTown.c_str(), row);
@@ -212,6 +214,7 @@ void Game::drawStanding(Canvas& cv, InputState& in) {
             if (!f || done >= (int)f->projects.size()) { title = "CIVIC PROJECTS - ALL DONE"; body = "The town remembers what you built for it."; status = fmt("%d finished", done); open = false; }
             else { const FactionProject& p = f->projects[done]; title = fmt("CIVIC PROJECT %d/%d: ", done + 1, (int)f->projects.size()) + p.title; body = p.text;
                 std::string need; bool all = true; for (auto& m : p.mats) { const ItemDef* d = gd->item(m.first); int have = party.countItem(m.first); if (have < m.second) all = false; need += (need.empty() ? "" : ", ") + fmt("%s %d/%d", d ? d->name.c_str() : m.first.c_str(), std::min(have, m.second), m.second); }
+                if (p.gold < 0) { need += (need.empty() ? "" : ", ") + fmt("%d gold", -p.gold); if (party.gold < -p.gold) all = false; }   // 1.5.0 (#100): paid by the party
                 status = "Needs: " + need; stc = all && r > -10 ? RGB(20, 120, 40) : RGB(120, 60, 20); right = fmt("+%d standing", p.rep) + (p.gold > 0 ? fmt(", %d gold", p.gold) : ""); }
         } else if (f) {
             const FactionReward& w = f->rewards[row]; bool got = extra.count(fmt("favour_%s_%d", boardTown.c_str(), row)) > 0;

@@ -202,10 +202,10 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     ts = t; font = f; gd = g; assetDir = assets; ui.req = r; baseRoot = dataRoot = assetDir + "/data";
     te.wrap = true;   // 1.1.11: dialogue text= lines are long - wrapped by default (Alt+Z / the Wrap button)
     auto mk = [&](const std::string& file, const std::string& title, const std::string& section, const std::string& listKey, std::vector<std::string> tmpl) { GenericEditor ge; ge.path = dataRoot + "/" + file; ge.title = title; ge.sectionName = section; ge.listKey = listKey; ge.templateKeys = tmpl; gens.push_back(ge); };
-    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique", "trait", "fx"});
+    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique", "trait", "fx", "family", "weight", "req", "wornby"});
     mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound", "boss", "music", "role", "windup", "ward", "snuff", "fx"});
     mk("spells.txt", "Spells", "spell", "id", {"id", "name", "desc", "tile", "cost", "ap", "range", "area", "dmg", "dmgtype", "stat", "heal", "effect", "duration", "target", "utility", "ff", "level", "sound", "shape", "chain", "knockback", "smoke", "ground", "upgrade"});
-    mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn", "passive", "perk4", "perk8", "perk12"});
+    mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn", "weapons", "wears", "passive", "perk4", "perk8", "perk12"});
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
     mk("encounters.txt", "Encounter tables", "table", "id", {"id", "level", "group"});
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
@@ -597,6 +597,9 @@ static const std::map<std::string, std::vector<std::string>>& choiceTable() {
         {"role", {"", "guard", "sniper", "support", "leader"}},             // 1.4.0 (#63)
         {"trait", {"", "reach", "cleave", "backstab", "crush", "arc", "steady", "quick", "spread"}},   // 1.4.0 (#68)
         {"shape", {"", "ball", "line", "cone"}},                            // 1.4.0 (#64)
+        {"family", {"", "blade", "dagger", "mace", "axe", "spear", "staff", "wand", "bow", "crossbow", "gun"}},   // 1.5.0 (#93)
+        {"weight", {"", "light", "medium", "heavy"}},
+        {"wears", {"light", "medium", "heavy"}},
         {"ground", {"", "fire", "ice"}},
         {"target", {"enemy", "ally", "self", "any", "ground"}},
         {"effect", {"", "burn", "freeze", "shock", "poison", "regen", "haste", "shield", "weaken", "stun", "aim", "strength", "focus", "blind", "cure", "revive", "marked", "tagged", "override", "slow", "smoke"}},
@@ -635,7 +638,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
         if (k == "notes") { if (ui.textField(x, y, w, v, 400)) g.dirty = true; if (ui.hover(x, y, w, 16)) ui.tip("For you: who they are, where they fit in the story. The game doesn't show it."); return; }
     }
     // --- six-stat rows ---
-    if (k == "stats" || k == "bonus") {
+    if (k == "stats" || k == "bonus" || k == "req") {
         auto m = parsePairs(v); bool ch = false;
         for (int i = 0; i < 6; i++) { int val = m.count(STAT_KEYS[i]) ? m[STAT_KEYS[i]] : 0; ui.text(x + i * 84, y + 2, toUpper(STAT_KEYS[i]), DIM); if (ui.intField(x + 26 + i * 84, y, 54, val, -20, 99)) { m[STAT_KEYS[i]] = val; ch = true; } }
         if (ch) { v = joinPairs(STAT_KEYS, m, k == "stats"); g.dirty = true; }
@@ -644,8 +647,11 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     if (k == "res") {
         auto m = parsePairs(v); bool ch = false;
         for (int i = 0; i < 6; i++) { int val = m.count(DMG_KEYS[i]) ? m[DMG_KEYS[i]] : 0; std::string lbl = std::string(DMG_KEYS[i]).substr(0, 3); ui.text(x + i * 86, y + 2, lbl, DIM); if (ui.intField(x + 24 + i * 86, y, 58, val, -100, 100)) { m[DMG_KEYS[i]] = val; ch = true; } }
-        if (ch) { v = joinPairs(DMG_KEYS, m, false); g.dirty = true; }
-        ui.text(x + 6 * 86, y + 2, "% (neg = weak)", DIM);
+        // 1.5.0 (#92): weapon-trait keys (crush:-100) have no box; they are kept and listed after the boxes
+        std::string tr; for (auto& kv : m) if (traitIndex(kv.first) >= 0) tr += (tr.empty() ? "" : ",") + kv.first + ":" + std::to_string(kv.second);
+        if (ch) { v = joinPairs(DMG_KEYS, m, false); if (!tr.empty()) v += (v.empty() ? "" : ",") + tr; g.dirty = true; }
+        ui.text(x + 6 * 86, y + 2, tr.empty() ? "% 50/100/-100" : "+ " + tr, DIM);
+        if (ui.hover(x, y, 6 * 86 + 120, 16)) ui.tip("50 resists (half damage), 100 immune, -100 weak (double). Weapon-trait keys like crush:-100 are typed in the file.");
         return;
     }
     // --- lo-hi ranges ---

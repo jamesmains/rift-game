@@ -4,6 +4,10 @@
 # color=r,g,b (1.1.8): the picture drawn as a white shape in that colour (none = its own colour on the sheet).
 # Items. type: weapon|armor|helm|boots|accessory|offhand|consumable|key|material|ammo
 # weapons: dmg=lo-hi dmgtype range ap stat(str|dex|int) accuracy crit twohanded gun ammo
+# 1.5.0 class gearing: family= (blade dagger mace axe spear staff wand bow crossbow gun) - a class not trained in it pays
+# +1 AP, -10 to hit and loses the trait; weight= light|medium|heavy on armour - each step over what the class wears is
+# -5 evasion and, for casters, +15% MP and 10% spell failure; req=str:14 - each missing point is -4 to hit (weapons)
+# or -3 evasion (armour); wornby=class wears it well whatever its weight
 # ================= MELEE WEAPONS =================
 [item]
 id=iron_dagger
@@ -13,10 +17,11 @@ tile=44,6
 dmg=2-5
 ap=2
 stat=dex
-crit=8
+crit=4
 value=20
 desc=Quick and cheap. Two stabs for the price of one swing.
 trait=backstab
+family=dagger
 
 [item]
 id=iron_sword
@@ -28,6 +33,7 @@ ap=4
 stat=str
 value=55
 desc=A dependable village blade.
+family=blade
 
 [item]
 id=steel_sword
@@ -40,6 +46,7 @@ stat=str
 accuracy=5
 value=240
 desc=Brasswick steel, well balanced.
+family=blade
 
 [item]
 id=scimitar
@@ -49,9 +56,10 @@ tile=32,6
 dmg=6-12
 ap=4
 stat=dex
-crit=8
+crit=4
 value=210
 desc=A curved raider's blade.
+family=blade
 
 [item]
 id=katana
@@ -61,10 +69,12 @@ tile=34,6
 dmg=11-19
 ap=4
 stat=dex
-crit=15
+crit=8
 accuracy=5
 value=930
 desc=Folded from metal that fell through the Rift. Impossibly sharp.
+family=blade
+req=dex:12
 
 [item]
 id=rapier
@@ -75,10 +85,12 @@ dmg=6-11
 ap=3
 stat=dex
 accuracy=10
-crit=12
+crit=6
 value=315
 desc=Thin, fast and precise.
 trait=backstab
+family=blade
+req=dex:11
 
 [item]
 id=flame_sword
@@ -91,6 +103,7 @@ ap=4
 stat=str
 value=1350
 desc=A blade wreathed in flame. Burns whatever it bites.
+family=blade
 
 [item]
 id=great_sword
@@ -103,6 +116,8 @@ stat=str
 twohanded=1
 value=780
 desc=Heavy enough to split a shield.
+family=blade
+req=str:14
 
 [item]
 id=iron_mace
@@ -115,6 +130,7 @@ stat=str
 value=60
 desc=Simple, brutal, good against bones.
 trait=crush
+family=mace
 
 [item]
 id=war_hammer
@@ -128,6 +144,8 @@ twohanded=1
 value=690
 desc=Cracks armour and skulls alike.
 trait=crush
+family=mace
+req=str:13
 
 [item]
 id=club
@@ -140,6 +158,7 @@ stat=str
 value=8
 desc=A knotted length of wood.
 trait=crush
+family=mace
 
 [item]
 id=spear
@@ -153,6 +172,7 @@ stat=str
 value=110
 desc=Reach over an ally's shoulder.
 trait=reach
+family=spear
 
 [item]
 id=halberd
@@ -167,6 +187,8 @@ twohanded=1
 value=720
 desc=A polearm for holding the line.
 trait=reach
+family=spear
+req=str:13
 
 [item]
 id=hand_axe
@@ -176,10 +198,11 @@ tile=38,9
 dmg=5-11
 ap=4
 stat=str
-crit=8
+crit=4
 value=70
 desc=A woodsman's axe.
 trait=cleave
+family=axe
 
 [item]
 id=battle_axe
@@ -189,11 +212,13 @@ tile=32,9
 dmg=13-23
 ap=5
 stat=str
-crit=10
+crit=5
 twohanded=1
 value=750
 desc=Favoured by ogres and people who want to be ogres.
 trait=cleave
+family=axe
+req=str:13
 
 [item]
 id=pickaxe
@@ -217,6 +242,7 @@ stat=int
 mp=6
 value=35
 desc=A focus for apprentice spellwork.
+family=staff
 
 [item]
 id=crystal_staff
@@ -231,6 +257,8 @@ mp=20
 bonus=int:2
 value=720
 desc=Tipped with Rift crystal that hums at night.
+family=staff
+req=int:12
 
 [item]
 id=wand_frost
@@ -246,6 +274,8 @@ mp=8
 value=390
 desc=Fires shards of ice.
 color=0,255,255
+family=wand
+req=int:11
 
 [item]
 id=plasma_saber
@@ -256,9 +286,11 @@ dmg=16-28
 dmgtype=fire
 ap=4
 stat=dex
-crit=10
+crit=5
 value=2100
 desc=A humming blade of contained plasma. Found only in the wreck.
+family=blade
+req=dex:12
 
 # ================= RANGED =================
 [item]
@@ -274,6 +306,7 @@ ammo=arrows
 value=60
 desc=Light hunting bow. Needs arrows.
 trait=arc
+family=bow
 
 [item]
 id=long_bow
@@ -290,6 +323,8 @@ twohanded=1
 value=360
 desc=A ranger's tall bow.
 trait=arc
+family=bow
+req=dex:12
 
 [item]
 id=crossbow
@@ -300,11 +335,13 @@ dmg=10-18
 range=7
 ap=5
 stat=dex
-crit=12
+crit=6
 ammo=arrows
 twohanded=1
 value=480
 desc=Slow to wind, nasty to meet.
+family=crossbow
+req=str:10
 
 [item]
 id=rusty_pistol
@@ -320,6 +357,7 @@ ammo=ammo_pistol
 value=75
 desc=Salvaged from the Rift city. Still fires, mostly.
 trait=quick
+family=gun
 
 [item]
 id=revolver
@@ -330,12 +368,13 @@ dmg=9-16
 range=7
 ap=4
 stat=dex
-crit=10
+crit=5
 gun=1
 ammo=ammo_pistol
 value=420
 desc=Six chambers, no nonsense.
 trait=quick
+family=gun
 
 [item]
 id=smg
@@ -352,6 +391,7 @@ accuracy=-5
 value=630
 desc=Cheap shots, lots of them.
 trait=quick
+family=gun
 
 [item]
 id=hunting_rifle
@@ -369,6 +409,8 @@ twohanded=1
 value=840
 desc=Reach out and touch something.
 trait=steady
+family=gun
+req=dex:11
 
 [item]
 id=shotgun
@@ -379,13 +421,14 @@ dmg=16-28
 range=3
 ap=4
 stat=dex
-crit=10
+crit=5
 gun=1
 ammo=ammo_rifle
 twohanded=1
 value=720
 desc=Devastating up close.
 trait=spread
+family=gun
 
 [item]
 id=sniper_rifle
@@ -397,13 +440,15 @@ range=12
 ap=6
 stat=dex
 accuracy=20
-crit=20
+crit=10
 gun=1
 ammo=ammo_rifle
 twohanded=1
 value=1950
 desc=One shot. Make it count.
 trait=steady
+family=gun
+req=dex:13
 
 [item]
 id=laser_pistol
@@ -421,6 +466,8 @@ ammo=cell
 value=975
 desc=Starship sidearm. Burns through armour.
 trait=quick
+family=gun
+req=int:10
 
 [item]
 id=plasma_rifle
@@ -438,6 +485,8 @@ twohanded=1
 value=2400
 desc=The ship's marines carried these. Few of them survived to use them.
 trait=steady
+family=gun
+req=int:11
 
 [item]
 id=railgun
@@ -456,6 +505,8 @@ twohanded=1
 value=3900
 desc=Magnetically accelerated death.
 trait=steady
+family=gun
+req=int:12
 
 # ================= AMMO =================
 [item]
@@ -511,6 +562,7 @@ res=physical:10
 bonus=con:1
 value=480
 desc=Dented where the arrow went through. Bram insists you carry it.
+weight=medium
 
 [item]
 id=kite_shield
@@ -520,6 +572,7 @@ tile=26,12
 def=5
 value=270
 desc=Big enough to hide behind.
+weight=medium
 
 [item]
 id=tower_shield
@@ -531,6 +584,8 @@ evasion=-3
 res=fire:10
 value=780
 desc=A wall you can carry.
+weight=heavy
+req=str:13
 
 [item]
 id=spellbook
@@ -562,6 +617,7 @@ def=6
 res=fire:20,shock:20
 value=1350
 desc=A projected barrier from the starship's armoury.
+weight=medium
 
 # ================= BODY ARMOR =================
 [item]
@@ -593,6 +649,7 @@ def=3
 res=shock:10
 value=55
 desc=Plates of car door riveted to canvas.
+weight=medium
 
 [item]
 id=chain_shirt
@@ -602,6 +659,7 @@ tile=27,11
 def=5
 value=225
 desc=Rings of iron, decent against blades.
+weight=medium
 
 [item]
 id=chain_mail
@@ -612,6 +670,8 @@ def=7
 evasion=-2
 value=480
 desc=Heavy, clinking, reassuring.
+weight=heavy
+req=str:11
 
 [item]
 id=plate_armor
@@ -622,6 +682,8 @@ def=11
 evasion=-5
 value=1350
 desc=Brasswick's finest smithing.
+weight=heavy
+req=str:13
 
 [item]
 id=mage_robe
@@ -634,6 +696,7 @@ bonus=int:2
 res=magic:20
 value=1050
 desc=Woven with threads of Rift crystal.
+req=int:13
 
 [item]
 id=ranger_cloak
@@ -656,6 +719,8 @@ def=9
 res=fire:15,shock:15
 value=1650
 desc=Ceramic plates from the starship marines.
+weight=medium
+wornby=scavenger
 
 [item]
 id=power_armor
@@ -669,6 +734,9 @@ res=fire:25,shock:10,cold:25
 evasion=-6
 value=4500
 desc=Servos whine as you walk. You feel invincible.
+weight=heavy
+req=str:11
+wornby=scavenger
 
 # ================= HELMS =================
 [item]
@@ -688,6 +756,7 @@ tile=38,12
 def=3
 value=110
 desc=Protects the important part.
+weight=medium
 
 [item]
 id=great_helm
@@ -698,6 +767,8 @@ def=5
 evasion=-2
 value=390
 desc=Hard to see out of. Hard to hit.
+weight=heavy
+req=str:11
 
 [item]
 id=wizard_hat
@@ -730,6 +801,7 @@ def=5
 res=shock:10
 value=600
 desc=With a cracked visor display.
+weight=medium
 
 [item]
 id=crown_rift
@@ -741,6 +813,7 @@ bonus=int:2,wis:2,cha:2
 mp=25
 value=2700
 desc=Worn by whoever ruled the lost city.
+req=int:12
 
 # ================= BOOTS =================
 [item]
@@ -781,6 +854,7 @@ def=4
 evasion=-2
 value=330
 desc=Shins of steel.
+weight=heavy
 
 [item]
 id=mag_boots
@@ -793,6 +867,7 @@ move=1
 res=shock:15
 value=900
 desc=Starship crew boots that cling to metal floors.
+weight=medium
 
 # ================= ACCESSORIES =================
 [item]
@@ -952,8 +1027,8 @@ id=potion_red
 name=Healing Potion
 type=consumable
 tile=30,4
-heal=30
-value=40
+heal=22
+value=55
 desc=Tastes of cherries and iron.
 
 [item]
@@ -961,8 +1036,8 @@ id=potion_red2
 name=Greater Healing Potion
 type=consumable
 tile=31,4
-heal=80
-value=135
+heal=60
+value=180
 desc=A full flask of life.
 
 [item]
@@ -971,7 +1046,7 @@ name=Mana Potion
 type=consumable
 tile=32,4
 mana=25
-value=45
+value=55
 desc=Cool, blue and fizzy.
 
 [item]
@@ -980,7 +1055,7 @@ name=Greater Mana Potion
 type=consumable
 tile=33,4
 mana=70
-value=150
+value=190
 desc=Hums when shaken.
 
 [item]
@@ -990,7 +1065,7 @@ type=consumable
 tile=45,4
 heal=150
 mana=100
-value=600
+value=900
 desc=Full restoration. Rare.
 
 [item]
@@ -1052,8 +1127,8 @@ id=bandage
 name=Bandage
 type=consumable
 tile=70,9
-heal=15
-value=10
+heal=10
+value=15
 desc=Clean linen.
 
 [item]
@@ -1125,12 +1200,14 @@ range=8
 ap=4
 stat=dex
 ammo=arrows
-crit=8
+crit=4
 value=600
 unique=1
 trait=arc
 fx=ignorehalfcover:1,noowpenalty:1
 desc=A marsh-hunter's bow strung with heron gut. Its arrows find whatever hides behind a stump or a stone.
+family=bow
+req=dex:12
 
 [item]
 id=sparkwright_gauntlet
@@ -1716,7 +1793,7 @@ tile=26,9
 dmg=15-25
 ap=5
 stat=str
-crit=15
+crit=8
 twohanded=1
 bonus=str:2
 value=900
@@ -1724,6 +1801,8 @@ desc=A great axe with the goblin chief's tusk for a hilt. Masterwork.
 unique=1
 fx=killap:2
 trait=cleave
+family=axe
+req=str:14
 
 [item]
 id=sedge_shield
@@ -1736,6 +1815,7 @@ bonus=con:2,cha:1
 hp=10
 value=850
 desc=The militia captain's shield, reforged around its old boss. Masterwork.
+weight=medium
 
 [item]
 id=lichbane
@@ -1754,6 +1834,7 @@ desc=A pale blade quenched in the lich's phylactery. Deals magic damage - the ba
 color=0,134,255
 unique=1
 fx=vsundead:40,lightaura:2
+family=blade
 
 [item]
 id=colossus_greaves
@@ -1765,6 +1846,7 @@ res=physical:10,cold:20
 bonus=con:2
 value=1100
 desc=Boots built on bones that walked for thirty years. Masterwork.
+weight=heavy
 
 [item]
 id=hydrascale_mail
@@ -1776,6 +1858,7 @@ res=poison:60,cold:15
 hp=20
 value=1600
 desc=Scale armour from the marsh hydra. Venom slides off it. Masterwork.
+weight=medium
 
 [item]
 id=dragonscale_shield
@@ -1786,6 +1869,8 @@ def=9
 res=fire:50
 value=2000
 desc=Ashwing's scales over a steel frame. Fire breaks on it. Masterwork.
+weight=heavy
+req=str:12
 
 [item]
 id=dragonfang
@@ -1796,12 +1881,13 @@ dmg=18-30
 dmgtype=fire
 ap=4
 stat=str
-crit=10
+crit=5
 res=fire:20
 value=2600
 desc=A sword with an edge of dragon scale; it is never cool to the touch. Fire damage, sets foes alight. Masterwork.
 unique=1
-fx=critburn:1,flankcrit:10
+fx=critburn:1,flankcrit:5
+family=blade
 
 [item]
 id=shadowsilk_cloak
@@ -1830,6 +1916,9 @@ apbonus=1
 tech=1
 value=4200
 desc=Power armour built around the Hull Walker's reactor. +1 AP. Masterwork.
+weight=heavy
+req=str:12
+wornby=scavenger
 
 # ================= FORMULAS =================
 [item]
@@ -1905,13 +1994,14 @@ dmg=11-19
 ap=4
 stat=str
 accuracy=10
-crit=8
+crit=4
 res=cold:20
 bonus=con:1
 value=1300
 desc=Sir Vael's sword, lost in Dunmarrow when the lich took him. It hums near the restless dead.
 unique=1
 fx=laststand:1,shieldcover:1
+family=blade
 
 [item]
 id=vigil_plate
@@ -1924,6 +2014,9 @@ res=magic:20,physical:5
 tech=1
 value=1700
 desc=The shell of the thing that guarded the chapel. Something in it still keeps watch.
+weight=heavy
+req=str:12
+wornby=scavenger
 
 [item]
 id=cult_robe
@@ -1936,6 +2029,7 @@ res=magic:30
 bonus=int:2,wis:1
 value=950
 desc=Violet robes stitched with eyes. Rift magic slides off it.
+req=int:12
 
 [item]
 id=barrow_blade
@@ -1950,6 +2044,7 @@ value=380
 desc=A wight's sword, cold enough to frost your breath.
 unique=1
 fx=vsfrozen:40,aooslow:1
+family=blade
 
 [item]
 id=wardens_lantern
@@ -1975,7 +2070,7 @@ name=Grakk's Lucky Tooth
 type=accessory
 tile=11,43
 bonus=dex:1,cha:1
-crit=6
+crit=3
 value=180
 desc=A goblin chief's tooth on a leather cord. Goblins swear it makes arrows find their mark. Goblins swear a lot of things.
 
@@ -2219,6 +2314,7 @@ evasion=4
 value=320
 salvage=hardened_leather:1
 desc=Boiled-leather plates over a padded coat. Light enough to run in.
+weight=medium
 
 [item]
 id=mithril_sword
@@ -2233,6 +2329,7 @@ value=950
 salvage=mithril_ingot:1
 desc=Light as a branch, keen as winter. It finds gaps in armour by itself.
 color=205,221,255
+family=blade
 
 [item]
 id=mithril_spear
@@ -2249,6 +2346,7 @@ salvage=mithril_ingot:1
 desc=A long pale blade on an ash shaft. Reaches over a friend's shoulder.
 color=205,221,255
 trait=reach
+family=spear
 
 [item]
 id=mithril_helm
@@ -2260,6 +2358,7 @@ value=650
 salvage=mithril_ingot:1
 desc=A close helm that weighs no more than a cap.
 color=205,221,255
+weight=medium
 
 [item]
 id=mithril_shield
@@ -2272,6 +2371,7 @@ value=1000
 salvage=mithril_ingot:1
 desc=Spells skid off it like rain off oilcloth.
 color=205,221,255
+weight=medium
 
 [item]
 id=mithril_mail
@@ -2284,6 +2384,7 @@ value=1500
 salvage=mithril_ingot:2
 desc=Fine rings of pale metal. All the protection of plate, none of the clatter - no penalty to evasion.
 color=205,221,255
+weight=medium
 
 [item]
 id=riftsteel_blade
@@ -2295,11 +2396,13 @@ dmgtype=magic
 ap=4
 stat=str
 accuracy=10
-crit=8
+crit=4
 value=2600
 salvage=mithril_ingot:1,rift_crystal:1
 desc=Mithril folded around a sliver of the sky. It cuts the things that shouldn't be.
 color=204,204,204
+family=blade
+req=str:12
 
 [item]
 id=riftsteel_plate
@@ -2314,6 +2417,8 @@ value=3800
 salvage=mithril_ingot:2,rift_crystal:1
 desc=The best armour anyone in Aldmoor can make, and only a master smith can make it.
 color=204,204,204
+weight=heavy
+req=str:13
 
 # ================= 1.1.2 TOWN FAVOURS (Honoured) =================
 
@@ -2350,6 +2455,7 @@ res=cold:40
 bonus=con:2
 value=1400
 desc=Frost-wolf fur in the colours of the northern clans. Only the clans' friends wear it.
+weight=medium
 
 [item]
 id=bogwalker_boots

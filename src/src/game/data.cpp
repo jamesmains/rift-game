@@ -86,11 +86,25 @@ static void parseStatList(const std::string& s, int* out, int count, int (*fromN
     }
 }
 
+const std::vector<std::string>& weaponTraits() { static const std::vector<std::string> t = {"reach", "cleave", "backstab", "crush", "arc", "steady", "quick", "spread"}; return t; }
+int traitIndex(const std::string& tr) { auto& t = weaponTraits(); for (size_t i = 0; i < t.size(); i++) if (t[i] == tr) return (int)i; return -1; }
+void parseResList(const std::string& s, int* res, std::map<std::string, int>* traitRes) {
+    for (auto& part : split(s, ',')) {
+        auto kv = split(trim(part), ':'); if (kv.size() != 2) continue;
+        std::string k = trim(kv[0]); int v = atoi(trim(kv[1]).c_str());
+        if (traitIndex(k) >= 0) { if (traitRes) (*traitRes)[k] = v; continue; }
+        for (int i = 0; i < DT_COUNT; i++) if (k == kDmgNames[i]) res[i] = v;   // unknown words are ignored (they used to count as physical)
+    }
+}
+
 static ItemType itemTypeFrom(const std::string& s) {
     static const char* n[] = {"weapon", "armor", "helm", "boots", "accessory", "offhand", "consumable", "key", "material", "ammo"};
     for (int i = 0; i < IT_TYPE_COUNT; i++) if (s == n[i]) return (ItemType)i;
     return IT_MATERIAL;
 }
+
+const char* weightName(int w) { return w >= 2 ? "heavy" : w == 1 ? "medium" : "light"; }
+int weightFromName(const std::string& s0) { std::string s = trim(s0); return s == "heavy" || s == "2" ? 2 : s == "medium" || s == "1" ? 1 : 0; }
 
 bool GameData::load(const std::string& dir) {
     dataDir = dir; overlayDir.clear();
@@ -122,6 +136,8 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
         d.quest = sec.geti("quest", d.type == IT_KEY ? 1 : 0) != 0; d.category = trim(sec.get("category")); d.unique = sec.geti("unique", 0) != 0;
         if (!trim(sec.get("color")).empty()) { d.recolor = true; d.color = parseColor(sec.get("color")); }
         d.trait = trim(sec.get("trait")); parseFx(sec.get("fx"), d.fx);   // 1.4.0 (#67/#68)
+        d.family = trim(sec.get("family")); d.weight = weightFromName(sec.get("weight")); parseStatList(sec.get("req"), d.req, ST_COUNT, statFromName);   // 1.5.0 (#93)
+        for (auto& s : split(sec.get("wornby"), ',')) if (!trim(s).empty()) d.wornby.push_back(trim(s));
         items[d.id] = d;
     }
     // ---- spells ----
@@ -147,7 +163,7 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
         d.hp = sec.geti("hp", 10); d.mp = sec.geti("mp", 0);
         parseStatList(sec.get("stats", "str:8,dex:8,con:8,int:8,wis:8,cha:8"), d.stats, ST_COUNT, statFromName);
         d.def = sec.geti("def", 0); d.evasion = sec.geti("evasion", 0);
-        parseStatList(sec.get("res"), d.res, DT_COUNT, dmgTypeFromName);
+        parseResList(sec.get("res"), d.res, &d.traitRes);   // 1.5.0 (#92): trait keys too
         parseRange(sec.get("dmg", "1-3"), d.dmgMin, d.dmgMax); d.dmgType = dmgTypeFromName(sec.get("dmgtype", "physical"));
         d.range = sec.geti("range", 1); d.ap = sec.geti("ap", 4); d.apMax = sec.geti("apmax", 6); d.move = sec.geti("move", 4);
         d.accuracy = sec.geti("accuracy", 0);
@@ -176,6 +192,8 @@ bool GameData::loadFiles(const std::string& dir, bool required) {
             if (sec.has("sprite")) { Tile t = parseTile(sec.get("sprite")); if (t.valid()) { d.spriteCol = t.c; d.spriteRow = t.r; } }
             for (auto& s : split(sec.get("learn"), ',')) { auto kv = split(trim(s), ':'); if (kv.size() == 2) d.spellLevels.push_back({atoi(kv[0].c_str()), trim(kv[1])}); }
             d.hitDie = sec.geti("hd", 6); d.mpDie = sec.geti("md", 2); d.role = sec.get("role");
+            for (auto& s : split(sec.get("weapons"), ',')) if (!trim(s).empty()) d.weapons.push_back(trim(s));   // 1.5.0 (#93)
+            d.wears = sec.has("wears") ? weightFromName(sec.get("wears")) : 2;
             // 1.4.0 (#71): passive= (rank 1) and perkN= "Name|fx|Description"
             for (auto& kv : sec.kv) {
                 int rank = kv.first == "passive" ? 1 : startsWith(kv.first, "perk") ? atoi(kv.first.c_str() + 4) : 0;

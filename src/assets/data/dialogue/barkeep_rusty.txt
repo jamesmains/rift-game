@@ -1,8 +1,8 @@
 [start]
 speaker=Barkeep Rusty
-text=Welcome to the Last Call. We've got beds in the back if you need to sleep off the ruins. Twenty gold.
-option=Sleep. (20 gold)|room|gold:20
-option=Sleep.|poor|!gold:20
+text=Welcome to the Last Call. We've got beds in the back if you need to sleep off the ruins. Fifty gold.
+option=Sleep. (50 gold)|room|gold:50
+option=Sleep.|poor|!gold:50
 option=You look like you lost something.|still|!q_still>=1
 option=I found your coil.|still_back|item:copper_coil&q_still>=1&!q_still>=2
 option=Any rumours?|rumour
@@ -11,13 +11,13 @@ option=Goodbye.|end
 [room]
 speaker=Barkeep Rusty
 text=Mind the drones. They get curious at night.
-gold=-20
+gold=-50
 rest=1
 option=Thanks.|end
 
 [poor]
 speaker=Barkeep Rusty
-text=Twenty gold. Scrap's cheap, sleep isn't.
+text=Fifty gold. Scrap's cheap, sleep isn't.
 option=Right.|end
 
 [rumour]

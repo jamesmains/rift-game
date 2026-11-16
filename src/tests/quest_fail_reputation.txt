@@ -41,7 +41,7 @@ expect rep:hollowmere == 10
 # reputation prices: Honoured in Hollowmere = cheaper at the general store
 con shop hollowmere_general
 frames 3
-expect price:potion_red == 36
+expect price:potion_red == 50
 shot shop_neutral.png
 key ESC
 frames 3
@@ -49,7 +49,7 @@ con rep hollowmere 60
 con shop hollowmere_general
 frames 3
 expect rep:hollowmere == 70
-expect price:potion_red == 31
+expect price:potion_red == 43
 shot shop_honoured.png
 key ESC
 con rep brasswick -80

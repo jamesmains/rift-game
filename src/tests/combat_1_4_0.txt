@@ -110,7 +110,8 @@ expect cb:windups == 0
 cb turn 0
 # ---- #68 weapon traits: a spear reaches 2 tiles
 cb equip 0 spear
-expect cb:range:0 == 2
+# 1.5.0 (#93): a scavenger is not trained in spears - no reach (and +1 AP)
+expect cb:range:0 == 1
 cb equip 0 rusty_pistol
 expect cb:range:0 == 6
 # ---- #66 rank upgrades, #71 passives and perks
