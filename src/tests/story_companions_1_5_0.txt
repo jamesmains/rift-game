@@ -1,0 +1,199 @@
+# 1.5.0 (#88, #98, #102): the companions' red lines and the cult routes, and how the world remembers them.
+#  Tessa - Vell's followers sent to Brasswick's court (converts.txt): talked round (INT 13) / leaves / dies on the road
+#  Nyx   - Ashwing let go (ashwing_parley.txt): talked round (CHA 12) / dies following it north
+#  Elowen - the shards broken (shards_choice.txt): talked round (INT 13) / steps through the Rift
+#  (Bram's and Orin's are in story_bram_1_5_0 and story_goblins_1_5_0.)
+#  Cult: the robed figure talked away, the Sky Wardens - what Ashfall, Brasswick and the boards say.
+# New key: boardnotes:<board> (the news pinned there).
+god
+# ================= Tessa talked round =================
+newgame Mira warrior 1 31
+con join tessa
+expect members == 2
+con flag q_cult 2
+con setstat int 13
+teleport ashfall 45 34
+talk ilse
+choose You'll answer to Brasswick's court
+expect talk contains It hangs them
+expect answers contains Read the bounty
+choose Read the bounty
+expect flag:converts_judged == 1
+expect flag:tessa_converts_ok == 1
+expect members == 2
+expect scripterror lacks contradiction
+# ================= Tessa dies on the road =================
+newgame Mira warrior 1 32
+con join tessa
+con flag q_cult 2
+teleport ashfall 45 34
+talk ilse
+choose You'll answer to Brasswick's court
+expect answers lacks Read the bounty
+choose Then go and stop them
+expect members == 1
+expect flag:fell_scavenger == 1
+expect flag:tessa_fell_road == 1
+expect flag:joined_scavenger == 0
+expect npcshown:tessa == 0
+talk barkeep
+expect answers contains The market has painted something
+expect answers lacks How's the market taking the trial
+choose The market has painted something
+teleport brasswick 36 24
+talk townsfolk3
+expect answers contains Ever hear of a scavenger called Tessa
+choose Ever hear of a scavenger called Tessa
+expect boardnotes:brasswick contains BY ORDER OF THE MAYOR
+expect boardnotes:murkwater contains the nine in the Mayor's court
+expect epilogue contains a girl with a crowbar and a drone
+expect epilogue contains Tessa died on the north road
+con dialogue tessa
+expect answers lacks Come with me
+expect answers lacks About the way we parted
+choose Goodbye
+expect scripterror lacks contradiction
+# ================= Tessa leaves =================
+newgame Mira warrior 1 33
+con join tessa
+con flag q_cult 2
+teleport ashfall 45 34
+talk ilse
+choose You'll answer to Brasswick's court
+choose It's done, Tessa
+expect members == 1
+expect flag:left_scavenger == 1
+expect flag:fell_scavenger == 0
+expect npcshown:tessa == 1
+talk barkeep
+expect answers contains Seen Tessa
+expect answers contains How's the market taking the trial
+choose Seen Tessa
+con dialogue tessa
+expect answers contains About the way we parted
+choose Goodbye
+expect epilogue contains Tessa went back to the Ashfall market and never left it again
+# ================= mercy: the Sky Wardens; the robed figure talked away =================
+newgame Mira cleric 1 34
+con setstat wis 12
+con setstat cha 13
+con flag rift_shard2_found
+teleport ashfall 45 33
+talk cultist_npc
+choose You don't want the shards
+choose Vell will open the sky
+expect flag:cult_talked == 1
+expect flag:cult_scared == 0
+expect flag:q_cult == 1
+expect npcshown:cultist_npc == 0
+con flag q_cult 2
+teleport ashfall 45 34
+talk ilse
+choose Stay. Help Ashfall
+expect flag:converts_spared == 1
+talk barkeep
+expect answers contains What happened to the cultist in the square
+expect answers contains How's the market taking the Sky Wardens
+expect answers lacks the trial
+choose What happened to the cultist in the square
+teleport brasswick 31 29
+talk bard
+expect answers contains Anything new in the song
+choose Anything new in the song
+expect boardnotes:brasswick contains PROCLAMATION (DISPUTED)
+expect boardnotes:brasswick lacks BY ORDER OF THE MAYOR
+expect boardnotes:murkwater contains watch so that we can sleep
+expect epilogue contains The Sky Wardens kept their watch
+expect scripterror lacks contradiction
+# ================= Nyx talked round =================
+newgame Mira warrior 1 35
+con join nyx
+con flag q_dragon 1
+con setstat cha 12
+con dialogue ashwing_parley
+choose Leave, and Sunscar forgets your name
+expect flag:ashwing_gone == 1
+expect talk contains It ate a child
+expect answers contains A dragon's word lasts longer
+expect answers lacks The glass made it hungry
+choose A dragon's word lasts longer
+expect flag:nyx_ashwing_ok == 1
+expect members == 2
+expect boardnotes:frosthold contains WARNING TO PILGRIMS
+expect boardnotes:sunscar contains THE SKY IS CLEAR
+expect boardnotes:frosthold lacks LOST ON THE NORTH FACE
+# ================= Nyx follows the dragon north =================
+newgame Mira warrior 1 36
+con join nyx
+con flag q_dragon 1
+con setstat cha 12
+con dialogue ashwing_parley
+choose Leave, and Sunscar forgets your name
+choose Then hunt it, if you must
+expect members == 1
+expect flag:fell_ranger == 1
+expect flag:nyx_fell_ashwing == 1
+teleport millbrook 24 13
+expect npcshown:nyx == 0
+talk jory
+expect answers contains Has Nyx been by
+expect answers lacks Seen anything odd in the hills
+choose Has Nyx been by
+teleport frosthold 16 13
+talk frost_trader
+expect answers contains Did a ranger called Nyx come through
+choose Did a ranger called Nyx come through
+expect boardnotes:frosthold contains LOST ON THE NORTH FACE
+teleport sunscar 20 20
+talk sefa
+expect answers contains Did anyone come asking about Ashwing
+choose Did anyone come asking about Ashwing
+expect epilogue contains Nyx followed Ashwing into the high snow
+expect scripterror lacks contradiction
+# ================= Elowen talked round: the shards break =================
+autoending 1
+newgame Mira warrior 1 37
+con join elowen
+con flag q_main 7
+con setstat int 13
+con dialogue shards_choice
+choose Break them
+expect talk contains Half the magic in Aldmoor
+expect answers contains magic is physics nobody has written down
+expect answers lacks The wisps told you that
+choose magic is physics nobody has written down
+expect flag:elowen_seal_ok == 1
+expect flag:ending_seal == 1
+expect members == 2
+expect epilogue lacks Elowen stepped through
+# ================= Elowen steps through the Rift =================
+newgame Mira warrior 1 38
+con join elowen
+con flag q_main 7
+con dialogue shards_choice
+choose Break them
+choose It has to end
+expect flag:fell_mage == 1
+expect flag:elowen_fell_scar == 1
+expect flag:ending_seal == 1
+expect members == 1
+expect epilogue contains Elowen stepped through the Rift after her mother
+teleport brasswick 40 21
+talk arcanist
+expect answers contains About Elowen
+choose About Elowen
+talk bard
+choose Anything new in the song
+expect scripterror lacks contradiction
+# ================= Elowen: choose again =================
+newgame Mira warrior 1 39
+con join elowen
+con flag q_main 7
+con dialogue shards_choice
+choose Break them
+choose Then I won't
+choose Carry them home
+expect flag:ending_watch == 1
+expect flag:ending_seal == 0
+expect members == 2
+expect scripterror lacks contradiction
