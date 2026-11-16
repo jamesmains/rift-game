@@ -38,6 +38,7 @@ std::string Game::buildDynItem(const std::string& baseId, const std::vector<std:
             else if (k == "hp") d.bonusHP += v; else if (k == "mp") d.bonusMP += v; else if (k == "ap") d.bonusAP += v; else if (k == "move") d.bonusMove += v; else if (k == "range") d.range += v;
             else if (k == "str" || k == "dex" || k == "con" || k == "int" || k == "wis" || k == "cha") d.bonus[statFromName(k)] += v;
             else if (startsWith(k, "res_")) d.res[dmgTypeFromName(k.substr(4))] += v;
+            else d.fx[k] += v;   // 1.4.0 (#67): effect mods (ignorehalfcover, flankcrit, vsfrozen, critburn...) - see fxDescribe
         }
         if (!a.dmgType.empty()) d.dmgType = dmgTypeFromName(a.dmgType);
         d.value = d.value * a.valuePct / 100;
@@ -81,6 +82,19 @@ std::string Game::makeAffixed(const std::string& baseId, int tier) {
     for (auto& h : have) for (auto& a : affixes) if (a.id == h) { if (a.prefix) hasPre = true; else hasSuf = true; }
     if (hasPre) pre.clear(); if (hasSuf) suf.clear();
     std::vector<std::string> chosen = have;
+    // 1.4.0 (#67): a rare (tier 3) find usually carries one of the affixes that change how you play (effect mods)
+    auto isEffect = [&](const AffixDef* a) { static const char* plain[] = {"dmg", "dmgmin", "dmgmax", "def", "evasion", "accuracy", "crit", "hp", "mp", "ap", "move", "range", "str", "dex", "con", "int", "wis", "cha"};
+        for (auto& m : a->mods) { bool isPlain = startsWith(m.first, "res_"); for (auto* q : plain) if (m.first == q) isPlain = true; if (!isPlain) return true; } return false; };
+    if (have.empty() && tier >= 3 && rng.chance(65)) {
+        std::vector<const AffixDef*> ePre, eSuf; for (auto* a : pre) if (isEffect(a)) ePre.push_back(a); for (auto* a : suf) if (isEffect(a)) eSuf.push_back(a);
+        if (!ePre.empty() || !eSuf.empty()) {
+            bool usePre = !ePre.empty() && (eSuf.empty() || rng.chance(50));
+            auto& eff = usePre ? ePre : eSuf; auto& other = usePre ? suf : pre;
+            chosen.push_back(eff[rng.range(0, (int)eff.size() - 1)]->id);
+            if (!other.empty()) chosen.push_back(other[rng.range(0, (int)other.size() - 1)]->id);
+            return buildDynItem(b0, chosen, plus);
+        }
+    }
     if (have.empty() && tier >= 3 && !pre.empty() && !suf.empty()) { chosen.push_back(pre[rng.range(0, (int)pre.size() - 1)]->id); chosen.push_back(suf[rng.range(0, (int)suf.size() - 1)]->id); }
     else { std::vector<const AffixDef*> all = pre; all.insert(all.end(), suf.begin(), suf.end()); if (all.empty()) return baseId; chosen.push_back(all[rng.range(0, (int)all.size() - 1)]->id); }
     return buildDynItem(b0, chosen, plus);

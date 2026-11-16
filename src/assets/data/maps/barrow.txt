@@ -129,7 +129,7 @@ flag=barrow_tomb_chest
 [chest]
 x=5
 y=5
-items=torch_item:3,potion_red:1
+items=torch_item:3,potion_red:1,wardens_lamp:1
 gold=15
 flag=barrow_wing_chest
 
@@ -138,3 +138,10 @@ x=8
 y=11
 node=bone_dust
 respawn=4
+
+[sign]
+template=paper_sign
+x=17
+y=17
+title=Grave inscription
+text=Here lies one who would not lie still. The cold in him fears fire.

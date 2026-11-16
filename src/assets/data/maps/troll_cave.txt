@@ -236,3 +236,10 @@ items=prayer_beads:1,potion_red:1
 x=33
 y=20
 node=mithril_ore
+
+[sign]
+template=paper_sign
+x=25
+y=30
+title=Chalk marks
+text=BONES BREAK UNDER HAMMERS. (A mace or a war hammer gets through what a sword skates off.)

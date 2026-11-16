@@ -176,8 +176,29 @@ void Game::drawAchievementPopups(Canvas& cv, float dt) {
 std::string Game::questText(const QuestDef& q) const { std::string s = questStatus(q); size_t at = s.find(" @"); return at == std::string::npos ? s : s.substr(0, at); }
 std::string Game::questPin(const QuestDef& q) const { std::string s = questStatus(q); size_t at = s.find(" @"); return at == std::string::npos ? "" : trim(s.substr(at + 2)); }
 
-static const char* JTABS[] = {"Quests", "Bounties", "Bestiary", "Stats", "Notes", "Achievements"};
-static const int JN = 6;
+static const char* JTABS[] = {"Quests", "Bounties", "Bestiary", "Stats", "Notes", "Achievements", "Tactics"};
+static const int JN = 7;
+#define JTAB_W ((SCREEN_W - 28) / JN)   // 1.4.0: seven tabs share the width
+// 1.4.0 (#60 #54): the Tactics page - how fights work beside the numbers, and every status combo (from the table in combat.cpp)
+static std::vector<std::pair<std::string, Color8>> tacticsText() {
+    std::vector<std::pair<std::string, Color8>> t;
+    auto h = [&](const char* s) { t.push_back({s, C::Gold}); }; auto l = [&](const std::string& s) { t.push_back({s, C::LtGray}); }; auto gap = [&]() { t.push_back({"", C::LtGray}); };
+    h("Cover");
+    l("A wall on the side facing the shooter is full cover (-40% to hit), a table, crate or rock half cover (-20%). Right next to someone there is no cover. When you move, every tile you can reach shows a bar on each side that would give cover against the enemies who can see it.");
+    l("Exposed: someone beside cover that doesn't face you is +15% to hit and to crit - walk round to the open side. Flanked (an ally next to them too) works the same up close.");
+    l("Defend in cover doubles it (half 40%, full 80%). Spells aimed at one target lose a quarter of their damage to half cover and half to full cover; blasts, lines, cones, chains and grenades don't care.");
+    l("Smoke blocks sight: whoever stands in it can only be hit from right next to them. Grenades and blasts smash crates and tables; fire burns wooden ones. Shield Bash shoves a foe out of its cover.");
+    gap(); h("Ground");
+    l("Shock spreads through water to everyone standing in it. Fire spells set grass alight; burning ground spreads and burns whoever walks in or starts a turn there. Cold blasts leave ice that costs a move more. Lit braziers can be put out by some monsters - and lit again by you (stand next to one, click it, 2 AP).");
+    gap(); h("Status combos");
+    for (auto& s : comboHelpLines()) l(s);
+    l("Every cold hit leaves its target chilled for a couple of turns. Mark Target: the whole party hits the marked foe more easily and crits it more. Scan Weakness: the next hit on the tagged foe is a critical.");
+    gap(); h("The rest");
+    l("Bosses wind up their worst attacks a turn ahead: get off the tiles marked in red. Some fights have a goal at the top of the screen (keep someone alive, reach a spot, hold out, close the rifts).");
+    l("Sneak up unseen (Camouflage helps) and your party gets a free first round; walk unlit into monsters that see in the dark and they get one. Kill a band's leader and the rest may run.");
+    l("Each class has a passive and gains a perk at ranks 4, 8 and 12 in it; many spells grow stronger with ranks in their class. The level-up screen tells you what is coming.");
+    return t;
+}
 
 void Game::updateJournal(InputState& in, float dt) {
     (void)dt;
@@ -188,13 +209,14 @@ void Game::updateJournal(InputState& in, float dt) {
     else if (grid && actP(in, A_LEFT) && jSel % 2 == 1) jSel--;
     else if (actP(in, A_PAGEUP) || actP(in, A_LEFT)) { jTab = (jTab + JN - 1) % JN; jSel = 0; jScroll = 0; }
     else if (actP(in, A_PAGEDOWN) || actP(in, A_RIGHT)) { jTab = (jTab + 1) % JN; jSel = 0; jScroll = 0; }
-    for (int i = 0; i < JN; i++) { int bx = 14 + i * 100; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + 96 && in.mouseY >= 12 && in.mouseY < 32) { jTab = i; jSel = 0; jScroll = 0; in.eatMouse(); } }
+    for (int i = 0; i < JN; i++) { int bx = 14 + i * JTAB_W; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + JTAB_W - 4 && in.mouseY >= 12 && in.mouseY < 32) { jTab = i; jSel = 0; jScroll = 0; in.eatMouse(); } }
     int n = 0;
     if (jTab == 0) { for (auto& q : quests) if (!questStatus(q).empty()) n++; }
     else if (jTab == 1) n = (int)bounties.size();
     else if (jTab == 2) n = (int)bestiary.size();
     else if (jTab == 4) n = (int)notes.size();
     else if (jTab == 5) n = (int)achievements.size();
+    else if (jTab == 6) { int lines = 0; for (auto& t : tacticsText()) lines += std::max(1, (int)ctx.font->wrap(t.first, SCREEN_W - 48).size()); n = std::max(1, lines - (SCREEN_H - 90) / 12); }
     if (n > 0 && !grid) { if (actP(in, A_UP)) jSel = (jSel + n - 1) % n; if (actP(in, A_DOWN)) jSel = (jSel + 1) % n; }
     if (grid) { if (actP(in, A_UP) && jSel >= 2) jSel -= 2; if (actP(in, A_DOWN) && jSel + 2 < n) jSel += 2; }
     jSel = clampi(jSel, 0, std::max(0, n - 1));
@@ -207,7 +229,7 @@ void Game::updateJournal(InputState& in, float dt) {
 void Game::drawJournal(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 160); uiRect(0, 0, SCREEN_W, SCREEN_H);
     panel(ctx, 6, 6, SCREEN_W - 12, SCREEN_H - 12);
-    for (int i = 0; i < JN; i++) button(ctx, in, 14 + i * 100, 12, 96, 20, JTABS[i], true, jTab == i);
+    for (int i = 0; i < JN; i++) button(ctx, in, 14 + i * JTAB_W, 12, JTAB_W - 4, 20, JTABS[i], true, jTab == i);
     int y0 = 44, x0 = 16, w = SCREEN_W - 32;
     if (jTab == 0) {
         // Rows are measured first so the list can scroll to keep the selected (opened) quest fully on screen; every
@@ -338,6 +360,11 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
     } else if (jTab == 4) {
         int y = y0; if (notes.empty()) UI::text(ctx, x0, y0, "Signs you read and things you learn are kept here.", C::Gray);
         for (size_t i = 0; i < notes.size(); i++) { if ((int)i < jScroll) continue; if (y > SCREEN_H - 50) break; auto lines = ctx.font->wrap(notes[i], w - 16); listRow(ctx, in, x0, y, w, (int)lines.size() * 12 + 6, (int)i == jSel); for (size_t l = 0; l < lines.size(); l++) UI::text(ctx, x0 + 8, y + 3 + (int)l * 12, lines[l], l == 0 ? C::Cream : C::LtGray); y += (int)lines.size() * 12 + 8; }
+    } else if (jTab == 6) {   // 1.4.0: Tactics (up / down scroll)
+        std::vector<std::pair<std::string, Color8>> rows;
+        for (auto& t : tacticsText()) { auto ls = ctx.font->wrap(t.first, w - 16); if (ls.empty()) ls.push_back(""); for (auto& s : ls) rows.push_back({s, t.second}); }
+        int y = y0;
+        for (size_t i = (size_t)std::max(0, jSel); i < rows.size(); i++) { if (y > SCREEN_H - 40) break; UI::text(ctx, x0 + 8, y, rows[i].first, rows[i].second); y += 12; }
     } else if (jTab == 5) {
         int y = y0; int cols = 2; int cw = w / cols;
         for (size_t i = 0; i < achievements.size(); i++) {

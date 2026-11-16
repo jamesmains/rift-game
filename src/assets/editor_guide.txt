@@ -4138,6 +4138,319 @@ Format: whole number. Default: 5.
 
 Range is counted in tiles like weapon reach, and a diagonal step counts as one tile. Self-target spells ignore it.
 
+== combat.tactics | Fights: cover, terrain and tricks (1.4.0)
+see: combat.combos, tilekind.fights, spell.shape, creature.role, creature.windup, obj.enemy.goal, item.trait, class.passive
+
+What decides a fight besides the numbers:
+
+- Cover: a blocking tile on the side facing the shooter gives half cover
+  (-20% to hit; impassable but see-through: tables, crates, rocks) or full cover
+  (-40%; walls). Point blank there is no cover. The move preview marks every
+  tile you can reach with a bar on each side that would give cover against the
+  foes who can see it there (short bar = half, long = full).
+- Exposed: a target standing next to cover that doesn't face the attacker
+  (shot from the open side) is +15% to hit and +15% crit, like a flanked one.
+- Hunker down: Defend in cover doubles the cover (half 40%, full 80%);
+  Defend in the open is -20%.
+- Spells: single-target damage spells do 25% less against half cover and 50%
+  less against full cover. Area spells, lines, cones, chains, grenades and
+  weapon skills like Volley ignore cover.
+- Smoke (Smoke Bomb, Smoke Screen): blocks sight; whoever stands in it has
+  full cover and can only be aimed at from right next to them.
+- Cover changes: furniture with breaks= is blown apart by enough area damage
+  and burns at the first fire (tile kinds burns=1); Shield Bash shoves its
+  target a tile back, out of its cover.
+- Terrain: shock spreads through water (conduct=1) to everyone standing in
+  it; fire spells leave burning ground on flammable kinds (it spreads, and
+  burns whoever walks in or starts a turn there); cold area spells leave ice
+  (+1 move cost). Ground effects end with the fight; broken furniture and
+  snuffed braziers stay until the party leaves the map.
+- Darkness: monsters that see in the dark and stand unlit when a fight starts
+  get a free round; some (snuff=1) put out braziers; a unit next to an unlit
+  brazier can light it again (2 AP). Torches burn in fights too.
+- Surprise: catching a group unaware (Camouflage, or walking up to it unseen
+  and attacking, or a touch map's group that wasn't chasing yet) gives the party
+  a free first round.
+- Morale: when a group's leader (role=leader) falls, the rest run and are
+  gone a turn later.
+- Bosses with windup= announce their big attack: the marked tiles get hit at
+  the start of the boss's next turn.
+- Difficulty: Hard foes flank, focus fire harder, go for exposed and helpless
+  targets and drink a draught when hurt; Story foes do less of that.
+
+== combat.combos | Status combos
+see: combat.tactics, spell.effect
+
+A status on the target plus a hit of the right element sets off a reaction.
+The rules live in one table in the game (kCombos in combat.cpp); the Journal's
+Tactics page lists them for players.
+
+- SHATTER: shock on a frozen target (+60% damage) or a chilled one (+40%);
+  ends the freeze.
+- THAW: fire on a frozen target - an extra burst of fire damage; ends the
+  freeze.
+- FLARE: fire on a poisoned target - all the poison it still had does its
+  damage at once.
+- STEAM: cold on a burning target - puts the fire out and blinds them.
+
+Primers: every cold hit leaves the target chilled (2 turns). Mark Target
+(effect=marked) gives everyone +15% to hit and crit against the target;
+Scan Weakness (effect=tagged) makes the next hit on it a critical. The Mage's
+passive makes combos 50% stronger and primers last a turn longer.
+
+== tilekind.fights | Tile kinds in fights
+see: tilekind.conduct, tilekind.flammable, tilekind.burns, tilekind.breaks, tilekind.snuff, combat.tactics
+
+The "in fights" and "turns into" rows of the Tiles tab say what a kind does
+when a fight happens on it. Nothing here changes exploring.
+
+  breaks=debris
+  breakhp=12
+  burns=1
+  conduct=1
+  flammable=1
+  snuff=brazier_out
+  kindle=brazier
+
+== tilekind.conduct | Carries shock
+see: tilekind.fights, combat.tactics
+
+conduct=1: shock damage (spells, shock grenades) on someone standing on this
+kind also hits everyone else standing in the same patch of conducting tiles,
+up to 4 tiles away, for half. Chain spells jump 2 tiles farther between two
+units standing in it.
+
+Format: 1 or 0. Default: 0. The base game sets it on water, deepwater,
+shallows, floor_water, mire, ford, river and swamp.
+
+== tilekind.flammable | Flammable ground
+see: tilekind.fights, tilekind.burns, spell.ground
+
+flammable=1: fire area spells and fire grenades leave burning ground on this
+kind for 3 rounds. Fire spreads to neighbouring flammable tiles. Standing in it
+(walking in, or starting a turn there) burns.
+
+Format: 1 or 0. Default: 0. Grass, meadow, tall grass, crops, reeds and hay
+have it.
+
+== tilekind.burns | Burns (cover)
+see: tilekind.breaks, tilekind.flammable
+
+burns=1 on a kind with breaks=: the first fire damage on it breaks it at once
+and leaves burning ground where it stood; burning ground next to it may set it
+alight too. For wooden furniture.
+
+Format: 1 or 0. Default: 0.
+
+== tilekind.breaks | Breaks into
+see: tilekind.burns, tilekind.fights, combat.tactics
+
+breaks=KIND: area damage on this tile (blasts, grenades, Volley, a boss's
+wind-up) adds up, and at breakhp= (default 10) the cell turns into KIND - a
+crate blown apart into debris, so whoever hid behind it loses their cover.
+breakhp= sets how much it takes.
+
+The change lasts until the party leaves the map.
+
+  breaks=debris
+  breakhp=16
+
+== tilekind.snuff | Put out / lit
+see: tilekind.fights, creature.snuff
+
+snuff=KIND on a light source: what it becomes when a monster with snuff=1 puts
+it out in a fight. kindle=KIND on the unlit kind: what it becomes when a party
+member next to it lights it (2 AP; click it in a fight).
+
+  snuff=brazier_out
+  kindle=brazier
+
+== tilekind.kindle | Lit
+see: tilekind.snuff
+
+kindle=KIND: an unlit light source a party member can light in a fight (stand
+next to it, click it, 2 AP). See tilekind.snuff.
+
+== spell.shape | Spell shape
+see: spell.area, spell.chain, spell.range
+
+shape=ball (default) covers area= tiles round the target. shape=line runs from
+the caster through the target, range= tiles long, and stops at a wall. shape=cone
+widens from the caster toward the target, range= tiles long. Lines and cones hit
+friend and foe (unless ff=0) and ignore cover. The targeting preview shows the
+tiles.
+
+  shape=line
+
+== spell.chain | Chain
+see: spell.shape, tilekind.conduct
+
+chain=JUMPS:RANGE:FALLOFF - hits the target, then jumps to the nearest living
+unit (either side) within RANGE tiles that it hasn't hit yet, JUMPS times, each
+jump FALLOFF percent weaker. Water carries it 2 tiles farther. The preview
+shows the jumps and the damage left at each.
+
+  chain=4:3:25
+
+== spell.knockback | Knockback
+see: combat.tactics
+
+knockback=1: a damaged enemy is shoved one tile straight away from the caster
+if that tile is free and walkable - out of its cover. Bosses and big creatures
+hold firm. Shield Bash has it.
+
+== spell.smoke | Smoke
+see: combat.tactics, spell.area
+
+smoke=N: a cloud over the spell's area for N rounds. It blocks sight lines;
+whoever stands in it has full cover and can only be aimed at from next to them.
+
+  smoke=3
+
+== spell.ground | Ground effect
+see: tilekind.flammable, combat.tactics
+
+ground=fire leaves burning ground on every tile the spell covers (without it,
+fire area spells only light flammable ground); ground=ice leaves ice (+1 move
+cost). Often given by an upgrade= line (Fireball at Mage rank 8).
+
+== spell.upgrade | Rank upgrades
+see: class.learn, class.passive
+
+upgrade=RANK:key=value,key=value:Text - from RANK in the class that teaches the
+spell (its learn= or spells=), the spell changes as if those keys were set. Use
+several upgrade= lines for several steps. The text is shown on the level-up
+screen when that rank is chosen.
+
+  upgrade=8:ground=fire:Mage rank 8 - leaves the whole blast burning.
+  upgrade=10:area=2:Ranger rank 10 - covers a wider area.
+
+== creature.role | Role
+see: combat.tactics, creature.windup
+
+How the creature behaves beside its numbers:
+
+- guard: allies next to it count as in half cover; it keeps by its side's
+  archers and raises its shield.
+- sniper: holds a lane on overwatch and rarely moves.
+- support: (with ai=support) buffs allies with its ally spells - bless,
+  strength, shield - not only heals.
+- leader: when it falls, the rest of its group breaks and runs.
+
+== creature.windup | Wind-up attack
+see: creature.role, combat.tactics
+
+windup=SPELL: from round 2, at most every third round, the creature announces
+SPELL instead of acting: the tiles it will hit are marked red, and it lands at
+the start of its next turn on whoever is still there. The spell needs no MP.
+Without area= or shape= it covers 3x3 round the target.
+
+  windup=grave_nova
+
+== creature.ward | Ward
+see: creature.windup
+
+ward=CREATURE: takes half damage while a creature of that id still stands in
+the fight. The Lich is warded by its necromancer: kill that first.
+
+== creature.snuff | Puts out lights
+see: tilekind.snuff
+
+snuff=1: on dark maps it walks to lit braziers (kinds with snuff=) and puts
+them out in a fight.
+
+== creature.fx | Creature effects
+see: item.fx
+
+fx=key:value,... - the same effect keys as items (see item.fx).
+
+== item.trait | Weapon trait
+see: item.fx, combat.tactics
+
+The weapon family's trait:
+
+- reach: hits enemies 2 tiles away in a straight line (spears; range=1).
+- cleave: also hits foes next to both you and the target, for half (axes).
+- backstab: +25% crit against flanked or exposed targets (daggers).
+- crush: armour soaks at most 40% of a blow instead of 65% (maces).
+- arc: shoots over half cover, for 25% less damage (bows).
+- steady: loses no accuracy at long range (rifles).
+- quick: attacks cost 1 less AP (pistols).
+- spread: also hits others in a short cone past the target, for half
+  (shotguns).
+
+== item.fx | Item effects
+see: item.trait, affix.mods
+
+fx=key:value,... special effects while the item is worn, shown on the item in
+plain words: ignorehalfcover, flankcrit:N, noowpenalty, vsfrozen:N,
+critburn, covermove:N, aooslow, aoostop, shieldcover, combopower:N,
+primerturns:N, vsundead:N, lightaura:N, killap:N, laststand, move:N,
+markdmg:N, spelldmg:N, chillfreeze, mpcost:N, itemap:N, machinecrit:N,
+healpower:N, healcure, smoketurns:N, hit:N, exposedhit:N. Class passives and
+perks use the same keys. smoke:N on a smoke bomb is how many rounds its cloud
+lasts.
+
+  fx=ignorehalfcover:1,flankcrit:15
+
+== class.passive | Class passive and perks
+see: class.learn, item.fx, spell.upgrade
+
+passive=Name|fx|Description is what every rank in the class gives from rank 1;
+perk4=, perk8=, perk12= (any perkN=) add a perk at that rank in the class. fx is
+key:value;key:value with the item.fx keys, or spell:ID to teach a spell. The
+level-up screen shows the perk a rank brings, and the next one to come.
+
+  passive=Hold the Line|aoostop:1;shieldcover:1|Their swings stop a foe that slips past.
+  perk12=Override|spell:override|Learns Override.
+
+== class.perk4 | Class perk
+see: class.passive
+
+A perk at that rank in the class: Name|fx|Description. See class.passive.
+
+== class.perk8 | Class perk
+see: class.passive
+
+A perk at that rank in the class: Name|fx|Description. See class.passive.
+
+== class.perk12 | Class perk
+see: class.passive
+
+A perk at that rank in the class: Name|fx|Description. See class.passive.
+
+== obj.enemy.goal | Fight goal
+see: obj.enemy.goaltext, obj.enemy.ongoal, combat.tactics
+
+goal= gives the fight with this group a goal, shown at the top of the fight:
+
+- protect:CREATURE - that creature joins on your side; if it falls the goal
+  fails (ongoalfail= runs) and the fight goes on.
+- reach:X,Y[,W,H] - a party member standing on those tiles wins the fight;
+  the enemy left withdraws.
+- hold:ROUNDS - last that many rounds and the enemy withdraws.
+- close:CREATURE - the group's creatures with ai=rift are rift tears: each
+  round every open one lets a CREATURE through, until a party member next to
+  it spends 2 AP to close it (click it).
+
+  goal=hold:4
+  goaltext=Hold the gate until the guards come
+
+== obj.enemy.goaltext | Goal text
+see: obj.enemy.goal
+
+The line shown at the top of the fight (empty = one made from goal=).
+
+== obj.enemy.ongoal | On goal done
+see: obj.enemy.goal, obj.enemy.ongoalfail
+
+Actions run when the goal is done (the same actions as a trigger's script=).
+
+== obj.enemy.ongoalfail | On goal failed
+see: obj.enemy.goal
+
+Actions run when a protect goal fails.
+
 == spell.area | Spell area
 see: spell.range, spell.ff, spell.dmg
 
@@ -4218,6 +4531,11 @@ Format: dropdown. Default: empty.
 Spells without damage always apply the effect; with damage it lands 50% of the
 time. Bosses resist stun.
 
+1.4.0: marked (everyone gets +15% to hit and crit against the target), tagged
+(the next hit on it is a critical), override (an enemy machine fights for the
+caster's side for the duration; not bosses), slow (half move). Every cold hit
+also leaves the target chilled - see combat.combos.
+
 == spell.duration | Spell effect duration
 see: spell.effect
 
@@ -4284,6 +4602,9 @@ A non-combat use, cast from the Spells menu outside fights:
 - detect: counts the unopened chests on the map and makes them glow.
 - unlock: opens a locked door or chest next to the caster.
 - recall: returns to the last town entered.
+- freeze, shock, emp, force (1.4.0, one per class): used on obstacles that ask
+  for them - freeze water (Mage's Rime), power dead machines (Scavenger's
+  Jumpstart), fry sealed tech (EMP Pulse), shift heavy things (Warrior's Heave).
 
 Format: dropdown. Default: empty.
 
@@ -5245,6 +5566,9 @@ res_fire, res_cold, res_shock, res_poison, res_magic, res_physical.
   mods=dmg:-1,crit:5
 
 Negative values make a cursed or cheap affix ("Rusty").
+
+1.4.0: any other key is an effect mod (see item.fx): ignorehalfcover, flankcrit, noowpenalty, vsfrozen, critburn, covermove, aooslow...
+Rare (tier 3) finds roll one of the affixes with an effect mod most of the time.
 
 == affix.dmgtype | Affix damage type
 see: affix.mods, item.dmgtype

@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
             if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
             if (cmd == "unitkill") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].ch.hp = 0; u[i].ch.alive = false; app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitkill <unit> (no end-of-fight check)
+            if (cmd == "cb") { std::string r = app.game.combatDo(p); printf("  cb %s\n", r.c_str()); step(1); return true; }   // 1.4.0: combat test hooks (combat.cpp combatDo)
             if (cmd == "drop") { std::string path; for (size_t i = 1; i < p.size(); i++) path += (i > 1 ? " " : "") + p[i]; in.dropped = {path}; step(1); in.dropped.clear(); step(2); return true; }   // 1.2.0: a file dropped on the window
 #ifndef TRIFFALL_NO_EDITOR
             if (cmd == "sheetimport") {   // sheetimport <png> <name> <tw> <th> <ox> <oy> <gx> <gy> [black|alpha|r,g,b]
@@ -169,6 +170,7 @@ int main(int argc, char** argv) {
                 if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
                 // 1.3.3: heard:<event> = 1 if that sound played since the last "audio" command (which clears the list)
+                if (startsWith(key, "cb:")) { got = app.game.combatProbe(key.substr(3)); num = !got.empty() && (isdigit((unsigned char)got[0]) || (got[0] == '-' && got.size() > 1)) && got.find_first_of(",;:") == std::string::npos; return true; }   // 1.4.0
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
 #ifndef TRIFFALL_NO_EDITOR
                 if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer

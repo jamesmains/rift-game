@@ -180,3 +180,10 @@ node=circuit
 x=26
 y=5
 node=rift_crystal
+
+[sign]
+template=paper_sign
+x=11
+y=36
+title=Maintenance tag
+text=WALKER UNIT. Targeting: sweeps fire along one straight line, one cycle after lock-on. Stand clear of the line. Sensitive to shock (EMP).

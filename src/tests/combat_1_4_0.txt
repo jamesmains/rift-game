@@ -1,0 +1,146 @@
+# 1.4.0 (#55-#68, #71, #78, #80): cover preview, exposed targets, spells vs cover, breakable cover, smoke, knockback,
+# hunker, combos, conducting water, burning ground, spell shapes and chains, marks, boss wind-ups, guards, weapon traits,
+# rank upgrades and perks, fight goals, surprise and morale. Built on a floor laid in the hermit's clearing ("cb arena").
+newgame Kai scavenger 1 20261115
+god
+frames 30
+teleport hermit_hut 4 14
+frames 120
+cb arena 2 11 21 7
+combat rat,bandit_archer,bandit_shieldbearer,golem
+frames 2
+cb forcehit 1
+unitplace 0 4 14
+unitplace 1 20 16
+unitplace 2 12 14
+unitplace 3 20 12
+unitplace 4 21 16
+cb cellkind 11 14 crate
+cb turn 0
+cb hp 2 200
+cb hp 3 200
+cb hp 1 200
+cb hp 4 400
+# ---- #55 the move preview: a tile beside the crate shows half cover on its east side (2 bits per side N E S W)
+cb reach
+expect cb:reachcover:10:14 == 4
+shot combat_1_4_0_reach.png
+# ---- cover and #57 spells: half cover from the west; Spark loses 25%, Fireball (area) nothing
+expect cb:cover:0:2 == 1
+expect cb:why:0:2 contains half cover
+expect cb:spellcover:0:2:spark == 25
+expect cb:spellcover:0:2:fireball == 0
+# ---- #56 exposed: from the open north side the crate is beside the archer but doesn't face the shooter
+unitplace 0 12 11
+expect cb:exposed:0:2 == 1
+expect cb:why:0:2 contains exposed
+expect cb:cover:0:2 == 0
+unitplace 0 4 14
+# ---- #59 hunker: defending in cover doubles the cover
+cb status 2 defend 1 0
+expect cb:why:0:2 contains hunkered
+cb clearfx 2
+# ---- #58 smoke: whoever stands in it can't be aimed at from afar and has full cover
+cb item 0 smoke_bomb 12 14
+expect cb:ground:12:14 contains smoke:4
+expect cb:target:0:2 == 0
+expect cb:cover:0:2 == 2
+shot combat_1_4_0_smoke.png
+cb roundtick
+cb roundtick
+cb roundtick
+cb roundtick
+expect cb:ground:12:14 == fire:0,ice:0,smoke:0
+# ---- #58 a grenade blows the crate apart
+cb item 0 grenade 11 14
+expect cb:cell:11:14 == debris
+expect cb:cover:0:2 == 0
+cb hp 2 200
+# ---- #63 a shield-bearer next to the archer gives it half cover
+unitplace 3 13 14
+expect cb:cover:0:2 == 1
+unitplace 3 20 12
+expect cb:cover:0:2 == 0
+# ---- #60 combos: Frost Bolt chills, Lightning (a line now) shatters
+unitplace 0 6 14
+cb clearfx 2
+cb cast 0 frost_bolt 12 14
+expect cb:fx:2 contains chilled
+cb cast 0 lightning 12 14
+expect cblog contains SHATTER
+expect cb:spelltiles:lightning:0:12:14 == 7,14;8,14;9,14;10,14;11,14;12,14;13,14
+# ---- #61 shock through water: Spark on the rat in the ford also hits the shield-bearer standing in it
+cb cellkind 14 16 ford
+cb cellkind 15 16 ford
+unitplace 1 14 16
+unitplace 3 15 16
+cb hp 3 200
+cb cast 0 spark 14 16
+expect cb:hp:3 < 200
+expect cblog contains water carries the shock
+# ---- #61 Fireball on grass leaves fire that burns whoever walks into it
+cb arena 16 11 3 3 grass
+cb cast 0 fireball 17 12
+expect cb:ground:17:12 contains fire:3
+cb clearfx 1
+cb step 1 17 13
+expect cb:fx:1 contains burn
+shot combat_1_4_0_fire.png
+# ---- #64 a real chain: archer -> shield-bearer -> rat
+expect cb:chain:chain_lightning:0:2 == 2,3,1
+cb cast 0 chain_lightning 12 14
+expect cblog contains Chain Lightning
+# ---- #58 Shield Bash shoves its target a tile back
+unitplace 1 7 14
+cb cast 0 shield_bash 7 14
+expect cb:pos:1 == 8,14
+# ---- #65 Mark Target marks an enemy: the party hits it more easily
+cb cast 0 mark_target 12 14
+expect cb:fx:2 contains marked
+expect cb:why:0:2 contains marked
+# ---- #62 boss wind-up: marked tiles, then it lands at the start of its next turn
+unitplace 4 9 14
+cb windup 4 0
+expect cb:windups == 1
+expect cb:windtiles contains 6,14
+shot combat_1_4_0_windup.png
+unitplace 0 6 11
+cb turn 4
+expect cb:windups == 0
+cb turn 0
+# ---- #68 weapon traits: a spear reaches 2 tiles
+cb equip 0 spear
+expect cb:range:0 == 2
+cb equip 0 rusty_pistol
+expect cb:range:0 == 6
+# ---- #66 rank upgrades, #71 passives and perks
+cb rank 0 mage 8
+expect cb:spell:fireball:0 contains ground=fire
+cb rank 0 warrior 4
+expect cb:memberfx:0:aoostop == 1
+expect cb:memberfx:0:aooslow == 1
+expect cb:knows:0:heave == 1
+# ---- #78 a reach goal: stepping onto the tile wins the fight
+cb goal reach:3,11
+expect cb:goal == reach,open
+cb step 0 3 11
+expect cb:goal == reach,done
+frames 200
+key ENTER
+frames 60
+keys ENTER ENTER ENTER
+frames 30
+# ---- #80 surprise and #63 morale: killing the leader makes the rest run
+cb surprise 1
+combat bandit_sergeant,bandit,bandit
+frames 2
+expect cb:surprise == 1
+cb forcehit 1
+cb turn 0
+unitplace 1 5 14
+cb hp 1 1
+cb attack 0 1
+expect cb:alive:1 == 0
+expect cb:fx:2 contains routed
+expect cblog contains break and run
+log

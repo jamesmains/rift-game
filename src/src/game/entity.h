@@ -40,6 +40,8 @@ struct Character {
     int combatId = -1;
     std::string portraitHint;
     std::string favs[8];                // favorites hotbar: "spell:id" or "item:id"
+    // 1.4.0: creature extras (creatures.txt role= windup= ward= snuff= fx=); party members get fx from gear and class perks
+    std::string role, windup, ward; bool snuff = false; std::map<std::string, int> cfx;
     int bond = 0;                       // companions: +1 Loyal (+10 hit, +5 evasion), -1 Strained (-10 / -5); Game::syncBonds
     // multiclassing: every level is a rank in some class (D&D style). level == sum of ranks.
     std::map<std::string, int> ranks;   // class id -> rank
@@ -61,6 +63,10 @@ struct Character {
     const ItemDef* weapon(const GameData& gd) const;
     int attackRange(const GameData& gd) const;
     int attackAP(const GameData& gd) const;
+    bool meleeWeapon(const GameData& gd) const;   // 1.4.0: fights up close (range 1 weapon, spears included)
+    std::string trait(const GameData& gd) const;  // 1.4.0 (#68): the weapon's family trait ("" = none)
+    int fx(const std::string& key, const GameData& gd) const;   // 1.4.0: gear fx= + class passives/perks + creature fx
+    bool hasShield(const GameData& gd) const;     // an off-hand with def (a shield) is worn
     void attackDamage(const GameData& gd, int& lo, int& hi, int& type) const;
     bool hasEffect(const std::string& id) const { for (auto& e : effects) if (e.id == id) return true; return false; }
     StatusEffect* effect(const std::string& id) { for (auto& e : effects) if (e.id == id) return &e; return nullptr; }

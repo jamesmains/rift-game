@@ -140,7 +140,7 @@ flag=lab_boss_chest
 [chest]
 x=4
 y=33
-items=flare:1
+items=flare:1,sparkwright_gauntlet:1
 gold=15
 flag=lab_chest_0
 
@@ -205,3 +205,9 @@ x=3
 y=35
 node=rift_crystal
 
+[sign]
+template=paper_sign
+x=16
+y=21
+title=Lab notice
+text=CRYSTAL GOLEM: the slam only hits what stands in front of it, one beat after it rears up. Stay to its sides.

@@ -13,11 +13,12 @@ range=5
 dmg=4-8
 dmgtype=shock
 stat=int
+upgrade=6:dmg=6-11:Mage rank 6 - hits harder (6-11).
 
 [spell]
 id=frost_bolt
 name=Frost Bolt
-desc=A shard of ice that may freeze the target.
+desc=A shard of ice: always leaves the target chilled, and may freeze it.
 tile=89,37
 cost=4
 ap=4
@@ -27,6 +28,7 @@ dmgtype=cold
 effect=freeze
 duration=2
 stat=int
+upgrade=7:duration=3:Mage rank 7 - the freeze lasts 3 turns.
 
 [spell]
 id=fireball
@@ -43,11 +45,12 @@ effect=burn
 duration=2
 stat=int
 level=3
+upgrade=8:ground=fire:Mage rank 8 - leaves the whole blast burning for 3 rounds.
 
 [spell]
 id=lightning
 name=Lightning
-desc=A bolt from the sky. Devastating against machines.
+desc=A bolt that tears through everything in a line, friend or foe. Devastating against machines; carried by water.
 tile=80,39
 cost=9
 ap=4
@@ -56,7 +59,9 @@ dmg=14-24
 dmgtype=shock
 effect=stun
 stat=int
-level=8
+level=7
+shape=line
+upgrade=11:dmg=18-28:Mage rank 11 - hits harder (18-28).
 
 [spell]
 id=blizzard
@@ -72,22 +77,24 @@ dmgtype=cold
 effect=freeze
 duration=2
 stat=int
-level=11
+level=9
 
 [spell]
 id=chain_lightning
 name=Chain Lightning
-desc=Arcs between everything nearby.
+desc=Arcs from the target to the nearest body, and on: up to 4 jumps of 3 tiles, a quarter weaker each time. It does not care whose side they are on; water carries it farther.
 tile=80,39
 cost=16
 ap=5
 range=7
-area=2
+area=0
 dmg=16-26
 dmgtype=shock
 stat=int
-level=14
+level=10
 sound=spell_chain
+chain=4:3:25
+upgrade=12:chain=6:3:20:Mage rank 12 - 6 jumps, losing only a fifth each time.
 
 [spell]
 id=meteor
@@ -98,18 +105,18 @@ cost=24
 ap=6
 range=8
 area=2
-dmg=30-45
+dmg=26-40
 dmgtype=fire
 effect=burn
 duration=3
 stat=int
-level=18
+level=12
 sound=spell_meteor
 
 [spell]
 id=light
 name=Light
-desc=A floating light that widens your view in dark places for a long while. (Outside combat)
+desc=A floating light that widens your view in dark places for a long while, and adds to a burning torch. In a fight it lights the target area. (The Cleric's gift.)
 tile=82,39
 cost=4
 ap=2
@@ -121,7 +128,7 @@ level=2
 [spell]
 id=knock
 name=Knock
-desc=Opens a locked door or chest next to you without a key. (Outside combat)
+desc=Opens a locked door or chest next to you without a key. (Outside combat; no class learns it since 1.4.0 - the Scavenger's Hack opens locks.)
 tile=0,45
 cost=6
 ap=2
@@ -140,7 +147,7 @@ ap=2
 range=0
 target=self
 utility=recall
-level=7
+level=6
 
 # ---- cleric ----
 [spell]
@@ -154,6 +161,7 @@ range=6
 heal=18
 target=ally
 stat=wis
+upgrade=9:effect=cure:Cleric rank 9 - also cures poison, burning and weakness.
 
 [spell]
 id=holy_light
@@ -167,6 +175,7 @@ dmg=6-12
 dmgtype=magic
 stat=wis
 sound=spell_holy
+upgrade=7:dmg=8-15:Cleric rank 7 - hits harder (8-15).
 
 [spell]
 id=bless
@@ -182,6 +191,7 @@ target=ally
 stat=wis
 level=3
 sound=spell_bless
+upgrade=8:area=1:Cleric rank 8 - also blesses allies next to the target.
 
 [spell]
 id=cure
@@ -209,7 +219,7 @@ dmg=14-22
 dmgtype=magic
 effect=stun
 stat=wis
-level=9
+level=8
 sound=spell_holy
 
 [spell]
@@ -223,7 +233,7 @@ range=5
 effect=revive
 target=ally
 stat=wis
-level=12
+level=10
 sound=spell_revive
 
 [spell]
@@ -240,7 +250,7 @@ effect=shield
 duration=3
 target=ally
 stat=wis
-level=15
+level=12
 sound=spell_shield
 
 [spell]
@@ -253,7 +263,7 @@ ap=2
 range=0
 target=self
 utility=detect
-level=4
+level=2
 
 # ---- warrior ----
 [spell]
@@ -270,11 +280,12 @@ target=self
 stat=str
 level=3
 sound=skill_warcry
+upgrade=9:area=1,duration=6:Warrior rank 9 - rallies allies next to you too, for 6 turns.
 
 [spell]
 id=shield_bash
 name=Shield Bash
-desc=Slam an adjacent enemy, stunning it.
+desc=Slam an adjacent enemy: stuns it and shoves it back a tile - out of its cover, if there is room behind it.
 tile=84,38
 cost=5
 ap=3
@@ -283,8 +294,10 @@ dmg=8-14
 dmgtype=physical
 effect=stun
 stat=str
-level=6
+level=5
 sound=skill_bash
+knockback=1
+upgrade=10:dmg=12-18:Warrior rank 10 - hits harder (12-18).
 
 [spell]
 id=cleave
@@ -298,7 +311,7 @@ area=1
 dmg=12-20
 dmgtype=physical
 stat=str
-level=10
+level=8
 sound=skill_slash
 
 [spell]
@@ -313,24 +326,25 @@ effect=shield
 duration=4
 target=self
 stat=con
-level=14
+level=11
 sound=spell_shield
 
 # ---- ranger ----
 [spell]
 id=mark_target
 name=Mark Target
-desc=Study a foe: your next shots are far more accurate.
+desc=Mark a foe: for 3 turns the whole party hits it more often (+15%) and crits it more (+15%).
 tile=99,33
 cost=3
 ap=2
-range=0
-effect=aim
+range=8
+effect=marked
 duration=3
-target=self
+target=enemy
 stat=dex
 level=3
 sound=skill_mark
+upgrade=9:duration=5:Ranger rank 9 - the mark lasts 5 turns.
 
 [spell]
 id=volley
@@ -346,6 +360,7 @@ dmgtype=physical
 stat=dex
 level=6
 sound=skill_volley
+upgrade=10:area=2:Ranger rank 10 - covers a wider area (radius 2).
 
 [spell]
 id=camouflage
@@ -375,7 +390,7 @@ dmgtype=poison
 effect=poison
 duration=4
 stat=dex
-level=14
+level=11
 
 [spell]
 id=call_wolf
@@ -409,7 +424,7 @@ sound=skill_hack
 [spell]
 id=flashlight
 name=Flashlight
-desc=A salvaged lamp: widens your view in the dark for a long while. (Outside combat)
+desc=A salvaged lamp: widens your view in the dark for a long while. (Outside combat; no class learns it since 1.4.0 - the Cleric's Light and torches make light.)
 tile=10,42
 cost=2
 ap=2
@@ -430,11 +445,12 @@ heal=14
 target=ally
 stat=int
 level=3
+upgrade=9:heal=24:Scavenger rank 9 - patches up more (24).
 
 [spell]
 id=emp_pulse
 name=EMP Pulse
-desc=A burst of shock that cripples machines around the target.
+desc=A burst of shock that cripples machines around the target. Outside combat it fries a sealed electronic door or console next to you.
 tile=80,39
 cost=8
 ap=4
@@ -446,6 +462,7 @@ effect=stun
 stat=int
 level=6
 sound=spell_emp
+utility=emp
 
 [spell]
 id=overcharge
@@ -476,7 +493,7 @@ dmgtype=fire
 effect=burn
 duration=2
 stat=int
-level=14
+level=12
 sound=spell_drone
 
 [spell]
@@ -584,3 +601,161 @@ range=6
 heal=16
 target=ally
 sound=spell_dark
+
+# ---- 1.4.0: one out-of-combat ability per class, Scavenger tools, boss wind-ups ----
+[spell]
+id=rime
+name=Rime
+desc=Freezes the water next to you into ice you can walk on, for as long as you stay on this map. (Outside combat; the Mage's gift.)
+tile=90,37
+cost=4
+ap=2
+range=0
+target=self
+utility=freeze
+stat=int
+level=2
+
+[spell]
+id=heave
+name=Heave
+desc=Brute strength: shifts boulders, rubble and heavy crates that block the way, however weak the rest of the party is. (Outside combat; the Warrior's gift.)
+tile=84,38
+cost=3
+ap=2
+range=0
+target=self
+utility=force
+stat=str
+level=2
+
+[spell]
+id=jumpstart
+name=Jumpstart
+desc=A jolt from a salvaged battery: powers a dead machine, lift or door next to you. (Outside combat; the Scavenger's gift.)
+tile=80,39
+cost=3
+ap=2
+range=0
+target=self
+utility=shock
+stat=int
+level=2
+
+[spell]
+id=scan_weakness
+name=Scan Weakness
+desc=Scan a foe for a weak point: the next hit on it is a critical. Lasts 3 turns.
+tile=81,7
+cost=3
+ap=2
+range=7
+effect=tagged
+duration=3
+target=enemy
+stat=int
+level=5
+sound=skill_hack
+
+[spell]
+id=smoke_screen
+name=Smoke Screen
+desc=A smoke canister: a cloud (radius 1) for 3 rounds. It blocks sight; whoever stands in it can only be hit from right next to them.
+tile=58,16
+cost=5
+ap=3
+range=5
+area=1
+smoke=3
+target=ground
+stat=int
+level=7
+sound=grenade_throw
+
+[spell]
+id=override
+name=Override
+desc=Hijack an enemy machine: it fights for your side for 3 turns. Bosses resist.
+tile=81,7
+cost=8
+ap=4
+range=5
+effect=override
+duration=3
+target=enemy
+stat=int
+level=12
+sound=skill_hack
+
+[spell]
+id=grave_nova
+name=Grave Nova
+desc=The Lich draws the grave-cold out of the ground around a victim and lets it burst.
+tile=108,41
+cost=0
+ap=4
+range=8
+area=2
+dmg=18-28
+dmgtype=magic
+effect=weaken
+duration=2
+sound=spell_dark
+
+[spell]
+id=seismic_slam
+name=Seismic Slam
+desc=The golem rears up and slams the ground: a shock wave in a cone in front of it.
+tile=84,38
+cost=0
+ap=4
+range=4
+shape=cone
+dmg=20-32
+dmgtype=physical
+effect=stun
+duration=1
+sound=explosion
+
+[spell]
+id=unmaking
+name=The Unmaking
+desc=The Unmade King tears a hole in the world around a victim.
+tile=82,33
+cost=0
+ap=4
+range=9
+area=2
+dmg=28-40
+dmgtype=magic
+effect=weaken
+duration=3
+sound=spell_rift
+
+[spell]
+id=firestorm
+name=Firestorm
+desc=Ashwing fills its lungs: a rain of fire on a wide area.
+tile=79,33
+cost=0
+ap=4
+range=9
+area=2
+dmg=24-36
+dmgtype=fire
+effect=burn
+duration=2
+sound=spell_meteor
+
+[spell]
+id=barrage
+name=Barrage
+desc=The Hull Walker locks on and sweeps a line of fire across the deck.
+tile=89,6
+cost=0
+ap=4
+range=9
+shape=line
+dmg=18-28
+dmgtype=fire
+sound=spell_laser

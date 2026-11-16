@@ -247,7 +247,7 @@ aggro=4
 level=3
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_shieldbearer,bandit_archer
 x=75
 y=89
 aggro=4
@@ -260,7 +260,7 @@ aggro=4
 level=3
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_sergeant,bandit,bandit_archer
 x=73
 y=69
 aggro=4
@@ -401,7 +401,7 @@ aggro=4
 level=3
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_shieldbearer,bandit_archer
 x=58
 y=51
 aggro=4
@@ -420,7 +420,7 @@ aggro=4
 level=3
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_sergeant,bandit,bandit_archer
 x=131
 y=65
 aggro=4
@@ -446,7 +446,7 @@ aggro=4
 level=3
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_shieldbearer,bandit_archer
 x=68
 y=79
 aggro=4
@@ -477,7 +477,7 @@ y=89
 aggro=4
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_sergeant,bandit,bandit_archer
 x=126
 y=61
 aggro=4

@@ -16,6 +16,7 @@ stat=dex
 crit=8
 value=20
 desc=Quick and cheap. Two stabs for the price of one swing.
+trait=backstab
 
 [item]
 id=iron_sword
@@ -77,6 +78,7 @@ accuracy=10
 crit=12
 value=315
 desc=Thin, fast and precise.
+trait=backstab
 
 [item]
 id=flame_sword
@@ -112,6 +114,7 @@ ap=4
 stat=str
 value=60
 desc=Simple, brutal, good against bones.
+trait=crush
 
 [item]
 id=war_hammer
@@ -124,6 +127,7 @@ stat=str
 twohanded=1
 value=690
 desc=Cracks armour and skulls alike.
+trait=crush
 
 [item]
 id=club
@@ -135,6 +139,7 @@ ap=4
 stat=str
 value=8
 desc=A knotted length of wood.
+trait=crush
 
 [item]
 id=spear
@@ -143,10 +148,11 @@ type=weapon
 tile=28,8
 dmg=6-11
 ap=4
-range=2
+range=1
 stat=str
 value=110
 desc=Reach over an ally's shoulder.
+trait=reach
 
 [item]
 id=halberd
@@ -155,11 +161,12 @@ type=weapon
 tile=30,8
 dmg=12-20
 ap=5
-range=2
+range=1
 stat=str
 twohanded=1
 value=720
 desc=A polearm for holding the line.
+trait=reach
 
 [item]
 id=hand_axe
@@ -172,6 +179,7 @@ stat=str
 crit=8
 value=70
 desc=A woodsman's axe.
+trait=cleave
 
 [item]
 id=battle_axe
@@ -185,6 +193,7 @@ crit=10
 twohanded=1
 value=750
 desc=Favoured by ogres and people who want to be ogres.
+trait=cleave
 
 [item]
 id=pickaxe
@@ -264,6 +273,7 @@ stat=dex
 ammo=arrows
 value=60
 desc=Light hunting bow. Needs arrows.
+trait=arc
 
 [item]
 id=long_bow
@@ -279,6 +289,7 @@ ammo=arrows
 twohanded=1
 value=360
 desc=A ranger's tall bow.
+trait=arc
 
 [item]
 id=crossbow
@@ -302,12 +313,13 @@ type=weapon
 tile=52,15
 dmg=5-10
 range=6
-ap=3
+ap=4
 stat=dex
 gun=1
 ammo=ammo_pistol
 value=75
 desc=Salvaged from the Rift city. Still fires, mostly.
+trait=quick
 
 [item]
 id=revolver
@@ -316,13 +328,14 @@ type=weapon
 tile=54,15
 dmg=9-16
 range=7
-ap=3
+ap=4
 stat=dex
 crit=10
 gun=1
 ammo=ammo_pistol
 value=420
 desc=Six chambers, no nonsense.
+trait=quick
 
 [item]
 id=smg
@@ -331,13 +344,14 @@ type=weapon
 tile=58,15
 dmg=7-12
 range=6
-ap=3
+ap=4
 stat=dex
 gun=1
 ammo=ammo_pistol
 accuracy=-5
 value=630
 desc=Cheap shots, lots of them.
+trait=quick
 
 [item]
 id=hunting_rifle
@@ -354,6 +368,7 @@ ammo=ammo_rifle
 twohanded=1
 value=840
 desc=Reach out and touch something.
+trait=steady
 
 [item]
 id=shotgun
@@ -370,6 +385,7 @@ ammo=ammo_rifle
 twohanded=1
 value=720
 desc=Devastating up close.
+trait=spread
 
 [item]
 id=sniper_rifle
@@ -387,6 +403,7 @@ ammo=ammo_rifle
 twohanded=1
 value=1950
 desc=One shot. Make it count.
+trait=steady
 
 [item]
 id=laser_pistol
@@ -396,13 +413,14 @@ tile=78,6
 dmg=10-16
 dmgtype=fire
 range=7
-ap=3
+ap=4
 stat=dex
 accuracy=10
 gun=1
 ammo=cell
 value=975
 desc=Starship sidearm. Burns through armour.
+trait=quick
 
 [item]
 id=plasma_rifle
@@ -419,6 +437,7 @@ ammo=cell
 twohanded=1
 value=2400
 desc=The ship's marines carried these. Few of them survived to use them.
+trait=steady
 
 [item]
 id=railgun
@@ -436,6 +455,7 @@ ammo=cell
 twohanded=1
 value=3900
 desc=Magnetically accelerated death.
+trait=steady
 
 # ================= AMMO =================
 [item]
@@ -1095,6 +1115,71 @@ value=60
 desc=Throw at enemies: explodes in a small area.
 
 [item]
+id=gullwing
+name=Gullwing
+type=weapon
+tile=27,10
+color=200,230,255
+dmg=7-13
+range=8
+ap=4
+stat=dex
+ammo=arrows
+crit=8
+value=600
+unique=1
+trait=arc
+fx=ignorehalfcover:1,noowpenalty:1
+desc=A marsh-hunter's bow strung with heron gut. Its arrows find whatever hides behind a stump or a stone.
+
+[item]
+id=sparkwright_gauntlet
+name=Sparkwright's Gauntlet
+type=accessory
+tile=0,43
+color=120,220,255
+value=650
+unique=1
+bonus=int:2
+fx=combopower:50,primerturns:1
+desc=A lab glove wired to a cracked rift cell. Frost and lightning meet in it and do terrible things together.
+
+[item]
+id=smokewalker_cloak
+name=Smokewalker Cloak
+type=armor
+tile=10,26
+color=150,150,170
+def=3
+evasion=8
+value=640
+unique=1
+fx=smoketurns:2,covermove:1
+desc=A tunnel-runner's cloak that still smells of cordite. In it, smoke lingers and cover is never far.
+
+[item]
+id=wardens_lamp
+name=Warden's Lamp
+type=accessory
+tile=3,42
+color=255,220,140
+light=5
+value=700
+unique=1
+fx=lightaura:3,vsundead:20
+desc=The last Warden of Hollowmere carried it into the barrow and never carried it out. Its light keeps the dark - and the dead - at bay.
+[item]
+id=smoke_bomb
+name=Smoke Bomb
+type=consumable
+tile=58,16
+color=170,170,180
+value=45
+effect=smoke
+range=3
+fx=smoke:3
+desc=Throw it (3 AP): a cloud of smoke, radius 2, for 3 rounds. It blocks sight; whoever stands in it can only be hit from right next to them.
+[item]
 id=emp_grenade
 name=EMP Grenade
 type=consumable
@@ -1636,6 +1721,9 @@ twohanded=1
 bonus=str:2
 value=900
 desc=A great axe with the goblin chief's tusk for a hilt. Masterwork.
+unique=1
+fx=killap:2
+trait=cleave
 
 [item]
 id=sedge_shield
@@ -1664,6 +1752,8 @@ bonus=wis:2
 value=1400
 desc=A pale blade quenched in the lich's phylactery. Deals magic damage - the bane of the restless dead. Masterwork.
 color=0,134,255
+unique=1
+fx=vsundead:40,lightaura:2
 
 [item]
 id=colossus_greaves
@@ -1710,6 +1800,8 @@ crit=10
 res=fire:20
 value=2600
 desc=A sword with an edge of dragon scale; it is never cool to the touch. Fire damage, sets foes alight. Masterwork.
+unique=1
+fx=critburn:1,flankcrit:10
 
 [item]
 id=shadowsilk_cloak
@@ -1818,6 +1910,8 @@ res=cold:20
 bonus=con:1
 value=1300
 desc=Sir Vael's sword, lost in Dunmarrow when the lich took him. It hums near the restless dead.
+unique=1
+fx=laststand:1,shieldcover:1
 
 [item]
 id=vigil_plate
@@ -1854,6 +1948,8 @@ ap=4
 stat=str
 value=380
 desc=A wight's sword, cold enough to frost your breath.
+unique=1
+fx=vsfrozen:40,aooslow:1
 
 [item]
 id=wardens_lantern
@@ -2145,13 +2241,14 @@ type=weapon
 tile=36,8
 dmg=10-17
 ap=4
-range=2
+range=1
 stat=str
 accuracy=5
 value=900
 salvage=mithril_ingot:1
 desc=A long pale blade on an ash shaft. Reaches over a friend's shoulder.
 color=205,221,255
+trait=reach
 
 [item]
 id=mithril_helm

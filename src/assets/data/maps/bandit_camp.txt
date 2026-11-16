@@ -61,7 +61,7 @@ o = barrel
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_shieldbearer,bandit_archer
 x=18
 y=7
 aggro=5
@@ -70,15 +70,19 @@ flag=bandit_camp_grp_1
 link=bandit_camp_boss
 
 [enemy]
-group=bandit,bandit,bandit
+group=bandit_sergeant,bandit,bandit
 x=33
 y=18
 aggro=5
 level=2
 flag=bandit_camp_grp_2
+goal=protect:caravan_driver
+goaltext=Keep Pell's captured driver alive
+ongoal=flag:caravan_driver_saved;gold:40;notify:Pell's driver is safe - he presses a purse into your hand and runs for Brasswick.
+ongoalfail=flag:caravan_driver_lost;notify:The driver is dead.
 
 [enemy]
-group=wolf,bandit,bandit_archer
+group=wolf,bandit_shieldbearer,bandit_archer
 x=8
 y=15
 aggro=5
@@ -95,7 +99,7 @@ level=2
 flag=bandit_camp_grp_5
 
 [enemy]
-group=bandit,bandit_archer
+group=bandit_sergeant,bandit_archer
 x=35
 y=27
 aggro=5
@@ -119,7 +123,7 @@ level=2
 flag=bandit_camp_grp_8
 
 [enemy]
-group=bandit_leader,bandit,bandit_archer
+group=bandit_leader,bandit_shieldbearer,bandit_archer
 x=10
 y=6
 aggro=6
@@ -181,3 +185,9 @@ ty=103
 x=26
 y=29
 
+[sign]
+template=paper_sign
+x=26
+y=24
+title=Torn orders
+text=Shieldbearers stay with the bows - nobody gets an arrow-man while you stand. If the Captain falls, it's every man for himself. -- And keep the driver alive, he's worth a ransom.

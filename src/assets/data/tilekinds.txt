@@ -17,6 +17,7 @@ biome=plains
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=meadow
@@ -33,6 +34,7 @@ biome=plains
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=forest
@@ -124,6 +126,7 @@ biome=plains
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=sand
@@ -189,6 +192,7 @@ join=water
 link=water,bridge
 edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41|
 under=1
+conduct=1
 
 [kind]
 name=deepwater
@@ -207,6 +211,7 @@ join=water
 link=water,bridge
 edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41|
 under=1
+conduct=1
 
 [kind]
 name=shallows
@@ -226,6 +231,7 @@ join=water
 link=water,bridge
 edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41|
 under=1
+conduct=1
 
 [kind]
 name=hill
@@ -316,6 +322,7 @@ biome=swamp
 cost=2
 step=step_water
 recolor=1
+conduct=1
 
 [kind]
 name=deadtree
@@ -433,6 +440,7 @@ join=water
 link=water,bridge
 edges=0,12|0,12|1,12|5,12|0,12|0,12|4,12|0,12|1,12|3,12|1,12|1,12|2,12|0,12|1,12|9,41
 under=1
+conduct=1
 
 [kind]
 name=bridge
@@ -785,6 +793,7 @@ biome=
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=floor_dirt
@@ -904,6 +913,7 @@ join=water
 link=water,bridge
 edges=9,41|0,12|1,12|6,41|0,12|0,12|0,41|3,41|1,12|8,41|1,12|7,41|2,41|5,41|1,41|
 under=1
+conduct=1
 
 [kind]
 name=mire
@@ -919,6 +929,7 @@ encounter=0
 biome=
 cost=2
 step=step_water
+conduct=1
 
 [kind]
 name=floor_lava
@@ -949,6 +960,7 @@ encounter=0
 biome=
 cost=2
 step=step_water
+conduct=1
 
 [kind]
 name=floor_stone
@@ -1943,6 +1955,7 @@ biome=
 cost=1
 light=4
 under=1
+snuff=brazier_out
 
 [kind]
 name=candle
@@ -2036,6 +2049,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=table2
@@ -2051,6 +2066,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=table_left
@@ -2066,6 +2083,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=table_right
@@ -2081,6 +2100,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=chair
@@ -2097,6 +2118,8 @@ biome=
 cost=1
 step=step_wood
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=chair2
@@ -2113,6 +2136,8 @@ biome=
 cost=1
 step=step_wood
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=stool
@@ -2129,6 +2154,8 @@ biome=
 cost=1
 step=step_wood
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=shelf
@@ -2144,6 +2171,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=bookshelf
@@ -2159,6 +2188,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=bookshelf2
@@ -2174,6 +2205,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=wardrobe
@@ -2189,6 +2222,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=couch
@@ -2204,6 +2239,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=barrel
@@ -2219,6 +2256,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=barrel2
@@ -2234,6 +2273,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=crate
@@ -2249,6 +2290,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=basket
@@ -2264,6 +2307,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=bar_counter
@@ -2279,6 +2324,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=anvil
@@ -2567,6 +2614,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=fence_wood
@@ -2582,6 +2631,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=fence_post
@@ -2597,6 +2648,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=well
@@ -2672,6 +2725,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=wagon
@@ -2687,6 +2742,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=boat
@@ -2732,6 +2789,7 @@ biome=
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=crop2
@@ -2748,6 +2806,7 @@ biome=
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=sprouts
@@ -2764,6 +2823,7 @@ biome=
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=sprouts2
@@ -2780,6 +2840,7 @@ biome=
 cost=1
 step=step_grass
 recolor=1
+flammable=1
 
 [kind]
 name=cabbage
@@ -2811,6 +2872,9 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
+flammable=1
 
 [kind]
 name=scarecrow
@@ -2983,6 +3047,7 @@ biome=
 cost=1
 step=step_water
 under=1
+flammable=1
 
 [kind]
 name=lilypad
@@ -3293,6 +3358,8 @@ biome=
 cost=1
 light=2
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=terminal
@@ -3309,6 +3376,8 @@ biome=
 cost=1
 light=2
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=terminal2
@@ -3325,6 +3394,8 @@ biome=
 cost=1
 light=2
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=server
@@ -3340,6 +3411,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=car
@@ -3582,6 +3655,8 @@ biome=
 cost=1
 light=2
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=fridge
@@ -3597,6 +3672,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=tv
@@ -3613,6 +3690,8 @@ biome=
 cost=1
 light=1
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=cryopod
@@ -3660,6 +3739,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+breakhp=16
 
 [kind]
 name=box
@@ -3675,6 +3756,8 @@ encounter=0
 biome=
 cost=1
 under=1
+breaks=debris
+burns=1
 
 [kind]
 name=satellite
@@ -3795,4 +3878,37 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
+
+[kind]
+name=debris
+ground=
+prop=17,5
+walk=1
+sight=0
+water=0
+opaque=0
+tint=255,255,255
+bg=0,0,0
+encounter=0
+biome=
+cost=2
+step=step_wood
+under=1
+
+[kind]
+name=brazier_out
+ground=
+prop=29,22
+walk=0
+sight=0
+water=0
+opaque=0
+tint=255,255,255
+bg=0,0,0
+encounter=0
+biome=
+cost=1
+light=0
+under=1
+kindle=brazier
 

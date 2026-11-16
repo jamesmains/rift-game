@@ -636,6 +636,12 @@ int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int
         UI::text(ctx, cx + off, p.y, r.value, r.col);
     }
     cy = endY;
+    {   // 1.4.0 (#67 #68): the weapon's family trait and any special effects, in plain words
+        std::vector<std::string> fxl; if (!d.trait.empty()) fxl.push_back(traitDescribe(d.trait));
+        for (auto& kv : d.fx) if (kv.first != "smoke") fxl.push_back(fxDescribe(kv.first, kv.second));
+        if (!fxl.empty() && cy > y) cy += 3;
+        for (auto& f : fxl) for (auto& l : ctx.font->wrap(f, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, C::Cyan); cy += lh; }
+    }
     if (!trim(d.desc).empty() && cy + lh <= maxY) {
         if (cy > y) { cy += 3; cv.fillRect(x, cy, w, 1, RGB(70, 70, 90)); cy += 5; }
         for (auto& l : ctx.font->wrap(d.desc, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, RGB(200, 195, 175)); cy += lh; }
@@ -685,6 +691,14 @@ std::string Game::rankPreview(const Character& m, const std::string& cls) const 
     if (r == 1) for (auto& sp : c->startSpells) learn.push_back(sp);
     for (auto& sl : c->spellLevels) if (sl.first == r) learn.push_back(sl.second);
     for (auto& id : learn) if (auto* sp = gd->spell(id)) { if (std::find(m.spells.begin(), m.spells.end(), id) == m.spells.end()) s += ". Learns " + sp->name + " - " + sp->desc; }
+    // 1.4.0 (#71): the passive (rank 1) or perk this rank brings, and (#66) spells of this class that grow at this rank
+    for (auto& pk : c->perks) if (pk.rank == r) s += std::string(". ") + (r == 1 ? "Passive" : "Perk") + ": " + pk.name + " - " + pk.desc;
+    for (auto& kv : gd->spells) if (kv.second.cls == cls) for (auto& u : kv.second.upgrades) if (u.rank == r) {
+        bool knows = std::find(m.spells.begin(), m.spells.end(), kv.first) != m.spells.end() || std::find(learn.begin(), learn.end(), kv.first) != learn.end();
+        if (!knows) continue; std::string t = u.text; size_t dash = t.find(" - "); if (dash != std::string::npos && dash < 24) t = t.substr(dash + 3);
+        s += ". " + kv.second.name + " grows: " + t; }
+    { bool perkNow = false; for (auto& pk : c->perks) if (pk.rank == r) perkNow = true;
+      if (!perkNow) for (auto& pk : c->perks) if (pk.rank > r) { s += fmt(". (Perk at %s rank %d: %s)", c->name.c_str(), pk.rank, pk.name.c_str()); break; } }
     if (learn.empty()) { int next = 0; for (auto& sl : c->spellLevels) if (sl.first > r && (next == 0 || sl.first < next)) next = sl.first; if (next) for (auto& sl : c->spellLevels) if (sl.first == next) if (auto* sp = gd->spell(sl.second)) { s += fmt(". (Next spell at rank %d: %s)", next, sp->name.c_str()); break; } }
     return s;
 }

@@ -202,10 +202,10 @@ bool Editor::init(Tileset* t, Font* f, GameData* g, const std::string& assets, P
     ts = t; font = f; gd = g; assetDir = assets; ui.req = r; baseRoot = dataRoot = assetDir + "/data";
     te.wrap = true;   // 1.1.11: dialogue text= lines are long - wrapped by default (Alt+Z / the Wrap button)
     auto mk = [&](const std::string& file, const std::string& title, const std::string& section, const std::string& listKey, std::vector<std::string> tmpl) { GenericEditor ge; ge.path = dataRoot + "/" + file; ge.title = title; ge.sectionName = section; ge.listKey = listKey; ge.templateKeys = tmpl; gens.push_back(ge); };
-    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique"});
-    mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound", "boss", "music"});
-    mk("spells.txt", "Spells", "spell", "id", {"id", "name", "desc", "tile", "cost", "ap", "range", "area", "dmg", "dmgtype", "stat", "heal", "effect", "duration", "target", "utility", "ff", "level", "sound"});
-    mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn"});
+    mk("items.txt", "Items", "item", "id", {"id", "name", "type", "tile", "value", "desc", "dmg", "dmgtype", "range", "ap", "stat", "def", "evasion", "res", "bonus", "heal", "mana", "effect", "light", "salvage", "tech", "sound", "category", "quest", "unique", "trait", "fx"});
+    mk("creatures.txt", "Creatures", "creature", "id", {"id", "name", "sprite", "hp", "stats", "dmg", "dmgtype", "range", "apmax", "move", "def", "evasion", "res", "ai", "spells", "xp", "level", "gold", "loot", "faction", "size", "darkvision", "undead", "mechanical", "sound", "attacksound", "boss", "music", "role", "windup", "ward", "snuff", "fx"});
+    mk("spells.txt", "Spells", "spell", "id", {"id", "name", "desc", "tile", "cost", "ap", "range", "area", "dmg", "dmgtype", "stat", "heal", "effect", "duration", "target", "utility", "ff", "level", "sound", "shape", "chain", "knockback", "smoke", "ground", "upgrade"});
+    mk("classes.txt", "Classes", "class", "id", {"id", "name", "desc", "role", "stats", "hd", "md", "weapon", "armor", "items", "spells", "spriterow", "spritecol", "learn", "passive", "perk4", "perk8", "perk12"});
     mk("shops.txt", "Shops", "shop", "id", {"id", "hours", "faction", "item"});
     mk("encounters.txt", "Encounter tables", "table", "id", {"id", "level", "group"});
     mk("quests.txt", "Quests", "quest", "id", {"id", "name", "stage"});
@@ -593,10 +593,14 @@ static const std::map<std::string, std::vector<std::string>>& choiceTable() {
         {"type", {"weapon", "armor", "helm", "boots", "accessory", "offhand", "consumable", "key", "material", "ammo"}},
         {"dmgtype", {"physical", "fire", "cold", "shock", "poison", "magic"}},
         {"stat", {"str", "dex", "con", "int", "wis", "cha"}},
-        {"ai", {"melee", "ranged", "caster", "support", "coward", "boss"}},
+        {"ai", {"melee", "ranged", "caster", "support", "coward", "boss", "rift"}},
+        {"role", {"", "guard", "sniper", "support", "leader"}},             // 1.4.0 (#63)
+        {"trait", {"", "reach", "cleave", "backstab", "crush", "arc", "steady", "quick", "spread"}},   // 1.4.0 (#68)
+        {"shape", {"", "ball", "line", "cone"}},                            // 1.4.0 (#64)
+        {"ground", {"", "fire", "ice"}},
         {"target", {"enemy", "ally", "self", "any", "ground"}},
-        {"effect", {"", "burn", "freeze", "shock", "poison", "regen", "haste", "shield", "weaken", "stun", "aim", "strength", "focus", "blind", "cure", "revive"}},
-        {"utility", {"", "light", "stealth", "detect", "unlock", "recall"}},
+        {"effect", {"", "burn", "freeze", "shock", "poison", "regen", "haste", "shield", "weaken", "stun", "aim", "strength", "focus", "blind", "cure", "revive", "marked", "tagged", "override", "slow", "smoke"}},
+        {"utility", {"", "light", "stealth", "detect", "unlock", "recall", "freeze", "shock", "emp", "force"}},
         {"faction", {"monster", "bandit", "machine", "wild", "undead", "rift"}},
         {"style", {"cave", "crypt", "castle", "tech", "ship", "mine", "sewer"}},
         {"loot", {"common", "tech", "rare"}},
@@ -923,6 +927,26 @@ void Editor::drawKinds(InputState& in) {
     if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(plain step)"}; for (auto& id : gAudio.sfxChoices()) ids.push_back(id); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.step) cur = (int)i; TileKind* kp = &k; openListPicker("Footstep sound when the party walks onto this tile", ids, cur, [this, ids, kp](int i) { kp->step = i == 0 ? "" : ids[i]; kindsDirty = true; gAudio.play(i == 0 ? "step" : ids[i]); }); }
     if (ui.button(fx + keyW + 144, cy, 40, 16, "play")) gAudio.play(!k.step.empty() && gAudio.has(k.step) ? k.step : "step");
     ui.text(fx + keyW + 192, cy + 2, k.step.empty() ? "empty = the plain 'step' sound" : gAudio.has(k.step) ? "sound event (Sounds tab)" : "no sound '" + k.step + "' - plays 'step'", k.step.empty() || gAudio.has(k.step) ? DIM : ACCENT2);
+    cy += 22;
+    // 1.4.0 (#58 #61 #79): what the kind does in fights
+    ui.label(fx + 22, cy + 2, "in fights"); kh("fights", cy);
+    if (kcheck(fx + keyW, "carries shock", k.conduct, "conduct")) kindsDirty = true;
+    if (kcheck(fx + keyW + 120, "flammable ground", k.flammable, "flammable")) kindsDirty = true;
+    if (kcheck(fx + keyW + 260, "burns (cover)", k.burns, "burns")) kindsDirty = true;
+    cy += 22;
+    {
+        auto kindField = [&](int x0, int w0, std::string& v, const char* key, const char* lbl) {
+            ui.label(x0, cy + 2, lbl); int lw = font->width(lbl) + 6; std::string t = v;
+            if (ui.textField(x0 + lw, cy, w0, t, 40)) { v = trim(t); kindsDirty = true; }
+            if (ui.button(x0 + lw + w0 + 2, cy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& kk : allTileKinds()) ids.push_back(kk.name); int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == v) cur = (int)i; std::string* vp = &v; openListPicker(std::string("Tile kind it turns into (") + key + "=)", ids, cur, [this, vp](int i) { auto& ks = allTileKinds(); *vp = i <= 0 ? "" : ks[i - 1].name; kindsDirty = true; }); }
+            return x0 + lw + w0 + 22;
+        };
+        ui.label(fx + 22, cy + 2, "turns into"); kh("breaks", cy);
+        int x1 = kindField(fx + keyW, 90, k.breaks, "breaks", "broken:");
+        ui.label(x1, cy + 2, "hp"); if (ui.intField(x1 + 18, cy, 48, k.breakHp, 0, 999)) kindsDirty = true;
+        int x2 = kindField(x1 + 74, 80, k.snuffTo, "snuff", "put out:");
+        kindField(x2, 80, k.kindleTo, "kindle", "lit:");
+    }
     cy += 30;
     // big preview
     ui.label(fx + 22, cy, "preview (as in game, 2x):"); cy += 14;
@@ -990,7 +1014,7 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
 const std::vector<std::string>& edObjTypes() { static std::vector<std::string> v(OBJ_TYPES, OBJ_TYPES + NOBJ); return v; }
 std::vector<std::string> edObjKeys(const std::string& t) {   // what each object type reads (world.cpp loadMapText); x, y and an npc's id are per placement
     if (t == "npc") return {"npc", "name", "sprite", "color", "dialogue", "script", "shop", "wander", "show", "hide", "hostile", "craft", "board", "travel", "moveif", "movex", "movey"};
-    if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link", "leash"};
+    if (t == "enemy") return {"group", "aggro", "level", "flag", "ondefeat", "show", "hide", "link", "leash", "goal", "goaltext", "ongoal", "ongoalfail"};
     if (t == "chest") return {"items", "gold", "locked", "flag", "sprite", "opensprite", "color", "sound", "onuse"};
     if (t == "exit") return {"w", "h", "to", "tx", "ty", "require", "item", "locked"};
     if (t == "trigger") return {"w", "h", "script", "flag", "once", "require"};

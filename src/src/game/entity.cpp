@@ -49,7 +49,8 @@ int Character::maxMove(const GameData& gd) const {
     int v = baseHP > 0 ? mMove : 3 + stat(ST_DEX, gd) / 3;
     for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) v += it->bonusMove;
     if (hasEffect("haste")) v += 2;
-    if (hasEffect("freeze")) v = std::max(1, v / 2);
+    if (hasEffect("freeze") || hasEffect("slow")) v = std::max(1, v / 2);
+    v += fx("move", gd);
     return std::max(1, v);
 }
 int Character::defense(const GameData& gd) const {
@@ -82,8 +83,18 @@ const ItemDef* Character::weapon(const GameData& gd) const {
     if (equip[SL_WEAPON].empty()) return nullptr;
     return gd.item(equip[SL_WEAPON]);
 }
-int Character::attackRange(const GameData& gd) const { if (auto* w = weapon(gd)) return w->range; return baseHP > 0 ? mRange : 1; }
-int Character::attackAP(const GameData& gd) const { if (auto* w = weapon(gd)) return w->ap; return baseHP > 0 ? mAp : 3; }
+int Character::attackRange(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait == "reach" && w->range <= 1 ? 2 : w->range; return baseHP > 0 ? mRange : 1; }
+int Character::attackAP(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait == "quick" ? std::max(1, w->ap - 1) : w->ap; return baseHP > 0 ? mAp : 3; }
+bool Character::meleeWeapon(const GameData& gd) const { if (auto* w = weapon(gd)) return w->range <= 1; return (baseHP > 0 ? mRange : 1) <= 1; }
+std::string Character::trait(const GameData& gd) const { if (auto* w = weapon(gd)) return w->trait; return ""; }
+bool Character::hasShield(const GameData& gd) const { if (equip[SL_OFFHAND].empty()) return false; const ItemDef* d = gd.item(equip[SL_OFFHAND]); return d && d->type == IT_OFFHAND && d->def > 0; }
+int Character::fx(const std::string& key, const GameData& gd) const {
+    int v = 0;
+    for (int i = 0; i < SL_COUNT; i++) if (!equip[i].empty()) if (auto* it = gd.item(equip[i])) { auto f = it->fx.find(key); if (f != it->fx.end()) v += f->second; }
+    { auto f = cfx.find(key); if (f != cfx.end()) v += f->second; }
+    for (auto& r : ranks) if (r.second > 0) if (const ClassDef* cd = gd.cls(r.first)) for (auto& pk : cd->perks) if (pk.rank <= r.second) { auto f = pk.fx.find(key); if (f != pk.fx.end()) v += f->second; }
+    return v;
+}
 void Character::attackDamage(const GameData& gd, int& lo, int& hi, int& type) const {
     if (auto* w = weapon(gd)) {
         int s = stat(w->scaleStat, gd);
@@ -122,6 +133,7 @@ void Character::initFromCreature(const GameData& gd, const CreatureDef& c, int l
     for (int i = 0; i < DT_COUNT; i++) baseRes[i] = c.res[i];
     mDmgMin = c.dmgMin + lvlBonus; mDmgMax = c.dmgMax + lvlBonus; mDmgType = c.dmgType; mRange = c.range; mAp = c.ap; mApMax = c.apMax; mMove = c.move; mAcc = c.accuracy;
     ai = c.ai; spells = c.spells; boss = c.boss; undead = c.undead; mechanical = c.mechanical; darkvision = c.darkvision; faction = c.faction;
+    role = c.role; windup = c.windup; ward = c.ward; snuff = c.snuff; cfx = c.fx;
     onHitEffect = c.onHitEffect; xpReward = c.xp + lvlBonus * 8; lootGold = c.lootGold; loot = c.loot;
     for (int i = 0; i < SL_COUNT; i++) equip[i].clear();
     isPlayerSide = false; alive = true; effects.clear();

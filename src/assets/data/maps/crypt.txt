@@ -239,3 +239,9 @@ flag=chest_7_24
 items=the_two_ring:1
 locked=
 
+[sign]
+template=paper_sign
+x=14
+y=22
+title=Scratched on the wall
+text=The Lich cannot be hurt properly while his necromancer lives - the servant's chanting feeds him. Kill the servant first. And bring fire: the dead burn (the Brasswick market sells fire oil). When the grave-cold gathers round you, MOVE.

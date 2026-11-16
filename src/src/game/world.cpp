@@ -103,6 +103,13 @@ std::string tileKindsText(const std::vector<TileKind>& kinds) {
         if (!k.edges.empty()) { o += "edges="; for (size_t i = 0; i < k.edges.size(); i++) o += (i ? "|" : "") + tileStr(k.edges[i]); o += "\n"; }
         if (k.under) o += "under=1\n";
         if (k.shift) o += fmt("shift=%d\n", k.shift);   // 1.0.16: the Editor's save used to drop shift=
+        if (!k.breaks.empty()) o += "breaks=" + k.breaks + "\n";   // 1.4.0
+        if (k.breakHp) o += fmt("breakhp=%d\n", k.breakHp);
+        if (k.burns) o += "burns=1\n";
+        if (k.conduct) o += "conduct=1\n";
+        if (k.flammable) o += "flammable=1\n";
+        if (!k.snuffTo.empty()) o += "snuff=" + k.snuffTo + "\n";
+        if (!k.kindleTo.empty()) o += "kindle=" + k.kindleTo + "\n";
         o += "\n";
     }
     return o;
@@ -120,6 +127,8 @@ static void parseKindsText(const std::string& text, std::vector<TileKind>& kinds
         k.encounter = sec.geti("encounter", 0); k.biome = sec.get("biome"); k.moveCost = sec.geti("cost", 1);
         k.light = sec.has("light") ? sec.geti("light", 0) : defaultLight(k.name);
         k.step = trim(sec.get("step"));
+        k.breaks = trim(sec.get("breaks")); k.breakHp = sec.geti("breakhp", 0); k.burns = sec.geti("burns", 0) != 0; k.conduct = sec.geti("conduct", 0) != 0;   // 1.4.0
+        k.flammable = sec.geti("flammable", 0) != 0; k.snuffTo = trim(sec.get("snuff")); k.kindleTo = trim(sec.get("kindle"));
         readJoinFields(sec, k);
         kinds.push_back(k);
     }
@@ -291,6 +300,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             for (auto& c : split(gets(kv, "group"), ',')) if (!trim(c).empty()) e.creatures.push_back(trim(c));
             e.levelBonus = geti(kv, "level", 0); e.onDefeatScript = gets(kv, "ondefeat"); e.showFlag = gets(kv, "show"); e.hideFlag = gets(kv, "hide"); e.link = gets(kv, "link");
             e.leash = geti(kv, "leash", 0);   // 1.2.4 (#41)
+            e.goal = gets(kv, "goal"); e.goalText = gets(kv, "goaltext"); e.onGoal = gets(kv, "ongoal"); e.onGoalFail = gets(kv, "ongoalfail");   // 1.4.0 (#78)
             m.enemies.push_back(e);
         } else if (type == "chest") {
             Chest c; c.x = geti(kv, "x", 0); c.y = geti(kv, "y", 0); c.flag = gets(kv, "flag"); c.gold = geti(kv, "gold", 0); c.locked = gets(kv, "locked");

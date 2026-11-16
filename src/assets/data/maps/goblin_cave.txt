@@ -224,3 +224,10 @@ h=3
 script=dialogue:goblin_parley
 flag=goblin_parley_seen
 require=!q_goblins_done
+
+[sign]
+template=paper_sign
+x=6
+y=14
+title=Goblin drawing
+text=A big goblin with a crown, and many small goblins. The big one is crossed out - and all the small ones are running away.

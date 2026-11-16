@@ -41,6 +41,7 @@ struct Dialogue { std::string id; std::map<std::string, DialogueNode> nodes; };
 struct EncounterTable { std::string id; int minLevel = 1; std::vector<std::vector<std::string>> groups; };
 
 // ---- combat ----
+std::vector<std::string> comboHelpLines();   // 1.4.0: one plain line per status combo (the table in combat.cpp)
 struct Combatant {
     Character ch;             // copy for enemies; for party members a copy synced back after combat
     int partyIndex = -1;      // >=0 → party member
@@ -54,6 +55,12 @@ struct Combatant {
     bool summoned = false; int summoner = -1;   // made by a summon= spell (either side): no body, no XP, no loot
     int summonTurns = 0;      // >0: it fades after that many of its own turns
     float hitFlash = 0, offX = 0, offY = 0;   // feedback: a white flash when hit, a shove away from the blow / a sidestep on a miss
+    // 1.4.0
+    bool lastStandUsed = false;   // laststand perk: once a fight
+    bool gone = false;            // fled the field / surrendered / a closed rift: no body, counts as beaten
+    int lastWindup = -9;          // round of its last wind-up (windup= bosses)
+    bool potionUsed = false;      // an enemy drinks at most one draught a fight (Normal: leaders and bosses, Hard: all)
+    bool rift = false;            // goal=close: a rift tear that calls enemies every round until someone closes it
     bool friendly() const { return partyIndex >= 0 || ally; }
 };
 struct FloatText { float x, y, vy, life; std::string text; Color8 color; int scale = 1; };
@@ -93,6 +100,18 @@ struct CombatState {
     bool actionThisRound = false; int quietRounds = 0; bool disengaged = false;
     float hitstop = 0;         // a beat of stillness after a kill or a critical hit
     float banner = 0; std::string bannerText;   // "Round 3" / "Your turn: Bram" under the top bar   // rounds without a blow: the fight breaks off
+    // 1.4.0 (#58 #61): ground effects for this fight (kind 1 fire, 2 ice, 3 smoke) and damage soaked by breakable cover
+    struct GroundFx { int x, y, kind, turns; };
+    std::vector<GroundFx> groundFx;
+    std::map<int, int> tileDmg;
+    // 1.4.0 (#62): a boss's announced attack, landing on these tiles at the start of its next turn
+    struct Windup { int unit = -1; std::string spell; std::vector<std::pair<int, int>> tiles; };
+    std::vector<Windup> windups;
+    int surprise = 0;             // 1.4.0 (#80): 1 the party gets a free first round, -1 the enemies do
+    // 1.4.0 (#78): the fight's goal (from the enemy group's goal=): protect | reach | hold | close
+    struct Goal { std::string kind, arg, text, onWin, onFail; int x = 0, y = 0, w = 1, h = 1, rounds = 0, unit = -1, group = -1; bool done = false, failed = false; };
+    Goal goal;
+    std::vector<int> reachCover;  // 1.4.0 (#55): per reachable tile, the cover on each side (2 bits each, N E S W) against foes that see it
 };
 
 enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, GAMEOVER, LEVELUP, NAME, VICTORY, PAUSE, CUTSCENE, SAVELOAD, JOURNAL, WORLDMAP, CRAFT, CONSOLE, BOUNTY, ENDING };
@@ -427,7 +446,7 @@ public:
     void drawModeUI(Canvas& cv, InputState& in);   // the open screen, hotbar, hints and notifications (Game::draw)
     Canvas subCv;
     bool spellUsableOutside(const SpellDef& s) const;
-    bool spellUsableInCombat(const SpellDef& s) const { return s.dmgMax > 0 || s.heal > 0 || !s.effect.empty() || s.utility == "light"; }
+    bool spellUsableInCombat(const SpellDef& s) const { return s.dmgMax > 0 || s.heal > 0 || !s.effect.empty() || s.utility == "light" || !s.summon.empty() || s.smoke > 0; }
     bool castUtility(int member, const std::string& spellId, int target);
     void useFavorite(int member, int slot);
 
@@ -540,7 +559,13 @@ private:
     void combatNextTurn();
     void combatBeginTurn();
     void combatEndTurn();
-    void combatAttack(int attacker, int target, bool aimed);
+    bool combatAttack(int attacker, int target, bool aimed);   // true = it hit
+public:
+    // 1.4.0 test hooks (headless "cb ..." command and "expect cb:..." keys; combat.cpp)
+    int testForceHit = -1;                 // -1 roll as usual, 1 every attack hits, 0 every attack misses
+    std::string combatProbe(const std::string& what);
+    std::string combatDo(const std::vector<std::string>& args);
+private:
     int coverForTile(int x, int y, int fx, int fy, int self) const; bool aiCoverSpot(int ui, int ti, int& bx, int& by); std::vector<std::pair<int, int>> aiWalkTo(int ui, int x, int y);
     void combatSummon(int ci, const SpellDef& sp, int tx, int ty); int summonsOf(int ci) const;
     void combatCast(int caster, const std::string& spellId, int tx, int ty);
@@ -568,6 +593,40 @@ private:                                         // nearby map groups that hear 
     void drawTileInfo(Canvas& cv, int tx, int ty);
     void addFloat(int tx, int ty, const std::string& s, Color8 c, int scale = 1);
     void spawnLoot(Combatant& u);
+    // ---- 1.4.0 combat (combat.cpp) ----
+    int nextSurprise = 0;                            // (#80) set just before startCombat: 1 the party catches them unaware, -1 ambushed
+    struct FightChange { std::string map; int x = 0, y = 0; std::string kind; };
+    std::vector<FightChange> fightChanges;           // (#58) cells changed in fights (broken cover, snuffed braziers): put back when the party leaves the map
+    void revertFightChanges();
+    bool combatLOS(int x0, int y0, int x1, int y1) const;   // line of sight that smoke blocks too
+    int  groundAt(int x, int y, int kind) const;     // rounds left of a ground effect (0 = none)
+    bool smokeAt(int x, int y) const { return groundAt(x, y, 3) > 0; }
+    void addGround(int x, int y, int kind, int turns);
+    void groundRoundTick();
+    void groundHurt(int ui);
+    int  coverVs(int x, int y, int fx, int fy, int self, bool friendlySide, int* sides = nullptr) const;
+    int  effCover(const Combatant& a, const Combatant& d, bool* arced = nullptr) const;   // cover after the attacker's ways round it
+    bool exposed(const Combatant& a, const Combatant& d) const;
+    bool targetable(const Combatant& a, const Combatant& d) const;
+    bool marked(const Combatant& a, const Combatant& d) const;
+    SpellDef castSpell(const Character& c, const SpellDef& sp) const;   // (#66) the spell with the caster's rank upgrades
+    std::vector<std::pair<int, int>> spellTiles(int ci, const SpellDef& sp, int tx, int ty) const;
+    bool singleTargetSpell(const SpellDef& sp) const;
+    int  spellCoverPct(const Combatant& c, const Combatant& t, const SpellDef& sp) const;
+    std::vector<int> chainTargets(int ci, const SpellDef& sp, int first) const;
+    int  applyCombos(Combatant& t, int dmg, int dmgType, Combatant* attacker);
+    std::string comboPreview(const Combatant& t, int dmgType) const;
+    void damageTiles(const std::vector<std::pair<int, int>>& tiles, int dmg, int dmgType);
+    void changeCell(int x, int y, const std::string& kind);
+    void conductShock(int x, int y, int dmg, Combatant* src, const std::vector<int>& already);
+    void knockBack(int ci, int ti);
+    void windupStart(int ui, int ti);
+    bool windupResolve(int ui);
+    void leaderFell(const Combatant& leader);
+    void goalSetup(const EnemyGroup& g, int gi);
+    void goalCheck(bool roundStart);
+    void unitGone(Combatant& u, const std::string& why);
+    int  aiSmart() const { return clampi(difficulty, 0, 2); }
     // menus (menus.cpp)
     void updateMenu(InputState& in, float dt);
     void drawMenu(Canvas& cv, InputState& in);

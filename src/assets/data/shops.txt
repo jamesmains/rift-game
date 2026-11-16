@@ -127,6 +127,7 @@ item=medkit:4
 item=stimpak:2
 item=grenade:4
 item=emp_grenade:3
+item=smoke_bomb:3
 item=revolver
 item=smg
 item=shotgun
@@ -154,6 +155,7 @@ item=combat_armor
 item=mag_boots
 item=combat_helmet
 item=emp_grenade:3
+item=smoke_bomb:3
 item=elixir:1
 
 [shop]

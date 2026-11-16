@@ -236,7 +236,7 @@ flag=metro_chest_market
 [chest]
 x=16
 y=25
-items=draught_forgetting:1,power_core:1
+items=draught_forgetting:1,power_core:1,smokewalker_cloak:1
 gold=80
 flag=metro_chest_cache
 
@@ -274,3 +274,10 @@ w=2
 h=3
 script=log:Voices echo from the station ahead. Chanting.
 flag=metro_chant
+
+[sign]
+template=paper_sign
+x=2
+y=15
+title=Cult hymn sheet
+text='While the acolytes sing, the Hierophant cannot be harmed.' Underneath, in another hand: so stop them singing. They hate the light - keep a torch burning.

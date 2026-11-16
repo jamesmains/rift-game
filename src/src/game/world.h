@@ -19,6 +19,11 @@ struct TileKind {
     int moveCost = 1;
     int light = 0;               // light radius this tile gives off in dark maps (torches, braziers, crystals...)
     std::string step;            // 1.3.3: footstep sound event when the party walks onto it (empty = "step")
+    // 1.4.0 fights: breaks=KIND (cover that turns into KIND after breakhp= area damage, default 10), burns=1 (fire breaks
+    // it at once and sets it alight), conduct=1 (water: shock spreads to everyone standing in the same water), flammable=1
+    // (fire spells leave burning ground on it, and the fire spreads), snuff=KIND / kindle=KIND (a light source put out /
+    // lit in a fight turns into that kind)
+    std::string breaks, snuffTo, kindleTo; int breakHp = 0; bool burns = false, conduct = false, flammable = false;
     // 1.0.13 joined pieces (paths, rivers, shores, bridges, streets): the sheet draws these as sets of pieces that meet
     // their neighbours. edges= lists 16 ground tiles picked by which neighbours connect (mask N=1 E=2 S=4 W=8; an empty
     // entry keeps the random ground). join= names the groups this kind belongs to, link= the groups its own pieces
@@ -134,6 +139,8 @@ struct EnemyGroup {
     // tiles of its leash point (homeX/homeY); leash=0 = aggro + 5. temp = a random ambush made on the spot (it goes away
     // once it has lost the party). Not saved: a loaded game starts with nobody chasing.
     int leash = 0; bool chasing = false, temp = false;
+    // 1.4.0 (#78) goal= protect:CREATURE | reach:X,Y[,W,H] | hold:ROUNDS | close:CREATURE, goaltext=, ongoal= / ongoalfail= actions
+    std::string goal, goalText, onGoal, onGoalFail;
 };
 
 // 1.1.1: look and use keys every object type can take from its [type] entry in objects.txt (or its template, or set

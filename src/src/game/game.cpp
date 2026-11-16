@@ -209,6 +209,7 @@ void Game::applyMapFlags(Map& m) {
 
 void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     bool newPlace = id != mapId;
+    if (newPlace) revertFightChanges();   // 1.4.0 (#58): smashed furniture and snuffed braziers last for the visit
     Map* m = loadMap(id);
     map = m; mapId = id;
     for (auto& e : m->enemies) { e.chasing = false; if (e.temp) e.defeated = true; }   // 1.2.4 (#41): chases end when the party leaves
@@ -361,7 +362,7 @@ bool Game::visible(int x, int y) const {
     if (visMask.size() != (size_t)map->w * map->h) return false;
     return visMask[(size_t)y * map->w + x] != 0;
 }
-int Game::tileMoveCost(int x, int y) const { if (!map || !map->inBounds(x, y)) return 1; const auto& ks = allTileKinds(); unsigned k = map->at(x, y).kind; return k < ks.size() ? std::max(1, ks[k].moveCost) : 1; }
+int Game::tileMoveCost(int x, int y) const { if (!map || !map->inBounds(x, y)) return 1; const auto& ks = allTileKinds(); unsigned k = map->at(x, y).kind; int c = k < ks.size() ? std::max(1, ks[k].moveCost) : 1; if (inCombat() && groundAt(x, y, 2)) c++; return c; }   // 1.4.0: ice in a fight
 bool Game::inCombat() const { if (mode == GMode::COMBAT) return true; for (auto m : modeStack) if (m == GMode::COMBAT) return true; return false; }
 // Each party member glows a little on dark maps (map light= is the bare lantern); a torch or the Light spell widens it.
 int Game::partyGlow() const {
@@ -390,7 +391,7 @@ void Game::computeLight() {
     for (int y = 0; y < map->h; y++) for (int x = 0; x < map->w; x++) { const Cell& c = map->at(x, y); if (c.kind < kinds.size() && kinds[c.kind].light > 0) spread(x, y, kinds[c.kind].light); }
     int g = partyGlow();
     if (inCombat()) {
-        for (auto& u : cb.units) if (u.ch.alive) { if (u.partyIndex >= 0) spread(u.x, u.y, g); if (u.ch.hasEffect("burn")) spread(u.x, u.y, 2); }
+        for (auto& u : cb.units) if (u.ch.alive) { if (u.partyIndex >= 0) spread(u.x, u.y, std::max(g, u.ch.fx("lightaura", *gd))); if (u.ch.hasEffect("burn")) spread(u.x, u.y, 2); }   // 1.4.0 (#71): a cleric's light aura
         for (auto& l : cb.lights) spread(l.x, l.y, l.r);
     } else spread(px, py, g);
 }
@@ -629,7 +630,8 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     if (outdoors() && --weatherSteps <= 0) rerollWeather();
     banterTrigger("idle");
     camFree = false;
-    if (lightSteps > 0) lightSteps--; if (stealthSteps > 0) stealthSteps--; if (detectSteps > 0) detectSteps--;
+    if (lightSteps > 0) { lightSteps--; if (map->dark && lightSteps == 30) log("Your light is guttering - light another torch soon."); else if (map->dark && lightSteps == 0) { log("Your light burns out. The dark closes in."); notify("Light out"); } }   // 1.4.0 (#79)
+    if (stealthSteps > 0) stealthSteps--; if (detectSteps > 0) detectSteps--;
     touchChase();   // 1.2.4 (#41) touch=1: groups chasing the party take their step with it
     onStep();
 }
@@ -677,6 +679,9 @@ void Game::onStep() {
                 if (groupHasBoss(e2) && dp > 3 && !(!e.link.empty() && e2.link == e.link)) joins = false;   // bosses stay in their lair
                 if (joins) combatExtraGroups.push_back((int)j);
             }
+            // 1.4.0 (#80): a group that hadn't noticed the party (stealth, or a touch map's group that wasn't chasing) is surprised
+            nextSurprise = (stealthSteps > 0 || (map->touchCombat && !e.chasing)) ? 1 : 0;
+            if (!nextSurprise && map->dark && !evalCond("lit") && !lit(e.x, e.y)) for (auto& cid : e.creatures) if (const CreatureDef* cd = gd->creature(cid)) if (cd->darkvision) nextSurprise = -1;   // (#79) no light: they see you first
             startCombat(e.creatures, e.x, e.y, e.levelBonus, {(int)i}, e.onDefeatScript);
             return;
         }
@@ -858,6 +863,7 @@ void Game::interactAt(int x, int y) {
     if (GatherNode* g = map->gatherAt(x, y)) { gatherFrom(*g); return; }
     if (EnemyGroup* e = map->enemyAt(x, y)) {
         size_t idx = e - &map->enemies[0];
+        nextSurprise = e->chasing ? 0 : 1;   // 1.4.0 (#80): you got next to them unseen - you strike first
         startCombat(e->creatures, e->x, e->y, e->levelBonus, {(int)idx}, e->onDefeatScript); return;
     }
     if (SavePoint* sp = map->saveAt(x, y)) if (x == px && y == py) { if (!sp->sound.empty()) gAudio.play(sp->sound); if (!sp->onUse.empty()) runScript(sp->onUse); openSaveLoad(true); return; }
@@ -1369,7 +1375,7 @@ bool Game::castUtility(int mi, const std::string& spellId, int target) {
     int power = caster.stat(s->scaleStat, *gd);
     Character& t = party.members[clampi(target, 0, (int)party.members.size() - 1)];
     bool did = false;
-    if (s->utility == "light") { lightSteps = 120 + power * 6; log("A soft light surrounds the party."); did = true; }
+    if (s->utility == "light") { lightSteps = std::min(600, lightSteps + 120 + power * 6); lightPower = std::max(lightPower, 6); log(fmt("A soft light surrounds the party (%d steps of light).", lightSteps)); did = true; }   // 1.4.0 (#79): adds to a burning torch
     else if (s->utility == "stealth") { stealthSteps = 80 + power * 4; log("The party moves unseen. Monsters will keep their distance for a while."); did = true; }
     else if (s->utility == "detect") { detectSteps = 60 + power * 3; int n = 0; for (auto& c : map->chests) if (!c.opened) n++; log(fmt("You sense %d unopened treasure%s on this map. Chests now glow through the dark.", n, n == 1 ? "" : "s")); did = true; }
     else if (s->utility == "unlock") {
@@ -1945,6 +1951,12 @@ bool Game::deserialize(const std::string& text) {
             m.rankPoints = sec.geti("rankpoints", 0); m.startClass = sec.get("startclass", m.classId);
             m.hp = std::min(sec.geti("hp", 1), m.maxHP(*gd)); m.mp = std::min(sec.geti("mp", 0), m.maxMP(*gd));
             if (m.alive && m.hp <= 0) m.hp = 1;
+            // 1.4.0 (#66 #70): spells that moved to earlier ranks, and the new class abilities, come at once for ranks already held
+            for (auto& r : m.ranks) if (const ClassDef* cd = gd->cls(r.first)) {
+                auto give = [&](const std::string& id) { if (gd->spell(id) && std::find(m.spells.begin(), m.spells.end(), id) == m.spells.end()) m.spells.push_back(id); };
+                if (r.second >= 1) for (auto& s0 : cd->startSpells) give(s0);
+                for (auto& sl : cd->spellLevels) if (sl.first <= r.second) give(sl.second);
+            }
             party.members.push_back(m);
         } else if (sec.name == "extra") { lastTownMap = sec.get("town"); lastTownX = sec.geti("townx", 0); lastTownY = sec.geti("towny", 0); clockMin = sec.geti("clock", 8 * 60); day = sec.geti("day", 1); weather = sec.get("weather", "clear"); weatherSteps = sec.geti("weathersteps", 0); extra.clear(); for (auto& kv : sec.kv) if (kv.first != "town" && kv.first != "townx" && kv.first != "towny" && kv.first != "clock" && kv.first != "day" && kv.first != "weather" && kv.first != "weathersteps" && kv.first != "leader" && kv.first != "stats" && kv.first != "bestiary" && kv.first != "approval" && kv.first != "reputation") extra[kv.first] = kv.second;
             leader = sec.geti("leader", 0); stats = GameStats(); { auto st = split(sec.get("stats"), ','); int* f[] = {&stats.kills, &stats.fightsWon, &stats.fightsFled, &stats.goldEarned, &stats.goldSpent, &stats.chests, &stats.crits, &stats.damageDealt, &stats.damageTaken, &stats.spellsCast, &stats.crafted, &stats.bounties, &stats.travels, &stats.knockouts}; for (size_t i = 0; i < st.size() && i < 14; i++) *f[i] = atoi(st[i].c_str()); }

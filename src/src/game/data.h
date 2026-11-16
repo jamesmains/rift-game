@@ -47,6 +47,10 @@ struct ItemDef {
     std::string category;        // inventory / shop category (empty = by type)
     bool unique = false;         // unique=1 (1.1.3): hand-made one-off - never rolls or takes affixes (loot, crafting quality, enchanting)
     bool recolor = false; Color8 color = C::White;   // color=r,g,b (1.1.8): the sprite drawn as a white shape in this colour; none = the sheet's own colour
+    // 1.4.0 (#67/#68): trait= weapon family trait (reach cleave backstab crush arc steady quick spread) and fx= effects
+    // (key:value list, also filled by affix mods; see fxText / Character::fx): ignorehalfcover flankcrit noowpenalty ...
+    std::string trait;
+    std::map<std::string, int> fx;
     bool stackable() const { return type == IT_CONSUMABLE || type == IT_MATERIAL || type == IT_AMMO || type == IT_KEY; }
     int slot() const {
         switch (type) { case IT_WEAPON: return SL_WEAPON; case IT_OFFHAND: return SL_OFFHAND; case IT_HELM: return SL_HEAD;
@@ -72,7 +76,26 @@ struct SpellDef {
     int utilityPower = 0;
     std::string sound;            // sfx event (empty = by damage type)
     bool friendlyFire = true;     // area damage also hits the caster and allies standing in the blast (ff=0 for weapon skills like Cleave)
+    // 1.4.0: shape= ball (default: area radius) | line (caster through the target, range long) | cone (widens with distance);
+    // chain=jumps:range:falloff% (hits the target, then jumps to the nearest unit not yet hit); knockback=1 shoves the target
+    // one tile away; smoke=N rounds of smoke over the area; ground=fire|ice leaves burning ground / ice on every tile it covers
+    std::string shape;
+    int chainJumps = 0, chainRange = 3, chainFalloff = 25;
+    int knockback = 0, smoke = 0;
+    std::string ground;
+    // 1.4.0 (#66) upgrade=RANK:key=value,key=value:text - from that rank in the spell's class (cls) the spell changes
+    struct Upgrade { int rank = 0; std::vector<std::pair<std::string, std::string>> kv; std::string text; };
+    std::vector<Upgrade> upgrades;
+    std::string cls;              // the class whose learn= / spells= teaches it (worked out after loading)
 };
+// applies one spells.txt key to a spell (used for loading and for upgrade= at cast time); false = unknown key
+bool applySpellKey(SpellDef& d, const std::string& k, const std::string& v);
+// "key:value,key:value" (or ;) into a map, adding to what is there
+void parseFx(const std::string& s, std::map<std::string, int>& out);
+std::string fxText(const std::map<std::string, int>& fx);
+// plain words for an fx key / a weapon trait (item details, level-up screen, Editor)
+std::string fxDescribe(const std::string& key, int v);
+std::string traitDescribe(const std::string& trait);
 
 struct CreatureDef {
     std::string id, name;
@@ -91,6 +114,12 @@ struct CreatureDef {
     std::string sound;   // death sfx event (empty = death_enemy)
     std::string attackSound; // attack sfx event (empty = by weapon type)
     std::string music;       // 1.3.2: fight music while it is in the fight (bosses: empty = the "boss" track)
+    // 1.4.0: role= guard (adjacent allies count as in half cover) | sniper (holds overwatch on a lane) | support (buffs
+    // allies) | leader (the rest of its group breaks and flees when it dies); windup=spell (bosses: announced a turn ahead,
+    // lands on the marked tiles); snuff=1 puts out braziers in a fight; ward=creature: takes half damage while one lives
+    std::string role, windup, ward;
+    bool snuff = false;
+    std::map<std::string, int> fx;
 };
 
 struct ClassDef {
@@ -102,6 +131,10 @@ struct ClassDef {
     std::vector<std::pair<int, std::string>> spellLevels; // class rank -> spell id learned
     int hitDie = 6, mpDie = 2;   // max HP / MP gained per rank in this class
     std::string role;            // one-line summary shown when choosing a class rank
+    // 1.4.0 (#71): passive= (rank 1) and perk4= / perk8= / perk12= ... "Name|fx|Description"; fx = key:value;key:value
+    // (spell:id teaches a spell). Character::fx adds them up for the ranks a character has in the class.
+    struct Perk { int rank = 1; std::string name, desc, spell; std::map<std::string, int> fx; };
+    std::vector<Perk> perks;
 };
 
 // the category an item is filed under in the inventory and shop windows

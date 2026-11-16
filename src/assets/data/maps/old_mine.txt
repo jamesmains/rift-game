@@ -255,3 +255,10 @@ node=mithril_ore
 x=31
 y=17
 node=mithril_ore
+
+[sign]
+template=paper_sign
+x=13
+y=21
+title=Miner's last words
+text=The great wurm breathes on half the cavern - the floor glows red a breath before. Get out from under it. Its servants run when you cut down whoever leads them.

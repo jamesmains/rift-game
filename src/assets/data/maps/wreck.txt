@@ -132,6 +132,9 @@ y=12
 group=scrap_drone,scrap_drone,security_bot
 aggro=5
 flag=wr_guard1
+goal=reach:25,13,3,1
+goaltext=Get someone to the reactor (the row in front of it) to cut the drones' power
+ongoal=flag:wr_reactor_cut;notify:The reactor feed is cut. The drones drop where they hover.
 
 [enemy]
 x=18

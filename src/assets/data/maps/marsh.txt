@@ -213,7 +213,7 @@ text=The old sluice gate groans open. Black water drains away through a grate - 
 [chest]
 x=32
 y=34
-items=hydra_scale:1,potion_purple:1,herb_moon:4
+items=hydra_scale:1,potion_purple:1,herb_moon:4,gullwing:1
 gold=80
 flag=marsh_sunken_chest
 
@@ -261,3 +261,10 @@ node=bloodroot
 x=33
 y=8
 node=bloodroot
+
+[sign]
+template=paper_sign
+x=12
+y=5
+title=Fisherman's warning
+text=The hydra never leaves the water. Neither does lightning - one bolt in the mire runs through everything standing in it.

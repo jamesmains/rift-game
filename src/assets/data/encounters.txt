@@ -18,7 +18,7 @@ group=wolf,wolf
 group=wolf,wolf,wolf
 group=spider,spider
 group=goblin,goblin,goblin_archer
-group=bandit,bandit_archer
+group=bandit_shieldbearer,bandit_archer
 group=boar,boar
 group=bear
 
@@ -26,7 +26,7 @@ group=bear
 id=hills
 level=4
 group=ogre
-group=bandit,bandit,bandit_archer
+group=bandit_sergeant,bandit_shieldbearer,bandit_archer
 group=bear,wolf
 group=troll
 group=goblin_shaman,goblin,goblin,goblin
