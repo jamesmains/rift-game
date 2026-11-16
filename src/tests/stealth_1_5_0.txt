@@ -1,0 +1,128 @@
+# 1.5.0 (#99): stealth and avoidance. A thrown noisemaker (effect=lure) pulls nearby groups to where it lands; while
+# they look they only notice a party right beside them; they walk home once the noise is old. Traps ([trap]) hurt or
+# finish a group that walks onto them while it is busy (noise, chase, way home) - the crypt's cracked ceiling, the
+# bandits' bear trap - and hurt the party that steps on one. In the dark, an unlit party is noticed at half the distance
+# by what can't see in the dark. Commands: throwat X Y ITEM, aimthrow ITEM, groupmove I X Y; console light N.
+# Expect keys: group:I ("x,y" + ,gone ,dN ,r ,hN), trap:X,Y (armed|sprung|none), aim, aggro:I.
+newgame Kai warrior 1 20261116
+god
+frames 30
+# ---- the crypt (its dead see in the dark: light makes no difference to them) ----
+teleport crypt 20 21
+frames 130
+expect mode == EXPLORE
+con light 0
+expect aggro:4 == 5
+# face down the passage: one step to 20,22
+key DOWN
+frames 15
+expect y == 22
+# ---- aiming a bottle: the cursor starts in front, arrows move it, Esc keeps the bottle ----
+give clatter_bottle 3
+aimthrow clatter_bottle
+expect aim != none
+key ESC
+frames 5
+expect aim == none
+expect item:clatter_bottle == 3
+expect mode == EXPLORE
+# ---- lure the skeletons of the south room (group 1 at 20,31) up the passage under the cracked ceiling ----
+expect trap:20,25 == armed
+aimthrow clatter_bottle
+expect aim == 20,26
+key UP
+frames 3
+key UP
+frames 3
+expect aim == 20,24
+key ENTER
+frames 5
+expect aim == none
+expect item:clatter_bottle == 2
+expect group:1 contains d16
+expect mode == EXPLORE
+frames 600
+expect group:1 contains gone
+expect trap:20,25 == sprung
+expect flag:crypt_deadfall == 1
+expect flag:crypt_grp_5 == 1
+expect mode == EXPLORE
+# ---- a noise wears off with the party's steps; the group then walks home ----
+throwat 22 22 clatter_bottle
+expect item:clatter_bottle == 1
+# ---- the bandit camp: the party steps on the bear trap itself ----
+teleport bandit_camp 28 24
+frames 130
+expect trap:28,23 == armed
+con light 0
+key UP
+frames 20
+expect trap:28,23 == sprung
+expect log contains bear trap
+expect hp < 9999
+# it is set again on the next visit
+teleport hollowmere 20 20
+frames 60
+teleport bandit_camp 24 28
+frames 130
+expect trap:28,23 == armed
+# ---- darkness: bandits don't see in the dark - unlit, the sergeant's group (1, aggro 5) notices the party at 2 ----
+expect aggro:1 == 2
+con light 200
+expect aggro:1 == 5
+con light 0
+# ---- a bottle thrown into the entrance yard: the sergeant's group (1, at 33,18) comes down the passage and over the trap
+throwat 28 25 clatter_bottle
+expect group:1 contains ,d
+frames 600
+expect trap:28,23 == sprung
+expect group:1 contains h60
+expect group:1 lacks gone
+expect mode == EXPLORE
+# while it stands at the noise it barely notices the party
+expect aggro:1 == 1
+# walking off: the noise wears off (16 steps) and the group goes home
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+key RIGHT
+frames 12
+key LEFT
+frames 12
+expect group:1 lacks ,d
+# ---- the fight starts with it hurt: the sergeant (unit 1) has 40% of its HP ----
+expect x == 23
+groupmove 1 22 28
+key LEFT
+frames 10
+expect mode == COMBAT
+expect cb:hp:1 <= 20
+expect cb:hp:1 >= 1
+log

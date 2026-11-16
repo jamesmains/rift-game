@@ -352,4 +352,4 @@ template=paper_sign
 x=14
 y=21
 title=Grave-robber's note
-text=The bony ones don't see in the dark - they listen. Put your torch out and they'll let you walk past at a few paces, as long as you don't bump into them. The necromancers and their master see fine in the dark: light or no light, they know you're there. Smash a bottle down a passage and the dead shamble off to look.
+text=The dead down here see in the dark better than you see at noon - putting your torch out only blinds you. But they're dull things: smash a bottle down a passage and they shamble off to look, and they don't watch their feet. Mind the cracked ceiling in the south passage. Or don't, and let them walk under it.

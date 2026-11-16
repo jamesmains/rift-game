@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
             if (cmd == "cb") { std::string r = app.game.combatDo(p); printf("  cb %s\n", r.c_str()); step(1); return true; }   // 1.4.0: combat test hooks (combat.cpp combatDo)
             // 1.5.0 (#99): throwat X Y ITEM - throw a noisemaker there at once (no aiming); groupmove I X Y - put map group I there
             if (cmd == "throwat" && p.size() >= 4) { Game& g = app.game; g.throwItem = p[3]; bool ok = g.throwTargetOk(atoi(p[1].c_str()), atoi(p[2].c_str())); if (ok) g.throwLure(p[3], atoi(p[1].c_str()), atoi(p[2].c_str())); else g.throwItem.clear(); printf("  throwat ok=%d\n", ok ? 1 : 0); step(1); return true; }
+            if (cmd == "aimthrow" && p.size() >= 2) { app.game.startThrowAim(p[1]); step(2); return true; }   // start aiming as the Items menu / hotbar would
             if (cmd == "groupmove" && p.size() >= 4) { Game& g = app.game; int i = atoi(p[1].c_str()); if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { g.map->enemies[i].x = atoi(p[2].c_str()); g.map->enemies[i].y = atoi(p[3].c_str()); } step(1); return true; }
             if (cmd == "drop") { std::string path; for (size_t i = 1; i < p.size(); i++) path += (i > 1 ? " " : "") + p[i]; in.dropped = {path}; step(1); in.dropped.clear(); step(2); return true; }   // 1.2.0: a file dropped on the window
 #ifndef TRIFFALL_NO_EDITOR

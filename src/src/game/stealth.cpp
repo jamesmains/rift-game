@@ -132,13 +132,13 @@ bool Game::groupOnTrap(EnemyGroup& e) {
         e.defeated = true; e.distractSteps = 0; e.chasing = false;
         if (!e.flag.empty()) setFlag(e.flag);
         int xp = 0; for (auto& c : e.creatures) if (const CreatureDef* cd = gd->creature(c)) xp += cd->xp / 2;
-        log(seen ? who + (e.creatures.size() > 1 ? " go" : " goes") + " into the " + toLower(t->name) + " and " + (e.creatures.size() > 1 ? "don't" : "doesn't") + " come out." : "From somewhere out of sight: a crash, a scream, then nothing.");
+        log(seen ? who + (e.creatures.size() > 1 ? " are" : " is") + " caught by the " + toLower(t->name) + " and " + (e.creatures.size() > 1 ? "don't" : "doesn't") + " get up." : "From somewhere out of sight: a crash, a scream, then nothing.");
         if (xp > 0) giveXP(xp);
         addFloat(e.x, e.y, "trapped!", C::Yellow);
         if (!e.onDefeatScript.empty()) runScript(e.onDefeatScript);
     } else {
         e.hurt = std::min(90, e.hurt + hurt);
-        if (seen) log(who + " blunder" + (e.creatures.size() > 1 ? "" : "s") + " into the " + toLower(t->name) + fmt(" (-%d%% HP for the fight).", hurt));
+        if (seen) log(who + (e.creatures.size() > 1 ? " are" : " is") + " caught by the " + toLower(t->name) + fmt(" (-%d%% HP for the fight).", hurt));
         addFloat(e.x, e.y, fmt("-%d%%", hurt), C::Orange);
     }
     return true;
