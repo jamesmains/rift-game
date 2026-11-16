@@ -128,7 +128,7 @@ bool Game::groupOnTrap(EnemyGroup& e) {
     int hurt = t->hurt; bool boss = groupHasBoss(e); if (boss) hurt = std::min(hurt, 50);   // a boss is hurt, never killed, by a trap
     springTrap(*t);
     if (!t->text.empty() && seen) log(t->text);
-    if (hurt >= 100 || e.hurt + hurt >= 100) {
+    if (!boss && (hurt >= 100 || e.hurt + hurt >= 100)) {
         e.defeated = true; e.distractSteps = 0; e.chasing = false;
         if (!e.flag.empty()) setFlag(e.flag);
         int xp = 0; for (auto& c : e.creatures) if (const CreatureDef* cd = gd->creature(c)) xp += cd->xp / 2;
@@ -137,7 +137,7 @@ bool Game::groupOnTrap(EnemyGroup& e) {
         addFloat(e.x, e.y, "trapped!", C::Yellow);
         if (!e.onDefeatScript.empty()) runScript(e.onDefeatScript);
     } else {
-        e.hurt = std::min(90, e.hurt + hurt);
+        e.hurt = std::min(boss ? 50 : 90, e.hurt + hurt);
         if (seen) log(who + (e.creatures.size() > 1 ? " are" : " is") + " caught by the " + toLower(t->name) + fmt(" (-%d%% HP for the fight).", hurt));
         addFloat(e.x, e.y, fmt("-%d%%", hurt), C::Orange);
     }
