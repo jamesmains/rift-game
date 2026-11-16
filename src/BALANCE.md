@@ -1,5 +1,50 @@
 # Balance notes
 
+## 1.5.0: hard on purpose (one difficulty, #83-#102)
+
+Same method as before, now `tools\pacing.ps1` (a PowerShell twin of `tools/pacing.sh`): warrior, seeds 1-3, with and
+without god mode, on the 1.5.0 build - the old Hard numbers built into every monster, the new hit chance (about 70% in
+the open, ~45% into half cover, ~30% into full cover) and crits (capped at 35%, x1.5), resistance tiers (resists /
+immune / weak, weapon-trait keys), class gear drawbacks, Wounded, scarcer potions, dearer inns and healers, and
+about a third less gold from monsters and loot.
+
+| Checkpoint | Hero level | Gold carried | Kills | Bot time (seeds 1-3) |
+|---|---|---|---|---|
+| Goblin chief dead | 2-3 | 75-100 | 16-22 | 3.5-4 min |
+| Brasswick | 3 | 170-180 | 26-30 | 6-6.5 min |
+| After Pell's caravan | 4 | 210-215 | 36-43 | 10.5-11 min |
+| Lich dead | 5 | 330-345 | 56-68 | 18-26 min |
+| Golem dead | 6 | 300-325 | 73-87 | 26-31.5 min |
+| Hierophant dead | 7 | 275-315 | 104-127 | 32.5-39.5 min |
+| Hull Walker dead | 8 | 275-315 | 119-139 | 38.5-46 min |
+| Entering the Scar | 8 | 310-340 | 122-143 | 41-48 min |
+| After the Unmade King | 9 | 580-600 | 137-158 | 54-61 min |
+
+- **Gold:** the bot ends with about 600 gold (1.4.0: 1,600-1,790) and carries only ~300 through the middle of the game,
+  while good gear costs 600-4,500. It doesn't even use the new sinks (paid civic projects, treating the Wounded,
+  dearer healers), and it ignores shop stock limits, so a person will be shorter still. Gold now buys choices.
+- **Levels and time:** the same level curve as 1.4.0 (9 at the end), 5-10 minutes longer: fights take more turns.
+- **Survival runs (no god mode):** seeds 1 and 3 are wiped in Greywood Cave by the goblin chief's hall, seed 2 by the
+  Lich's crypt (1.4.0: all three by the Lich). The closest run had the chief down to 52 HP with one spider left. The bot
+  plays no tricks: it doesn't use cover on purpose, throw the rattle stones from the cave's first chest, burn the
+  spiders or split the hall. A careful player who does should get through; one who walks in swinging should not - that
+  is the point (#82: basic mobs can wipe an unprepared party).
+- **What a careful human should expect:** the first wipe in Greywood Cave or at the bandit camp; spirits (marsh, metro,
+  the barrow) that are hopeless without magic or Blessed Oil; machines that are a slog without shock; and reloads that
+  cost minutes (every dungeon autosaves on arrival, every boss has a shrine nearby, and Field Notes keep what was learned).
+- **Changed during the runs:** the goblin chief's hall no longer pulls the whole cave into one fight (only the archer
+  group is linked; the bat-and-rat group and the chief's rat are gone); the auto party (bot / `auto`) oils its weapon
+  against foes that resist it, steps away and flees from foes it can't hurt; a fight with nobody able to land a blow for
+  six rounds breaks off; a linked boss dying in someone else's fight now runs its own `ondefeat=`; free swings skip
+  immune foes (a warrior used to pin a spirit in place forever).
+- **Knobs if testers bounce off:** creature `res=` tiers (one family at a time), `CRIT_CAP` and the cover penalties in
+  `Game::hitChance` (combat.cpp), the base 72 in hitChance, monster `gold=`, `itemSellPrice` (14 + CHA), shop stock
+  (`item=id:N`), inn `gold=-N` in the innkeepers' dialogue, `healerCost`, Wounded (-15% HP / -5 hit per wound), the
+  goblin hall's groups.
+- Bot limits seen: a lab doorway blocked by a barrel strands melee fighters (main_quest clears the lab's side groups);
+  the bot buys no armour or weapons.
+
+
 ## 1.4.0 re-run (after the combat changes of #55-#72, #78-#80)
 
 Same method as 1.0 below: `tools/pacing.sh warrior 1 1 2 3` (run here through a PowerShell copy of it), Normal, three

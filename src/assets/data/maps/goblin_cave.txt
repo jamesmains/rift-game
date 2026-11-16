@@ -110,7 +110,7 @@ aggro=5
 flag=goblin_cave_grp_12
 
 [enemy]
-group=goblin_chief,goblin,rat
+group=goblin_chief,goblin
 x=36
 y=16
 aggro=6
