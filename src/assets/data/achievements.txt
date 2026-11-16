@@ -147,6 +147,7 @@ tile=109,0
 
 [achievement]
 id=open_sky
+hidden=1
 name=Closed Sky
 desc=Break the cult of the Open Sky beneath Ashfall.
 cond=flag:hierophant_dead
@@ -154,6 +155,7 @@ tile=109,17
 
 [achievement]
 id=demolition
+hidden=1
 name=Fire in the Hole
 desc=Blow open the old metro stairs in Ashfall.
 cond=flag:metro_open
@@ -161,6 +163,7 @@ tile=0,42
 
 [achievement]
 id=warden
+hidden=1
 name=Warden's Light
 desc=Return the Warden's medal to Old Hesk.
 cond=flag:q_barrow>=2
@@ -168,6 +171,7 @@ tile=26,22
 
 [achievement]
 id=oathkeeper
+hidden=1
 name=Oath Kept
 desc=Bring Sir Vael's sword back into the light.
 cond=flag:q_vael>=2

@@ -1459,6 +1459,44 @@ range=5
 value=18
 desc=Throw it (3 AP) to light a wide area for six rounds. Anything hiding in the dark there is revealed and easier to hit.
 
+# 1.5.0 (#99) noisemakers: effect=lure[:STEPS[:RADIUS]] - thrown on the map (not in a fight). Groups within RADIUS of
+# where it lands go and look for STEPS of your steps, barely noticing you meanwhile, then walk home. Bosses ignore them.
+[item]
+id=rattle_stones
+category=Tools
+name=Rattle Stones
+type=consumable
+tile=14,5
+color=170,160,145
+effect=lure:12:6
+range=6
+value=6
+desc=A pouch of river pebbles. Throw them (from the Items menu or the hotbar) to clatter somewhere you can see: monsters nearby go to look, and you slip past - or lead them onto something sharp.
+
+[item]
+id=clatter_bottle
+category=Tools
+name=Clatter Bottle
+type=consumable
+tile=30,4
+color=150,200,170
+effect=lure:16:8
+range=7
+value=4
+desc=An empty bottle with a few nails inside. Smashes loud enough to turn heads two rooms away. Throw it where you want them to look.
+
+[item]
+id=clockwork_rattler
+category=Tools
+name=Clockwork Rattler
+type=consumable
+tile=59,19
+color=220,180,90
+effect=lure:30:10
+range=8
+value=35
+desc=A Brasswick wind-up toy that clicks and whirs for a long time after it lands. Machines and monsters alike go to see what it is - for a good while.
+
 [item]
 id=oil_fire
 name=Fire Oil
@@ -2098,7 +2136,7 @@ name=Copper Still Coil
 type=key
 tile=57,9
 value=0
-desc=A coil of copper pipe, lovingly polished. It smells strongly of whatever Rusty makes.
+desc=A coil of copper pipe, lovingly polished. It smells strongly of home-made spirits. Somebody in Ashfall will be missing it.
 
 [item]
 id=firewater
@@ -2189,7 +2227,7 @@ name=Mithril Ore
 type=material
 tile=57,12
 value=50
-desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Rimehollow and Ashwing's Mine. Smelting it takes Smithing 4 and Gorran's know-how.
+desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Rimehollow and Ashwing's Mine. Smelting it takes Smithing 4 and a master smith's know-how.
 
 [item]
 id=mithril_ingot
@@ -2270,7 +2308,7 @@ category=Formulas
 name=Gorran's Notes: Mithril
 type=consumable
 tile=26,14
-effect=learn:smelt_mithril,mithril_sword,mithril_spear,mithril_helm,mithril_shield,mithril_mail,master_hilt
+effect=learn:smelt_mithril,mithril_sword,mithril_spear,mithril_helm,mithril_shield,mithril_mail
 value=500
 desc=Read it (Use) to learn to smelt mithril and forge mithril swords, spears, helms, shields and mail (Smithing 4).
 

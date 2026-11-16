@@ -35,6 +35,10 @@ int main(int argc, char** argv) {
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
             if (cmd == "unitkill") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].ch.hp = 0; u[i].ch.alive = false; app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitkill <unit> (no end-of-fight check)
             if (cmd == "cb") { std::string r = app.game.combatDo(p); printf("  cb %s\n", r.c_str()); step(1); return true; }   // 1.4.0: combat test hooks (combat.cpp combatDo)
+            // 1.5.0 (#99): throwat X Y ITEM - throw a noisemaker there at once (no aiming); groupmove I X Y - put map group I there
+            if (cmd == "throwat" && p.size() >= 4) { Game& g = app.game; g.throwItem = p[3]; bool ok = g.throwTargetOk(atoi(p[1].c_str()), atoi(p[2].c_str())); if (ok) g.throwLure(p[3], atoi(p[1].c_str()), atoi(p[2].c_str())); else g.throwItem.clear(); printf("  throwat ok=%d\n", ok ? 1 : 0); step(1); return true; }
+            if (cmd == "aimthrow" && p.size() >= 2) { app.game.startThrowAim(p[1]); step(2); return true; }   // start aiming as the Items menu / hotbar would
+            if (cmd == "groupmove" && p.size() >= 4) { Game& g = app.game; int i = atoi(p[1].c_str()); if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { g.map->enemies[i].x = atoi(p[2].c_str()); g.map->enemies[i].y = atoi(p[3].c_str()); } step(1); return true; }
             if (cmd == "drop") { std::string path; for (size_t i = 1; i < p.size(); i++) path += (i > 1 ? " " : "") + p[i]; in.dropped = {path}; step(1); in.dropped.clear(); step(2); return true; }   // 1.2.0: a file dropped on the window
 #ifndef TRIFFALL_NO_EDITOR
             if (cmd == "sheetimport") {   // sheetimport <png> <name> <tw> <th> <ox> <oy> <gx> <gy> [black|alpha|r,g,b]
@@ -196,6 +200,35 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "lorefile:")) { got = g.foundFiles.count(key.substr(9)) ? "1" : "0"; return true; }
                 if (key == "inputtext") { got = g.inputBuf; num = false; return true; }
                 if (key == "deskfiles") { got.clear(); for (auto& f : app.desktop.loreFiles()) got += (got.empty() ? "" : ",") + f; num = false; return true; }   // My Computer's list
+                // 1.5.0: recipe:ID = 1 if the crafting lists show it (#86); fieldnote:ID = "res bits;tags" from fieldnotes.ini,
+                // fieldknown:ID = the resistance bits the tooltip shows, deskfieldnotes = the desktop's Field Notes.txt (#96)
+                if (startsWith(key, "recipe:")) { got = "0"; for (auto& r : g.recipes) if (r.id == key.substr(7) && g.recipeVisible(r)) got = "1"; return true; }
+                if (startsWith(key, "fieldnote:")) { auto it = g.fieldNotes.find(key.substr(10)); got = "none"; if (it != g.fieldNotes.end()) { got = std::to_string(it->second.res) + ";"; for (auto& t : it->second.tags) got += t + ","; } num = false; return true; }
+                if (startsWith(key, "fieldknown:")) { got = std::to_string(g.knownResBits(key.substr(11))); return true; }
+                if (key == "deskfieldnotes") { got = g.fieldNotesText(); num = false; return true; }
+                if (key == "bestiaryids") { got.clear(); for (auto& b : g.bestiaryIds()) got += (got.empty() ? "" : ",") + b; if (got.empty()) got = "none"; num = false; return true; }   // the Journal's bestiary list
+                // 1.5.0 (#99): group:I = "x,y" + ",gone" / ",d<steps>" (at a noise) / ",r" (walking home) / ",h<hurt%>"; trap:X,Y = armed|sprung|none;
+                // aim = "x,y" of the throw cursor ("none" when not aiming); aggro:I = how near group I lets the party come
+                if (startsWith(key, "group:")) { int i = atoi(key.substr(6).c_str()); got = "none"; num = false; if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { auto& e = g.map->enemies[i]; got = fmt("%d,%d", e.x, e.y); if (e.defeated) got += ",gone"; if (e.distractSteps > 0) got += fmt(",d%d", e.distractSteps); if (e.returning) got += ",r"; if (e.hurt > 0) got += fmt(",h%d", e.hurt); } return true; }
+                if (startsWith(key, "trap:")) { auto q = split(key.substr(5), ','); got = "none"; num = false; if (g.map && q.size() > 1) if (Trap* t = g.map->trapAt(atoi(q[0].c_str()), atoi(q[1].c_str()), false)) got = t->sprung ? "sprung" : "armed"; return true; }
+                // 1.5.0 (#97): bossshrine = walking steps from the boss group on this map farthest from a save shrine to its nearest
+                // shrine (doors and obstacles count as passable; -1 = no shrine reachable, none = no boss); lastautosave = play
+                // second of the last autosave
+                auto shrineDist = [&](const EnemyGroup& e) -> int { Map& m = *g.map;
+                    std::vector<int> d((size_t)m.w * m.h, -1); std::vector<int> q; d[(size_t)e.y * m.w + e.x] = 0; q.push_back(e.y * m.w + e.x);
+                    for (size_t h = 0; h < q.size(); h++) { int cx = q[h] % m.w, cy = q[h] / m.w; if (m.saveAt(cx, cy)) return d[q[h]];
+                        static const int DX[4] = {1, -1, 0, 0}, DY[4] = {0, 0, 1, -1};
+                        for (int k = 0; k < 4; k++) { int nx = cx + DX[k], ny = cy + DY[k]; if (!m.inBounds(nx, ny) || d[(size_t)ny * m.w + nx] >= 0) continue;
+                            if (!m.walkable(nx, ny) && !m.doorAt(nx, ny) && !m.obstacleAt(nx, ny) && !m.saveAt(nx, ny)) continue;
+                            d[(size_t)ny * m.w + nx] = d[q[h]] + 1; q.push_back(ny * m.w + nx); } }
+                    return -1; };
+                if (key == "bossshrine") { got = "none"; num = false; if (g.map) { int worst = -2;
+                    for (auto& e : g.map->enemies) { if (e.defeated || !g.groupHasBoss(e)) continue; int best = shrineDist(e); worst = (best < 0 || worst == -1) ? -1 : std::max(worst, best); }
+                    if (worst > -2) { got = std::to_string(worst); num = true; } } return true; }
+                if (startsWith(key, "groupshrine:")) { int i = atoi(key.substr(12).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(shrineDist(g.map->enemies[i])) : "-1"; return true; }
+                if (key == "lastautosave") { got = std::to_string(g.lastAutosave); return true; }
+                if (key == "aim") { got = g.throwItem.empty() ? "none" : fmt("%d,%d", g.throwX, g.throwY); num = false; return true; }
+                if (startsWith(key, "aggro:")) { int i = atoi(key.substr(6).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(g.groupAggro(g.map->enemies[i])) : "-1"; return true; }
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
                 // 1.4.0: spells:<member> = the spells member n knows (comma list); answers = the talk box's answers as shown
                 // (only those whose conditions hold, with their [CHA 12] tags), joined by " | "

@@ -634,6 +634,7 @@ materials=steel_ingot:2,iron_ingot:1
 gold=20
 difficulty=3
 skill=3
+known=0
 
 [recipe]
 id=distilled_essence
@@ -643,6 +644,7 @@ materials=arcane_dust:2,herb_moon:2,ectoplasm:1
 gold=20
 difficulty=3
 skill=3
+known=0
 
 [recipe]
 id=calibrated_servo
@@ -652,6 +654,7 @@ materials=circuit:2,iron_ingot:1,scrap:2
 gold=20
 difficulty=3
 skill=3
+known=0
 
 [recipe]
 id=stoneskin_brew

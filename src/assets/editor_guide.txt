@@ -556,6 +556,19 @@ migrations.txt and old saves follow the rename when they load:
 An item id that no longer exists (and has no rename) is dropped with a line in
 the message log; the rest of the save loads normally.
 
+A recipe that a patch made known=0 (now taught by a dialogue's recipe=) would
+be lost to a save that is already past that dialogue. migrations.txt [learn]
+gives it to every loaded save where a condition holds:
+
+  [learn]
+  recipe=tempered_blank|q_smith>=1
+
+The autosave (Load Game > Autosave) is written whenever the party arrives on
+another map, at most once a minute - except that arriving in a map of kind
+dungeon or ruins always autosaves (1.5.0). Saving by hand is at save shrines
+(savepoint objects): put one a short walk before every boss and every
+deliberately deadly place, so losing a fight costs minutes, not half an hour.
+
 == editor.import | Import from another campaign
 see: concepts.campaigns, editor.search, editor.check
 
@@ -1087,7 +1100,7 @@ see: tab.maps, tab.objects, tab.resources, obj.npc, obj.enemy, obj.chest, obj.ex
 
 Everything that is not plain terrain is an object listed below the map rows:
 npc, enemy, chest, exit, trigger, sign, door, savepoint, obstacle, lever,
-change, gather, and (1.4.0) crate and plate (see obj.crate, obj.plate).
+change, gather, (1.4.0) crate and plate (see obj.crate, obj.plate) and (1.5.0) trap (obj.trap).
 
 - 1. Choose the Objects tool and click the object type under "place:".
 - 2. Click an empty cell: the object is created there with a template of its usual keys.
@@ -1297,7 +1310,7 @@ free tile within 6 - Check warns about it. Put the spawn next to the main
 entrance so a party arriving there can find the way out.
 
 == map.dark | Dark map
-see: map.light, item.light, tilekind.name, spell.utility
+see: map.light, item.light, tilekind.name, spell.utility, concepts.stealth
 
 dark=1 turns on darkness: the party only sees what light reaches. Each member
 glows with the map's light radius; torches, lanterns, the Light spell and
@@ -1796,7 +1809,7 @@ Check warns when an NPC stands on a blocked tile.
 Together with x it places the NPC; moveif= can move it elsewhere later.
 
 == obj.enemy | Enemy group object
-see: obj.enemy.group, obj.enemy.aggro, obj.enemy.flag, obj.enemy.level, obj.enemy.ondefeat, obj.enemy.link, obj.enemy.leash, map.touch, concepts.encounters
+see: obj.enemy.group, obj.enemy.aggro, obj.enemy.flag, obj.enemy.level, obj.enemy.ondefeat, obj.enemy.link, obj.enemy.leash, map.touch, concepts.encounters, concepts.stealth
 
 A group of monsters placed on the map. They roam within about 4 tiles of their
 spot and close in when they see the party. When the party comes within aggro
@@ -3616,7 +3629,7 @@ Format: whole number. Default: 0.
 Mana is capped at the user's maximum MP. Combine with heal= for an elixir that restores both.
 
 == item.effect | Item use effect
-see: item.type, item.heal, item.spell, obj.obstacle.needs, recipe.known
+see: item.type, item.heal, item.spell, obj.obstacle.needs, recipe.known, concepts.stealth
 
 What a consumable does when used (besides heal/mana):
 
@@ -3630,12 +3643,14 @@ What a consumable does when used (besides heal/mana):
 - respec: Draught of Forgetting - re-pick a member's class ranks.
 - learn:recipe,recipe: a formula that teaches recipes (used up).
 - revealmap:MAP: a map item - using it reveals that whole map on the world map (used up). revealmap:MAP,x,y,radius reveals only a circle. Not usable in combat.
+- lure or lure:STEPS:RADIUS (1.5.0): a noisemaker. The Items menu (Throw...) or the hotbar lets you aim it on the map (arrows or mouse, range = the item's range=, default 6) at a spot you can see; enemy groups within RADIUS (default 7) of where it lands go there and look for STEPS of your steps (default 12), barely noticing you, then walk home. Bosses ignore it; not usable in a fight. See concepts.stealth.
 
 Format: one value. Default: empty.
 
   effect=learn:potion_regen,potion_haste
   effect=revealmap:overworld
   effect=revealmap:old_mine,20,14,8
+  effect=lure:16:8
 
 The base game sells the Surveyor's Map (map_aldmoor, effect=revealmap:overworld)
 at the Brasswick market.
@@ -5960,6 +5975,7 @@ Flags:
 
 Items and money:
 - give=id:n,id (item= is the same). take=id:n. gold=n (negative pays; never below 0). xp=n (shared by the living party).
+- recipe=id,id (1.5.0): teach recipes (a "Recipe learned" popup) - for known=0 recipes a master teaches, e.g. when giving a trial (smith_gorran.txt). In scripts: recipe tempered_blank.
 
 Party:
 - join=<npc id>: add that companion NPC (NPCs tab, companion= a class) to the party (4 max): its name, class, party picture, level, stats, gear and spells. Sets joined_<class>. An empty join= adds the NPC being talked to. The older join=class:Name:col,row (Name and sprite optional) still works.
@@ -7464,6 +7480,93 @@ see: obj.crate
 
 A name for this crate on this map (crate1, crate2... when empty). The headless
 tests check crate:<id>; scripts can look for a crate with crateat(x, y).
+
+== obj.trap | Trap object (1.5.0)
+see: obj.trap.hurt, obj.trap.damage, obj.trap.flag, obj.trap.onspring, concepts.stealth, item.effect
+
+A spike pit, a deadfall, a bear trap. An enemy group that walks onto it while it
+is busy - chasing the party, walking to a noise (item effect=lure) or walking home
+afterwards - loses hurt= percent of its HP before the fight starts; at 100 it is
+gone for good (its flag is set, ondefeat runs, the party gets half its XP).
+Groups that are only wandering step round traps. A boss is hurt at most 50% and
+never killed by one. The party stepping on it takes damage= each (never below
+1 HP). Either way it is sprung: it is set again the next time the party arrives,
+unless it has a flag=, which keeps it sprung for good.
+
+  [trap]
+  x=20
+  y=25
+  name=Cracked ceiling
+  hurt=100
+  damage=12
+  flag=crypt_deadfall
+  text=The cracked ceiling gives way with a roar of stone and dust.
+
+Keys: name (default Spike pit), hurt (0-100, default 100), damage (default 10),
+flag, text (shown when a group in sight springs it), onspring (actions run when
+it goes off), sprite / sprungsprite (empty = a drawn pit with spikes), color.
+Put a trap in a one-tile passage between a group and where you want players to
+throw the noise, and leave a hint (a sign) - see concepts.stealth.
+
+== obj.trap.hurt | Trap hurt
+see: obj.trap
+
+The share of a group's HP (0-100) the trap takes before the fight starts. 100 =
+the group is gone. A group can be hurt by several traps (up to 90% in all) and
+keeps the hurt while the party stays on the map.
+
+== obj.trap.damage | Trap damage
+see: obj.trap
+
+What each living party member loses when the party steps on it (never below 1 HP).
+0 = harmless to the party (a trap only monsters can set off).
+
+== obj.trap.flag | Trap flag
+see: obj.trap, concepts.flags
+
+Set when it goes off. With a flag the trap stays sprung for good; without one it
+is set again each time the party arrives on the map.
+
+== obj.trap.onspring | Trap onspring
+see: obj.trap, concepts.scripts
+
+Actions run when it goes off (under a group or the party): message:..., flag:...,
+script:<id>...
+
+== concepts.stealth | Stealth and avoidance (1.5.0)
+see: obj.trap, item.effect, obj.enemy.aggro, obj.enemy.leash, map.touch, map.dark
+
+Not every group has to be fought. What decides whether a group notices the party:
+
+- aggro= (obj.enemy.aggro): how near the party can come in its line of sight.
+- Stealth (Camouflage, utility=stealth): a third of that.
+- Darkness: on a dark map, with no light on the party (no torch, Light spell or
+  light-giving gear), a group in which nothing sees in the dark notices the party
+  at half the distance. Undead, machines and the creatures with darkvision=1 see
+  fine - and get the first move on an unlit party.
+- A noise: a group looking at a thrown noisemaker only notices a party right
+  beside it, and a fight it starts that way begins with a surprise round for you.
+
+Noisemakers are items with effect=lure (base game: Rattle Stones, Clatter Bottle,
+Clockwork Rattler). Groups near where one lands walk there by the shortest way,
+stay for a while, then go home. On a touch=1 map they leave the chase for it.
+
+Traps (obj.trap) are what makes a noise a weapon: a group walking to the noise
+over a trap is hurt or finished before you meet it. The base game's examples:
+Greywood Cave (rattle stones in the first chest, a scout's note), Dunmarrow Crypt
+(a cracked ceiling over the south passage, bottles and a note by the entrance),
+Thornhollow Camp (the bandits' bear trap in the yard passage, Harl's orders).
+
+== concepts.fieldnotes | Field Notes (1.5.0)
+see: concepts.saves, creature.res
+
+What the party finds out about a creature - each damage type it was hit with
+(and, with weapon traits, each trait), the spells it was seen casting, its
+wind-ups and wards, that it saw the party in the dark - is written to
+fieldnotes.ini in the save folder, for every save slot. Slaying three of a kind
+notes everything. The combat info box and the Journal's bestiary read it, and
+the desktop has a Field Notes.txt that lists it, so a lost fight and a reload
+still teach the player something. A fresh save folder starts empty.
 
 == obj.plate | Pressure plate object (1.4.0)
 see: obj.plate.group, obj.plate.onpress, obj.crate, puzzle.plates

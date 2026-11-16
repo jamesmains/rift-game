@@ -214,7 +214,8 @@ void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     if (map && map != m) resetVisitObstacles(*map);   // 1.4.0 (#75): frozen water thaws behind the party
     map = m; mapId = id;
     if (newPlace) resetCrates(*m);                     // 1.4.0 (#76): crates back where they were placed
-    for (auto& e : m->enemies) { e.chasing = false; if (e.temp) e.defeated = true; }   // 1.2.4 (#41): chases end when the party leaves
+    if (newPlace) resetTraps(*m);                      // 1.5.0 (#99): traps set again (flag= keeps one sprung)
+    for (auto& e : m->enemies) { e.chasing = false; if (e.temp) e.defeated = true; e.distractSteps = 0; e.returning = false; }   // 1.2.4 (#41): chases end when the party leaves (1.5.0: and noises)
     if (x == 0 && y == 0) { x = m->spawnX; y = m->spawnY; }
     if (!m->walkable(x, y)) { int ox, oy; if (m->findFree(x, y, 6, ox, oy, rng)) { x = ox; y = oy; } }
     px = x; py = y;
@@ -232,7 +233,11 @@ void Game::enterMap(const std::string& id, int x, int y, bool fade) {
     camFree = false; updateCamera(); camFX = (float)camX; camFY = (float)camY;
     if (fade) fadeIn = 0.6f;
     if (!m->name.empty()) notify(m->name);
-    if (newPlace && running) autosave();
+    if (newPlace && running) {
+        // 1.5.0 (#97): arriving in a dungeon or ruins always autosaves (not once a minute), so a wipe inside costs minutes
+        if (m->kind == "dungeon" || m->kind == "ruins") lastAutosave = -1000;
+        autosave();
+    }
 }
 
 int Game::activeLeader() const {
@@ -558,6 +563,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
 void Game::updateExplore(InputState& in, float dt) {
     if (banterVictoryPending) { banterVictoryPending = false; banterTrigger("victory"); }
     if (party.members.size() > 1) { size_t before = party.members.size(); checkCompanionMoods(); if (party.members.size() != before) return; }
+    if (updateThrowAim(in)) { updateNpcs(dt); return; }   // 1.5.0 (#99): aiming a noisemaker
     if (actP(in, A_CANCEL)) { openPause(); return; }
     if (actP(in, A_MENU)) { menuTab = 0; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); return; }
     if (actP(in, A_SPELLS)) { menuTab = 2; menuSel = 0; menuScroll = 0; menuSubFocus = false; menuMember = clampi(menuMember, 0, (int)party.members.size() - 1); spellCol = party.members[menuMember].spells.empty() ? 0 : 1; pushMode(GMode::MENU); return; }
@@ -641,6 +647,7 @@ void Game::tryMove(int dx, int dy, bool interactOnBlocked) {
     camFree = false;
     if (lightSteps > 0) { lightSteps--; if (map->dark && lightSteps == 30) log("Your light is guttering - light another torch soon."); else if (map->dark && lightSteps == 0) { log("Your light burns out. The dark closes in."); notify("Light out"); } }   // 1.4.0 (#79)
     if (stealthSteps > 0) stealthSteps--; if (detectSteps > 0) detectSteps--;
+    distractionStep(); partyOnTrap();   // 1.5.0 (#99): noises wear off step by step; a trap underfoot goes off
     touchChase();   // 1.2.4 (#41) touch=1: groups chasing the party take their step with it
     GMode before = mode;
     updatePlates(true);   // 1.4.0 (#76): plates under the leader / pushed crates
@@ -674,7 +681,7 @@ void Game::onStep() {
         if (e.defeated) continue;
         if (!e.showFlag.empty() && !evalCond(e.showFlag)) continue;
         if (!e.hideFlag.empty() && evalCond(e.hideFlag)) continue;
-        int aggro = stealthSteps > 0 ? std::max(1, e.aggro / 3) : e.aggro;
+        int aggro = groupAggro(e);   // 1.5.0 (#99): stealth, a noise, or darkness against eyes that need light
         if (map->touchCombat) aggro = 1;   // 1.2.3 (#40) touch=1: only a group right next to the party starts a fight
         if (chebyshev(e.x, e.y, px, py) <= aggro && lineOfSight(*map, px, py, e.x, e.y)) {
             // everyone who would notice joins from the start: groups close to the party, groups that can see the group that
@@ -692,8 +699,8 @@ void Game::onStep() {
                 if (joins) combatExtraGroups.push_back((int)j);
             }
             // 1.4.0 (#80): a group that hadn't noticed the party (stealth, or a touch map's group that wasn't chasing) is surprised
-            nextSurprise = (stealthSteps > 0 || (map->touchCombat && !e.chasing)) ? 1 : 0;
-            if (!nextSurprise && map->dark && !evalCond("lit") && !lit(e.x, e.y)) for (auto& cid : e.creatures) if (const CreatureDef* cd = gd->creature(cid)) if (cd->darkvision) nextSurprise = -1;   // (#79) no light: they see you first
+            nextSurprise = (stealthSteps > 0 || e.distractSteps > 0 || (map->touchCombat && !e.chasing)) ? 1 : 0;   // 1.5.0: or looking at a noise
+            if (!nextSurprise && map->dark && !evalCond("lit") && !lit(e.x, e.y)) for (auto& cid : e.creatures) if (const CreatureDef* cd = gd->creature(cid)) if (cd->darkvision) { nextSurprise = -1; noteCreature(cid, 0, "darkvision"); }   // (#79) no light: they see you first (1.5.0: noted)
             startCombat(e.creatures, e.x, e.y, e.levelBonus, {(int)i}, e.onDefeatScript);
             return;
         }
@@ -787,10 +794,11 @@ void Game::touchChase() {
     if (flags.count("_fleegrace")) return;   // the party just got away: they need a moment to pick up the chase
     for (auto& e : map->enemies) {
         if (!groupShown(e)) continue;
+        if (e.distractSteps > 0 || e.returning) continue;   // 1.5.0 (#99): busy with a noise (it moves in updateNpcs)
         int leash = leashOf(e);
         bool inLeash = chebyshev(px, py, e.homeX, e.homeY) <= leash;
         if (!e.chasing) {
-            int aggro = stealthSteps > 0 ? std::max(1, e.aggro / 3) : e.aggro;
+            int aggro = groupAggro(e);
             if (!inLeash || chebyshev(e.x, e.y, px, py) > aggro || !lineOfSight(*map, px, py, e.x, e.y)) continue;
             e.chasing = true;
         } else if (!inLeash) {
@@ -798,7 +806,7 @@ void Game::touchChase() {
             if (visible(e.x, e.y)) { const CreatureDef* cd = e.creatures.empty() ? nullptr : gd->creature(e.creatures[0]); log((cd ? cd->name : std::string("They")) + (e.creatures.size() > 1 ? " and the rest give" : " gives") + " up the chase."); }
             continue;
         }
-        groupStepToward(e, px, py, 1, leash + 1);
+        if (groupStepToward(e, px, py, 1, leash + 1)) groupOnTrap(e);   // 1.5.0 (#99): a chaser doesn't watch its feet
     }
 }
 
@@ -916,6 +924,7 @@ void Game::updateNpcs(float dt) {
             if (e.defeated || e.chasing || e.hidden) continue;
             e.wanderTimer -= (int)(dt * 1000);
             if (e.wanderTimer > 0) continue;
+            if (stepDistracted(e)) { e.wanderTimer = rng.range(250, 400); continue; }   // 1.5.0 (#99): off to a noise, or back from one
             int away = chebyshev(e.x, e.y, e.homeX, e.homeY);
             if (e.temp) {   // lost the party: walks off and is gone once out of sight (or off the screen)
                 auto seen = [&]() { const int T = UI::TILE; return visible(e.x, e.y) && e.x * T + T > camX && e.x * T < camX + UI::SCREEN_W && e.y * T + T > camY && e.y * T < camY + UI::SCREEN_H; };
@@ -925,11 +934,11 @@ void Game::updateNpcs(float dt) {
                 continue;
             }
             int ox = e.x, oy = e.y;
-            if (away > 4) { e.wanderTimer = rng.range(300, 500); groupStepToward(e, e.homeX, e.homeY, 0, -1); }   // back to the leash point
+            if (away > 4) { e.wanderTimer = rng.range(300, 500); if (groupStepToward(e, e.homeX, e.homeY, 0, -1) && groupOnTrap(e)) continue; }   // back to the leash point (1.5.0: not watching its feet)
             else {
                 e.wanderTimer = rng.range(600, 2000);
                 int d = rng.range(0, 5); int nx = e.x + (d == 0) - (d == 1), ny = e.y + (d == 2) - (d == 3);
-                if ((nx != e.x || ny != e.y) && chebyshev(nx, ny, e.homeX, e.homeY) <= 4 && map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py)) { e.x = nx; e.y = ny; }
+                if ((nx != e.x || ny != e.y) && chebyshev(nx, ny, e.homeX, e.homeY) <= 4 && map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py) && !map->trapAt(nx, ny)) { e.x = nx; e.y = ny; }   // 1.5.0: idle groups step round traps
             }
             if (chebyshev(e.x, e.y, px, py) <= 1) { e.x = ox; e.y = oy; }   // never walks into the party on its own
         }
@@ -940,12 +949,14 @@ void Game::updateNpcs(float dt) {
         e.wanderTimer -= (int)(dt * 1000);
         if (e.wanderTimer <= 0) {
             e.wanderTimer = rng.range(600, 2000);
+            if (stepDistracted(e)) { e.wanderTimer = rng.range(250, 400); if (chebyshev(e.x, e.y, px, py) <= 1 && mode == GMode::EXPLORE) { onStep(); } continue; }   // 1.5.0 (#99)
             int dist = chebyshev(e.x, e.y, px, py);
-            int nx = e.x, ny = e.y;
-            if (dist <= e.aggro + 3 && stealthSteps <= 0 && lineOfSight(*map, e.x, e.y, px, py)) { // approach
+            int nx = e.x, ny = e.y; bool approach = false;
+            if (dist <= groupAggro(e) + 3 && stealthSteps <= 0 && lineOfSight(*map, e.x, e.y, px, py)) { // approach
                 if (abs(px - e.x) > abs(py - e.y)) nx += px > e.x ? 1 : -1; else ny += py > e.y ? 1 : -1;
-            } else { int d = rng.range(0, 5); nx += (d == 0) - (d == 1); ny += (d == 2) - (d == 3); if (chebyshev(nx, ny, e.homeX, e.homeY) > 4) { nx = e.x; ny = e.y; } }
-            if ((nx != e.x || ny != e.y) && map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py)) { e.x = nx; e.y = ny; }
+                approach = true;
+            } else { int d = rng.range(0, 5); nx += (d == 0) - (d == 1); ny += (d == 2) - (d == 3); if (chebyshev(nx, ny, e.homeX, e.homeY) > 4 || map->trapAt(nx, ny)) { nx = e.x; ny = e.y; } }   // 1.5.0: idle groups step round traps
+            if ((nx != e.x || ny != e.y) && map->walkable(nx, ny) && !map->occupied(nx, ny) && !(nx == px && ny == py)) { e.x = nx; e.y = ny; if (approach && groupOnTrap(e)) continue; }   // 1.5.0 (#99): one coming for the party doesn't
             if (chebyshev(e.x, e.y, px, py) <= 1 && mode == GMode::EXPLORE) { onStep(); }
         }
     }
@@ -1145,6 +1156,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "amends") { auto p = split(v, ':'); if (p.size() >= 2) { approval[trim(p[0])] += atoi(p[1].c_str()); syncBonds(); } }
     // craftxp=STATION:N: practice at a station (forge, alchemy, workbench, field) - master crafters' trials
     else if (k == "craftxp") { auto p = split(v, ':'); if (p.size() >= 2) addCraftXP(trim(p[0]), atoi(p[1].c_str())); }
+    else if (k == "recipe") { learnRecipes(v, true); }   // 1.5.0 (#86): recipe=id,id - a master teaches a recipe (known=0 ones)
     else if (k == "note") { auto p = split(v, '|'); addNote(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); notify("Added to journal."); }
     else if (k == "win") { if (mode == GMode::DIALOGUE) popMode(); std::vector<std::string> ls; for (auto& l : split(v, '|')) ls.push_back(endingText(l)); startCutscene(ls, [this]() { setFlag("game_won"); checkAchievements(true); startEnding(); }); }
     else if (k == "savepoint") { if (map) { SavePoint s; s.x = px; s.y = py; applyTypeLook(s); map->savepoints.push_back(s); } }
@@ -1474,7 +1486,7 @@ void Game::useFavorite(int mi, int slot) {
     } else {
         const ItemDef* d = gd->item(id); if (!d) return;
         if (!party.hasItem(id)) { log("You have no " + d->name + " left."); return; }
-        if (startsWith(d->effect, "script:")) { useItemOn(id, m, false); return; }   // 1.1.10: an item that runs a script needs no "who uses it"
+        if (startsWith(d->effect, "script:") || d->effect == "lure" || startsWith(d->effect, "lure:")) { useItemOn(id, m, false); return; }   // 1.1.10: an item that runs a script needs no "who uses it" (1.5.0: nor a noisemaker)
         if (d->type != IT_CONSUMABLE || d->dmgMax > 0 || !d->useSpell.empty()) { log(d->name + " can only be used in combat."); return; }
         menuTab = 1; menuSel = 0; for (size_t i = 0; i < party.inventory.size(); i++) if (party.inventory[i].id == id) menuSel = (int)i;
         menuSubFocus = true; menuSub = 0; menuPrompt = "use"; menuMember = 0; pushMode(GMode::MENU); log("Choose who uses " + d->name + ".");
@@ -1567,6 +1579,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if (!visible(cr.x, cr.y)) col = RGB(col.r / 3, col.g / 3, col.b / 3);
         ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, col);
     }
+    drawTraps(cv, cx, cy);   // 1.5.0 (#99)
     // objects
     for (auto& ch : map->chests) {
         bool detect = detectSteps > 0 && !ch.opened;
@@ -1713,6 +1726,7 @@ void Game::draw(Canvas& cv, InputState& in) {
     drawWeather(cv, frameDt);
     if (mode == GMode::COMBAT || (!modeStack.empty() && std::find(modeStack.begin(), modeStack.end(), GMode::COMBAT) != modeStack.end())) drawCombat(cv, in);
     drawBanter(cv);
+    drawThrowAim(cv);   // 1.5.0 (#99)
     drawHUD(cv, in);
     drawLog(cv);
     drawModeUI(cv, in);
@@ -1921,6 +1935,10 @@ bool Game::useItemOn(const std::string& itemId, Character& target, bool inCombat
         log(d->effect == "frost" ? "Stand next to water you want to freeze, then use it." : "Stand next to a dead machine, lift or door, then use it."); return false;
     }
     else if (d->effect == "flare") { log("Throw it during a fight to light up the battlefield."); return false; }
+    else if (d->effect == "lure" || startsWith(d->effect, "lure:")) {   // 1.5.0 (#99): a noisemaker - aimed on the map, then thrown
+        if (Game::inCombat()) { log("Too late for that - they've seen you. Throw it before a fight."); return false; }
+        startThrowAim(itemId); return false;
+    }
     else if (d->effect == "torch") { lightSteps = std::max(lightSteps, 220); lightPower = std::max(lightPower, 5); log(map && map->dark ? "You light a torch. The dark pulls back a few steps." : "You light a torch. (It matters most underground.)"); revealAround(); used = true; }
     else if (startsWith(d->effect, "imbue_")) { int n = d->mana > 0 ? d->mana : 5; target.removeEffect("imbue_fire"); target.removeEffect("imbue_cold"); target.removeEffect("imbue_shock"); target.removeEffect("imbue_poison"); target.removeEffect("imbue_magic"); target.addEffect(d->effect, 99, n); log(fmt("%s coats their weapon: the next %d attacks deal %s damage.", target.name.c_str(), n, d->effect.substr(6).c_str())); used = true; }
     else if (d->effect == "respec") { int idx = -1; for (size_t i = 0; i < party.members.size(); i++) if (&party.members[i] == &target) idx = (int)i; if (idx < 0 || Game::inCombat()) { log("Not now."); return false; } if (target.level <= 1) { log(target.name + " has nothing to forget yet."); return false; } party.removeItem(itemId, 1); respecMember(idx); gAudio.play("levelup"); return true; }
@@ -2058,6 +2076,7 @@ bool Game::deserialize(const std::string& text) {
     for (size_t i = 0; i < party.members.size(); i++) if (party.members[i].statPoints > 0 || party.members[i].rankPoints > 0) levelUpQueue.push_back((int)i);
     lightSteps = stealthSteps = detectSteps = 0;
     syncBonds();
+    applyLearnMigrations();   // 1.5.0 (#86)
     rng.reseed(fixedSeed ? fixedSeed : (uint64_t)time(nullptr));
     enterMap(mid, sx, sy, false);
     fadeIn = 0.8f;

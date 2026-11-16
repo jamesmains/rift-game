@@ -288,3 +288,8 @@ x=10
 y=22
 title=Maintenance log, last page
 text=Drones and turrets shrug off bullets on their plating. A jolt through the casing shorts them out: storm oil on a blade, a stun baton, anything with a charge.
+
+# 1.5.0 (#97): a shrine before the golem
+[savepoint]
+x=30
+y=13

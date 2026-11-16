@@ -686,7 +686,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     if (k == "effect" && s.name == "item") {
         if (ui.textField(x, y, w - 60, v, 80)) g.dirty = true;
         if (ui.hover(x, y, w - 60, 16)) ui.tip("What using it does. script:<id> runs a script (the item is used up); script:<id>:keep runs it and keeps the item. Only consumables can be used.");
-        if (ui.button(x + w - 56, y, 52, 16, "pick...")) { std::vector<std::string> opts = choiceTable().at("effect"); for (const char* e : {"torch", "dig", "blast", "flare", "respec", "frost", "power"}) opts.push_back(e); for (auto& sf : scriptFiles) { opts.push_back("script:" + sf); opts.push_back("script:" + sf + ":keep"); }
+        if (ui.button(x + w - 56, y, 52, 16, "pick...")) { std::vector<std::string> opts = choiceTable().at("effect"); for (const char* e : {"torch", "dig", "blast", "flare", "respec", "frost", "power", "lure", "lure:12:7"}) opts.push_back(e); for (auto& sf : scriptFiles) { opts.push_back("script:" + sf); opts.push_back("script:" + sf + ":keep"); }
             int cur = 0; for (size_t i = 0; i < opts.size(); i++) if (opts[i] == v) cur = (int)i; openListPicker("effect", opts, cur, [&kvr, opts, &g](int i) { kvr.second = opts[i]; g.dirty = true; }); }
         return;
     }
@@ -1005,8 +1005,8 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     drawGroundPiece(*ui.cv, *ts, k, g, sx, sy, scale, k->tint, k->recolor, k->opaque, mask, corners);
     if (k->prop.valid()) ts->draw(*ui.cv, k->prop, sx, sy, scale);
 }
-static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather", "crate", "plate"};   // 1.4.0: crate, plate (keep new types at the end: tests click by index)
-static const int NOBJ = 14;
+static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather", "crate", "plate", "trap"};   // 1.4.0: crate, plate; 1.5.0: trap (keep new types at the end: tests click by index)
+static const int NOBJ = 15;
 static std::vector<std::pair<std::string, std::string>> objTemplate(const std::string& t, int x, int y) {
     std::vector<std::pair<std::string, std::string>> kv{{"x", std::to_string(x)}, {"y", std::to_string(y)}};
     if (t == "npc") { kv.insert(kv.begin(), {{"id", "npc1"}, {"name", "Villager"}}); kv.push_back({"sprite", "104,0"}); kv.push_back({"dialogue", ""}); kv.push_back({"wander", "0"}); }
@@ -1022,6 +1022,7 @@ static std::vector<std::pair<std::string, std::string>> objTemplate(const std::s
     else if (t == "gather") { kv.push_back({"item", "herb_moon"}); kv.push_back({"count", "1-2"}); kv.push_back({"tool", ""}); kv.push_back({"respawn", "3"}); }
     else if (t == "crate") { kv.insert(kv.begin(), {"id", "crate_" + std::to_string(x) + "_" + std::to_string(y)}); kv.push_back({"name", "Crate"}); kv.push_back({"heavy", "0"}); }   // 1.4.0 (#76)
     else if (t == "plate") { kv.push_back({"group", "plates1"}); kv.push_back({"onpress", "script:pressure_plates,plates1,plates1_open"}); }
+    else if (t == "trap") { kv.push_back({"name", "Spike pit"}); kv.push_back({"hurt", "100"}); kv.push_back({"damage", "10"}); kv.push_back({"flag", ""}); }   // 1.5.0 (#99)
     return kv;
 }
 // 1.4.0 (#75): every needs= value an obstacle understands (worldstate.cpp obstacleMenu), for the object panel's + list
@@ -1050,7 +1051,7 @@ std::string Editor::scriptArgs(const std::string& id) const {
     return "";
 }
 void Editor::actionChoices(std::vector<std::string>& ids, std::vector<std::string>& labels) const {
-    static const char* acts[] = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2", "resetcrates:", "lorefile:NAME"};
+    static const char* acts[] = {"heal", "message:Title|Text", "item:ITEM_ID:1", "gold:10", "flag:NAME", "dialogue:ID", "combat:goblin,goblin", "teleport:MAP,X,Y", "cutscene:line 1|line 2", "resetcrates:", "lorefile:NAME", "recipe:RECIPE_ID"};
     for (auto a : acts) { ids.push_back(a); labels.push_back(a); }
     for (auto& sf : scriptFiles) {
         std::string args = scriptArgs(sf), id = "script:" + sf;
@@ -1074,6 +1075,7 @@ std::vector<std::string> edObjKeys(const std::string& t) {   // what each object
     if (t == "gather") return {"node", "item", "count", "tool", "respawn", "name", "sprite", "color", "spentsprite", "spent", "sound"};
     if (t == "crate") return {"name", "heavy", "sprite", "color"};          // 1.4.0 (#76); id is per placement
     if (t == "plate") return {"group", "onpress", "onrelease", "sprite", "color"};
+    if (t == "trap") return {"name", "hurt", "damage", "flag", "text", "onspring", "sprite", "sprungsprite", "color"};   // 1.5.0 (#99)
     return {};
 }
 
@@ -1277,6 +1279,7 @@ void Editor::drawMaps(InputState& in) {
         else if (o.type == "gather") { if (ox >= 0 && oy >= 0 && ox < em.w && oy < em.h) drawGatherNode(o, sx, sy, zoom, em.at(ox, oy)); col = C::Green; }   // as the game draws it
         else if (o.type == "crate") { Tile t = parseTile(o.get("sprite")); if (!t.valid()) t = T(8, 36); Color8 cc = !trim(o.get("color")).empty() ? parseColor(o.get("color")) : atoi(o.get("heavy").c_str()) > 0 ? RGB(190, 150, 110) : RGB(225, 180, 110); ts->drawRecolor(*ui.cv, t, sx, sy, zoom, cc); col = C::Orange; }   // 1.4.0
         else if (o.type == "plate") { Tile t = parseTile(o.get("sprite")); if (t.valid()) ts->draw(*ui.cv, t, sx, sy, zoom); else { int in2 = 3 * zoom / 2; ui.cv->fillRect(sx + in2, sy + in2, cell - 2 * in2, cell - 2 * in2, RGB(75, 70, 60)); ui.cv->rect(sx + in2, sy + in2, cell - 2 * in2, cell - 2 * in2, RGB(150, 140, 120)); } col = C::Cream; }
+        else if (o.type == "trap") { Tile t = parseTile(o.get("sprite")); if (t.valid()) ts->draw(*ui.cv, t, sx, sy, zoom); else { int in2 = 2 * zoom; ui.cv->fillRect(sx + in2, sy + in2, cell - 2 * in2, cell - 2 * in2, RGB(15, 10, 10)); for (int k = 0; k < 3; k++) { int bx = sx + in2 + 1 + k * (cell - 2 * in2) / 3; ui.cv->line(bx, sy + cell - in2 - 1, bx + zoom, sy + in2 + 1, RGB(200, 190, 180)); } } col = C::Red; }   // 1.5.0 (#99)
         ui.cv->rect(sx, sy, ow * cell, oh * cell, (int)i == objSel ? C::White : Color8{col.r, col.g, col.b, 160});
         if (overView && in.mouseX >= sx && in.mouseY >= sy && in.mouseX < sx + ow * cell && in.mouseY < sy + oh * cell) hoverObj = (int)i;
     }

@@ -159,6 +159,7 @@ std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base 
 CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, const std::string& dir);
 SaveSlotInfo readSaveSlotInfo(const std::string& path);
 bool writeSaveFile(const std::string& path, const std::string& text);   // atomic, keeps the previous file as path.bak
+int creatureResistance(const CreatureDef& cd, int dmgType);   // 1.5.0 (#96): res= plus the undead / machine rules (journal.cpp)
 
 struct GameSettings {
     bool fullscreen = true;
@@ -527,6 +528,36 @@ public:
     // 1.4.0 (#77): desktop files (data/lore) that a game unlocks (first line #locked); kept in files.ini, like achievements, for every save slot
     std::set<std::string> foundFiles;
     void loadFoundFiles(); void unlockLoreFile(const std::string& name);
+    // 1.5.0 (#96) Field Notes: what the party has found out about each kind of creature - the damage types it was hit
+    // with (bit per DT_*) and things it was seen doing (tags: spell:ID, windup:ID, ward:CREATURE, darkvision, studied).
+    // Kept in fieldnotes.ini in the save folder for every slot (like files.ini), so a lost fight and a reload still teach.
+    // res = the rk_<creature> int as a whole: bits 0-5 damage types, bits 8+ weapon traits (master's weaponTraits()).
+    struct FieldNote { int res = 0; std::set<std::string> tags; };
+    static const int FN_ALL = 0xFFFF;   // everything known (three slain)
+    std::map<std::string, FieldNote> fieldNotes;
+    void loadFieldNotes(); void saveFieldNotes() const;
+    bool noteCreature(const std::string& creature, int resBits, const std::string& tag = "");   // true = something new (saved at once)
+    int knownResBits(const std::string& creature) const;   // this save's rk_ bits | field notes | every type once 3 are slain
+    std::string fieldNotesText() const;                     // the desktop's Field Notes.txt
+    std::vector<std::string> bestiaryIds() const;           // the Journal's bestiary list: met in this save + in the Field Notes
+    void applyLearnMigrations();                            // 1.5.0 (#86): migrations.txt [learn] recipe=id|condition
+    // 1.5.0 (#99) stealth and avoidance (stealth.cpp): noticing, thrown noisemakers (effect=lure), traps
+    int groupAggro(const EnemyGroup& e) const;              // how near the party may come before the group notices it
+    int distractGroups(int x, int y, int steps, int radius);   // groups near (x,y) go and look; returns how many
+    std::string throwItem; int throwX = 0, throwY = 0;      // aiming a noisemaker on the map (empty = not aiming)
+    void startThrowAim(const std::string& itemId);
+    bool updateThrowAim(InputState& in);                    // true = aiming ate the input this frame
+    bool throwTargetOk(int x, int y) const;
+    void throwLure(const std::string& itemId, int x, int y);
+    bool stepDistracted(EnemyGroup& e);                     // a timer step for a group busy with a noise / walking home
+    void distractionStep();                                 // one party step: noises hold their groups a step less
+    void resetTraps(Map& m);
+    void springTrap(Trap& t);
+    bool groupOnTrap(EnemyGroup& e);                        // the group stands on an armed trap: hurt or gone
+    void partyOnTrap();
+    void applyGroupHurt(Combatant& u, int groupIndex);
+    void drawTraps(Canvas& cv, int cx, int cy);
+    void drawThrowAim(Canvas& cv);
     bool gatherReady(const GatherNode& g) const { auto it = extra.find("gather_" + mapId + "_" + std::to_string(g.x) + "_" + std::to_string(g.y)); return it == extra.end() || day - atoi(it->second.c_str()) >= g.respawn; }
     bool interactable(int x, int y) { return map->crateAt(x, y) || map->npcAt(x, y) || map->chestAt(x, y) || map->doorAt(x, y) || map->signAt(x, y) || map->enemyAt(x, y) || map->obstacleAt(x, y) || map->leverAt(x, y) || map->gatherAt(x, y); }
     void respawnParty();

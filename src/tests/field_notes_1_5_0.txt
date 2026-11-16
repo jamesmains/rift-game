@@ -1,0 +1,68 @@
+# 1.5.0 (#96): Field Notes - what the party learns about a creature (hit with a damage type, spells it casts, three
+# slain = everything) goes into fieldnotes.ini in the save folder, for every slot. After a wipe and a reload the tooltip
+# (knownResBits), the bestiary and the desktop's Field Notes.txt still know it. A fresh save folder starts empty.
+# Expect keys: fieldnote:ID ("res bits;tags,"), fieldknown:ID (what the tooltip shows), deskfieldnotes, bestiaryids.
+frames 5
+# the desktop icon opens an empty notepad on a fresh run
+dblclick 130 190
+frames 5
+expect window == fieldnotes
+expect deskfieldnotes contains Nothing yet
+shot field_notes_empty.png
+key ESC
+frames 3
+newgame Kai mage 1 20261116
+god
+frames 30
+expect fieldnote:skeleton == none
+expect bestiaryids lacks skeleton
+saveslot 1
+frames 5
+teleport hermit_hut 4 14
+frames 120
+cb arena 2 11 21 7
+combat skeleton,necromancer
+frames 2
+cb forcehit 1
+unitplace 0 4 14
+unitplace 1 6 14
+unitplace 2 8 16
+cb turn 0
+cb hp 1 500
+cb hp 2 500
+# a blade (physical, bit 1) and a fire spell (fire, bit 2) on the skeleton
+cb attack 0 1
+expect fieldnote:skeleton contains 1;
+cb cast 0 fireball 6 14
+expect fieldknown:skeleton == 3
+expect savefile:fieldnotes.ini == 1
+# the necromancer casts a dark bolt: what it casts goes into the notes too
+cb cast 2 dark_bolt 4 14
+expect fieldnote:necromancer contains spell:dark_bolt
+# ---- the party falls; the reload knows nothing of this fight in the save, but the notes remain ----
+partywipe
+frames 60
+loadslot 1
+frames 60
+expect mode == EXPLORE
+expect fieldknown:skeleton == 3
+expect bestiaryids contains skeleton
+expect deskfieldnotes contains Skeleton
+expect deskfieldnotes contains fire
+expect deskfieldnotes contains Casts:
+# three slain = all of it, for good
+con bestiary skeleton 2
+teleport hermit_hut 4 14
+frames 120
+combat skeleton
+frames 2
+cb forcehit 1
+unitplace 0 4 14
+unitplace 1 5 14
+cb turn 0
+cb hp 1 1
+cb attack 0 1
+frames 200
+expect fieldnote:skeleton contains studied
+expect fieldknown:skeleton >= 63
+log

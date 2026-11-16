@@ -95,3 +95,12 @@ void Game::migrateSave(std::vector<ConfigSection>& secs, int fromFormat) {
     // format steps. 1/2 -> 3 (1.0): nothing to convert; experience is no longer split, which only changes what comes next.
     (void)fromFormat;
 }
+// 1.5.0 (#86): [learn] recipe=id|condition - a recipe that a patch made known=0 (taught by a dialogue now) is given to a
+// loaded save where the condition already holds, so nobody is left with a trial they can no longer craft.
+void Game::applyLearnMigrations() {
+    for (auto& sec : mergedConfig("migrations.txt")) if (sec.name == "learn") for (auto& kv : sec.kv) {
+        if (kv.first != "recipe") continue;
+        auto p = split(kv.second, '|'); std::string id = trim(p[0]); if (id.empty()) continue;
+        if (p.size() < 2 || evalCond(trim(p[1]))) learnRecipes(id, false);
+    }
+}

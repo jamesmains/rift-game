@@ -341,3 +341,38 @@ x=10
 y=23
 title=A dead adventurer's note
 text=My sword just skipped off them. Bones want breaking, not cutting - I left the groundskeeper's mace in the chest by the stairs like a fool. And the cold thing in the north hall... steel went straight through it. Only the priest's blessed oil marked it.
+
+# 1.5.0 (#97): a shrine in the great hall, before the lich's chamber
+[savepoint]
+x=29
+y=17
+
+# 1.5.0 (#99): the south passage's cracked ceiling - a group walking under it (to a noise, after the party, back home)
+# brings it down on itself. The skeletons in the room below come up this passage to a bottle smashed at its top.
+[trap]
+x=20
+y=25
+name=Cracked ceiling
+hurt=100
+damage=12
+flag=crypt_deadfall
+text=The cracked ceiling gives way with a roar of stone and dust.
+
+[sign]
+x=21
+y=23
+title=Chalk marks
+text=An X under the crack in the south passage, and: DON'T STAND HERE. Underneath, in another hand: unless you want the dead to.
+
+[chest]
+x=13
+y=20
+items=clatter_bottle:3,torch_item:1
+flag=crypt_robber_sack
+
+[sign]
+template=paper_sign
+x=14
+y=21
+title=Grave-robber's note
+text=The dead down here see in the dark better than you see at noon - putting your torch out only blinds you. But they're dull things: smash a bottle down a passage and they shamble off to look, and they don't watch their feet. Mind the cracked ceiling in the south passage. Or don't, and let them walk under it.

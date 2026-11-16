@@ -103,6 +103,7 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     }
     // hide the enemy groups on the map while fighting
     for (int g : groupIndices) if (g >= 0 && g < (int)map->enemies.size()) map->enemies[g].defeated = true;
+    for (auto& u : cb.units) if (u.partyIndex < 0) applyGroupHurt(u, u.groupIndex);   // 1.5.0 (#99): a group a trap hurt starts the fight hurt
     for (size_t i = 0; i < cb.units.size(); i++) cb.order.push_back((int)i);
     std::stable_sort(cb.order.begin(), cb.order.end(), [&](int a, int b) { return cb.units[a].initiative > cb.units[b].initiative; });
     // groups that noticed the party at the same moment fight from round one (each placed around its own position)
@@ -154,6 +155,7 @@ bool Game::combatAddGroup(int gi, bool announce) {
             if (!cand.empty()) { auto p = rng.pick(cand); ux = p.first; uy = p.second; }
         }
         if (ux < 0) continue;
+        applyGroupHurt(u, gi);   // 1.5.0 (#99): what a trap took off it
         u.x = ux; u.y = uy; u.ch.ap = u.ch.maxAP(*gd); u.ch.move = u.ch.maxMove(*gd); u.initiative = u.ch.stat(ST_DEX, *gd) + rng.range(1, 8);
         cb.units.push_back(u); cb.order.push_back((int)cb.units.size() - 1); names.push_back(u.ch.name);
     }
@@ -667,6 +669,7 @@ void Game::windupStart(int ui, int ti) {
     SpellDef s = *sp; if (s.area == 0 && s.shape.empty()) s.area = 1;
     CombatState::Windup w; w.unit = ui; w.spell = sp->id; w.tiles = spellTiles(ui, s, t.x, t.y);
     cb.windups.push_back(w); u.lastWindup = cb.round; u.ch.ap = 0;
+    if (!u.ch.creatureId.empty()) noteCreature(u.ch.creatureId, 0, "windup:" + sp->id);   // 1.5.0 (#96)
     cb.bannerText = u.ch.name + ": " + sp->name + "!"; cb.banner = 1.4f;
     addFloat(u.x, u.y - 1, sp->name + "!", C::Red, 2);
     std::string m = u.ch.name + " gathers power for " + sp->name + " - it lands on the marked tiles at the start of its next turn. Get clear!";
@@ -819,7 +822,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
     cb.actionThisRound = true;
     if (attacker) { dmg = applyCombos(t, dmg, dmgType, attacker); if (!t.ch.alive) return; }   // 1.4.0 (#60): SHATTER, THAW, FLARE, STEAM
     // 1.4.0 (#72) ward=creature: a boss shielded by its servants takes half damage while one of them stands
-    if (!t.ch.ward.empty()) { for (auto& o : cb.units) if (o.ch.alive && &o != &t && o.ch.creatureId == t.ch.ward) { dmg = std::max(1, dmg / 2); addFloat(t.x, t.y - 1, "warded", C::Purple); break; } }
+    if (!t.ch.ward.empty()) { for (auto& o : cb.units) if (o.ch.alive && &o != &t && o.ch.creatureId == t.ch.ward) { dmg = std::max(1, dmg / 2); addFloat(t.x, t.y - 1, "warded", C::Purple); if (!t.ch.creatureId.empty()) noteCreature(t.ch.creatureId, 0, "ward:" + t.ch.ward); break; } }
     int res = t.ch.resist(dmgType, *gd);
     // 1.5.0 (#92): a weapon trait the creature has a res= key for replaces its physical value (skeletons: crush:-100)
     int traitBit = -1;
@@ -840,6 +843,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
         bool fresh = (known & bits) != bits;
         if (fresh) { extra[key] = std::to_string(known | bits);
             if (traitBit >= 8 && !(known & (1 << traitBit)) && res < t.ch.resist(DT_PHYS, *gd)) cb.log.push_back(fmt("%s: %s weapons %s!", t.ch.name.c_str(), dmgTrait.c_str(), res < 0 ? "hit it hard" : "get through")); }
+        noteCreature(t.ch.creatureId, atoi(extra[key].c_str()));   // 1.5.0 (#96): the whole rk_ int (damage types, and weapon traits in bits 8+) goes into the Field Notes, which outlive the save
         if (eff <= -50) addFloat(t.x, t.y - 1, "WEAK!", C::Yellow); else if (eff >= 100) addFloat(t.x, t.y - 1, "IMMUNE", C::Gray, 2); else if (eff >= 40) addFloat(t.x, t.y - 1, "resists", C::Gray);
         if (traitBit >= 8 && res < t.ch.resist(DT_PHYS, *gd)) addFloat(t.x, t.y - 2, dmgTrait + " gets through", C::Cyan);
         if (eff >= 100 && fresh && attacker && attacker->partyIndex >= 0) cb.log.push_back(fmt("%s is immune to %s%s.", t.ch.name.c_str(), traitBit >= 8 ? (dmgTrait + "-trait ").c_str() : "", dmgTypeName(dmgType)));
@@ -984,6 +988,7 @@ void Game::combatCast(int ci, const std::string& spellId, int tx, int ty) {
         // 1.5.0 (#93): armour too heavy for the caster's class can make the spell fizzle (AP and MP are spent)
         if (int fail = c.ch.spellFail(*gd)) if (rng.chance(fail)) { cb.log.push_back(fmt("%s's spell fizzles - the armour is too heavy (%d%% fail).", c.ch.name.c_str(), fail)); addFloat(c.x, c.y - 1, "fizzle", C::Gray, 2); gAudio.play("miss"); return; }
         cb.log.push_back(c.ch.name + " casts " + sp->name + "!"); gAudio.play(spellSound(*sp)); if (c.partyIndex >= 0) stats.spellsCast++;
+        if (!c.friendly() && !c.ch.creatureId.empty()) noteCreature(c.ch.creatureId, 0, "spell:" + sp0->id);   // 1.5.0 (#96)
         if (sp->chainJumps <= 0) { CombatAnim an; an.kind = sp->shape == "line" ? 0 : 1; an.x0 = c.x; an.y0 = c.y; an.x1 = tx; an.y1 = ty; an.color = sp->utility == "light" ? C::Cream : dmgColor(sp->dmgType); an.dur = 0.35f; an.tile = sp->tile; cb.anims.push_back(an); }
     }
     Combatant& c = cb.units[ci];
@@ -2042,8 +2047,8 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
         if (!t.friendly()) {
             int lo = t.ch.mDmgMin, hi = t.ch.mDmgMax;
             lines.push_back({fmt("Hits %d-%d %s, range %d", lo, hi, dmgTypeName(t.ch.mDmgType), t.ch.attackRange(*gd)), C::LtGray});
-            int known = 0; { auto it = extra.find("rk_" + t.ch.creatureId); if (it != extra.end()) known = atoi(it->second.c_str()); }
-            auto bit = bestiary.find(t.ch.creatureId); bool all = bit != bestiary.end() && bit->second >= 3;
+            int known = knownResBits(t.ch.creatureId);   // 1.5.0 (#96): this save's hits, the Field Notes, or 3 slain
+            bool all = (known & ((1 << DT_COUNT) - 1)) == (1 << DT_COUNT) - 1;
             std::string weak, strong;
             for (int d = 0; d < DT_COUNT; d++) {
                 if (!all && !(known & (1 << d))) continue;
@@ -2059,6 +2064,16 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
             if (!strong.empty()) lines.push_back({"Resists: " + strong, C::Gray});
             if (weak.empty() && strong.empty()) lines.push_back({all ? "No notable resistances" : "Resistances: hit it to find out", C::DkGray});
             if (t.ch.darkvision && map->dark) lines.push_back({"Sees in the dark", C::Purple});
+            {   // 1.5.0 (#96): what the Field Notes say it does (spells seen, wind-ups, wards)
+                auto fn = fieldNotes.find(t.ch.creatureId); std::string casts, seen;
+                if (fn != fieldNotes.end()) for (auto& tg : fn->second.tags) {
+                    if (startsWith(tg, "spell:")) { const SpellDef* sp = gd->spell(tg.substr(6)); casts += (casts.empty() ? "" : ", ") + (sp ? sp->name : tg.substr(6)); }
+                    else if (startsWith(tg, "windup:")) { const SpellDef* sp = gd->spell(tg.substr(7)); seen += (seen.empty() ? "" : "; ") + std::string("winds up ") + (sp ? sp->name : tg.substr(7)); }
+                    else if (startsWith(tg, "ward:")) { const CreatureDef* w = gd->creature(tg.substr(5)); seen += (seen.empty() ? "" : "; ") + std::string("warded by ") + (w ? w->name : tg.substr(5)); }
+                }
+                if (!casts.empty()) lines.push_back({"Casts: " + casts, C::Cyan});
+                if (!seen.empty()) lines.push_back({"Notes: " + seen, C::Cyan});
+            }
         }
         if (!t.ch.effects.empty()) { std::string ef; for (auto& e : t.ch.effects) ef += (ef.empty() ? "" : ", ") + e.id + fmt(" %d", e.turns); lines.push_back({ef, C::Cyan}); }
     } else if (tu >= 0) lines.push_back({"Something moves in the dark...", C::Purple});

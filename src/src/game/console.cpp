@@ -17,6 +17,7 @@ void Game::runConsole(const std::string& line) {
     auto argi = [&](size_t i, int d = 0) { return i < p.size() ? atoi(p[i].c_str()) : d; };
     // 1.4.0 (kept out of the long else-if chain below): stealth [N] = sneaking steps (as Camouflage); setstat STAT N [MEMBER] =
     // a party member's base stat (stat checks in dialogue); spellsof [MEMBER] = what they know
+    if (c == "light") { lightSteps = std::max(0, argi(1, 200)); if (lightSteps > 0) lightPower = std::max(lightPower, 5); revealAround(); out(fmt("light = %d steps", lightSteps)); return; }   // 1.5.0 (#99): a torch without the item
     if (c == "stealth") { stealthSteps = std::max(0, argi(1, 200)); out(fmt("stealth = %d steps", stealthSteps)); return; }
     if (c == "setstat") { if (party.members.empty()) return; int mi = clampi(argi(3, 0), 0, (int)party.members.size() - 1); std::string nm = toUpper(arg(1)); int st = -1; for (int i = 0; i < ST_COUNT; i++) if (nm == statName(i)) st = i;
         if (st < 0) { out("usage: setstat str|dex|con|int|wis|cha N [MEMBER]"); return; } party.members[mi].baseStats[st] = argi(2, 10); out(fmt("%s %s = %d (with gear %d)", party.members[mi].name.c_str(), statName(st), party.members[mi].baseStats[st], party.members[mi].stat(st, *gd))); return; }
@@ -72,6 +73,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }
     else if (c == "achieve") { unlockAchievement(arg(1)); out("ok"); }
     else if (c == "reset_achievements") { unlocked.clear(); saveAchievementState(); out("achievements reset"); }
+    else if (c == "reset_fieldnotes") { fieldNotes.clear(); saveFieldNotes(); out("field notes cleared"); }   // 1.5.0 (#96)
     else if (c == "reset_files") { foundFiles.clear(); writeFile(saveDir + "/files.ini", "[found]\n"); out("desktop files locked again"); }   // 1.4.0 (#77)
     else if (c == "bounty") { popMode(); openBoard(arg(1, lastTownMap.empty() ? "hollowmere" : lastTownMap)); }
     else if (c == "craft") { popMode(); openCraft(arg(1, "all")); }

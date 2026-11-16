@@ -343,3 +343,8 @@ h=1
 script=dialogue:ashwing_parley
 flag=ashwing_parley_seen
 require=!dragon_dead&!ashwing_gone
+
+# 1.5.0 (#97): a shrine before Ashwing
+[savepoint]
+x=24
+y=22

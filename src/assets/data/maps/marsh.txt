@@ -307,3 +307,8 @@ y=2
 items=oil_blessed:2
 gold=0
 flag=marsh_teach_chest
+
+# 1.5.0 (#97): a shrine before the hydra
+[savepoint]
+x=39
+y=23

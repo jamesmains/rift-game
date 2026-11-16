@@ -1,0 +1,62 @@
+# 1.5.0 (#97): every boss has a save shrine a short walk before it, and arriving in a dungeon or ruins always
+# autosaves (not just once a minute), so "reload and try again" costs minutes. The optional deadly places (the
+# Broodmother's nest in Greywood Cave, the Sealed Ossuary in Hesk's Barrow) are warned about and have a shrine too.
+# Expect keys: bossshrine (walking steps from the boss farthest from a shrine to its nearest one), groupshrine:I,
+# lastautosave (play second of the last autosave).
+newgame Kai warrior 1 20261116
+god
+frames 30
+# ---- the autosave on arrival: towns keep the once-a-minute limit, dungeons always save ----
+teleport hollowmere 20 20
+frames 200
+teleport hollowmere_home 0 0
+frames 200
+expect lastautosave <= 2
+con clearmap wreck
+teleport wreck 0 0
+frames 200
+expect lastautosave >= 3
+expect savefile:autosave.sav == 1
+# ---- a shrine within 20 steps of every boss ----
+teleport crypt 0 0
+frames 5
+expect bossshrine <= 20
+teleport bandit_camp 0 0
+frames 5
+expect bossshrine <= 20
+teleport barrow 0 0
+frames 5
+expect bossshrine <= 20
+teleport goblin_cave 0 0
+frames 5
+expect bossshrine <= 20
+teleport lab 0 0
+frames 5
+expect bossshrine <= 20
+teleport marsh 0 0
+frames 5
+expect bossshrine <= 20
+teleport metro 0 0
+frames 5
+expect bossshrine <= 20
+teleport old_mine 0 0
+frames 5
+expect bossshrine <= 20
+teleport rift_core 0 0
+frames 5
+expect bossshrine <= 20
+teleport ship 0 0
+frames 5
+expect bossshrine <= 20
+teleport troll_cave 0 0
+frames 5
+expect bossshrine <= 20
+# ---- the deadly optional places: warned, and a shrine right before them ----
+teleport goblin_cave 0 0
+frames 5
+expect obstacle:24,19 == 1
+expect groupshrine:8 <= 16
+teleport barrow 0 0
+frames 5
+expect groupshrine:4 <= 16
+log

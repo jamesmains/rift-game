@@ -29,8 +29,8 @@ const std::vector<std::string>& scriptActionKeys() {
         "resetcrates", "lorefile",
         // 1.4.0
         "teach",
-        // 1.5.0 (#85, #87/#88): fell=CLASS|text (leave= too, now through the companion leaving rules), fight=FLAG
-        "fell", "fight"};
+        // 1.5.0 (#85, #87/#88): fell=CLASS|text (leave= too, now through the companion leaving rules), fight=FLAG; (#86) recipe=
+        "fell", "fight", "recipe"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }

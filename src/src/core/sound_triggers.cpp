@@ -41,6 +41,8 @@ const std::vector<SoundTrigger>& soundTriggers() {
         {"emp_release", "Exploring", "spell_emp", "1.4.0: an EMP scrambles a sealed tech door's lock (needs=emp obstacle)"},
         {"hidden_found", "Exploring", "detect", "1.4.0: light or a detect spell shows something hidden (needs=light obstacle)"},
         {"crate_push", "Exploring", "step_hard", "1.4.0: a crate is pushed one tile"},
+        {"lure", "Exploring", "block", "1.5.0: a thrown noisemaker lands (item effect=lure; the item's sound= wins)"},
+        {"trap", "Exploring", "hit", "1.5.0: a trap goes off under a monster group or the party"},
         {"plate_down", "Exploring", "lever", "1.4.0: a pressure plate goes down under a crate or the party"},
         {"plate_up", "Exploring", "ui_move", "1.4.0: a pressure plate comes back up"},
         {"text_key", "Interface", "ui_move", "1.4.0: a letter is typed into a terminal / combination lock box"},

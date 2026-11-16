@@ -240,3 +240,8 @@ y=12
 title=Captain's log
 text=Day 9 after the fall. The crew think the lock code is a secret. It is the old joke: our own name, read the wrong way round. If you are reading this, you were clever - or desperate. Take what is left.
 sprite=27,14
+
+# 1.5.0 (#97): a shrine before the war mech
+[savepoint]
+x=46
+y=17
