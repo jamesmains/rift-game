@@ -13,6 +13,12 @@ int dmgTypeFromName(const std::string& s);
 enum Stat { ST_STR = 0, ST_DEX, ST_CON, ST_INT, ST_WIS, ST_CHA, ST_COUNT };
 const char* statName(int s);
 int statFromName(const std::string& s);
+// 1.4.0 (#73) stat checks: "cha>=12" (the part after stat: / partystat:) -> stat index, operator (>= > <= < =), number
+bool parseStatCheck(const std::string& body, int& stat, std::string& op, int& value);
+bool statCheckPasses(int have, const std::string& op, int value);
+// the tag a dialogue answer shows in front of its text for the checks in its conditions: "[CHA 12] ", "[Party STR 14] ",
+// "[Sneaking] " (empty when it has none)
+std::string dialogueCheckTag(const std::vector<std::string>& conds);
 
 enum ItemType { IT_WEAPON = 0, IT_ARMOR, IT_HELM, IT_BOOTS, IT_ACCESSORY, IT_OFFHAND, IT_CONSUMABLE, IT_KEY, IT_MATERIAL, IT_AMMO, IT_TYPE_COUNT };
 enum EquipSlot { SL_WEAPON = 0, SL_OFFHAND, SL_HEAD, SL_BODY, SL_FEET, SL_ACCESSORY, SL_COUNT };

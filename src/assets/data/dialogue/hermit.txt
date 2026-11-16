@@ -3,6 +3,9 @@ speaker=The Hermit
 text=A visitor! Forty years alone and now they come in droves. Well. I collect things that don't belong. Bring me a Bear Claw, a Circuit Board, and a Rough Gem, and I'll show you something that really doesn't belong.
 option=I'll find them.|quest|!q_hermit>=1
 option=I have all three.|turnin|q_hermit>=1&item:bear_claw&item:circuit&item:gem_rough&!q_hermit>=2
+option=Why those three things?|why|q_hermit>=1&!q_hermit>=2
+option=(He's nodding off in his chair. Lift the chest key from his belt.)|steal|q_hermit>=1&!q_hermit>=2&stealthy
+option=How do you like town?|town|hermit_friend
 option=What's in the chest?|chest|q_hermit>=2
 option=Goodbye.|end
 
@@ -25,3 +28,45 @@ option=Thank you.|end
 speaker=The Hermit
 text=Socks, mostly.
 option=Right.|end
+
+# 1.4.0 (#74): more ways through the Hermit's Riddle - answer his question (WIS: he moves to Brasswick's inn, INT: he
+# stays), or steal the key while he dozes (stealthy: he never opens his door to you again).
+[why]
+speaker=The Hermit
+text=Fire, lightning and the earth's own patience. A claw that remembers the bear, a board that remembers the spark, a stone that remembers the mountain. I collect things that remember. Do you know why?
+option=Because nobody remembers you.|why_wis|stat:wis>=12
+option=They're what fell on the Rift's night: fire, storm and stone. You're keeping the night.|why_int|stat:int>=13
+option=No idea.|end
+
+[why_wis]
+speaker=The Hermit
+text=...Forty years. Forty years and nobody has asked me a single question. (He laughs until he has to sit down.) Keep your claws and stones. Here - the key. And I think... I think I'd like to see a town again. Brasswick still has that inn with the copper kettle?
+set=q_hermit=2,hermit_riddle,hermit_friend
+give=rift_heart:1
+xp=400
+quest=The Hermit's Riddle - answered
+option=It does. I'll buy the first round.|end
+
+[why_int]
+speaker=The Hermit
+text=(He stares at you.) The night. Yes. The fire in the forest, the storm in the wires, the stones out of the sky. Somebody has to remember it properly. You understand - so you don't need the things. Take the key; I'll keep collecting.
+set=q_hermit=2,hermit_riddle
+give=rift_heart:1
+xp=400
+quest=The Hermit's Riddle - answered
+option=Keep remembering.|end
+
+[steal]
+speaker=$hero
+text=(His breathing slows. The key comes off his belt without a sound; the chest opens on oiled hinges. Under the socks lies a warm, beating crystal. You are out of the door before he snores again.)
+set=q_hermit=2,hermit_robbed
+give=rift_heart:1
+xp=200
+approve=scavenger:3,cleric:-5,warrior:-3
+quest=The Hermit's Riddle - stolen
+option=(Leave quietly.)|end
+
+[town]
+speaker=The Hermit
+text=Noisy. Smelly. Wonderful. Fenna lets me tell the story of the Rift's night every evening, and somebody new always listens. Forty years I wasted on socks.
+option=Glad to hear it.|end

@@ -1,0 +1,17 @@
+# 1.4.0 (#74): the raider at Sunscar's pump after Water Rights (well_toll or well_shared)
+[start]
+speaker=Raider at the Pump
+text=Pump's running. Keep your hands where I can see them.
+option=How does the water work now?|toll|well_toll
+option=How does the water work now?|shared|well_shared
+option=Goodbye.|end
+
+[toll]
+speaker=Raider at the Pump
+text=A copper a bucket, raider or settler. Kesh's orders. You're the one who set it up? Then you drink free. Everyone else pays.
+option=Fair enough.|end
+
+[shared]
+speaker=Raider at the Pump
+text=Settlers drink free, caravans and strangers pay a copper. I stand here, I get paid, nobody fights over a bucket. Strangest job I ever had. Best, too.
+option=Keep it that way.|end

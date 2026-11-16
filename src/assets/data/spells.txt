@@ -759,3 +759,313 @@ shape=line
 dmg=18-28
 dmgtype=fire
 sound=spell_laser
+
+# ---- companion quest abilities (1.4.0) ----
+# Taught by teach=<companion>:<spell>|<loyal spell> when a companion's personal quest ends (their camp talk). Each quest
+# has two endings with a different ability; the second id is the stronger version used while the companion is Loyal.
+# -- Bram: Captain Sedge's shield. He carries it (guard) or you do and he carries the anger (reprisal).
+[spell]
+id=sedges_guard
+name=Sedge's Guard
+desc=Bram plants Captain Sedge's shield in front of an ally next to him: a shield for a few turns.
+tile=84,38
+cost=4
+ap=2
+range=1
+effect=shield
+duration=3
+target=ally
+stat=str
+sound=spell_shield
+
+[spell]
+id=sedges_bulwark
+name=Sedge's Bulwark
+desc=Loyal Bram: everyone close to him is shielded and steadied (a little healing too).
+tile=84,38
+cost=7
+ap=3
+range=0
+area=1
+heal=8
+effect=shield
+duration=4
+target=ally
+stat=str
+sound=spell_shield
+
+[spell]
+id=sedges_reprisal
+name=Sedge's Reprisal
+desc=A blow for the captain: heavy damage to an adjacent enemy, which may leave it weakened.
+tile=82,38
+cost=6
+ap=3
+range=1
+dmg=10-16
+dmgtype=physical
+effect=weaken
+duration=2
+stat=str
+sound=skill_bash
+
+[spell]
+id=sedges_vengeance
+name=Sedge's Vengeance
+desc=Loyal Bram: a crushing blow for the captain that may leave the enemy weakened for longer.
+tile=82,38
+cost=8
+ap=3
+range=1
+dmg=16-24
+dmgtype=physical
+effect=weaken
+duration=3
+stat=str
+sound=skill_bash
+
+# -- Elowen: the wisps are not her mother. She lets it go (stilled light) or studies the hunger (rift hunger).
+[spell]
+id=stilled_light
+name=Stilled Light
+desc=Elowen quiets an ally's mind: their INT rises for a few turns.
+tile=81,39
+cost=5
+ap=2
+range=5
+effect=focus
+duration=4
+target=ally
+stat=int
+sound=spell_bless
+
+[spell]
+id=lantern_of_the_lost
+name=Lantern of the Lost
+desc=Loyal Elowen: a soft light around an ally that sharpens and mends everyone near them.
+tile=81,39
+cost=9
+ap=3
+range=5
+area=1
+heal=10
+effect=focus
+duration=4
+target=ally
+stat=int
+sound=spell_bless
+
+[spell]
+id=rift_hunger
+name=Rift Hunger
+desc=Elowen turns the wisps' hunger on a foe: magic damage that may weaken it.
+tile=83,37
+cost=6
+ap=4
+range=5
+dmg=8-14
+dmgtype=magic
+effect=weaken
+duration=3
+stat=int
+sound=spell_rift
+
+[spell]
+id=rift_devouring
+name=Rift Devouring
+desc=Loyal Elowen: the hunger spreads to everything around the target.
+tile=83,37
+cost=10
+ap=4
+range=5
+area=1
+dmg=12-18
+dmgtype=magic
+effect=weaken
+duration=3
+stat=int
+sound=spell_rift
+
+# -- Nyx: four pelts. Two cloaks (pack sense) or the pelts left at her father's hut (frost fang).
+[spell]
+id=pack_sense
+name=Pack Sense
+desc=Nyx calls the hunt: an ally moves and acts faster for a few turns.
+tile=99,33
+cost=5
+ap=2
+range=4
+effect=haste
+duration=3
+target=ally
+stat=dex
+sound=skill_mark
+
+[spell]
+id=winter_pack
+name=Winter Pack
+desc=Loyal Nyx: the whole pack around her runs faster.
+tile=99,33
+cost=9
+ap=3
+range=0
+area=2
+effect=haste
+duration=3
+target=ally
+stat=dex
+sound=skill_warcry
+
+[spell]
+id=frost_fang
+name=Frost Fang
+desc=An arrow tipped with her father's hunting charm: cold damage that may freeze.
+tile=89,37
+cost=6
+ap=4
+range=7
+dmg=9-15
+dmgtype=cold
+effect=freeze
+duration=1
+stat=dex
+sound=skill_volley
+
+[spell]
+id=white_fang
+name=White Fang
+desc=Loyal Nyx: a deeper cold that freezes for longer.
+tile=89,37
+cost=8
+ap=4
+range=7
+dmg=13-20
+dmgtype=cold
+effect=freeze
+duration=2
+stat=dex
+sound=skill_volley
+
+# -- Orin: the lich is gone. He says the names (litany) or seals the crypt against the next one (grave ward).
+[spell]
+id=litany_of_names
+name=Litany of Names
+desc=Orin says the names of the dead: everyone near him is healed and keeps mending for a few turns.
+tile=78,37
+cost=8
+ap=3
+range=0
+area=1
+heal=12
+effect=regen
+duration=3
+target=ally
+stat=wis
+sound=spell_heal
+
+[spell]
+id=litany_of_the_rested
+name=Litany of the Rested
+desc=Loyal Orin: a longer litany that reaches further and mends more.
+tile=78,37
+cost=12
+ap=4
+range=0
+area=2
+heal=18
+effect=regen
+duration=4
+target=ally
+stat=wis
+sound=spell_heal
+
+[spell]
+id=grave_ward
+name=Grave Ward
+desc=The crypt's seal, spoken over a foe: holy damage that may stun it.
+tile=81,33
+cost=7
+ap=4
+range=5
+dmg=10-16
+dmgtype=magic
+effect=stun
+stat=wis
+sound=spell_holy
+
+[spell]
+id=grave_seal
+name=Grave Seal
+desc=Loyal Orin: the seal falls on everything around the target.
+tile=81,33
+cost=11
+ap=4
+range=5
+area=1
+dmg=12-20
+dmgtype=magic
+effect=stun
+stat=wis
+sound=spell_holy
+
+# -- Tessa: the terminal laughed at her. She lets it rest (scrap plating) or keeps its core (signal jam).
+[spell]
+id=scrap_plating
+name=Scrap Plating
+desc=Tessa bolts salvaged plates onto an ally: a shield and a quick patch.
+tile=58,9
+cost=5
+ap=3
+range=3
+heal=6
+effect=shield
+duration=3
+target=ally
+stat=int
+sound=skill_hack
+
+[spell]
+id=scrap_bastion
+name=Scrap Bastion
+desc=Loyal Tessa: plating for everyone around her ally.
+tile=58,9
+cost=9
+ap=3
+range=3
+area=1
+heal=8
+effect=shield
+duration=4
+target=ally
+stat=int
+sound=skill_hack
+
+[spell]
+id=signal_jam
+name=Signal Jam
+desc=The terminal's core screams on every channel: shock damage around the target that may stun.
+tile=80,39
+cost=7
+ap=4
+range=6
+area=1
+dmg=6-10
+dmgtype=shock
+effect=stun
+stat=int
+sound=spell_emp
+
+[spell]
+id=signal_crash
+name=Signal Crash
+desc=Loyal Tessa: the core's full scream - harder shock around the target that may stun.
+tile=80,39
+cost=10
+ap=4
+range=6
+area=1
+dmg=10-16
+dmgtype=shock
+effect=stun
+stat=int
+sound=spell_emp

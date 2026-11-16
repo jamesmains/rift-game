@@ -133,3 +133,10 @@ outside a fight, as from the Spells menu), `clearmap [MAP]` (the map's enemy gro
 before teleporting there), `reset_files` (lock the desktop files again). Expect keys: `obstacle:X,Y` (1 while an
 obstacle blocks it), `kind:X,Y` (tile kind), `crate:ID` (x,y), `plate:X,Y` (1 while down), `lorefile:NAME` (1 once
 unlocked), `deskfiles` (what My Computer lists), `inputtext` (the text box). The text box is mode NAME; `type` fills it.
+
+1.4.0: `dialogue_1_4_0` - stat checks in dialogue (#73: `stat:cha>=12`, `partystat:str>=14`, the `[CHA 12]` tags, script
+`stat()` / `partystat()`, `stealthy`), other ways through quests (#74: the Stolen Caravan talked out and sneaked out,
+Water Rights patched + the middle way, Ashwing reasoned with) and companion quest abilities (#81: `teach=`, the Loyal
+version swapping in and out, a companion taught while away, save/load). Console: `setstat STAT N [MEMBER]`,
+`stealth [N]`, `spellsof [MEMBER]`. Expect keys: `answers` (the answers as shown, tags included, " | " between) and
+`spells:<member>` (comma list).

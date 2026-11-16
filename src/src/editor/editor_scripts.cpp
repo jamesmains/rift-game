@@ -183,6 +183,7 @@ void Editor::drawScripts(InputState& in) {
         "  cond() = any dialogue condition",
         "has(item)  visited(map)  kills(c)",
         "inparty(class)  rep(f)  approval(c)",
+        "stat(\"cha\") hero  partystat(\"str\") best",
         "random(1, 6)   chance(25)",
         "places()  visited overworld places",
         "placename(p) placemap(p)",

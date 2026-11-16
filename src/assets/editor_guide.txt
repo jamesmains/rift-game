@@ -279,7 +279,7 @@ every flag your campaign uses and warns about flags that are checked but never
 set.
 
 == concepts.conditions | Conditions
-see: concepts.flags, dlg.options, quest.stage.when, achievement.cond
+see: concepts.flags, dlg.options, quest.stage.when, achievement.cond, concepts.statchecks
 
 A condition is a test that is true or false. The same syntax is used by
 dialogue options, NPC show/hide/moveif, door openif/require, exit and trigger
@@ -300,6 +300,9 @@ Put ! in front of a test to reverse it. An empty condition is always true.
 - night / day: night is roughly 19:30 to 06:00.
 - weather:rain (also clear, storm, fog, snow).
 - lit: the party has a light going - a torch, a light spell or flare, or worn gear that gives light (1.1.7).
+- stat:cha>=12: the hero's stat, gear included (str, dex, con, int, wis, cha). Also >, <=, < and = (1.4.0).
+- partystat:str>=14: the best of that stat among the living party members (1.4.0). See Stat checks.
+- stealthy: the party is sneaking - Camouflage (or another stealth effect) is on (1.4.0).
 
 Examples:
 
@@ -308,7 +311,63 @@ Examples:
   gold:10
 
 There is no "equals" or "less than" except through !: q_main>=2&!q_main>=3
-means exactly 2. Spaces around & are fine. Flag names cannot contain & ! : or >=.
+means exactly 2 (stat checks are the exception: stat:int<10). Spaces around &
+are fine. Flag names cannot contain & ! : or >=.
+
+The "+ flag" button next to condition fields also offers stat checks and
+stealthy at the top of its list.
+
+== concepts.statchecks | Stat checks in dialogue
+see: concepts.conditions, dlg.options, quest.routes, scripting.values
+
+A dialogue answer whose condition holds a stat check shows the check in
+front of its text, so the player sees why the answer is there:
+
+  option=Pell has paid the guard to march on you. Go while you can.|persuade|stat:cha>=12
+  shows:  [CHA 12] Pell has paid the guard to march on you. Go while you can.
+
+  option=Look at me. Then count how many of you want to die.|intimidate|partystat:str>=14
+  shows:  [Party STR 14] Look at me. Then count how many of you want to die.
+
+  option=(Lift the key from his belt.)|steal|stealthy
+  shows:  [Sneaking] (Lift the key from his belt.)
+
+The rule: like every other condition, an answer whose check fails is
+hidden - the tag only appears on answers the party can actually pick. So
+always keep an ordinary answer next to a checked one.
+
+stat: reads the hero (with gear); partystat: the best living member, so a
+strong companion can do the intimidating. Habits used by the base game:
+CHA to persuade or bluff, STR (party) to intimidate, WIS to spot a lie or see
+what someone hides, INT to reason or fix things. Starting stats are 6 to 14;
+12 is a real investment for most heroes, 14 is hard.
+
+Scripts read the same numbers with stat("cha") and partystat("str"), or any
+condition with cond("stat:cha>=12").
+
+== quest.routes | More than one way through a quest
+see: concepts.statchecks, concepts.conditions, obj.npc.show, obj.enemy.hide, dlg.actions
+
+Since 1.4.0 several side quests can be finished by fighting, talking (stat
+checks), paying (gold, or standing with a town) or sneaking (the stealthy
+condition). The pattern, using the Stolen Caravan (Thornhollow) as the
+example:
+
+- Each route sets the quest's usual "done" flag (q_caravan_done) and one flag
+  of its own (caravan_talked, caravan_ransom, caravan_stolen), so the
+  quest-giver can thank each route differently.
+- Quest stages: the last true stage wins, so put a stage per route after the
+  plain one: stage=caravan_talked | Harl's band left Thornhollow...
+- Make the world show it: enemy groups with hide=caravan_bandits_gone leave
+  the camp, an NPC placement with show=caravan_bandits_gone turns up in
+  town, rep= moves a town's standing (and with it shop stock item=id:n:rep).
+- A sneaking route is a trigger with require=...&stealthy (and a second one
+  with !stealthy that only logs a hint).
+
+Base game: the Stolen Caravan (fight / talk / pay / sneak), the Hermit's
+Riddle (items / WIS or INT answer / steal while stealthy), Water Rights
+(buy or patch the valve; free / toll / CHA middle way / buy the claim) and
+Ashwing (fight / reason INT / persuade CHA / pay 400).
 
 == concepts.scripts | Action lists (script=, onuse=, ondefeat=, onclear=, bossdefeat=)
 see: scripting.hooks, dlg.actions, obj.trigger.script, obj.enemy.ondefeat, obj.obstacle.onclear, dungeon.bossdefeat
@@ -5814,7 +5873,7 @@ is hidden by its condition, the node behaves as if it had none (next= or end).
 Always leave one option without a condition, like Goodbye.
 
 == dlg.actions | Dialogue actions
-see: dlg.nodes, concepts.scripts, concepts.flags, concepts.worldmap
+see: dlg.nodes, concepts.scripts, concepts.flags, concepts.worldmap, dlg.teach
 
 Actions are key=value lines in a node and run, in order, the moment the node
 shows. In scripts the same actions are written key:value.
@@ -5828,6 +5887,7 @@ Items and money:
 Party:
 - join=<npc id>: add that companion NPC (NPCs tab, companion= a class) to the party (4 max): its name, class, party picture, level, stats, gear and spells. Sets joined_<class>. An empty join= adds the NPC being talked to. The older join=class:Name:col,row (Name and sprite optional) still works. leave=class.
 - approve=class:n,class:n (or all:n). rep=faction:n,faction:n: change the party's reputation with a town or group (Factions tab), + or -.
+- teach=who:spell or teach=who:spell|loyal_spell: a lasting ability (1.4.0, see Teaching abilities). who = a companion NPC id (bram), a class id, a member's name, or hero.
 - heal=1: full HP/MP and sleep to 07:00. rest=1: inn rest - full HP/MP, revives, clears effects, morning. healer=1 or healer=<greeting>: paid healer menu. respec=1 (paid at a shrine) or respec=free.
 
 Places and things:
@@ -5845,6 +5905,30 @@ Messages and flow:
 Gotchas: gold= does not check the purse - hide the option with gold:n. Actions
 that open something else (combat, shop, teleport, craft, board, travel,
 healer, respec, win) close the dialogue.
+
+== dlg.teach | Teaching abilities (teach=)
+see: dlg.actions, dlg.camp, tab.spells, class.id
+
+  teach=bram:sedges_guard|sedges_bulwark
+
+teach= gives someone a spell or skill for good. Before the | is the spell they
+learn; after it (optional) the stronger version they use instead while the
+companion is Loyal (flag loyal_<class> and approval 10 or more). If their
+loyalty breaks, they go back to the first spell; when it holds again, the
+strong one returns.
+
+- who: a companion NPC's id (bram), a class id (warrior), a party member's
+  name, or hero (the hero learns the spell at once; no Loyal version).
+- A companion who is not in the party right now still learns it: the lesson
+  is kept with the save and applied whenever they travel with you (also after
+  they leave and come back).
+- Spells taught this way are not class spells, so a respec keeps them.
+- Several at once: teach=bram:a|b,orin:c.
+
+The base game uses it at the end of every companion's personal quest: each
+quest has two endings, each with its own ability (spells.txt, the block
+"companion quest abilities").
+In scripts: teach bram:sedges_guard|sedges_bulwark.
 
 == dlg.camp | Companion camp talk ([camp])
 see: dlg.nodes, dlg.actions, class.id
@@ -7175,6 +7259,7 @@ Functions:
 - flag("name") - a flag's value. cond("item:key&!door_open") - any dialogue condition.
 - has(item) - how many the party carries and wears. visited(map). kills(creature).
 - inparty(class or name), rep(faction), approval(class).
+- stat("cha") - the hero's stat with gear; partystat("str") - the best of the living party (1.4.0).
 - random(1, 6), random(10) (1 to 10), chance(25) (1 a quarter of the time).
 - places() - the overworld places the party has been to. placename(p), placemap(p), placex(p), placey(p).
 - distance(p) - tiles from where the party is on the overworld; leagues(p) = distance / 10 + 1.

@@ -11,6 +11,8 @@
 // 1.4.0: mid(text, start[, length]) (1-based), squash(text) (letters and digits only, upper case: compare codes), plates(group) / platesdown(group) (pressure plates on this map),
 // crateat(x, y) (1 if a crate stands there), lorefile(name) (1 if that desktop file is unlocked); actions resetcrates,
 // lorefile <name> (a desktop file appears).
+// built-in values (gold, day, hour, here...), functions (cond("item:key"), random(1,6), placename(p), 1.4.0: stat("cha"),
+// partystat("str")...), + - * / %,
 // == != < <= > >=, and / or / not.
 // compileScript turns the text into a flat list of statements with jumps (the Editor's Check uses it too); the game
 // runs them in Game::resumeScript (script.cpp), pausing on say / ask / pick / wait and on actions that open a screen.

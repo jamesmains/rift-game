@@ -233,6 +233,10 @@ public:
     // Strained (<= -15) fight worse, at -40 they leave and go home; Loyal (talked to at 30+, own quest done) fight better.
     static const char* approvalTier(int a); int approvalOf(const std::string& cls) const; bool companionLoyal(const std::string& cls) const;
     void changeApproval(const std::string& cls, int d); void syncBonds(); void checkCompanionMoods(); void companionLeaves(size_t idx);
+    // 1.4.0 (#81) taught abilities: teach=WHO:SPELL[|LOYAL_SPELL] (WHO = companion NPC id, class id, member name or hero).
+    // Companions' lessons are kept in extra["taught_<class>"] and applied whenever they are in the party (syncBonds):
+    // the LOYAL_SPELL replaces SPELL while the companion is Loyal, and goes back to SPELL if the loyalty breaks.
+    void teachAction(const std::string& v); void applyTaught(const std::string& onlyCls, bool announce);
     // towns: standing page on the notice board (favours, civic projects, amends); Disliked = no work, Hated = no trade
     int repOf(const std::string& id) const; const FactionDef* faction(const std::string& id) const; bool shopRefuses(const std::string& shop);
     int amendsCost(const std::string& id) const; int projectsDone(const std::string& id) const;

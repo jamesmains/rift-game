@@ -15,9 +15,16 @@ void Game::runConsole(const std::string& line) {
     auto p = split(cmd, ' '); std::string c = toLower(p[0]);
     auto arg = [&](size_t i, const std::string& d = "") { return i < p.size() ? p[i] : d; };
     auto argi = [&](size_t i, int d = 0) { return i < p.size() ? atoi(p[i].c_str()) : d; };
+    // 1.4.0 (kept out of the long else-if chain below): stealth [N] = sneaking steps (as Camouflage); setstat STAT N [MEMBER] =
+    // a party member's base stat (stat checks in dialogue); spellsof [MEMBER] = what they know
+    if (c == "stealth") { stealthSteps = std::max(0, argi(1, 200)); out(fmt("stealth = %d steps", stealthSteps)); return; }
+    if (c == "setstat") { if (party.members.empty()) return; int mi = clampi(argi(3, 0), 0, (int)party.members.size() - 1); std::string nm = toUpper(arg(1)); int st = -1; for (int i = 0; i < ST_COUNT; i++) if (nm == statName(i)) st = i;
+        if (st < 0) { out("usage: setstat str|dex|con|int|wis|cha N [MEMBER]"); return; } party.members[mi].baseStats[st] = argi(2, 10); out(fmt("%s %s = %d (with gear %d)", party.members[mi].name.c_str(), statName(st), party.members[mi].baseStats[st], party.members[mi].stat(st, *gd))); return; }
+    if (c == "spellsof") { if (party.members.empty()) return; int mi = clampi(argi(1, 0), 0, (int)party.members.size() - 1); std::string s; for (auto& sp : party.members[mi].spells) s += sp + " "; out(party.members[mi].name + ": " + (s.empty() ? "(none)" : s)); return; }
     if (c == "help") {   // one topic per line; drawConsole wraps anything wider than the screen
         out("world: teleport MAP [X Y] | maps | pos | reveal | worldmap MODE | time HH:MM | day N | weather clear|rain|storm|fog|snow");
         out("party: give ITEM [N] | gold N | xp N | level N | heal | hurt N [poison] | god | auto | spells | learn SPELL [MEMBER] | join CLASS | item?");
+        out("1.4.0: stealth [N] | setstat STAT N [MEMBER] | spellsof [MEMBER] | run teach:bram:SPELL");
         out("story: flag NAME [V] | unflag NAME | flags | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | achieve ID | reset_achievements");
         out("fights: spawn CREATURE[,CREATURE] | kill | touch [0|1] | combatmusic [ID|-] | cast SPELL [DX DY] | bestiary CREATURE N | difficulty 0-2");
         out("screens: bounty [TOWN] | bounties | craft [STATION] | cskill STATION XP | shop ID | dialogue ID [NODE] | run SCRIPT");

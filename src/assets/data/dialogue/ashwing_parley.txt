@@ -1,0 +1,53 @@
+# 1.4.0 (#73, #74): Ashwing speaks before the fight (trigger at the edge of its lair in old_mine). Reason with it (INT),
+# persuade it (CHA), pay it off (gold), or fight as before. If it leaves, ashwing_gone hides its group for good.
+[start]
+speaker=Ashwing
+text=(The cavern breathes. Two eyes like banked coals open in the dark above you.) Smallthing. You smell of Sunscar's goats... and of sky-glass. The glass in my hoard sings at night. It sings HUNGER. Tell me why I should not eat you too.
+option=Because the glass is what's starving you. It feeds on you; you feed on Sunscar.|reason|q_dragon>=1&stat:int>=13
+option=Leave, and Sunscar forgets your name. Stay, and they hunt you for a hundred years.|persuade|q_dragon>=1&stat:cha>=12
+option=(Pay 400 gold) Tribute. Take it, and find a mountain with no people on it.|tribute|q_dragon>=1&gold:400
+option=Because I came here to kill you.|refuse
+
+[reason]
+speaker=Ashwing
+text=(A long silence. Then the dragon turns its head and looks at its own hoard as if for the first time.) ...It sings when I am hungriest. It sang the night I took the first child. (It hooks a sliver of violet glass out of the gold and spits it at your feet.) Keep your singing thing, smallthing. I will hunt the high snow, where nothing sings.
+give=rift_dust:3
+set=ashwing_gone,ashwing_reasoned
+xp=600
+rep=sunscar:10
+approve=mage:5,cleric:5,warrior:-3
+quest=Ashwing - the dragon is leaving the mine
+next=gone
+
+[persuade]
+speaker=Ashwing
+text=(It laughs, a sound like a kiln door.) A hundred years of spears in my sleep. You are a tiresome thing, smallthing - and right. The mountains past the Scar are quiet. I will go before Sunscar thinks of it.
+set=ashwing_gone,ashwing_persuaded
+xp=500
+rep=sunscar:10
+approve=cleric:3,warrior:-3
+quest=Ashwing - the dragon is leaving the mine
+next=gone
+
+[tribute]
+speaker=Ashwing
+text=(Claws as long as swords rake your purse into the hoard.) Gold that comes to me. How novel. Very well, smallthing. I have been bought before, by braver people. I go.
+gold=-400
+set=ashwing_gone,ashwing_paid
+xp=400
+rep=sunscar:5
+approve=scavenger:3,warrior:-5
+quest=Ashwing - the dragon is leaving the mine
+next=gone
+
+[refuse]
+speaker=Ashwing
+text=Then come closer, smallthing. I am so very hungry.
+set=ashwing_parley_refused
+approve=warrior:3
+option=(Draw your weapon.)|end
+
+[gone]
+speaker=$hero
+text=Wings fill the cavern - then the light from the old shaft goes out, and comes back, and the dragon is gone. Somewhere far above, Sunscar's goats are going to have a very confusing afternoon.
+option=(Leave the lair.)|end

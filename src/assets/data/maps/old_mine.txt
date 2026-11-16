@@ -139,6 +139,7 @@ y=16
 aggro=6
 level=8
 flag=dragon_dead
+hide=ashwing_gone
 ondefeat=flag:q_dragon_done;notify:Ashwing is slain. Sunscar will sing of this for a hundred years.
 link=old_mine_boss
 
@@ -323,3 +324,22 @@ y=25
 items=iron_ingot:2,gem_rough:3,mithril_ore:1
 gold=120
 flag=mine_strongroom
+
+# 1.4.0 (#74): Ashwing speaks first (ashwing_parley: reason, persuade, pay or fight); just outside its aggro range
+[trigger]
+x=25
+y=19
+w=1
+h=4
+script=dialogue:ashwing_parley
+flag=ashwing_parley_seen
+require=!dragon_dead&!ashwing_gone
+
+[trigger]
+x=26
+y=23
+w=6
+h=1
+script=dialogue:ashwing_parley
+flag=ashwing_parley_seen
+require=!dragon_dead&!ashwing_gone

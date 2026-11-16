@@ -67,14 +67,32 @@ quest=Tessa: One Question
 approve=scavenger:5
 option=Let's go.|end
 
+# 1.4.0 (#81): Scrap Plating if she lets the terminal rest, Signal Jam if she keeps its core (Loyal: stronger).
 [circuit_turnin]
 speaker=Tessa
-text=...It booted. I asked it. It said: "You already know." Then it shut down for good. I think it was laughing at me. Here - built this out of the spare parts while I was waiting.
+text=...It booted. I asked it. It said: "You already know." Then it shut down for good. I think it was laughing at me. Here - built this out of the spare parts while I was waiting. The core's still warm, though. I could pull it.
 take=circuit:3
 give=cell:20
-set=q_tessa_done
+option=Let it rest. Strip the casing for plating instead.|circuit_rest
+option=Pull the core. Nothing laughs at you twice.|circuit_core
+
+[circuit_rest]
+speaker=Tessa
+text=Let it rest. ...Yeah. Forty years answering nobody. (She peels the casing off in neat plates.) Good steel, this. I can bolt it onto you lot faster than you can complain about it.
+set=q_tessa_done,tessa_let_rest
 xp=120
 approve=scavenger:15
+teach=tessa:scrap_plating|scrap_bastion
+quest=Tessa: One Question - done
+option=Machines.|end
+
+[circuit_core]
+speaker=Tessa
+text=(The core comes out with a squeal on every channel at once.) Hear that? That's what it sounds like when it's angry. I'm going to point that at things.
+set=q_tessa_done,tessa_kept_core
+xp=120
+approve=scavenger:12
+teach=tessa:signal_jam|signal_crash
 quest=Tessa: One Question - done
 option=Machines.|end
 

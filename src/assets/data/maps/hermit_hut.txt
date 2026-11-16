@@ -95,6 +95,7 @@ id=hermit
 npc=hermit
 x=12
 y=9
+show=!hermit_friend&!hermit_robbed
 
 [chest]
 x=10
@@ -105,3 +106,13 @@ items=potion_blue:1,potion_red:2
 [savepoint]
 x=14
 y=10
+
+# 1.4.0 (#74): after the party steals his treasure the hermit only shouts at them (hermit_robbed); after the WIS answer
+# he has moved to Brasswick's Copper Kettle (hermit_friend, placement in brasswick.txt)
+[npc]
+id=hermit_angry
+npc=hermit
+x=12
+y=9
+dialogue=hermit_robbed
+show=hermit_robbed

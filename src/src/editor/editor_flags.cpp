@@ -17,9 +17,9 @@ static const int BOTTOM = 18;
 // ---------------------------------------------------------------- condition helpers
 // the flag names a condition reads ("q_main>=2&!item:key&seen_ghost" -> q_main, seen_ghost)
 static bool nonFlagTerm(const std::string& c) {
-    static const char* pre[] = {"item:", "gold:", "level:", "party:", "kills:", "itemn:", "approval:", "weather:", "rep:", "mode:", "equipped:", "fav:", "map:"};
+    static const char* pre[] = {"item:", "gold:", "level:", "party:", "kills:", "itemn:", "approval:", "weather:", "rep:", "mode:", "equipped:", "fav:", "map:", "stat:", "partystat:"};
     for (auto p : pre) if (startsWith(c, p)) return true;
-    return c == "night" || c == "day" || c == "lit" || c == "room";   // 1.1.7: lit (a light is on)
+    return c == "night" || c == "day" || c == "lit" || c == "room" || c == "stealthy";   // 1.1.7: lit (a light is on); 1.4.0: stealthy, stat checks
 }
 std::vector<std::string> condFlags(const std::string& cond) {
     std::vector<std::string> out;
@@ -77,6 +77,11 @@ std::string Editor::condEnglish(const std::string& cond) const {
         else if (startsWith(c, "map:")) s = std::string(neg ? "the party is NOT on " : "the party is on ") + c.substr(4);
         else if (c == "night" || c == "day") s = std::string("it is ") + (neg ? "not " : "") + c;
         else if (c == "lit") s = neg ? "the party has no light going" : "the party has a light going";
+        else if (c == "stealthy") s = neg ? "the party is NOT sneaking" : "the party is sneaking (Camouflage)";   // 1.4.0
+        else if (startsWith(c, "stat:") || startsWith(c, "partystat:")) { bool best = c[0] == 'p'; int st = 0, v = 0; std::string op;   // 1.4.0 (#73)
+            if (!parseStatCheck(c.substr(best ? 10 : 5), st, op, v)) s = c + " (not a stat check: stat:cha>=12)";
+            else { std::string ops = op == ">=" ? "at least " : op == ">" ? "more than " : op == "<=" ? "at most " : op == "<" ? "less than " : "exactly ";
+                s = std::string(best ? "someone in the party has " : "the hero has ") + statName(st) + (neg ? " NOT " : " ") + ops + std::to_string(v); } }
         else if (c.find(">=") != std::string::npos) { auto p = c.find(">="); s = trim(c.substr(0, p)) + (neg ? " is below " : " is at least ") + trim(c.substr(p + 2)); }
         else s = c + (neg ? " is NOT set" : " is set");
         o += (o.empty() ? "" : " and ") + s;
@@ -219,8 +224,19 @@ void Editor::flagPicker(int x, int y, int w, bool appendCond, std::function<void
         ensureIndex();
         std::vector<std::string> names, labels; for (auto& f : flagIndex) { int s = 0, c = 0; for (auto& u : f.second) (u.set ? s : c)++; names.push_back(f.first); labels.push_back(f.first + fmt("   (set by %d, checked by %d)", s, c)); }
         names.insert(names.begin(), ""); labels.insert(labels.begin(), "+ a new flag name...");
+        // 1.4.0 (#73, #74): conditions that aren't flags - stat checks and sneaking - from the same list
+        if (appendCond) { names.insert(names.begin() + 1, {"#stat", "#partystat", "stealthy"}); labels.insert(labels.begin() + 1, {"+ a stat check: the hero's stat (stat:cha>=12)...", "+ a stat check: the best in the party (partystat:str>=14)...", "stealthy   (the party is sneaking: Camouflage)"}); }
         openListPicker(appendCond ? "Flag to add to the condition (& = and)" : "Flag", labels, 0, [this, names, onPick](int i) {
             if (i == 0) openTextPrompt("New flag name (letters, digits, _)", "my_flag", [this, onPick](const std::string& n) { std::string f; for (char c : n) if (isalnum((unsigned char)c) || c == '_') f += c; if (f.empty()) return; if (!flagDocs.count(f)) { flagDocs[f] = ""; flagDocsDirty = true; flagIndexDirty = true; } onPick(f); });
+            else if (names[i] == "#stat" || names[i] == "#partystat") {
+                std::string pre = names[i].substr(1) + ":";
+                std::vector<std::string> st = {"STR (strength)", "DEX (dexterity)", "CON (constitution)", "INT (intelligence)", "WIS (wisdom)", "CHA (charisma)"};
+                openListPicker(pre == "stat:" ? "Which of the hero's stats?" : "Which stat (the best in the party counts)?", st, 5, [this, pre, onPick](int s) {
+                    std::string sn = toLower(statName(s));
+                    openTextPrompt("At least how much " + std::string(statName(s)) + "? (12 is good, 14 is hard; >, <=, < or = in front for other tests)", "12", [pre, sn, onPick](const std::string& n0) {
+                        std::string n = trim(n0); if (n.empty()) return; if (isdigit((unsigned char)n[0])) n = ">=" + n;
+                        int a, b; std::string op; if (!parseStatCheck(sn + n, a, op, b)) return; onPick(pre + sn + n); }); });
+            }
             else onPick(names[i]);
         });
     }

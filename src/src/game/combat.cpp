@@ -1231,7 +1231,7 @@ void Game::combatAI(float dt) {
     if (u.rift) { combatEndTurn(); return; }
     // 1.4.0 (#63) a draught when badly hurt - Hard: every living foe, Normal: leaders and bosses, Story: never; once a fight
     if (!u.friendly() && !u.potionUsed && !u.summoned && !u.ch.mechanical && !u.ch.undead && u.ch.ap >= 3 && u.ch.hp * 100 < u.ch.maxHP(*gd) * 35 && (aiSmart() >= 2 || (aiSmart() == 1 && (u.ch.boss || u.ch.role == "leader")))) {
-        u.potionUsed = true; u.ch.ap -= 3; int h = u.ch.maxHP(*gd) * 35 / 100; u.ch.hp = std::min(u.ch.maxHP(*gd), u.ch.hp + h);
+        u.potionUsed = true; u.ch.ap -= 3; int h = u.ch.maxHP(*gd) * (aiSmart() >= 2 ? 35 : 20) / 100; u.ch.hp = std::min(u.ch.maxHP(*gd), u.ch.hp + h);
         addFloat(u.x, u.y, "+" + std::to_string(h), C::Green); cb.log.push_back(u.ch.name + " gulps down a healing draught."); gAudio.play("potion"); return;
     }
     // 1.4.0 (#63 routed): run for it - the reachable tile farthest from every foe
@@ -1282,6 +1282,7 @@ void Game::combatAI(float dt) {
         if ((int)i == (u.friendly() ? cb.focusParty : cb.focusEnemy)) sc -= u.friendly() ? 12 : (aiSmart() == 0 ? 5 : aiSmart() == 1 ? 12 : 24);   // the side piles onto one target (1.4.0: harder on Hard)
         if (!u.friendly() && aiSmart() >= 2 && (o.ch.hasEffect("stun") || o.ch.hasEffect("freeze") || exposed(u, o))) sc -= 10;   // Hard: goes for the helpless and the exposed
         if (o.summoned) sc += 8;                                                      // the summoner matters more than the summon
+        { bool wards = false; for (auto& w : cb.units) if (w.ch.alive && &w != &o && w.friendly() == o.friendly() && !w.ch.ward.empty() && w.ch.ward == o.ch.creatureId) wards = true; if (wards) sc -= 25; }   // 1.4.0: kill whatever shields the boss first
         if (map->dark && !u.ch.darkvision && !lit(o.x, o.y)) sc += 12;
         sc += rng.range(0, !u.friendly() && aiSmart() == 0 ? 20 : 8);
         if (sc < bestScore) { bestScore = sc; best = (int)i; }

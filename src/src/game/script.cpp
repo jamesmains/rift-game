@@ -157,6 +157,12 @@ SVal Game::scriptFn(ScriptRun& r, const std::string& n, const std::vector<SVal>&
     if (n == "platesdown") return SVal::num(platesIn(s0(), true));
     if (n == "crateat") return SVal::num(map && map->crateAt((int)n0(), (int)n1()) ? 1 : 0);
     if (n == "lorefile") return SVal::num(foundFiles.count(s0()) ? 1 : 0);
+    // 1.4.0 (#73): stat("cha") = the hero's stat with gear, partystat("str") = the best living member's (as the conditions)
+    if (n == "stat" || n == "partystat") { std::string nm = toUpper(s0()); int st = -1; for (int i = 0; i < ST_COUNT; i++) if (nm == statName(i)) st = i;
+        if (st < 0) { err = n + "() needs str, dex, con, int, wis or cha (got '" + s0() + "')"; return SVal::num(0); }
+        if (party.members.empty()) return SVal::num(0);
+        int have = party.members[0].stat(st, *gd); if (n == "partystat") for (auto& m : party.members) if (m.alive) have = std::max(have, m.stat(st, *gd));
+        return SVal::num(have); }
     err = "unknown function " + n + "()";
     return SVal::num(0);
 }

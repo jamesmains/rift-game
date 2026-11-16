@@ -55,13 +55,31 @@ quest=Orin: Let Them Rest
 approve=cleric:5
 option=Let's go.|end
 
+# 1.4.0 (#81): Litany of Names if he says the names, Grave Ward if he seals the crypt instead (Loyal: stronger).
 [lich_turnin]
 speaker=Orin
-text=Then it is done. I will say the names tonight, all of them. Take this - it was blessed for the crypt's guardian long ago. It should guard you now.
+text=Then it is done. Take this - it was blessed for the crypt's guardian long ago. It should guard you now. And tonight... I could say the names, all of them. Or I could go back down and seal the deep chamber, so nothing ever wears their faces again.
 give=holy_symbol:1
-set=q_orin_done
+option=Say the names, Orin. All of them.|lich_names
+option=Seal it. Make sure nothing walks out of there again.|lich_seal
+
+[lich_names]
+speaker=Orin
+text=(He says them until dawn: the miller, the twins, old Hanne, two hundred more. His voice never breaks.) ...Thank you. I feel them at my back now, the way a parish should be. They will help me mend you.
+set=q_orin_done,orin_said_names
 xp=120
 approve=cleric:15
+teach=orin:litany_of_names|litany_of_the_rested
+quest=Orin: Let Them Rest - done
+option=Rest well, Orin.|end
+
+[lich_seal]
+speaker=Orin
+text=(He comes back up grey with dust, the seal's words still on his lips.) It is closed. I said the warding the old priests used, and I find I remember all of it. Whatever comes for us next, it will have to come through that.
+set=q_orin_done,orin_sealed_crypt
+xp=120
+approve=cleric:12
+teach=orin:grave_ward|grave_seal
 quest=Orin: Let Them Rest - done
 option=Rest well, Orin.|end
 

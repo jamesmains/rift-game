@@ -26,7 +26,9 @@ const std::vector<std::string>& scriptActionKeys() {
         // 1.1.10, for scripts and dialogue alike
         "time", "sound", "encounter", "weather", "stat", "script",
         // 1.4.0 (#76/#77)
-        "resetcrates", "lorefile"};
+        "resetcrates", "lorefile",
+        // 1.4.0
+        "teach"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }
@@ -46,7 +48,8 @@ static const std::map<std::string, std::pair<int, int>>& fnTable() {
         {"random", {1, 2}}, {"chance", {1, 1}}, {"places", {0, 0}}, {"placename", {1, 1}}, {"placemap", {1, 1}}, {"placex", {1, 1}}, {"placey", {1, 1}},
         {"distance", {1, 1}}, {"leagues", {1, 1}}, {"mapname", {1, 1}}, {"itemname", {1, 1}}, {"count", {1, 1}}, {"at", {2, 2}}, {"contains", {2, 2}},
         {"add", {2, 2}}, {"len", {1, 1}}, {"upper", {1, 1}}, {"lower", {1, 1}}, {"find", {2, 2}}, {"min", {2, 2}}, {"max", {2, 2}}, {"abs", {1, 1}}, {"var", {1, 1}},
-        {"mid", {2, 3}}, {"squash", {1, 1}}, {"plates", {0, 1}}, {"platesdown", {0, 1}}, {"crateat", {2, 2}}, {"lorefile", {1, 1}}};   // 1.4.0
+        {"mid", {2, 3}}, {"squash", {1, 1}}, {"plates", {0, 1}}, {"platesdown", {0, 1}}, {"crateat", {2, 2}}, {"lorefile", {1, 1}},   // 1.4.0
+        {"stat", {1, 1}}, {"partystat", {1, 1}}};   // 1.4.0 (#73)
     return t;
 }
 const std::vector<std::string>& scriptFunctions() { static std::vector<std::string> k; if (k.empty()) for (auto& f : fnTable()) k.push_back(f.first); return k; }

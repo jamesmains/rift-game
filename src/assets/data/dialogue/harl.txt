@@ -1,0 +1,30 @@
+# 1.4.0 (#74): Captain Harl after her band left Thornhollow (talked into it, scared off, or paid). She drinks at the
+# Copper Kettle in Brasswick (placement show=caravan_bandits_gone) and remembers how you did it.
+[start]
+speaker=Captain Harl
+text=Well, well. Pell's problem-solver. Sit, if you like - it's honest ale, mostly.
+option=Spending my gold, Harl?|paid|caravan_ransom
+option=There was never any guard march, you know.|bluff|caravan_talked&!caravan_scared
+option=No hard feelings?|scared|caravan_scared
+option=What will you do now?|now
+option=Goodbye.|end
+
+[paid]
+speaker=Captain Harl
+text=Every copper. (She raises her mug to you.) The lads drink to you nightly. Best customer Thornhollow ever had.
+option=Don't make me regret it.|end
+
+[bluff]
+speaker=Captain Harl
+text=I worked that out about a mile down the road. (She laughs.) Clever. I'd have done the same. No hard feelings - it was a cold camp anyway.
+option=Glad you see it that way.|end
+
+[scared]
+speaker=Captain Harl
+text=Feelings? (She looks at your hands, not your face.) You'd have done it. I've buried enough people to know the look. We're drovers now. Honest work. Mostly.
+option=Keep it that way.|end
+
+[now]
+speaker=Captain Harl
+text=Drove cattle for the Brasswick butchers, guard the odd wagon. Turns out merchants pay better than they bleed. Who knew.
+option=Good luck, Harl.|end

@@ -68,6 +68,7 @@ y=7
 aggro=5
 level=2
 flag=bandit_camp_grp_1
+hide=caravan_bandits_gone
 link=bandit_camp_boss
 
 [enemy]
@@ -81,6 +82,7 @@ goal=protect:caravan_driver
 goaltext=Keep Pell's captured driver alive
 ongoal=flag:caravan_driver_saved;gold:40;notify:Pell's driver is safe - he presses a purse into your hand and runs for Brasswick.
 ongoalfail=flag:caravan_driver_lost;notify:The driver is dead.
+hide=caravan_bandits_gone
 
 [enemy]
 group=wolf,bandit_shieldbearer,bandit_archer
@@ -89,6 +91,7 @@ y=15
 aggro=5
 level=2
 flag=bandit_camp_grp_3
+hide=caravan_bandits_gone
 link=bandit_camp_boss
 
 [enemy]
@@ -106,6 +109,7 @@ y=27
 aggro=5
 level=2
 flag=bandit_camp_grp_6
+hide=caravan_bandits_gone
 
 [enemy]
 group=bandit
@@ -114,6 +118,7 @@ y=7
 aggro=5
 level=2
 flag=bandit_camp_grp_7
+hide=caravan_bandits_gone
 
 [enemy]
 group=wolf
@@ -130,6 +135,7 @@ y=6
 aggro=6
 level=2
 flag=bandit_leader_dead
+hide=caravan_bandits_gone
 ondefeat=flag:q_caravan_done;item:mayor_seal:1;notify:You found the merchant's stolen goods and a strange seal.
 link=bandit_camp_boss
 
@@ -221,3 +227,29 @@ y=5
 title=Crumpled note
 sprite=27,14
 text=Boss - the new strongroom lock is set. Four dials: FOUR, SEVEN, TWO, ONE. Learn it and burn this. Don't tell Vosk. - R.
+
+# 1.4.0 (#74): the Stolen Caravan has other ways through - talk or pay at the gate (Captain Harl answers for the camp;
+# her band then leaves: caravan_bandits_gone hides every bandit group), or sneak into the storeroom with Camouflage on.
+[npc]
+id=lookout
+npc=bandit_lookout
+x=22
+y=26
+show=!caravan_bandits_gone&!caravan_parley_refused&!bandit_leader_dead
+
+[trigger]
+x=2
+y=28
+w=5
+h=2
+script=dialogue:caravan_stash
+flag=caravan_stolen
+require=q_caravan>=1&!q_caravan_done&stealthy
+
+[trigger]
+x=2
+y=28
+w=5
+h=2
+script=log:Crates stamped PELL'S PROVISIONS are stacked here, but the camp is wide awake - you would never carry them out unseen. (Sneak in with Camouflage on, or deal with the captain.)
+require=q_caravan>=1&!q_caravan_done&!stealthy

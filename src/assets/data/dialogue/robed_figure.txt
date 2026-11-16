@@ -2,8 +2,44 @@
 speaker=Robed Figure
 text=The Unmade King stirs. The shards return to him. You carry one - no, you carry MORE. Give them to us, and be spared the unmaking.
 option=Who are you people?|who
+option=You don't want the shards. You were sent to bring me somewhere. Where?|lie|stat:wis>=12
+option=Take off the robe and walk away, while you still have legs to walk on.|scare|partystat:str>=14
 option=Never.|fight
 option=I'll think about it.|end
+
+# 1.4.0 (#73): spot the lie (WIS), then talk him out of it (CHA) - or frighten him off (party STR). Either way he drops
+# the sigil and Vell's note and runs; the quest starts as if the fight had happened (cult_fought hides him,
+# cult_aftermath_done keeps the square's trigger quiet).
+[lie]
+speaker=Robed Figure
+text=(His eyes flick to the south-east, towards the dead metro stairs, before he can stop them.) I - the Hierophant wants the bearer brought below. Alive. He says the sky opens wider with a willing key. ...I wasn't meant to say that.
+option=Vell will open the sky and you'll be the first thing it eats. Go home.|talked|stat:cha>=13
+option=Then you've said enough.|fight
+
+[talked]
+speaker=Robed Figure
+text=(He looks at his own hands for a long moment. Then he pulls the violet sigil from his robe and drops it at your feet, with a folded note.) I have a sister in Brasswick. I'll... I'll go and see her. Don't tell them it was me.
+give=cult_sigil
+set=cult_fought,cult_aftermath_done,cult_talked,q_cult=1
+xp=150
+approve=cleric:5,warrior:-2
+quest=The Open Sky
+next=note
+
+[scare]
+speaker=Robed Figure
+text=(He takes a step back, and another. The robe comes off over his head; a violet sigil and a folded note fall out of it.) I never - I only carried messages! (He runs for the north gate and does not look back.)
+give=cult_sigil
+set=cult_fought,cult_aftermath_done,cult_scared,q_cult=1
+xp=150
+approve=warrior:3,cleric:-2
+quest=The Open Sky
+next=note
+
+[note]
+speaker=$hero
+text=The note is in a careful hand: "Bring the bearer below. The Hierophant will open the sky with or without the shards. - V." Below. Below what? Someone in Ashfall must have seen where these people come and go.
+option=(Ask around.)|end
 
 [who]
 speaker=Robed Figure

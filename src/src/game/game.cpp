@@ -969,6 +969,12 @@ bool Game::evalCond(const std::string& cond) const {
         else if (startsWith(c, "equipped:")) { std::string id = c.substr(9); for (auto& m : party.members) for (int s = 0; s < SL_COUNT; s++) if (m.equip[s] == id) val = true; }
         else if (startsWith(c, "fav:")) { std::string id = c.substr(4); for (auto& m : party.members) for (auto& f : m.favs) if (!f.empty() && (id == "any" || f == "spell:" + id || f == "item:" + id)) val = true; }
         else if (startsWith(c, "map:")) val = mapId == c.substr(4);
+        // 1.4.0 (#73): stat:cha>=12 = the hero's stat (with gear); partystat:str>=14 = the best in the party (living members)
+        else if (startsWith(c, "stat:") || startsWith(c, "partystat:")) { bool best = c[0] == 'p'; int st = 0, want = 0; std::string op;
+            if (parseStatCheck(c.substr(best ? 10 : 5), st, op, want) && !party.members.empty()) { int have = party.members[0].stat(st, *gd);
+                if (best) { bool any = false; for (auto& m : party.members) if (m.alive) { int v = m.stat(st, *gd); if (!any || v > have) have = v; any = true; } }
+                val = statCheckPasses(have, op, want); } }
+        else if (c == "stealthy") val = stealthSteps > 0;   // 1.4.0 (#74): Camouflage (or another stealth) is on
         else if (c == "lit") { val = lightSteps > 0; for (auto& m : party.members) for (int s = 0; s < SL_COUNT; s++) if (const ItemDef* d = m.equip[s].empty() ? nullptr : gd->item(m.equip[s])) if (d->light > 0) val = true; }   // 1.1.7: a torch, light spell or light-giving gear is on
         else if (startsWith(c, "kills:")) { auto p = split(c.substr(6), ':'); auto it = bestiary.find(p[0]); val = it != bestiary.end() && it->second >= (p.size() > 1 ? atoi(p[1].c_str()) : 1); }
         else if (c.find(">=") != std::string::npos) { auto p = split(c, '>'); auto it = flags.find(trim(p[0])); int v = it == flags.end() ? 0 : it->second; val = v >= atoi(p[1].c_str() + 1); }
@@ -1147,6 +1153,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
         int* f = sn == "travels" ? &stats.travels : sn == "kills" ? &stats.kills : sn == "chests" ? &stats.chests : sn == "crafted" ? &stats.crafted : sn == "bounties" ? &stats.bounties : sn == "fights" ? &stats.fightsWon : nullptr;
         if (f) *f += d; }
     else if (k == "rest") { for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; }
+    else if (k == "teach") teachAction(v);   // 1.4.0 (#81): teach=bram:spell|loyal_spell - a lasting ability (standing.cpp)
 }
 
 void Game::updateDialogue(InputState& in, float dt) {
@@ -1235,7 +1242,7 @@ void Game::drawDialogue(Canvas& cv, InputState& in) {
         for (int r = 0; r < vis; r++) {
             int i = first + r; bool sel = i == dlgSel;
             if (sel) cv.fillRect(20, oy + r * oh - 1, SCREEN_W - 40, oh, armed ? RGB(70, 55, 20) : RGB(40, 34, 20));
-            std::string label = (sel ? "> " : "  ") + n.options[avail[i]].text;
+            std::string label = (sel ? "> " : "  ") + dialogueCheckTag(n.options[avail[i]].conds) + n.options[avail[i]].text;   // 1.4.0 (#73): "[CHA 12] " in front of a stat check
             if (ts == 2) while (label.size() > 4 && ctx.font->width(label, 2) > SCREEN_W - 52) label = label.substr(0, label.size() - 4) + "..";
             UI::text(ctx, 26, oy + r * oh, label, !armed ? C::Gray : sel ? C::Yellow : C::LtGray, ts);
         }

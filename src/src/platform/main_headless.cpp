@@ -184,6 +184,10 @@ int main(int argc, char** argv) {
                 if (key == "inputtext") { got = g.inputBuf; num = false; return true; }
                 if (key == "deskfiles") { got.clear(); for (auto& f : app.desktop.loreFiles()) got += (got.empty() ? "" : ",") + f; num = false; return true; }   // My Computer's list
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
+                // 1.4.0: spells:<member> = the spells member n knows (comma list); answers = the talk box's answers as shown
+                // (only those whose conditions hold, with their [CHA 12] tags), joined by " | "
+                if (startsWith(key, "spells:")) { int mi = atoi(key.substr(7).c_str()); got.clear(); if (mi >= 0 && mi < (int)g.party.members.size()) for (auto& sp : g.party.members[mi].spells) got += (got.empty() ? "" : ",") + sp; if (got.empty()) got = "none"; num = false; return true; }
+                if (key == "answers") { got.clear(); if (g.mode == GMode::DIALOGUE) { auto it = g.dialogues.find(g.dlgId); if (it != g.dialogues.end()) { auto nt = it->second.nodes.find(g.dlgNode); if (nt != it->second.nodes.end()) for (auto& o : nt->second.options) { bool ok = true; for (auto& c : o.conds) if (!g.evalCond(c)) ok = false; if (ok) got += (got.empty() ? "" : " | ") + dialogueCheckTag(o.conds) + o.text; } } } if (got.empty()) got = "none"; num = false; return true; }
 #ifndef TRIFFALL_NO_EDITOR
                 if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer
                 if (startsWith(key, "sheetcat:")) { auto q = split(key.substr(9), ':'); app.editor.syncBooks(); Tile t = q.size() >= 2 ? parseTile(q[1] + "@" + q[0]) : Tile{}; got = std::string(1, app.editor.cellCat(t)); num = false; return true; }   // sheetcat:<sheet>:c,r
