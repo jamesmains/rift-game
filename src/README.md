@@ -28,6 +28,52 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.4.0 deeper fights, puzzles, and more ways through quests
+
+* **Cover you can plan around:** when you move, every tile you can reach shows a bar on each side that would give
+  cover against the enemies who can see it there (short = half, long = full). Shooting at someone from the open side
+  of their cover makes them **EXPOSED** (+15% to hit and to crit). **Defend** in cover doubles it.
+* **Spells meet cover:** single-target spells lose a quarter of their damage to half cover and half to full cover (the
+  target preview says so). Blasts, lines, cones, chains and grenades don't care - that's their job.
+* **Cover that changes:** grenades and blasts smash crates, tables and barrels; fire burns wooden ones. **Shield Bash**
+  shoves its target a tile back, out of its cover. New **Smoke Bomb** and the Scavenger's **Smoke Screen**: whoever stands
+  in smoke can only be hit from right next to them.
+* **Terrain matters:** shock runs through water to everyone standing in it; fire spells set grass alight and the fire
+  spreads; cold blasts leave ice. Some monsters put out braziers in the dark - you can light them again.
+* **Status combos:** shock on a frozen or chilled foe = **SHATTER**, fire on a frozen one = **THAW**, fire on a poisoned
+  one = **FLARE**, cold on a burning one = **STEAM**. Frost spells always chill. **Mark Target** now marks an enemy for
+  the whole party; the Scavenger's **Scan Weakness** makes the next hit a critical. The Journal has a new **Tactics** page.
+* **Spell shapes:** Lightning tears through a line; **Chain Lightning** really jumps from body to body, weaker each jump.
+* **Bosses with tricks:** big bosses wind up their worst attack a turn ahead and mark the tiles in red - move. Some are
+  shielded by their servants (kill the Lich's necromancer first). Notes near each boss's lair hint at the trick.
+* **Enemies with roles:** shield-bearers protect their archers, snipers hold a lane, supports buff, and when a band's
+  leader falls the rest may run. **Hard** foes flank, focus fire and drink potions; Story foes go easier.
+* **Fights with goals:** keep Pell's captured driver alive at Thornhollow, cut the Wreck's reactor feed, close the rift
+  tears in the Scar.
+* **Surprise:** sneak up unseen and your party gets a free first round - walk into the dark without a light and the
+  monsters that see in it get one instead. Torches burn down in fights too.
+* **Classes:** each class has a passive and gains a perk at ranks 4, 8 and 12; many spells grow stronger with ranks in
+  their class; every class's spells now arrive by rank 12. One out-of-combat ability per class: Mage **Rime** (freeze
+  water), Warrior **Heave**, Scavenger **Jumpstart** and **Hack**, Cleric **Light**, Ranger **Camouflage** and **Sense
+  Treasure**. (Old saves: Knock becomes Rime, Flashlight becomes Jumpstart.)
+* **Weapons and loot:** every weapon family has a trait - spears reach 2 tiles, axes cleave, daggers backstab, maces
+  crush armour, bows arc over cover, rifles stay steady at range, pistols are quick, shotguns spread. Rare loot often
+  carries an effect that changes how you play (ignores half cover, crits set foes alight...). Named uniques have
+  signature effects, and four new ones hide in the marsh, the Research Annex, the metro and the barrow.
+* **Stat checks in dialogue:** answers like "[CHA 12] You don't want trouble." appear when your hero (or, for
+  "[Party STR 14]", your strongest member) has what it takes - persuade, intimidate or catch a lie with the goblins,
+  the bandits and the cult.
+* **More ways through quests:** the Stolen Caravan, the Hermit's Riddle, Water Rights and Ashwing can be talked, paid,
+  sneaked or fought through, and the world shows how you did it afterwards.
+* **Companion quests change them:** each companion's personal quest now ends with a choice that teaches them a new
+  ability - a stronger one while they're Loyal.
+* **Obstacles and puzzles:** freeze a stream, power a dead lift, fry a sealed tech door, find what only shows in the
+  light. Lever-order, pressure-plate (push the crates) and combination-lock puzzles in several dungeons.
+* **Terminals and desktop clues:** terminals in the lab, the metro and the ship ask for passwords - the clues are in
+  files on the desktop's My Computer, and new files appear as you find data disks.
+* **Editor:** new tile kind, spell, creature, item, class and enemy-group fields (all with guide topics), reusable
+  puzzle scripts with arguments, crates and pressure plates, and the needs= picker knows the new obstacles.
+
 ## 1.3.4 crunchier sound effects, every sound trigger in the Editor
 
 * **Crunchier, retro sound:** the Pixel Combat effects (fights, spells, footsteps, map changes) now play through a

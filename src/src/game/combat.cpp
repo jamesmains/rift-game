@@ -1400,6 +1400,16 @@ void Game::combatAI(float dt) {
             for (auto& p : path) { spent += tileMoveCost(p.first, p.second); if (spent > u.ch.move) break; walk.push_back(p); if (range > 1 && chebyshev(p.first, p.second, t.x, t.y) <= range && combatLOS(p.first, p.second, t.x, t.y)) break; }
             if (!walk.empty()) { cb.aiPath = walk; cb.stepTimer = 0; return; }
         }
+        // 1.4.0: no way to walk up to it (a turret behind a counter, a gap in a wall) - shooters and casters look for a
+        // reachable tile they can hit it from instead of standing still all fight
+        int reachR = range;
+        for (auto& sid : u.ch.spells) if (const SpellDef* sp = gd->spell(sid)) if (sp->dmgMax > 0 && u.ch.mp >= sp->cost) reachR = std::max(reachR, sp->range);
+        if (reachR > 1 && u.ch.size == 1) {
+            combatComputeReachable(); cb.reachDirty = true;
+            int bx = -1, by = -1, bs = 1 << 30;
+            for (auto& r : cb.reachable) { if (chebyshev(r.first, r.second, t.x, t.y) > reachR || !combatLOS(r.first, r.second, t.x, t.y) || groundAt(r.first, r.second, 1)) continue; int s = chebyshev(r.first, r.second, u.x, u.y); if (s < bs) { bs = s; bx = r.first; by = r.second; } }
+            if (bx >= 0) { auto pth = aiWalkTo(cb.selectedUnit, bx, by); if (!pth.empty()) { cb.aiPath = pth; cb.stepTimer = 0; return; } }
+        }
     }
     combatEndTurn();
 }

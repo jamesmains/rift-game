@@ -129,7 +129,7 @@ level=2
 flag=bandit_camp_grp_8
 
 [enemy]
-group=bandit_leader,bandit_shieldbearer,bandit_archer
+group=bandit_leader,bandit,bandit_archer
 x=10
 y=6
 aggro=6

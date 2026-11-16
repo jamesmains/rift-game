@@ -1,3 +1,34 @@
+# Balance notes
+
+## 1.4.0 re-run (after the combat changes of #55-#72, #78-#80)
+
+Same method as 1.0 below: `tools/pacing.sh warrior 1 1 2 3` (run here through a PowerShell copy of it), Normal, three
+seeds, with and without god mode, on the 1.4.0 build (cover preview, exposed targets, spells vs cover, combos, wind-ups,
+roles, morale, traits, perks, the reworked side quests...).
+
+| Checkpoint | Hero level | Gold carried | Kills | Bot time (seeds 1-3) |
+|---|---|---|---|---|
+| Goblin chief dead | 2-3 | 90-105 | 18-23 | 3 min |
+| After Pell's caravan | 4 | 420-480 | 37-40 | 7.5-8 min |
+| Lich dead | 5 | 650-680 | 45-62 | 13-16 min |
+| Golem dead | 6 | 850-890 | 63-77 | 17-21 min |
+| Hierophant dead | 7 | 930-1,020 | 104-114 | 24-27.5 min |
+| Hull Walker dead | 8 | 930-1,020 | 115-124 | 30-36 min |
+| Entering the Scar | 8 | 1,180-1,300 | 125-135 | 32-38 min |
+| After the Unmade King | 9 | 1,600-1,790 | 140-155 | 44.5-50 min |
+
+- The curve is about the same as 1.0, one level lower at the end (9 instead of 10) and a few minutes longer: fights take
+  more turns now that cover, wards and wind-ups matter and the bot doesn't play the tricks.
+- Survival runs: all three seeds are wiped by the Lich again, as in 1.0 - he is still the first wall for the bot. The
+  bot now goes for the necromancer that wards him (the party AI hits whatever wards a boss first), but it doesn't bring
+  fire oil or dodge Grave Nova. A person who reads the note by the crypt's stairs should do better than the bot.
+- Changed during the re-run: a boss's healing draught on Normal heals 20% (35% on Hard) - the goblin chief's was
+  turning the first boss fight; the Bandit Captain's own group is back to plain bandits (shield-bearers stay with the
+  archers of the two groups linked to him) - a level-3 bot party met all three at once and lost; casters and shooters
+  with no path to their target now walk to a tile they can hit it from (a lab turret behind a gap stalled a fight).
+- Knobs if testers bounce off: crypt group `level=`, the Lich's `ward=necromancer` (remove it to make him a plain
+  fight), `windup=` on any boss, the new bandit creatures' stats, `aiSmart()` in combat.cpp for how hard Hard plays.
+
 # Balance notes for 1.0
 
 How the difficulty and reward curve was checked, what changed, and what still needs a person.
