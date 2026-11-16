@@ -16,8 +16,6 @@ editor-edits/
 # 1.3.0: licensed music (Pixel Fantasy by AlkaKrab) may not be redistributed as-is: kept out of git, unpacked from
 # assets\packs by tools\unpack-music.ps1 (build.ps1 runs it)
 src/assets/audio/music/pixel_fantasy/
-# the owner's own test campaign (third-party tileset): stays on this PC and out of hand-out builds
-src/assets/campaigns/test/
 # the project notes stay on this PC (owner's rule)
 CLAUDE.md
 .claude/

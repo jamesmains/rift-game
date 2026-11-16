@@ -1,0 +1,62 @@
+# 1.7.0 (#140): the Update button. A copy without update-source.txt (like this test) never offers one; updatesource
+# points the updater at a releases\ folder (fixtures next to this script). Only a NEWER version whose folder holds
+# Triffall.exe is offered. Yes on the dialog asks the platform to start the updater (headless only writes its script).
+installed
+frames 3
+expect update == none
+expect updatebutton == 0
+updatesource fixtures/update_old
+expect update == none
+updatesource fixtures/update_incomplete
+expect update == none
+updatesource fixtures/update_releases
+expect update == 99.0.0
+frames 3
+expect updatebutton == 1
+shot update_taskbar.png
+deskaction about
+frames 3
+shot update_about.png
+key ESC
+frames 3
+deskaction update
+frames 2
+expect topwindow == Update Triffall
+shot update_dialog.png
+expect updaterequest == 0
+key ENTER
+frames 3
+expect updaterequest == 1
+updatelaunch
+expect updatescript == 1
+#
+# 1.7.0 (#145): deleting an adventure. A new campaign (Editor) with a save of its own...
+newcampaign Doomed Isle
+expect edcampaign == doomed_isle
+campaign doomed_isle
+newgame Ada warrior 1
+saveslot 1
+expect campaignsave:doomed_isle:1 == 1
+todesktop
+frames 3
+launchcampaign doomed_isle
+expect launchcampaign == doomed_isle
+shot delete_button.png
+# Delete... (bottom right of the Play page), then Yes
+click 575 420
+frames 3
+expect topwindow == Delete Adventure
+shot delete_confirm.png
+key ENTER
+frames 3
+expect campaigns == triffall,tutorial
+expect campaignsave:doomed_isle:1 == 0
+expect launchcampaign == triffall
+expect edcampaign == triffall
+expect campaign == triffall
+# the main story and the Tutorial can't be deleted: no button, and the delete itself refuses
+launchcampaign tutorial
+shot no_delete_tutorial.png
+deletecampaign tutorial
+deletecampaign triffall
+expect campaigns == triffall,tutorial

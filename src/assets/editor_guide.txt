@@ -627,6 +627,11 @@ To make one:
 While a campaign is selected the editor shows only that campaign's own files,
 never the base game's. Tiles, sprites and sounds are shared by all campaigns.
 
+To delete one: Campaign button > "- Delete a campaign...", pick it and confirm.
+Its folder and its saves are removed for good (since 1.7.0). The base game and
+the Tutorial can't be deleted. Players can do the same with Delete... on the
+launcher's Play page.
+
 Advanced: inherit=1 in campaign.txt makes a campaign build on the base game.
 Files it lacks then come from assets/data and entries it defines replace base
 entries with the same id. Base entries show as "(base)" in the lists; editing

@@ -55,8 +55,9 @@ Copy-Item "src\README.md" "$out\README.txt"
 & "$PSScriptRoot\tools\pull-editor-edits.ps1" -ManifestFor $out   # assets-manifest.txt: how assets\ looked as built, to spot Editor edits later
 Write-Host "Built $out\Triffall.exe (v$version, $kind)" -ForegroundColor Green
 
-# 1.3.0: campaigns that git ignores (the owner's own test campaigns, e.g. with a bought tileset) stay in build\game and
-# the installed copy, but never go into a copy to hand out (-Package, the release zip)
+# 1.3.0: campaigns that git ignores (the owner's own test campaigns, e.g. with a bought tileset) stay in build\game, but
+# never go into a copy to hand out (-Package, the release zip, and since 1.7.0 the releases\<version> folder - so not
+# into the installed copy either). None is ignored since 1.7.0 (#144 removed the local "test" campaign).
 function Remove-LocalCampaigns([string]$assetsDir) {
     Get-ChildItem (Join-Path $assetsDir "campaigns") -Directory -ErrorAction SilentlyContinue | ForEach-Object {
         git check-ignore -q "src/assets/campaigns/$($_.Name)/campaign.txt" 2>$null
@@ -92,10 +93,14 @@ if ($Release) {
     New-Item -ItemType Directory $dir | Out-Null
     Copy-Item "$out\Triffall.exe", "$out\README.txt", "$out\assets-manifest.txt" $dir
     Copy-Item "$out\assets" "$dir\assets" -Recurse
+    Remove-LocalCampaigns "$dir\assets"   # 1.7.0 (#143): the release folder is a complete hand-out copy too
     if (-not $Demo -and -not $NoEditor) {   # latest.json always points at the full game
+        # 1.7.0 (#143): "exe" names the release FOLDER (exe + assets). Idea Jotter's itch.io upload of "The release" pushes
+        # what exe names, and "1.6.5/Triffall.exe" sent the exe alone, without the game's assets. install.ps1 and the
+        # in-game updater go by "version" (releases\<version>\).
         $latest = [ordered]@{
             version  = $version
-            exe      = "$version/Triffall.exe"
+            exe      = "$version"
             zip      = "triffall-v$version-windows.zip"
             notes    = $Notes
             released = (Get-Date).ToString("s")
@@ -105,3 +110,8 @@ if ($Release) {
     }
     Write-Host "Released v$version$suffix to releases\ ($zip)" -ForegroundColor Green
 }
+
+# 1.7.0 (#143): end with success on purpose. Without this the script's exit code was the last native command's: the
+# final `git check-ignore` in Remove-LocalCampaigns returns 1 for a campaign that isn't ignored (the Tutorial), so every
+# -Package build "failed" in Idea Jotter (Zip, the itch.io upload of "Full game") although it had built fine.
+exit 0

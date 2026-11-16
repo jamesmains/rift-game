@@ -1,6 +1,7 @@
 #include "app.h"
 #include "game/tiles.h"
 #include "core/crash.h"
+#include "core/updater.h"
 
 bool App::init(const std::string& assets, const std::string& saves, AudioBackend* audio) {
     assetDir = assets; saveDir = saves; gAssetDir = assets;
@@ -18,10 +19,26 @@ bool App::init(const std::string& assets, const std::string& saves, AudioBackend
 #ifndef TRIFFALL_NO_EDITOR
     editor.init(&tileset, &font, &data, assets, &req); editor.exportDir = saves + "/exports"; editor.prefsPath = saves + "/editor.ini";
     editor.onSwitchCampaign = [this](const std::string& id) { if (game.running && game.campaignId != id) game.running = false; return game.switchCampaign(id); };
+    editor.onDeleteCampaign = [this](const std::string& id, std::string& err) { return deleteCampaign(id, err); };
 #endif
     if (!desktop.init(&tileset, &font, &data, &game, &settings, &req, saves, assets + "/icons.png")) { error = "Missing " + assets + "/icons.png"; return false; }
+    desktop.onDeleteCampaign = [this](const std::string& id, std::string& err) { return deleteCampaign(id, err); };
     crashInstall(saves, [this]() { return game.crashState(); }, [this]() { game.emergencySave(); });   // saves/crash.log + crash_recovery.sav
     state = AppState::BOOT;
+    return true;
+}
+
+// 1.7.0 (#145): delete a campaign the player added or made. Whatever has it loaded lets go of it first: the Editor (back
+// to the base game), the game (not running it any more), the launcher's pick.
+bool App::deleteCampaign(const std::string& id, std::string& err) {
+    if (isCoreCampaign(id)) { err = "it comes with the game."; return false; }
+#ifndef TRIFFALL_NO_EDITOR
+    if (editor.campaignId == id) editor.setCampaign("triffall");
+#endif
+    if (game.campaignId == id) { game.running = false; game.playtest = false; game.switchCampaign("triffall"); }
+    gAudio.music(""); gAudio.ambient("");   // a track streamed from its folder would keep the file open
+    if (!deleteCampaignFiles(assetDir, saveDir, id, err)) return false;
+    desktop.campaignDeleted(id);
     return true;
 }
 
@@ -100,6 +117,12 @@ void App::frame(InputState& in, float dt) {
     gAudio.setVolumes(settings.masterVolume, settings.musicVolume, settings.sfxVolume, settings.ambientVolume);
     font.style = Font::STYLE_CLEAR;   // 1.1.1: the only text face; the classic glyphs are kept for the logo
     gAudio.update(dt);
+    gUpdater.tick(dt);   // 1.7.0 (#140): looks for a newer release now and then (only a copy with update-source.txt)
+    if (state == AppState::GAME && game.running && gUpdater.available() && updateToldFor != gUpdater.newVersion()) {
+        updateToldFor = gUpdater.newVersion();
+        game.log("Triffall " + updateToldFor + " is ready to install: Exit to the desktop and click Update on the taskbar.");
+        game.notify("Update " + updateToldFor + " ready (on the desktop)");
+    }
     if (shuttingDown) {
         shutdownT -= dt; canvas.fillRect(0, 0, canvas.w, canvas.h, C::Black);
         { std::string msg = "It's now safe to turn off your computer."; font.draw(canvas, tileset, (canvas.w - font.width(msg)) / 2, canvas.h / 2 - 6, msg, RGB(255, 170, 40)); }

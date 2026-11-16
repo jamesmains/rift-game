@@ -34,6 +34,8 @@ public:
     float shutdownT = 0; bool shuttingDown = false, bootChimed = false;
 
     bool init(const std::string& assets, const std::string& saves, AudioBackend* audio = nullptr);
+    bool deleteCampaign(const std::string& id, std::string& err);   // 1.7.0 (#145): files + saves, and nothing still points at it
+    std::string updateToldFor;              // 1.7.0 (#140): the update version the running game was told about
     bool startPlaytest();                   // editor "Play here" (not compiled with TRIFFALL_NO_EDITOR): start or move the running game to editor.playMap at playX/playY
     void frame(InputState& in, float dt);   // update + draw into canvas
     bool wantsQuit() const { return quit; }

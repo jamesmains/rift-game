@@ -6,6 +6,7 @@
 #include "desktop.h"
 #include "../core/audio.h"
 #include "../core/version.h"
+#include "../core/updater.h"
 #include "../game/world.h"
 #include <algorithm>
 #include <cmath>
@@ -42,7 +43,7 @@ static const std::vector<std::string>& howToPlayLines() {
         "WHAT YOU LEARN", "  What you find out about a monster - what hurts it, what it", "  casts - goes into the Journal's Bestiary, for every save.", "  Lost a fight? Reload: you still know what you learned.", "  Hesk's Barrow and Greywood Cave hide places marked as deadly:", "  come back with the right weapon or element. There is always a", "  save shrine close by.", "",
         "TERMINALS", "  Old machines in the world ask for passwords. Notes, logs and", "  data disks nearby hold the clues; what you read is kept in", "  the Journal, under Notes.", "",
         "FAVORITES", "  In the Spells or Items menu, highlight something and press 1-8.", "  Utility spells (Light, Knock, Recall, Sense Treasure, Camouflage,", "  healing) can be cast from the Spells menu outside combat.", "",
-        "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one; new campaigns show", "  up on the Play page.", "",
+        "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one; new campaigns show", "  up on the Play page (Delete... there removes one you no longer", "  want; the main story and the Tutorial always stay).", "",
         "THE DESKTOP", "  Double-click an icon to open it. Right-click it (or E / pad X)", "  to change its picture. Drag icons anywhere: the desktop keeps", "  their places, pictures and the wallpaper for next time.",
     };
     return lines;
@@ -242,7 +243,10 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
             if (w.focusFirst && active) { w.focusFirst = false; w.focusX = dx + dw / 2; w.focusY = (nw2 >= 0 ? byB + 4 : byB + 34) + 13; }   // a controller starts on Continue (or New Game)
             if (launchButton(cv, in, dx, byB + 4, dw, 26, "Continue", nw2 >= 0, nw2 >= 0 && !game->running, active)) { loadSlotAsk(nw2); return; }
             if (launchButton(cv, in, dx, byB + 34, dw, 26, "New Game", true, nw2 < 0 && !game->running, active)) { openNewGame(cur->id); return; }
-            if (launchButton(cv, in, dx, byB + 64, dw, 24, "Load a save...", true, false, active)) { w.page = LP_SAVES; w.scroll = 0; w.pick = std::max(0, nw2); }
+            // 1.7.0 (#145): an adventure the player added or made can be deleted (not the main story or the Tutorial)
+            bool canDelete = !isCoreCampaign(cur->id); int lw2 = canDelete ? dw - 92 : dw;
+            if (launchButton(cv, in, dx, byB + 64, lw2, 24, "Load a save...", true, false, active)) { w.page = LP_SAVES; w.scroll = 0; w.pick = std::max(0, nw2); }
+            if (canDelete && launchButton(cv, in, dx + dw - 86, byB + 64, 86, 24, "Delete...", true, false, active)) { askDeleteCampaign(cur->id); return; }
         }
     } else if (w.page == LP_SAVES) {
         heading(cx, cy + 2, "Saves");
@@ -304,7 +308,16 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
             "Art: Urizen 1-bit tileset by vurmux (CC0).", "Desktop icons: Cute Desktop Icons by Mayke-Arth.", "Music: Pixel Fantasy by AlkaKrab.",
             "Sound effects: Pixel Combat by Helton Yan (CC BY 4.0).", "Engine: C++ software renderer + raylib.",
         };
-        f.draw(cv, *ctx.ts, cx, y, std::string("Version ") + TRIFFALL_VERSION, L_TEXT); y += 18;
+        f.draw(cv, *ctx.ts, cx, y, std::string("Version ") + TRIFFALL_VERSION, L_TEXT);
+        // 1.7.0 (#140): a newer version ready to install (only in a copy installed with an update source)
+        if (gUpdater.available()) {
+            std::string u = "Version " + gUpdater.newVersion() + " is ready.";
+            int ux = cx + f.width(std::string("Version ") + TRIFFALL_VERSION) + 16;
+            f.draw(cv, *ctx.ts, ux, y, u, L_AMBER);
+            int bx2 = ux + f.width(u) + 10, bw3 = std::min(110, cx + cw - bx2);
+            if (bw3 >= 70 && launchButton(cv, in, bx2, y - 5, bw3, 22, "Update now", true, true, active)) { askUpdate(); return; }
+        } else if (gUpdater.enabled()) f.draw(cv, *ctx.ts, cx + f.width(std::string("Version ") + TRIFFALL_VERSION) + 16, y, "(up to date)", L_DIM);
+        y += 18;
         for (auto* l : credits) { f.draw(cv, *ctx.ts, cx, y, l, L_TEXT); y += 13; }
         y += 10;
         int bw2 = std::min(200, cw);

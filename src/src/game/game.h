@@ -156,6 +156,10 @@ struct CampaignInfo {
     std::string defeat;                   // 1.1.7 defeat=SCRIPT: a lost fight doesn't end the game - the party gets back up and this runs (the tutorial)
 };
 std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base game first
+// 1.7.0 (#145): the campaigns that come with the game (the main story, the Tutorial) can't be deleted
+inline bool isCoreCampaign(const std::string& id) { return id.empty() || id == "triffall" || id == "tutorial"; }
+// removes assets/campaigns/<id> and its saves (saves/campaigns/<id>); false + err when it can't (core, unknown, locked files)
+bool deleteCampaignFiles(const std::string& assetDir, const std::string& saveDir, const std::string& id, std::string& err);
 CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, const std::string& dir);
 SaveSlotInfo readSaveSlotInfo(const std::string& path);
 // 1.6.1 (#135): every campaign keeps its own 3 slots + autosave. The main story's stay in the save folder itself (as

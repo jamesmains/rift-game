@@ -102,4 +102,5 @@ struct PlatformRequests {
     bool setIntegerScaling = false; bool integerScalingValue = true;
     int canvasW = 0, canvasH = 0;  // non-zero: the app's canvas changed size (editor); -1 = back to the game's screen size (1.2.2)
     std::string setClipboard; bool hasClipboardOut = false;
+    bool startUpdate = false;      // 1.7.0 (#140): the player chose Update: start the updater (core/updater.h) and quit
 };

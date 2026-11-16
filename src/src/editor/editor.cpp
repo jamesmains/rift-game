@@ -503,7 +503,22 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
             auto all = listCampaigns(assetDir); std::vector<std::string> names; int cur = 0;
             for (size_t i = 0; i < all.size(); i++) { names.push_back(all[i].name + (all[i].id == "triffall" ? "  (base game)" : "  [" + all[i].id + "]")); if (all[i].id == campaignId) cur = (int)i; }
             names.push_back("+ New campaign...");
-            openListPicker("Campaign to edit", names, cur, [this, all](int i) {
+            std::vector<CampaignInfo> deletable; for (auto& c : all) if (!isCoreCampaign(c.id)) deletable.push_back(c);
+            if (!deletable.empty()) names.push_back("- Delete a campaign...");   // 1.7.0 (#145)
+            openListPicker("Campaign to edit", names, cur, [this, all, deletable](int i) {
+                if (i == (int)all.size() + 1) {   // 1.7.0 (#145): pick one (never the base game or the Tutorial), confirm, delete
+                    std::vector<std::string> dn; for (auto& c : deletable) dn.push_back(c.name + "  [" + c.id + "]");
+                    openListPicker("Delete which campaign? (the base game and the Tutorial can't be deleted)", dn, 0, [this, deletable](int k) {
+                        if (k < 0 || k >= (int)deletable.size()) return;
+                        std::string id = deletable[k].id, nm = deletable[k].name;
+                        openConfirm("Delete the campaign " + nm + " (assets/campaigns/" + id + ") and its saves for good? This can't be undone." + (id == campaignId && anyDirty() ? " Its unsaved changes are lost too." : ""), [this, id, nm]() {
+                            std::string err;
+                            if (onDeleteCampaign && onDeleteCampaign(id, err)) say("Deleted the campaign " + nm + ".");
+                            else say("Couldn't delete " + nm + ": " + (err.empty() ? std::string("not possible here.") : err));
+                        });
+                    });
+                    return;
+                }
                 if (i >= (int)all.size()) { openTextPrompt("Name of the new campaign (it starts empty)", "", [this](const std::string& nm) { newCampaign(nm); }); return; }
                 bool any = anyDirty();
                 std::string id = all[i].id;

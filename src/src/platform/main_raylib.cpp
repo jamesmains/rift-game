@@ -3,6 +3,7 @@
 #include "../app.h"
 #include "../core/platform_services.h"
 #include "../core/crash.h"
+#include "../core/updater.h"
 #include <filesystem>
 #include <cstring>
 #include <cmath>
@@ -34,9 +35,11 @@ int main(int argc, char** argv) {
     std::string assets = base + "assets";
     std::string saves = base + "saves";
     if (!std::filesystem::exists(assets)) { assets = "assets"; saves = "saves"; } // running from the source tree
+    std::string savesArg;
     for (int i = 1; i + 1 < argc; i++)   // --saves <folder>: keep saves, settings and desktop layout there instead (fresh test runs)
-        if (std::strcmp(argv[i], "--saves") == 0) saves = argv[i + 1];
+        if (std::strcmp(argv[i], "--saves") == 0) saves = savesArg = argv[i + 1];
     std::error_code ec; std::filesystem::create_directories(saves, ec);
+    gUpdater.init(base, saves, savesArg);   // 1.7.0 (#140): only a copy with update-source.txt (install.ps1) looks for updates
 
     if (!gPlatform->init()) return 0;          // Steam asked us to relaunch through the client
     rl_audio_init();
@@ -126,6 +129,11 @@ int main(int argc, char** argv) {
         app.frame(in, dt);
         if (app.req.hasClipboardOut) { rl_set_clipboard(app.req.setClipboard.c_str()); app.req.hasClipboardOut = false; }
         if (app.wantsQuit()) break;
+        if (app.req.startUpdate) {   // 1.7.0 (#140): the helper waits for this process to end, installs, starts the game again
+            app.req.startUpdate = false; std::string err;
+            if (gUpdater.launch(err)) break;
+            app.desktop.showDialog("Update", "The update couldn't start: " + err + " Triffall keeps running as it is.");
+        }
 
         PlatformRequests& r = app.req;
         if (r.setFullscreen) { r.setFullscreen = false; bool was = fullscreen; if (r.fullscreenValue != fullscreen) { rl_toggle_borderless(); fullscreen = r.fullscreenValue; } if (!fullscreen) placeWindow(app.settings.scale, was); }

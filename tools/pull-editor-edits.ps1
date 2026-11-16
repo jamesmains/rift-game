@@ -82,7 +82,20 @@ foreach ($c in $copies) {
         }
         $results += [pscustomobject]@{ Copy = $c.Name; Rel = $rel; File = $file; BaseHash = $b; Action = $action }
     }
-    foreach ($rel in $base.Keys) { if (-not $now.ContainsKey($rel) -and -not $Quiet) { Write-Host "  (deleted in $($c.Name), left in src\assets: $rel)" -ForegroundColor DarkGray } }
+    # 1.7.0 (#145): a whole campaign deleted in that copy (the launcher's or the Editor's Delete) goes from src\assets too,
+    # when src still has it exactly as that copy had it (so nothing newer is lost). Never the Tutorial.
+    $goneCamps = @($base.Keys | Where-Object { $_ -match '^campaigns\\([^\\]+)\\campaign\.txt$' -and -not $now.ContainsKey($_) } | ForEach-Object { ($_ -split '\\')[1] })
+    $srcRoot = (Resolve-Path $srcAssets).Path.TrimEnd('\') + '\'
+    $removedCamps = @()
+    foreach ($id in $goneCamps) {
+        $dir = Join-Path $srcAssets "campaigns\$id"
+        if ($id -eq "tutorial" -or -not (Test-Path $dir)) { continue }
+        $same = $true
+        foreach ($f in Get-ChildItem $dir -Recurse -File) { if ($base[$f.FullName.Substring($srcRoot.Length)] -ne (Get-FileHash $f.FullName -Algorithm SHA256).Hash) { $same = $false; break } }
+        if ($same) { Remove-Item $dir -Recurse -Force; $removedCamps += "campaigns" + [char]92 + $id + [char]92; Write-Host "  Campaign $id was deleted in $($c.Name): removed from src\assets too" -ForegroundColor Cyan }
+        else { Write-Host "  Campaign $id was deleted in $($c.Name), but src\assets has newer files of it: left in src\assets" -ForegroundColor Yellow }
+    }
+    foreach ($rel in $base.Keys) { if (-not $now.ContainsKey($rel) -and -not $Quiet -and -not ($removedCamps | Where-Object { $rel.StartsWith($_) })) { Write-Host "  (deleted in $($c.Name), left in src\assets: $rel)" -ForegroundColor DarkGray } }
     Write-Manifest $c.Dir $now
 }
 $results

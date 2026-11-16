@@ -3,6 +3,7 @@
 // Usage: triffall_headless script.txt [outdir]
 #include "../app.h"
 #include "bot.h"
+#include "../core/updater.h"
 #include <cstdio>
 #include <map>
 #include <chrono>
@@ -28,6 +29,7 @@ int main(int argc, char** argv) {
     std::string clip; bool padMode = false; int fails = 0;
     auto step = [&](int n) { for (int i = 0; i < n; i++) { if (padMode) in.gamepadActive = true; app.frame(in, dt); if (app.req.hasClipboardOut) { clip = app.req.setClipboard; app.req.hasClipboardOut = false; } bool c = in.down[K_CTRL], sh = in.down[K_SHIFT]; in.beginFrame(); in.down[K_CTRL] = c; in.down[K_SHIFT] = sh; if (c) in.clipboard = clip; if (app.wantsQuit()) break; } };
     Bot bot(app, in, step, fails);
+    const std::string scriptDir = std::filesystem::path(argv[1]).parent_path().string();   // 1.7.0: test fixtures next to the script
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
             // 1.6.0 game commands
@@ -47,6 +49,12 @@ int main(int argc, char** argv) {
             if (cmd == "todesktop") { app.game.requestDesktop = true; step(2); return true; }   // the game hands back to the desktop (as Exit does)
             if (cmd == "installed") { app.desktop.markInstalled(); app.desktop.refreshCampaignIcons(); step(2); return true; }
             if (cmd == "launchcampaign") { app.desktop.openLauncher(-1, p[1]); step(2); return true; }   // the launcher with this adventure picked
+            // 1.7.0 (#140): updatesource DIR = look for updates in that releases\ folder (the script is only written, never run);
+            // updatelaunch = do what the Update dialog's Yes leads to (writes the helper script into <outdir>/triffall-update)
+            if (cmd == "updatesource") { gUpdater.dryRun = true; std::error_code uec; std::string usrc = std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1]; gUpdater.setSource(usrc, app.saveDir); gUpdater.checkNow(true); step(2); printf("  update: %s\n", gUpdater.available() ? gUpdater.newVersion().c_str() : "none"); return true; }
+            if (cmd == "updatelaunch") { gUpdater.dryRun = true; std::string err; bool ok = gUpdater.launch(err); printf("  updatelaunch ok=%d %s %s\n", ok ? 1 : 0, gUpdater.scriptPath.c_str(), err.c_str()); step(1); return true; }
+            // 1.7.0 (#145): deletecampaign ID = what the launcher's / Editor's Delete does after Yes (run from a copy of assets!)
+            if (cmd == "deletecampaign") { std::string err; bool ok = app.deleteCampaign(p[1], err); printf("  deletecampaign %s ok=%d %s\n", p[1].c_str(), ok ? 1 : 0, err.c_str()); step(2); return true; }
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
             if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
             // 1.6.2 (#136): aim [unit] = put the combat cursor on that unit (else the enemy nearest the active one), no confirm
@@ -214,6 +222,17 @@ int main(int argc, char** argv) {
                 if (key == "launcherpage") { got = "none"; for (auto& w : app.desktop.windows) if (w.type == "launcher") got = std::to_string(w.page); return true; }
                 if (key == "deskicons") { got.clear(); for (auto& d : app.desktop.iconDefs) got += (got.empty() ? "" : ",") + d.action; num = false; return true; }
                 if (key == "launchcampaign") { got = app.desktop.launchCampaign; num = false; return true; }
+                // 1.7.0: update = the version ready to install ("none"); updaterequest = 1 once Update was confirmed; updatebutton =
+                // 1 while the taskbar shows it; campaigns = every campaign id (launcher order); topwindow = the top desktop window's title
+                if (key == "update") { got = gUpdater.available() ? gUpdater.newVersion() : "none"; num = false; return true; }
+                if (key == "updaterequest") { got = app.req.startUpdate ? "1" : "0"; return true; }
+                if (key == "updatebutton") { got = app.desktop.updBtnW > 0 ? "1" : "0"; return true; }
+                if (key == "updatescript") { std::error_code ec; got = !gUpdater.scriptPath.empty() && std::filesystem::exists(gUpdater.scriptPath, ec) ? "1" : "0"; return true; }
+                if (key == "campaigns") { got.clear(); for (auto& c : listCampaigns(app.assetDir)) got += (got.empty() ? "" : ",") + c.id; num = false; return true; }
+#ifndef TRIFFALL_NO_EDITOR
+                if (key == "edcampaign") { got = app.editor.campaignId; num = false; return true; }
+#endif
+                if (key == "topwindow") { got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().title; num = false; return true; }
                 if (key == "deskslots") { app.desktop.refreshSlots(); got.clear(); for (int i = 0; i < 4; i++) got += app.desktop.slots[i].exists ? "1" : "0"; num = false; return true; }
                 if (startsWith(key, "campaignsave:")) { auto q = split(key.substr(13), ':'); std::error_code ec; got = q.size() == 2 && std::filesystem::exists(campaignSlotPath(app.saveDir, q[0], atoi(q[1].c_str()) - 1), ec) ? "1" : "0"; return true; }   // campaignsave:ID:N (N 1-3, 4 = autosave)
 

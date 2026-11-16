@@ -29,6 +29,15 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.7.0 updates from inside the game, deleting adventures
+
+* An installed copy of Triffall now notices when a newer version is ready: an Update button appears on the
+  taskbar (and on the launcher's About page). One click and Triffall closes, updates itself and starts again;
+  saves, settings and Editor changes are kept, and if anything goes wrong the old version stays.
+* Adventures you added or made can be deleted: Delete... on the launcher's Play page, or Campaign > Delete a
+  campaign... in the Editor. The main story and the Tutorial can't be deleted.
+* The builds handed out (the zip, itch.io uploads) contain the whole game again: one upload sent only the program.
+
 ## 1.6.3 an icon of its own
 
 * Triffall has its own icon: an amber T with a violet rift bolt, on the game's exe, its window, the taskbar and the
@@ -978,8 +987,9 @@ renders frames to PNG without a window - see `tests/`).
 A campaign is a separate game in `assets/campaigns/<id>/`: `campaign.txt` plus its own data files, in the same
 layout as `assets/data` (`maps/`, `dialogue/`, `items.txt`, `creatures.txt`, `classes.txt`, `spells.txt`, `shops.txt`,
 `quests.txt`...). It uses only its own folder; tiles (`tilekinds.txt` can be added to change or add tile kinds),
-sprites and sounds are shared. Each campaign gets its own **desktop icon**; double-clicking it
-opens New Game for that campaign, and saves remember which campaign they belong to.
+sprites and sounds are shared. Each campaign is listed on the launcher's **Play** page (double-click = New Game)
+and keeps its own saves. **Delete...** on that page (or the Editor's Campaign > Delete a campaign...) removes a
+campaign and its saves for good; the main story and the Tutorial can't be deleted.
 
 The easiest way to make one is the Editor's **Campaign > New campaign**, then the **Campaign tab**. `campaign.txt`:
 

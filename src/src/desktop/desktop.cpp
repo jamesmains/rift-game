@@ -3,6 +3,7 @@
 #include "../core/platform_services.h"
 #include "../game/tiles.h"
 #include "../core/version.h"
+#include "../core/updater.h"
 #include <algorithm>
 #include <ctime>
 #include <filesystem>
@@ -330,7 +331,42 @@ void Desktop::runAction(const std::string& a) {
     else if (a == "worldmap") { if (!game->running) showDialog("World Map", "The map shows the world of a running game. Start or load a game first."); else { game->openWorldMap(); launchGame = true; } }
     else if (a == "editor") { launchEditor = true; windows.clear(); }
     else if (a == "resume") { if (game->running) launchGame = true; }
+    else if (a == "update") askUpdate();   // 1.7.0 (#140)
     else if (a == "shutdown") showDialog("Shut Down", "Are you sure you want to shut down the computer? Unsaved progress will be lost.", [this]() { quit = true; }, true);
+}
+
+// 1.7.0 (#140): the Update button (taskbar, launcher's About page): what's new, what happens, then the updater
+void Desktop::askUpdate() {
+    if (!gUpdater.available()) {
+        showDialog("Triffall Update", gUpdater.enabled() ? std::string("Triffall is up to date (version ") + TRIFFALL_VERSION + ")." : "This copy of Triffall is updated by the store or site it came from.");
+        return;
+    }
+    std::string v = gUpdater.newVersion(), notes = gUpdater.notes();
+    if (notes.size() > 220) { notes = notes.substr(0, 217); size_t sp = notes.find_last_of(' '); if (sp != std::string::npos && sp > 150) notes.resize(sp); notes += "..."; }
+    std::string t = "Version " + v + " is ready (you have " + TRIFFALL_VERSION + ")." + (notes.empty() ? "" : " New: " + notes) +
+        " Triffall closes, updates itself and starts again in a few seconds. Saves and settings are kept.";
+    if (game->running) t += " The adventure you're playing now closes too: progress since your last save is lost.";
+    showDialog("Update Triffall", t, [this]() { if (req) req->startUpdate = true; }, true);
+}
+
+// 1.7.0 (#145): delete an adventure (campaign folder + its saves). The main story and the Tutorial can't be deleted.
+void Desktop::askDeleteCampaign(const std::string& id) {
+    if (isCoreCampaign(id)) { showDialog("Delete Adventure", "The main story and the Tutorial are part of Triffall and can't be deleted."); return; }
+    std::string name = id; for (auto& c : listCampaigns(assetDir)) if (c.id == id) name = c.name;
+    if (game->running && game->campaignId == id) { showDialog("Delete Adventure", "You're playing " + name + " right now. Exit that game first (Esc > Exit), then delete it."); return; }
+    showDialog("Delete Adventure", "Delete " + name + " from this computer? Its maps, data and saves are removed for good. This can't be undone.", [this, id, name]() {
+        std::string err;
+        if (!onDeleteCampaign || !onDeleteCampaign(id, err)) { showDialog("Delete Adventure", "Couldn't delete " + name + ": " + (err.empty() ? std::string("not possible here.") : err)); return; }
+        showToast("Deleted " + name + ".");
+    }, true);
+}
+void Desktop::campaignDeleted(const std::string& id) {
+    bool changed = false;
+    if (launchCampaign == id) { launchCampaign = "triffall"; changed = true; }
+    if (slotsCampaign == id) slotsCampaign = launchCampaign;
+    for (auto& w : windows) if (w.type == "new" && w.campaign == id) w.wantClose = true;
+    refreshSlots();
+    if (changed) saveDesktopSettings();
 }
 
 // 1.6.1: one list for the Start menu (update and draw used to keep two copies)
@@ -468,6 +504,14 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         if (actP(in, A_CONFIRM) && !justOpened) { runAction(items[startSel].action); return; }
         if (in.mousePressed[0] && !overStart && !(in.mouseX >= mx && in.mouseX < mx + 180 && in.mouseY >= my && in.mouseY < my + mh)) startOpen = false;
         if (startOpen) { mouseUsed = true; }
+    }
+    // 1.7.0 (#140): the taskbar's Update button
+    if (updBtnW > 0 && !isModal && in.mousePressed[0] && !mouseUsed && in.mouseX >= updBtnX && in.mouseX < updBtnX + updBtnW && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { mouseUsed = true; startOpen = false; gAudio.play("desktop_click"); askUpdate(); }
+    // after an update: say how it went (once)
+    if (!updateResultShown && gUpdater.resultPending && !isModal) {
+        updateResultShown = true; gUpdater.resultPending = false;
+        if (gUpdater.resultOk) showDialog("Triffall Update", "Triffall was updated to version " + (gUpdater.resultVersion.empty() ? std::string(TRIFFALL_VERSION) : gUpdater.resultVersion) + ". Your saves and settings were kept.");
+        else showDialog("Triffall Update", "The update to " + gUpdater.resultVersion + " didn't finish" + (gUpdater.resultText.empty() ? std::string(".") : ": " + gUpdater.resultText) + " Triffall " + TRIFFALL_VERSION + " is still installed, so nothing was lost.");
     }
     // taskbar app button (resume game)
     if (game->running && !isModal) { int bx = 2 + sbW + 6; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + 160 && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { launchGame = true; mouseUsed = true; } }
@@ -895,12 +939,23 @@ void Desktop::drawTaskbar(Canvas& cv, InputState& in) {
     }
     // tray with clock
     int tw = 70;
+    // 1.7.0 (#140): a newer version is ready: a button left of the tray (a blinking light while the pointer is away)
+    updBtnW = 0;
+    if (gUpdater.available()) {
+        std::string lbl = "Update to " + gUpdater.newVersion();
+        int bw = ctx.font->width(lbl) + 28, bx = UI::SCREEN_W - tw - 4 - 6 - bw;
+        bool hv = !modal() && in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY >= y + 4 && in.mouseY < y + 26;
+        bevelBox(cv, bx, y + 4, bw, 22, hv && in.mouseDown[0]);
+        bool lit = hv || fmodf(ctx.time, 1.6f) < 1.1f;
+        cv.fillRect(bx + 7, y + 11, 8, 8, DKSHADOW); cv.fillRect(bx + 8, y + 12, 6, 6, lit ? RGB(255, 200, 40) : RGB(120, 90, 20));
+        ctx.font->bold = hv; ctx.font->draw(cv, *ctx.ts, bx + 20, y + 9, lbl, DKSHADOW); ctx.font->bold = false;
+        updBtnX = bx; updBtnW = bw;
+    }
     bevelBox(cv, UI::SCREEN_W - tw - 4, y + 4, tw, 22, true);
     time_t t = time(nullptr); struct tm* lt = localtime(&t);
     char buf[16]; if (lt) strftime(buf, sizeof buf, "%H:%M", lt); else snprintf(buf, sizeof buf, "00:00");
     ctx.ts->draw(cv, TL::UI_SPEAKER, UI::SCREEN_W - tw + 2, y + 9, 1, DKSHADOW);
     ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 42, y + 9, buf, DKSHADOW);
-    (void)in;
 }
 
 void Desktop::drawStartMenu(Canvas& cv, InputState& in) {

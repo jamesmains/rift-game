@@ -81,6 +81,18 @@ std::vector<CampaignInfo> listCampaigns(const std::string& assetDir) {
     std::stable_sort(out.begin() + 1, out.end(), [](const CampaignInfo& a, const CampaignInfo& b) { return a.order < b.order; });   // base game stays first
     return out;
 }
+bool deleteCampaignFiles(const std::string& assetDir, const std::string& saveDir, const std::string& id, std::string& err) {
+    if (isCoreCampaign(id)) { err = "it comes with the game."; return false; }
+    if (id.find_first_of("/\\:") != std::string::npos || id == "." || id == "..") { err = "that isn't a campaign folder name."; return false; }
+    std::string dir = assetDir + "/campaigns/" + id;
+    if (!fileExists(dir + "/campaign.txt")) { err = "there is no campaign " + id + "."; return false; }
+    std::error_code ec;
+    std::filesystem::remove_all(dir, ec);
+    if (ec || std::filesystem::exists(dir)) { err = "some of its files are in use or read-only (" + ec.message() + ")."; return false; }
+    std::string sd = campaignSaveDir(saveDir, id);
+    if (!saveDir.empty() && sd != saveDir && std::filesystem::exists(sd, ec)) std::filesystem::remove_all(sd, ec);   // its own slots + autosave
+    return true;
+}
 bool Game::switchCampaign(const std::string& id) {
     std::string want = id.empty() ? "triffall" : id;
     auto all = listCampaigns(assetDir);

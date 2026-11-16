@@ -111,6 +111,15 @@ public:
     void setIconPicture(int index, int c, int r);                      // c < 0: back to the default
     void refreshCampaignIcons();           // one desktop icon per campaign folder in assets/campaigns
     void openNewGame(const std::string& campaignId);
+    // 1.7.0 (#145): delete an adventure the player added or made (never the main story or the Tutorial). App sets the
+    // hook (App::deleteCampaign: files, saves, the game's and the Editor's state); askDeleteCampaign asks first.
+    std::function<bool(const std::string& id, std::string& err)> onDeleteCampaign;
+    void askDeleteCampaign(const std::string& id);
+    void campaignDeleted(const std::string& id);   // forget it: the launcher's pick, the slots shown
+    // 1.7.0 (#140): the taskbar's Update button (drawn last frame at updBtnX, updBtnW wide; 0 = not shown)
+    int updBtnX = 0, updBtnW = 0;
+    bool updateResultShown = false;
+    void askUpdate();
 
 private:
     void drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool active);

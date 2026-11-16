@@ -413,6 +413,7 @@ public:
     // Files the campaign doesn't have yet are read from the base game and saved into the campaign (copy on write).
     std::string dataRoot, baseRoot, campaignId = "triffall"; bool campaignInherit = true;
     std::function<bool(const std::string&)> onSwitchCampaign;   // set by the app: loads the campaign's data into the game
+    std::function<bool(const std::string&, std::string&)> onDeleteCampaign;   // 1.7.0 (#145): set by the app (App::deleteCampaign)
     std::string readPath(const std::string& rel) const { std::string p = dataRoot + "/" + rel; if (dataRoot == baseRoot || !campaignInherit || fileExists(p)) return p; return baseRoot + "/" + rel; }
     void setCampaign(const std::string& id);
     void newCampaign(const std::string& name);
