@@ -17,11 +17,15 @@ void panel(Ctx& c, int x, int y, int w, int h, Color8 fill, Color8 border) {
 void panelTitle(Ctx& c, int x, int y, int w, int h, const std::string& title) {
     panel(c, x, y, w, h);
     Canvas& cv = *c.cv;
-    int tw = c.font->width(title) + 12;
+    // 1.5.1 (#103): measure the title as it is drawn (bold is 1 px wider per letter), and shorten one that is wider
+    // than the panel, so the text always sits inside its box.
+    c.font->bold = true;
+    std::string t = title;
+    while (t.size() > 4 && c.font->width(t) + 12 > w - 24) t = t.substr(0, t.size() - 4) + "..";
+    int tw = c.font->width(t) + 12;
     cv.fillRect(x + (w - tw) / 2, y - 2, tw, 16, C::Panel);
     cv.rect(x + (w - tw) / 2, y - 2, tw, 16, C::Gold);
-    c.font->bold = true;
-    textCenter(c, x + w / 2, y, title, C::Gold);
+    textCenter(c, x + w / 2, y, t, C::Gold);
     c.font->bold = false;
 }
 

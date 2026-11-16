@@ -1,0 +1,20 @@
+# 1.5.1 (#103): a message box's title sits inside its gold box (the box was measured without bold, so long titles
+# ran out of it), and a title wider than the box is shortened with "..".
+newgame Kai warrior 1 20261116
+god
+frames 30
+con clearmap goblin_cave
+teleport goblin_cave 23 19
+frames 120
+key DOWN
+frames 20
+shot sign_goblin.png
+expect mode == MESSAGE
+key ENTER
+frames 20
+con run message:A title much too long for any message box to hold on one line, it keeps going and going|Short text.
+frames 20
+shot long_title.png
+expect mode == MESSAGE
+key ENTER
+frames 20

@@ -28,6 +28,13 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.5.1 message titles fit their box
+
+* A sign's or letter's title no longer runs out of the gold box above the message; a title too long for the box is
+  shortened with "..".
+* The goblins' warning note in Greywood Cave hangs one step west, so it can be read with the keyboard or a gamepad
+  (before, only a mouse click could reach it).
+
 ## 1.5.0 a hard game on purpose: choices that cost, monsters with weak spots
 
 * **One difficulty, and it is hard.** No more Story / Normal / Hard: every monster has the old Hard numbers built in and

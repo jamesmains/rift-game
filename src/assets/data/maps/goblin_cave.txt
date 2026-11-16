@@ -308,7 +308,7 @@ text=Webs as thick as rope seal a side passage, too tough to cut. Bones hang in 
 
 [sign]
 template=paper_sign
-x=24
+x=23
 y=20
 title=Warning, scratched in goblin hand
 text=BIG MOTHER. NO GO. Twelve goblins went in, no goblins came out. Her poison eats you from inside and blades just stick in her. Fire is the only thing she fears. - by order of Grakk
