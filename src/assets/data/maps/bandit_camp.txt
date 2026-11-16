@@ -193,6 +193,7 @@ y=24
 title=Torn orders
 text=Shieldbearers stay with the bows - nobody gets an arrow-man while you stand. If the Captain falls, it's every man for himself. -- And keep the driver alive, he's worth a ransom.
 
+[sign]
 template=combo_lock
 x=12
 y=28
