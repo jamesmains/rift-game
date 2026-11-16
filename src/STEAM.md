@@ -6,7 +6,7 @@ Nothing here requires a Steam account until step 2; everything in step 1 can be 
 ## 0. What the build already does
 
 * **Achievements** are defined in `assets/data/achievements.txt` (33 shipped; the six 1.0 story ones are hidden until earned) and unlocked by the game
-  itself, stored in `saves/achievements.ini`, shown in the Win98 popup and the Achievements window.
+  itself, stored in `saves/achievements.ini`, shown in the desktop balloon popup and the Achievements window.
   Every unlock also goes through `PlatformServices::unlockAchievement(id)` (`src/core/platform_services.h`).
   The Steam implementation (`src/platform/steam_services.cpp`) forwards it to `SteamUserStats()->SetAchievement`.
   **The Steam-side achievement API names must equal the `id=` values in achievements.txt** (`first_blood`, …).

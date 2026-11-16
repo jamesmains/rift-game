@@ -1,7 +1,7 @@
 # Triffall
 
-An old-school open-world RPG with X-COM / Fallout-style turn-based tactical combat,
-wrapped in a fake Windows 98 desktop that serves as the main menu.
+An old-school open-world RPG with turn-based tactical combat,
+wrapped in a retro 90s PC desktop that serves as the main menu.
 
 Forty years ago the sky over Aldmoor tore open. When it closed, pieces of other worlds
 lay scattered across the land: a city of glass and asphalt, a starship, machines that
@@ -26,7 +26,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * Day/night, weather, shop hours; crafting and random affixes on loot; world map with fast travel
 * Journal with quests (map pins, checklists, branching endings and failure), bestiary, stats, notes; notice-board
   bounties; town reputation that moves shop prices; 33 achievements
-* A Win98 desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
+* A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
 ## 1.6.3 an icon of its own
@@ -622,7 +622,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   a night overworld, an ending theme, and ambient loops under the music (wind, cave drips, swamp, rain, town, machines,
   night insects, the Rift; 1.1.6: crypt, storm, forest, fire, sea) set per map (`[ambient]` in sounds.txt, `ambient=` in a
   map header; outdoors, rain/storm/snow and night replace it).
-* **First impression**: a logo splash after the BIOS lines, and on the very first launch a Win98 setup wizard whose last
+* **First impression**: a logo splash after the BIOS lines, and on the very first launch a retro setup wizard whose last
   page asks two real questions (tips, large text). The Readme starts with "How to play - the first ten minutes".
 * **Demo**: `cmake -DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`) builds the demo: no editor, the base campaign
   limited to the maps in `assets/data/demo.txt` (Hollowmere to Brasswick), the demo's ending when the Mayor sends you to
@@ -683,7 +683,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * **Resource nodes** are drawn in their own colour (ore copper, herbs green, tech cyan; `color=` on the gather object
   overrides it) and turn grey once picked; the small item icon that sat inside herb patches is gone.
 
-## Running (Windows)
+## Running
 
 Unzip and run `Triffall.exe`. The `assets/` folder must sit next to the exe; a `saves/`
 folder is created on first run (settings.ini + slot1-3.sav live there).
@@ -790,7 +790,7 @@ Load/Save icons still work when no game is running.
 * **Bounties**: each town's notice board posts a few offers per day; take up to 3 at a time, drop one from the
   journal (E), hand them in at the board. Courier jobs give you a letter and send you one way only.
 * **Achievements**: `achievements.txt` (conditions over stats and flags), unlocked across all save slots,
-  popped up Win98-style and listed in the desktop Achievements window. With a Steam build they are forwarded
+  popped up as desktop balloons and listed in the desktop Achievements window. With a Steam build they are forwarded
   to Steam (see `STEAM.md`).
 * **Dev console** (`, debug builds only: `build.ps1 -Dev`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
   weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run,
@@ -933,14 +933,14 @@ or on any platform:
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --config Release
 
-**Windows from Linux or macOS** (cross-compiling with llvm-mingw; this is how the 1.0 exe was built):
+**Cross-compiling from Linux or macOS** (with llvm-mingw; this is how the 1.0 exe was built):
 
     cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=tools/mingw-toolchain.cmake -DLLVM_MINGW=/path/to/llvm-mingw
     cmake --build build-win --target Triffall -j
 
 **The demo:** add `-DTRIFFALL_DEMO=ON` (or `build_windows.bat demo`); see STEAM.md "The demo".
 
-**Browser build (itch.io):** install [Emscripten](https://emscripten.org) (emsdk) and Ninja. On Windows,
+**Browser build (itch.io):** install [Emscripten](https://emscripten.org) (emsdk) and Ninja. On the build PC,
 `build-web.ps1` (in the project folder above `src`) does the rest: it trims the assets for the browser
 (`tools/web_assets.py`: only the music the demo plays, re-encoded smaller, no art sources), builds the demo and puts
 `index.html`, `index.js`, `index.wasm` and `index.data` in `build/dist/web` (`-Release` also zips them for upload,
@@ -964,7 +964,7 @@ renders frames to PNG without a window - see `tests/`).
     src/core/      software renderer (gfx), input, utils
     src/game/      data loading, world/maps, procedural generation, exploration,
                    combat, dialogue, menus, save/load
-    src/desktop/   the Windows 98 desktop shell
+    src/desktop/   the retro desktop shell
     src/editor/    Editor (edui.h widgets + editor.cpp)
     src/platform/  raylib shell (main_raylib.cpp + rl_shim.c) and the headless driver
     assets/        tiles.png (Urizen 1-bit tileset), icons.png, and data/

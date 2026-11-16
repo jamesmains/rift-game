@@ -248,7 +248,7 @@ void Game::drawAchievementPopups(Canvas& cv, float dt) {
         if (!a) continue;
         float t = p.second; float slide = t > 4.6f ? (5.0f - t) / 0.4f : t < 0.5f ? t / 0.5f : 1.0f;
         int w = 230, h = 44; int x = SCREEN_W - (int)(w * slide) - 4; int yy = y - (int)i * (h + 4);
-        // Win98 "balloon" style
+        // desktop "balloon" style
         cv.fillRect(x, yy, w, h, RGB(255, 255, 225)); cv.rect(x, yy, w, h, C::Black);
         cv.fillRect(x + 1, yy + 1, w - 2, 12, RGB(0, 0, 128)); ctx.font->draw(cv, *ctx.ts, x + 5, yy + 1, "Achievement unlocked", C::White);
         cv.fillRect(x + 4, yy + 16, 26, 26, RGB(200, 200, 200)); ctx.ts->draw(cv, a->tile, x + 5, yy + 17, 2);

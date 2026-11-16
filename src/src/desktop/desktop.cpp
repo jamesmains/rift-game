@@ -330,7 +330,7 @@ void Desktop::runAction(const std::string& a) {
     else if (a == "worldmap") { if (!game->running) showDialog("World Map", "The map shows the world of a running game. Start or load a game first."); else { game->openWorldMap(); launchGame = true; } }
     else if (a == "editor") { launchEditor = true; windows.clear(); }
     else if (a == "resume") { if (game->running) launchGame = true; }
-    else if (a == "shutdown") showDialog("Shut Down Windows", "Are you sure you want to shut down the computer? Unsaved progress will be lost.", [this]() { quit = true; }, true);
+    else if (a == "shutdown") showDialog("Shut Down", "Are you sure you want to shut down the computer? Unsaved progress will be lost.", [this]() { quit = true; }, true);
 }
 
 // 1.6.1: one list for the Start menu (update and draw used to keep two copies)
@@ -813,7 +813,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
     } else if (w.type == "minesweeper") { drawMinesweeper(cv, w, in, active);
     } else if (w.type == "solitaire") { drawSolitaire(cv, w, in, active);
     } else if (w.type == "setup") {
-        // first launch: a Win98 setup wizard. The components are for fun; the two options at the end are real settings.
+        // first launch: a retro setup wizard. The components are for fun; the two options at the end are real settings.
         GameSettings& s = *settings;
         cv.fillRect(w.x + 4, w.y + 24, 110, w.h - 64, RGB(0, 0, 128));
         for (int k = 0; k < 8; k++) { uint32_t h = (uint32_t)(k * 2654435761u); cv.put(w.x + 10 + (int)(h % 98), w.y + 30 + (int)((h >> 9) % 80), RGB(200, 200, 255)); }
@@ -1014,7 +1014,7 @@ void Desktop::drawBoot(Canvas& cv, float t) {
     f.draw(cv, *ctx.ts, 18, 70, "an old-school RPG", RGB(200, 190, 150));
     f.draw(cv, *ctx.ts, cv.w - 16 - f.width(TRIFFALL_VERSION_LABEL), 20, TRIFFALL_VERSION_LABEL, DIMG);
     cv.hline(16, 90, cv.w - 32, RGB(70, 70, 70));
-    const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: Pentium II 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Loading Aldmoor...", "Starting Triffall..."};
+    const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Loading Aldmoor...", "Starting Triffall..."};
     int n = sizeof(lines) / sizeof(lines[0]);
     int show = std::min(n, (int)(t / 0.2f));
     for (int i = 0; i < show; i++) f.draw(cv, *ctx.ts, 16, 104 + i * 14, lines[i], GREY);

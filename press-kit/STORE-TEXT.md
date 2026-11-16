@@ -1,6 +1,6 @@
-# Triffall - store text (as of 1.6.2)
+# Triffall - store text (as of 1.6.5)
 
-Text for the Steam and itch.io pages, checked against the game as it is at 1.6.2 (first written at 1.3.0). Pictures: `press-kit/art/` (key
+Text for the Steam and itch.io pages, checked against the game as it is at 1.6.5 (first written at 1.3.0). Pictures: `press-kit/art/` (key
 art, capsules, itch cover and banner) and `press-kit/screenshots/16x9_1920x1080/` (combat first). Remake both with
 `.\tools\make-presskit.ps1` after a build.
 
@@ -14,17 +14,23 @@ eligibility). The tagline below is for the page text, the key art and itch.io on
 1.6.2 (the 1.5 combat UI: hit and crit chances in the target box, IMMUNE / WEAK! labels; the 1.6.1 desktop and
 launcher). The desktop no longer has lore files or Field Notes (#137), and the game has one difficulty (1.5.0).
 
+1.6.5 (#142), the owner's rule: **public text never names other games, other companies or their products** (the old
+text compared the fights to two classic games and named the desktop's operating system). Describe the game by what it
+does ("turn-based squad tactics", "a retro 90s PC desktop"). The only exception is the store's own platform field (the OS line of Steam's system
+requirements form), which the store needs. Minesweeper and Solitaire are kept as the names of the desktop's two games
+(both are generic game names, used by many games).
+
 ## Name and tagline
 
 Not for Steam capsules (see above).
 
-**Triffall** - An old-school tactical RPG hiding inside a Windows 98 desktop.
+**Triffall** - An old-school tactical RPG hiding inside a retro PC desktop.
 
-## Short description (Steam, 300 characters max - this is 269)
+## Short description (Steam, 300 characters max - this is 267)
 
 Forty years after the sky tore open, the Rift is waking again. Lead a party of four across an open world of towns,
-dungeons and pieces of other worlds, in X-COM / Fallout-style turn-based fights fought right where you stand. It all
-starts on a faked Windows 98 desktop.
+dungeons and pieces of other worlds, in classic turn-based squad tactics fought right where you stand. It all starts
+on a lovingly faked 90s PC desktop.
 
 ## About this game
 
@@ -32,11 +38,11 @@ Forty years ago the sky over Aldmoor tore open. When it closed, pieces of other 
 a city of glass and asphalt, a starship, machines that still hum. Now the Rift is waking again - and your village
 elder has sent for you.
 
-Triffall is an open-world RPG with X-COM / Fallout-style turn-based tactical combat, fought right where you stand.
+Triffall is an old-school open-world RPG with turn-based tactical combat, fought right where you stand.
 Build a party of four, multiclass across five classes, light your way through dark dungeons, craft and enchant gear,
 and make three story choices that decide how it ends.
 
-And it all starts on a lovingly faked Windows 98 desktop - Minesweeper and Solitaire included.
+And it all starts on a lovingly faked 90s PC desktop - Minesweeper and Solitaire included.
 
 ### Features
 
@@ -48,7 +54,7 @@ And it all starts on a lovingly faked Windows 98 desktop - Minesweeper and Solit
 - Darkness that matters: torches, lanterns, light spells and enemies that see in the dark
 - Deep crafting with skill, failure, fine and masterwork results, enchanting and salvage
 - Day and night, weather, shop hours, town reputation and fast travel by coach
-- A Windows 98 desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
+- A retro 90s PC desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
 - A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
 - Fills any screen shape, wide monitors included (a classic 4:3 mode is in Settings)
 - Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
@@ -67,7 +73,9 @@ The free demo is the first chapter of the base game (Hollowmere, Millbrook, Grey
 and the Hermit's Hut) plus the full Tutorial. Saves carry over to the full game. In the demo's `assets/data/demo.txt`,
 set `store=` to the full game's page once it exists: the demo desktop then shows a "Wishlist Triffall" icon.
 
-## System requirements (Windows)
+## System requirements (Steam's form)
+
+The OS line is the store's platform field (the one place the OS is named; keep it out of the page text).
 
 - OS: Windows 10 or later, 64-bit
 - Processor: any x64 CPU
@@ -103,42 +111,8 @@ has to change.
 RPG, Turn-Based Tactics, Party-Based RPG, Open World, Pixel Graphics, Retro, Fantasy, Sci-fi, Crafting, Level Editor,
 Old School, Singleplayer
 
-## Idea Jotter's brief (paste-ready, 1.6.2)
+## Idea Jotter's entry
 
-The project's brief in Idea Jotter still had store-facing lines from before 1.5 ("Easy / Normal / Hard", "130+ items",
-"a bonus campaign", generated music, lore files in My Computer). Corrected text for its fields:
-
-**Features** (one per line):
-
-```
-Turn-based tactical combat with action points, cover, flanking, overwatch and aimed shots
-Swords, bows, guns, lasers, spells and grenades; 50+ monsters and 200+ items
-5 classes you multiclass into rank by rank, and 5 recruitable companions with banter, approval and personal quests
-A hand-made overworld, 6 towns, dungeons and an extra chapter
-A 7-stage main quest with three choices and three endings; 20 side quests and town bounties
-Darkness that matters: torches, lanterns, light spells and enemies that see in the dark
-Deep crafting with skill, failure, fine and masterwork results, enchanting and salvage
-Day and night, weather, shop hours, town reputation and fast travel by coach
-A Windows 98 desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
-A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
-Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
-Accessibility: large text, clear font, text speed, colour-blind colours, reduced flashing
-Soundtrack: the Pixel Fantasy music pack by AlkaKrab
-```
-
-**More info**, first line: `Requirements: Windows 10 or later (64-bit), any x64 CPU, 2 GB RAM, OpenGL 3.3, about 200 MB.`
-(the rest of that field is still right).
-
-**Brief sections** with outdated lines:
-- core, step 1: "the first launch runs a setup wizard" -> "the first launch runs a setup wizard that puts the Triffall
-  launcher on the desktop".
-- core, step 2: "From the desktop you start a New Game (base game, the Tutorial, or another campaign)" -> "From the
-  Triffall launcher you continue, load or start an adventure (the main story, the Tutorial, or another campaign)".
-- core, step 7: "lore files in My Computer, achievements" -> "achievements in the launcher".
-- look: "Chiptune music per area with ambient loops (wind, rain, caves, town, machines)" -> "Music per area from the
-  Pixel Fantasy pack by AlkaKrab; crunchy Pixel Combat sound effects by Helton Yan".
-- nice: drop "Hand-made or replaced music and sound effects (current ones are generated)" (done at 1.3.0/1.3.3).
-- assets: "campaigns (Tutorial, The Gullwatch Light)" -> "campaigns (Tutorial)".
-- questions: "Do the generated music and ambient loops sound good by ear?" -> "Do the music picks and the crunched
-  sound effects sound right by ear?"; "the project folder is riftfall" is no longer true (it's C:\Apps\Triffall).
-- ask: "at 1.0.10" -> "at 1.6.2".
+At 1.6.5 the project's Description, Features, Tags, More info and the brief's vision and references were rewritten
+without other games' or companies' names (handed to Idea Jotter through `.ideajotter-text.json`). More info no longer
+names the OS in its requirements line.

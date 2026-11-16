@@ -30,7 +30,7 @@ that a store or a lawyer would accept. The only contact is itch.io (comments on 
 message to post (the owner sends it, from their own account):
 
 > Hi Mayke! I'm using your Cute Desktop Icons 32x32 in Triffall, a commercial RPG for Steam and itch.io (the icons are
-> on its fake Windows 98 desktop; you're in the credits). Could you confirm in writing that I may use the icons in a
+> on its retro PC desktop; you're in the credits). Could you confirm in writing that I may use the icons in a
 > paid game, as part of the game only (not resold as icons)? A reply here is enough. A licence line on the page
 > (for example CC BY 4.0) would help everyone else too. Thank you for the lovely icons!
 

@@ -1031,7 +1031,7 @@ see its when and text.
 see: achievement.id, achievement.cond, achievement.hidden, achievement.tile
 
 Achievements (achievements.txt) unlock across all save slots of the game and
-pop up Win98-style. Each has a name, description, icon and a condition made of
+pop up as desktop balloons. Each has a name, description, icon and a condition made of
 stat counters and flags, checked twice a second while playing. Unlocked ones
 are stored in saves/achievements.ini and listed in the desktop Achievements
 window (and sent to Steam in a Steam build).
@@ -5880,7 +5880,7 @@ Format: any text. Default: the id.
 
   name=First Blood
 
-Keep it short: the popup is small. A pun or a nod to the moment works well. It is shown in bold on the Win98-style balloon popup.
+Keep it short: the popup is small. A pun or a nod to the moment works well. It is shown in bold on the desktop-style balloon popup.
 
 == achievement.desc | Achievement description
 see: achievement.hidden

@@ -2,10 +2,10 @@
 
 Pictures for Triffall's public pages (itch.io, Steam, social links, press). Every picture is made from the game's
 own pixels and letters, scaled up by whole numbers (no blur, no painted or AI-made art): the TRIFFALL logo is the
-boot screen's lettering, the text is the game's own font, the window and taskbar are the game's Windows 98 desktop.
+boot screen's lettering, the text is the game's own font, the window and taskbar are the game's retro desktop.
 
-**Tagline:** An old-school tactical RPG hiding inside a Windows 98 desktop.
-**Tags:** RPG, turn-based, tactical, open world, party-based, pixel art, retro, Windows 98, fantasy, sci-fi, crafting, moddable
+**Tagline:** An old-school tactical RPG hiding inside a retro PC desktop.
+**Tags:** RPG, turn-based, tactical, open world, party-based, pixel art, retro, 90s nostalgia, fantasy, sci-fi, crafting, moddable
 
 Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the art, music and sounds: [RIGHTS.md](RIGHTS.md).
 
@@ -30,7 +30,7 @@ Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the 
 | `screenshots/native/01_combat.png` | 960x540 | screenshot: a fight (hit and crit chances, cover) |
 | `screenshots/native/04_overworld.png` | 960x540 | screenshot: the open world |
 | `screenshots/native/06_dialogue.png` | 960x540 | screenshot: talking to Elder Mara in Hollowmere |
-| `screenshots/native/11_launcher.png` | 960x540 | screenshot: the Windows 98 desktop and the Triffall launcher |
+| `screenshots/native/11_launcher.png` | 960x540 | screenshot: the retro desktop and the Triffall launcher |
 | `screenshots/native/16_editor_maps.png` | 1280x720 | screenshot: the built-in Editor (it draws at 1280x720 on a 1920x1080 screen) |
 | `screenshots/16x9_1920x1080/*.png` | 1920x1080 | all 17 store screenshots, 2x (combat first) |
 | `art/steam/header_capsule_920x430.png` | 920x430 | Steam header capsule |

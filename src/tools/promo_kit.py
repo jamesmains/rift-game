@@ -8,7 +8,7 @@ gives the game; 1280x720 Editor shots). press-kit/README.md lists every file it 
 
 1.6.3 (#139): everything is the game's own pixels at whole-number scales. The TRIFFALL logo is drawn from the game's
 classic bold letters (tiles.png rows 47-49, as the boot screen draws it), all other text is the game's Clear face
-(Spleen 6x12 from src/src/core/font_spleen.h), the window frame and taskbar are the desktop's Windows 98 look. Each
+(Spleen 6x12 from src/src/core/font_spleen.h), the window frame and taskbar are the desktop's retro 90s look. Each
 picture is laid out on a small "pixel canvas" and scaled up with nearest-neighbour only. No system fonts, no painted
 or generated art (Steam asks about AI-made content).
 """
@@ -25,7 +25,7 @@ SHOTS_NATIVE = os.path.join(KIT, "screenshots", "native")
 for d in list(DIRS.values()) + [SHOTS_HD, SHOTS_NATIVE]:
     os.makedirs(d, exist_ok=True)
 
-TAGLINE = "An old-school tactical RPG hiding inside a Windows 98 desktop."
+TAGLINE = "An old-school tactical RPG hiding inside a retro PC desktop."
 SHORT = "an old-school tactical RPG"
 
 # ---------------------------------------------------------------- the game's colours
@@ -133,7 +133,7 @@ def dither_fade(im, side, width, color=BLACK):
     return im
 
 def bevel(img, x, y, w, h, outer=(LIGHT, BLACK), inner=(WHITE, DARK)):
-    """Windows 98 raised edge: outer and inner light (top/left) and dark (bottom/right) lines."""
+    """Retro raised edge: outer and inner light (top/left) and dark (bottom/right) lines."""
     px = img.load()
     for i, (lt, dk) in enumerate((outer, inner)):
         for X in range(x + i, x + w - i): px[X, y + i] = lt; px[X, y + h - 1 - i] = dk
@@ -141,7 +141,7 @@ def bevel(img, x, y, w, h, outer=(LIGHT, BLACK), inner=(WHITE, DARK)):
         px[x + w - 1 - i, y + i] = dk; px[x + i, y + h - 1 - i] = dk
 
 def window(img, x, y, w, h, title, client):
-    """A Windows 98 window like the desktop's (grey frame, navy-to-blue title bar, close box) around `client`."""
+    """A retro window like the desktop's (grey frame, navy-to-blue title bar, close box) around `client`."""
     px = img.load()
     for Y in range(y, y + h):
         for X in range(x, x + w): px[X, Y] = GREY
@@ -230,7 +230,7 @@ def icon(size):
 
 # ---------------------------------------------------------------- the kit
 def cover():
-    """itch.io cover 630x500 (also Idea Jotter's project cover): the fight inside a Windows 98 window on the desktop."""
+    """itch.io cover 630x500 (also Idea Jotter's project cover): the fight inside a retro window on the desktop."""
     W, H, k = 315, 250, 2
     c = Image.new("RGB", (W, H), TEAL)
     lg = logo(3); paste_rgba(c, lg, ((W - lg.width) // 2, 9))

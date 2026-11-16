@@ -2,7 +2,7 @@
 // first-run installer puts there. It is the hub for everything about the game: continue / start / load an adventure
 // (each campaign keeps its own saves, #135), How to Play, Achievements, settings, the Editor and the credits.
 // 1.6.2 (#137): the Field Notes and Files pages were removed (little used); what you learn about monsters is in the
-// Journal's Bestiary, and the documents that hold terminal passwords are found in the world (signs, data disks). Win98 window outside, the game's own night-and-rift look inside.
+// Journal's Bestiary, and the documents that hold terminal passwords are found in the world (signs, data disks). Retro window outside, the game's own night-and-rift look inside.
 #include "desktop.h"
 #include "../core/audio.h"
 #include "../core/version.h"

@@ -1,4 +1,4 @@
-// Turn-based tactical combat (X-COM / Fallout style) fought in place on the current map.
+// Turn-based tactical combat (action points, cover, flanking) fought in place on the current map.
 #include "game.h"
 #include "../core/audio.h"
 #include "tiles.h"

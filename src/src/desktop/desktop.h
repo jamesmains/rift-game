@@ -1,4 +1,4 @@
-// The fake Windows 98 desktop that serves as the main menu.
+// The retro PC desktop that serves as the main menu.
 #pragma once
 #include <map>
 #include <array>
