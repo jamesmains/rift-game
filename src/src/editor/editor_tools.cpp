@@ -158,7 +158,8 @@ std::vector<Editor::LintItem> Editor::lintDialogue(const std::string& text, cons
         else if (k == "join") { std::string c = joinClassOf(v); if (trim(v).empty()) {} else   // 1.1.9: join=<npc id> (an NPC with companion=) or class:Name:col,row; empty = the NPC being talked to
             if (trim(v).find(':') == std::string::npos && npcSec(v) && c == trim(v)) err(ln, "join=" + trim(v) + ": that NPC has no companion= class (NPCs tab)");
             else if (!gd->cls(c)) err(ln, trim(v).find(':') == std::string::npos ? "join= names no companion NPC or class '" + trim(v) + "'" : "join= uses unknown class '" + c + "'"); }
-        else if (k == "leave") { if (!gd->cls(v)) err(ln, "leave= uses unknown class '" + v + "'"); }
+        else if (k == "leave" || k == "fell") { std::string c = trim(split(v, '|')[0]); if (!gd->cls(c)) err(ln, k + "= uses unknown class '" + c + "'"); }   // 1.5.0: leave=/fell=CLASS|text
+        else if (k == "fight") { curClosed = true; if (trim(v).empty()) err(ln, "fight= needs the flag= of an enemy group on the map"); }   // 1.5.0 (#85)
         else if (k == "combat") { curClosed = true; for (auto& c : split(v, ',')) if (!trim(c).empty() && !gd->creature(trim(c))) err(ln, "combat= uses unknown creature '" + trim(c) + "'"); }
         else if (k == "spawn") { auto p = split(v, ','); if (p.size() < 3) err(ln, "spawn needs creature,x,y"); else if (!gd->creature(trim(p[0]))) err(ln, "spawn= uses unknown creature '" + trim(p[0]) + "'"); }
         else if (k == "teleport") { curClosed = true; auto p = split(v, ','); if (p.size() < 3) err(ln, "teleport needs map,x,y"); else if (!isMap(trim(p[0]))) err(ln, "teleport to unknown map '" + trim(p[0]) + "'"); }

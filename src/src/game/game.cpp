@@ -741,6 +741,11 @@ bool Game::groupShown(const EnemyGroup& e) const {
     if (!e.hideFlag.empty() && evalCond(e.hideFlag)) return false;
     return true;
 }
+// 1.5.0 (#84): Map can't read conditions, so EnemyGroup::hidden caches show=/hide= for Map::enemyAt / occupied (bumping,
+// interacting, pathing, combat placement). Refreshed with the world state and every frame in updateNpcs.
+void Game::refreshGroupsShown(Map& m) {
+    for (auto& e : m.enemies) e.hidden = (!e.showFlag.empty() && !evalCond(e.showFlag)) || (!e.hideFlag.empty() && evalCond(e.hideFlag));
+}
 
 // One 4-way step for the group toward (tx,ty), along the shortest walkable path (around walls, other groups and NPCs)
 // until it is within `reach` tiles of it. Cells further than `limit` from the group's leash point are off limits
@@ -891,6 +896,7 @@ void Game::interactAt(int x, int y) {
 }
 
 void Game::updateNpcs(float dt) {
+    refreshGroupsShown(*map);   // 1.5.0 (#84)
     for (auto& n : map->npcs) {
         n.hidden = extra.count("hidenpc_" + mapId + "_" + n.id) > 0;
         if (!n.showFlag.empty() && !evalCond(n.showFlag)) n.hidden = true;
@@ -907,7 +913,7 @@ void Game::updateNpcs(float dt) {
         if (mode == GMode::EXPLORE && !inCombat())   // ambush groups that are gone (beaten or lost) leave the list
             map->enemies.erase(std::remove_if(map->enemies.begin(), map->enemies.end(), [](const EnemyGroup& e) { return e.temp && e.defeated; }), map->enemies.end());
         for (auto& e : map->enemies) {
-            if (e.defeated || e.chasing) continue;
+            if (e.defeated || e.chasing || e.hidden) continue;
             e.wanderTimer -= (int)(dt * 1000);
             if (e.wanderTimer > 0) continue;
             int away = chebyshev(e.x, e.y, e.homeX, e.homeY);
@@ -930,7 +936,7 @@ void Game::updateNpcs(float dt) {
         return;
     }
     for (auto& e : map->enemies) {
-        if (e.defeated) continue;
+        if (e.defeated || e.hidden) continue;   // 1.5.0 (#84): a hidden group doesn't walk or start fights
         e.wanderTimer -= (int)(dt * 1000);
         if (e.wanderTimer <= 0) {
             e.wanderTimer = rng.range(600, 2000);
@@ -1080,7 +1086,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     if (k == "set") { for (auto& f : split(v, ',')) { auto p = split(trim(f), '='); if (p.size() == 2) setFlag(trim(p[0]), atoi(p[1].c_str())); else if (!trim(f).empty()) setFlag(trim(f)); } }
     else if (k == "flag") setFlag(v);
     else if (k == "clear") for (auto& f : split(v, ',')) flags.erase(trim(f));
-    else if (k == "inc") { flags[v] = flags[v] + 1; }
+    else if (k == "inc") { int n = flags[v] + 1; setFlag(v, n); }
     else if (k == "give" || k == "item") { for (auto& it : split(v, ',')) { auto p = split(trim(it), ':'); if (trim(p[0]).empty()) continue; giveItem(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1); } }
     else if (k == "take") { for (auto& it : split(v, ',')) { auto p = split(trim(it), ':'); party.removeItem(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1); if (auto* d = gd->item(trim(p[0]))) log("Gave " + d->name + "."); } }
     else if (k == "gold") { int g = atoi(v.c_str()); party.gold = std::max(0, party.gold + g); if (g > 0) stats.goldEarned += g; else stats.goldSpent -= g; log(g >= 0 ? fmt("Received %d gold.", g) : fmt("Paid %d gold.", -g)); gAudio.play("gold"); }
@@ -1111,7 +1117,12 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
                 ch.hp = ch.maxHP(*gd); ch.mp = ch.maxMP(*gd); party.members.push_back(ch); log(ch.name + " joined the party!"); setFlag("joined_" + cls); flags.erase("left_" + cls); if (dlgNpc) { hideNpcForGood(*dlgNpc); if (!dlgNpc->id.empty()) extra["home_" + cls] = "hidenpc_" + mapId + "_" + dlgNpc->id; } syncBonds(); }
         } else if (party.members.size() >= 4) log("Your party is full.");
     }
-    else if (k == "leave") { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == v) { log(party.members[i].name + " left the party."); party.members.erase(party.members.begin() + i); break; } }
+    // 1.5.0 (#87/#88): leave=CLASS[|text] - the companion walks out the way an unhappy one does (companionLeaves: gear to
+    // the pack, left_<class>, back home where amends can bring them back); fell=CLASS[|text] - gone for good (fell_<class>)
+    else if (k == "leave" || k == "fell") { auto p = split(v, '|'); std::string cls = trim(p[0]), why; for (size_t i = 1; i < p.size(); i++) why += (i > 1 ? "|" : "") + p[i];
+        int mi = memberOfClass(cls); if (mi < 0) for (size_t i = 1; i < party.members.size(); i++) if (toLower(party.members[i].name) == toLower(cls)) mi = (int)i;
+        if (mi > 0) { if (k == "leave") companionLeaves((size_t)mi, why); else companionFalls((size_t)mi, why); } }
+    else if (k == "fight") { if (mode == GMode::DIALOGUE) popMode(); fightGroup(trim(v)); }   // 1.5.0 (#85): fight=FLAG - that map group attacks now
     else if (k == "combat") { std::vector<std::string> cs; for (auto& c : split(v, ',')) if (!trim(c).empty()) cs.push_back(trim(c)); if (mode == GMode::DIALOGUE) popMode(); int cx = dlgNpc ? dlgNpc->x : px, cy = dlgNpc ? dlgNpc->y : py; if (dlgNpc) hideNpcForGood(*dlgNpc); startCombat(cs, cx, cy, 0, {}, ""); }
     else if (k == "teleport") { auto p = split(v, ','); if (p.size() >= 3) { if (mode == GMode::DIALOGUE) popMode(); std::string msg; for (size_t i = 3; i < p.size(); i++) msg += (i > 3 ? "," : "") + p[i]; startTransition(trim(p[0]), atoi(p[1].c_str()), atoi(p[2].c_str()), trim(msg)); } }   // 1.1.10: teleport=map,x,y,text shown while travelling
     else if (k == "message") { auto p = split(v, '|'); showMessage(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); if (p.size() > 1) addNote(p[0], p[1]); }

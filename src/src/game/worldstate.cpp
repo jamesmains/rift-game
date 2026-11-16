@@ -42,7 +42,25 @@ void Game::applyWorldState(Map& m) {
     // levers show their state
     // 1.1.1: sprite = the lever's picture, onsprite = its picture while its flag is set (objects.txt [type] lever)
     for (auto& l : m.levers) if (m.inBounds(l.x, l.y)) { Tile off = l.sprite.valid() ? l.sprite : TL::LEVER; m.at(l.x, l.y).prop = l.onSprite.valid() && !l.flag.empty() && hasFlag(l.flag) ? l.onSprite : off; }
+    refreshGroupsShown(m);   // 1.5.0 (#84): groups hidden by show=/hide= are not there at all
     if (&m == map) { revealAround(); }
+}
+
+// 1.5.0 (#85): fight=FLAG (dialogue / script action) - the enemy group on this map with that flag= attacks at once, with
+// the groups linked to it (link=), the same as walking into it. Nothing happens if it is already beaten or not there.
+void Game::fightGroup(const std::string& flag) {
+    if (!map || flag.empty()) return;
+    refreshGroupsShown(*map);
+    for (size_t i = 0; i < map->enemies.size(); i++) {
+        EnemyGroup& e = map->enemies[i];
+        if (e.flag != flag || e.defeated || e.hidden) continue;
+        combatExtraGroups.clear();
+        if (!e.link.empty()) for (size_t j = 0; j < map->enemies.size(); j++) { auto& e2 = map->enemies[j]; if (j != i && !e2.defeated && !e2.hidden && e2.link == e.link) combatExtraGroups.push_back((int)j); }
+        nextSurprise = 0;
+        startCombat(e.creatures, e.x, e.y, e.levelBonus, {(int)i}, e.onDefeatScript);
+        return;
+    }
+    log("(fight: no group with flag " + flag + " here)");
 }
 
 void Game::clearObstacle(Map& m, Obstacle& o, bool announce) {

@@ -48,6 +48,7 @@ void Game::loadSystems() {
         bool dup = false; for (auto& o : affixes) if (o.id == a.id) { o = a; dup = true; } if (!dup) affixes.push_back(a);
     }
     loadLocations();
+    loadContradictions();   // 1.5.0 (#89)
     loadAchievementState();
 }
 

@@ -296,6 +296,7 @@ void Editor::runCampaignCheck() {
     for (auto& f : dlgFiles) if (readFile(readPath("dialogue/" + f + ".txt"), txt)) for (auto& it : lintDialogue(txt, f)) { FlagUse u; u.tab = 11; u.file = f; u.line = std::max(0, it.line); addF(!it.warn, "dialogue " + f + (it.line >= 0 ? fmt(" line %d: ", it.line + 1) : ": ") + it.msg, u); }
     // ---- flags ----
     for (auto& kv : flagIndex) { int s = 0, c = 0; for (auto& u : kv.second) (u.set ? s : c)++; if (s == 0 && c > 0) { FlagUse u; u.tab = 19; u.file = kv.first; addF(true, "flag '" + kv.first + "' is checked but nothing ever sets it", u); } }
+    contradictionCheck();   // 1.5.0 (#89): flag pairs that must never both be true
     // ---- data files ----
     for (size_t i = 0; i < gens[15].secs.size(); i++) { auto& s = gens[15].secs[i]; auto& ty = edObjTypes(); std::string tt = s.name == "type" ? s.get("id") : s.get("type");
         if (std::find(ty.begin(), ty.end(), tt) == ty.end()) addF(true, (s.name == "type" ? "object type entry '" : "object template " + s.get("id") + ": type '") + tt + "' is not an object type", gu(15, (int)i, 22));

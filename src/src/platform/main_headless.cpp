@@ -43,7 +43,15 @@ int main(int argc, char** argv) {
                 std::string err; int sh = app.editor.sheetImport(p[1], p[2], g, err); printf("sheetimport %s -> %d %s\n", p[2].c_str(), sh, err.c_str()); step(2); return true; }
             if (cmd == "sheetcopy") { std::string err; bool ok = app.editor.copyBaseSheets(err); printf("sheetcopy ok=%d %s\n", ok ? 1 : 0, err.c_str()); step(2); return true; }
             if (cmd == "edsetcampaign") { app.editor.setCampaign(p[1]); step(2); return true; }
+            if (cmd == "contracheck") { app.editor.open(); app.editor.runCampaignCheck(); int n = 0; for (auto& f : app.editor.report) if (startsWith(f.text, "Contradiction")) { printf("  %s\n", f.text.c_str()); n++; } printf("contracheck: %d contradiction(s)\n", n); return true; }   // 1.5.0 (#89): Check all's contradiction findings
 #endif
+            // 1.5.0 (#89): assetreplace FILE OLD|NEW - edit a file under assets\ (run the test from a copy!); \n in OLD / NEW = a line break
+            if (cmd == "assetreplace" && p.size() > 2) { std::string rest; for (size_t i = 2; i < p.size(); i++) rest += (i > 2 ? " " : "") + p[i];
+                size_t bar = rest.find('|'); std::string from = rest.substr(0, bar), to = bar == std::string::npos ? "" : rest.substr(bar + 1);
+                auto unesc = [](std::string v) { size_t at; while ((at = v.find("\\n")) != std::string::npos) v.replace(at, 2, "\n"); return v; }; from = unesc(from); to = unesc(to);
+                std::string t, path = app.assetDir + "/" + p[1]; bool ok = readFile(path, t); size_t at = ok ? t.find(from) : std::string::npos;
+                if (at != std::string::npos) { t.replace(at, from.size(), to); writeFile(path, t); }
+                printf("assetreplace %s: %s\n", p[1].c_str(), at != std::string::npos ? "replaced" : "NOT FOUND"); if (at == std::string::npos) fails++; return true; }
             if (cmd == "screen") { app.setScreen(atoi(p[1].c_str()), atoi(p[2].c_str())); step(2); printf("screen %dx%d\n", app.canvas.w, app.canvas.h); return true; }   // 1.2.2: screen W H (a wide / tall screen)
             if (cmd == "edscreen") { app.setEditorScreen(atoi(p[1].c_str()), atoi(p[2].c_str())); step(2); return true; }   // 1.2.2: the Editor's canvas size
             if (cmd == "alt") { in.down[K_ALT] = true; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_ALT] = false; step(1);  return true; }
@@ -167,8 +175,8 @@ int main(int argc, char** argv) {
             Game& g = app.game; std::string got; bool num = true;
             auto edExpect = [&]() -> bool {   // 1.1.11 editor text checks (outside the else-if chain: MSVC limits its depth)
                 // 1.2.4 (#41): map enemy groups - "groups" = x,y,c(hasing) of each one on the map, "enemydist" = steps to the nearest one (-1 none)
-                if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
-                if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
+                if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
+                if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
                 // 1.3.3: heard:<event> = 1 if that sound played since the last "audio" command (which clears the list)
                 if (startsWith(key, "cb:")) { got = app.game.combatProbe(key.substr(3)); num = !got.empty() && (isdigit((unsigned char)got[0]) || (got[0] == '-' && got.size() > 1)) && got.find_first_of(",;:") == std::string::npos; return true; }   // 1.4.0
 
@@ -189,6 +197,7 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "spells:")) { int mi = atoi(key.substr(7).c_str()); got.clear(); if (mi >= 0 && mi < (int)g.party.members.size()) for (auto& sp : g.party.members[mi].spells) got += (got.empty() ? "" : ",") + sp; if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "answers") { got.clear(); if (g.mode == GMode::DIALOGUE) { auto it = g.dialogues.find(g.dlgId); if (it != g.dialogues.end()) { auto nt = it->second.nodes.find(g.dlgNode); if (nt != it->second.nodes.end()) for (auto& o : nt->second.options) { bool ok = true; for (auto& c : o.conds) if (!g.evalCond(c)) ok = false; if (ok) got += (got.empty() ? "" : " | ") + dialogueCheckTag(o.conds) + o.text; } } } if (got.empty()) got = "none"; num = false; return true; }
 #ifndef TRIFFALL_NO_EDITOR
+                if (key == "contradictions") { app.editor.open(); app.editor.runCampaignCheck(); got.clear(); for (auto& f : app.editor.report) if (startsWith(f.text, "Contradiction")) got += (got.empty() ? "" : " || ") + f.text; if (got.empty()) got = "none"; num = false; return true; }   // 1.5.0 (#89)
                 if (key == "sheets") { got.clear(); for (int i : app.editor.visibleSheets()) got += (got.empty() ? "" : ",") + app.tileset.sheets[i].name; if (got.empty()) got = "none"; num = false; return true; }   // 1.2.0: the sheets the pickers offer
                 if (startsWith(key, "sheetcat:")) { auto q = split(key.substr(9), ':'); app.editor.syncBooks(); Tile t = q.size() >= 2 ? parseTile(q[1] + "@" + q[0]) : Tile{}; got = std::string(1, app.editor.cellCat(t)); num = false; return true; }   // sheetcat:<sheet>:c,r
                 if (startsWith(key, "sheetgroups:")) { app.editor.syncBooks(); int sh = sheetIndex(key.substr(12)); got = sh < (int)app.editor.books.size() ? std::to_string(app.editor.books[sh].groups.size()) : "0"; return true; }

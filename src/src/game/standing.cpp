@@ -102,7 +102,24 @@ void Game::checkCompanionMoods() {
     for (size_t i = party.members.size(); i-- > 1;) if (approvalOf(party.members[i].classId) <= -40) { companionLeaves(i); return; }
 }
 
-void Game::companionLeaves(size_t idx) {
+int Game::memberOfClass(const std::string& cls) const { for (size_t i = 1; i < party.members.size(); i++) if (party.members[i].classId == cls) return (int)i; return -1; }
+
+// 1.5.0 (#87/#88): a companion's red line crossed and not talked round - fell=CLASS|text. They are gone for good (off
+// screen): gear goes to the pack, joined_<class> is cleared, fell_<class> is set, and their NPC stays hidden at home.
+void Game::companionFalls(size_t idx, const std::string& why) {
+    if (idx == 0 || idx >= party.members.size()) return;
+    Character m = party.members[idx]; std::string cls = m.classId, kept;
+    for (int s = 0; s < SL_COUNT; s++) if (!m.equip[s].empty() && gd->item(m.equip[s])) { party.addItem(m.equip[s], 1, *gd); if (auto* d = gd->item(m.equip[s])) kept += (kept.empty() ? "" : ", ") + d->name; }
+    party.members.erase(party.members.begin() + idx);
+    if (leader == (int)idx) leader = 0; else if (leader > (int)idx) leader--;
+    flags.erase("joined_" + cls); setFlag("fell_" + cls);
+    log(m.name + " is gone.");
+    gAudio.play("death_party");
+    std::string body = (trim(why).empty() ? m.name + " is gone, and will not be coming back." : trim(why)) + (kept.empty() ? std::string() : " Their gear stays with you: " + kept + ".");
+    if (mode == GMode::DIALOGUE) { notify(m.name + " is gone."); log(body); } else showMessage(m.name, body);   // in a talk the scene itself tells it
+}
+
+void Game::companionLeaves(size_t idx, const std::string& why) {
     if (idx == 0 || idx >= party.members.size()) return;
     Character m = party.members[idx]; std::string cls = m.classId;
     std::string kept;
@@ -117,8 +134,9 @@ void Game::companionLeaves(size_t idx) {
         if (!did.empty()) for (auto it = extra.begin(); it != extra.end();) { if (startsWith(it->first, "hidenpc_") && it->first.size() > did.size() && it->first.compare(it->first.size() - did.size() - 1, did.size() + 1, "_" + did) == 0) it = extra.erase(it); else ++it; } }
     log(m.name + " has left the party.");
     gAudio.play("ui_close");
-    showMessage(m.name + " leaves", m.name + " has had enough of the way you do things, and goes back to where you first met." +
-        (kept.empty() ? std::string() : " Their gear stays with you: " + kept + ".") + " You could try to make amends there.");
+    std::string body = (trim(why).empty() ? m.name + " has had enough of the way you do things, and goes back to where you first met." : trim(why)) +
+        (kept.empty() ? std::string() : " Their gear stays with you: " + kept + ".") + " You could try to make amends there.";
+    if (mode == GMode::DIALOGUE) { notify(m.name + " leaves the party."); log(body); } else showMessage(m.name + " leaves", body);   // 1.5.0: in a talk (leave=) the scene tells it
 }
 
 // ---------------- towns ----------------

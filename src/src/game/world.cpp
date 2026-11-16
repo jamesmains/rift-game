@@ -180,7 +180,7 @@ void Map::rect(int x, int y, int fw, int fh, const std::string& kindName, Rng& r
 void Map::init(int W, int H, const std::string& kindName, Rng& rng) { w = W; h = H; cells.assign((size_t)W * H, Cell{}); fill(0, 0, W, H, kindName, rng); }
 
 NPC* Map::npcAt(int x, int y) { for (auto& n : npcs) if (!n.hidden && n.x == x && n.y == y) return &n; return nullptr; }
-EnemyGroup* Map::enemyAt(int x, int y) { for (auto& e : enemies) if (!e.defeated && e.x == x && e.y == y) return &e; return nullptr; }
+EnemyGroup* Map::enemyAt(int x, int y) { for (auto& e : enemies) if (!e.defeated && !e.hidden && e.x == x && e.y == y) return &e; return nullptr; }   // 1.5.0 (#84): a hidden group isn't there
 Chest* Map::chestAt(int x, int y) { for (auto& c : chests) if (c.x == x && c.y == y) return &c; return nullptr; }
 Door* Map::doorAt(int x, int y) { for (auto& d : doors) if (d.x == x && d.y == y) return &d; return nullptr; }
 Exit* Map::exitAt(int x, int y) { for (auto& e : exits) if (x >= e.x && y >= e.y && x < e.x + e.w && y < e.y + e.h) return &e; return nullptr; }
@@ -188,7 +188,7 @@ SignPost* Map::signAt(int x, int y) { for (auto& s : signs) if (s.x == x && s.y 
 SavePoint* Map::saveAt(int x, int y) { for (auto& s : savepoints) if (s.x == x && s.y == y) return &s; return nullptr; }
 bool Map::occupied(int x, int y) const {
     for (auto& n : npcs) if (!n.hidden && n.x == x && n.y == y) return true;
-    for (auto& e : enemies) if (!e.defeated && e.x == x && e.y == y) return true;
+    for (auto& e : enemies) if (!e.defeated && !e.hidden && e.x == x && e.y == y) return true;
     for (auto& c : chests) if (c.x == x && c.y == y) return true;
     return false;
 }
