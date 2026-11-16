@@ -90,6 +90,7 @@ struct Bot {
                     if (slot == SL_WEAPON && cur) { if ((d->range > 1) != (cur->range > 1) || d->isGun != cur->isGun || d->scaleStat != cur->scaleStat) continue; if (d->twoHanded && !m.equip[SL_OFFHAND].empty()) continue; }
                     if (slot == SL_OFFHAND) { const ItemDef* w = m.equip[SL_WEAPON].empty() ? nullptr : G.gd->item(m.equip[SL_WEAPON]); if (w && (w->twoHanded || w->range > 1)) continue; }
                     int gain = gearScore(*d) - (cur ? gearScore(*cur) : 0);
+                    if (!m.trainedWith(*d, *G.gd) || !m.wearsWell(*d, *G.gd) || m.reqShort(*d, *G.gd) > 0) continue;   // 1.5.0 (#93): a careful player doesn't wear what their class uses badly
                     if (gain > bestGain) { bestGain = gain; bestId = sl.id; }
                 }
                 if (bestId.empty()) break;

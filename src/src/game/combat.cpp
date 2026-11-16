@@ -248,7 +248,8 @@ void Game::combatNextTurn() {
             if (cb.quietRounds >= 3) {
                 bool seen = false;
                 for (auto& a : cb.units) if (a.ch.alive && a.friendly()) for (auto& b : cb.units) if (b.ch.alive && !b.friendly() && chebyshev(a.x, a.y, b.x, b.y) <= 8 && combatLOS(a.x, a.y, b.x, b.y)) seen = true;
-                if (!seen) { cb.log.push_back("Neither side can reach the other. The fight breaks off."); log("The fight breaks off - the enemy has lost sight of you."); cb.ending = true; cb.fled = true; cb.disengaged = true; cb.endTimer = 0.4f; return; }
+                // 1.5.0: also after six rounds with no blow struck, even in sight (a foe nobody can get at)
+                if (!seen || cb.quietRounds >= 6) { cb.log.push_back("Neither side can reach the other. The fight breaks off."); log("The fight breaks off - the enemy has lost sight of you."); cb.ending = true; cb.fled = true; cb.disengaged = true; cb.endTimer = 0.4f; return; }
             }
             groundRoundTick();                        // 1.4.0: fire / ice / smoke burn down, fire spreads
             if (lightSteps > 0) { lightSteps = std::max(0, lightSteps - 3); if (lightSteps == 0 && map->dark) cb.log.push_back("Your torch burns out."); }   // (#79) torches burn in a fight too
@@ -798,7 +799,10 @@ void Game::combatReactions(int mover, int fromX, int fromY) {
         if ((int)i == mover || !w.ch.alive || !m.ch.alive || w.friendly() == m.friendly() || w.ch.hasEffect("stun") || w.ch.hasEffect("freeze")) continue;
         bool wasAdj = chebyshev(w.x, w.y, fromX, fromY) <= 1, isAdj = chebyshev(w.x, w.y, m.x, m.y) <= 1;
         // attack of opportunity: a melee unit gets one free swing when a foe leaves its reach
-        if (w.ch.meleeWeapon(*gd) && wasAdj && !isAdj && !w.aooDone) {
+        // 1.5.0 (#92): no free swing at something the weapon can't hurt (an immune spirit would be pinned in place forever)
+        bool canHurt = true; { int lo, hi, ty; w.ch.attackDamage(*gd, lo, hi, ty); for (auto& e : w.ch.effects) if (startsWith(e.id, "imbue_")) ty = dmgTypeFromName(e.id.substr(6));
+            int r = m.ch.resist(ty, *gd); std::string tr = w.ch.trait(*gd); if (ty == DT_PHYS && !tr.empty()) { auto f = m.ch.traitRes.find(tr); if (f != m.ch.traitRes.end()) r = f->second; } canHurt = r < 100; }
+        if (w.ch.meleeWeapon(*gd) && wasAdj && !isAdj && !w.aooDone && canHurt) {
             w.aooDone = true; cb.log.push_back(w.ch.name + " gets a free attack as " + m.ch.name + " pulls away!"); addFloat(w.x, w.y, "opportunity!", C::Orange);
             int saveAP = w.ch.ap; w.ch.ap = 99;
             // the swing is resolved against the tile being left (still adjacent)
@@ -1170,6 +1174,10 @@ void Game::combatFinish() {
         giveXP(cb.xpGained);
         pushMode(GMode::VICTORY);
         if (!cb.onDefeatScript.empty()) { std::string s = cb.onDefeatScript; runScript(s); }
+        // 1.5.0: groups that joined the fight (linked bosses) run their own ondefeat= too - a linked boss dying in another
+        // group's fight used to set its flag but skip its story step
+        { std::vector<std::string> more; for (int g : cb.defeatedGroups) if (g >= 0 && g < (int)map->enemies.size()) { const std::string& od = map->enemies[g].onDefeatScript; if (!od.empty() && od != cb.onDefeatScript && std::find(more.begin(), more.end(), od) == more.end()) more.push_back(od); }
+          for (auto& sc : more) { std::string s = sc; runScript(s); } }
     } else if (cb.fled && cb.disengaged) {
         std::vector<std::string> defeatScripts;
         // the fight broke off: what was killed stays dead (its group too, if none of it is left), XP and gold are kept
@@ -1322,21 +1330,29 @@ void Game::combatAI(float dt) {
     auto wres = [&](const Combatant& o) { int lo, hi, ty; u.ch.attackDamage(*gd, lo, hi, ty); for (auto& e : u.ch.effects) if (startsWith(e.id, "imbue_")) ty = dmgTypeFromName(e.id.substr(6));
         int r = o.ch.resist(ty, *gd); std::string tr = u.ch.trait(*gd); if (ty == DT_PHYS && !tr.empty()) { auto f = o.ch.traitRes.find(tr); if (f != o.ch.traitRes.end()) r = f->second; } return r; };
     if (u.partyIndex >= 0 && autoCombat) {   // the party on auto: oil the weapon with something that works, or get away
-        bool anyHurt = false; for (auto& o : cb.units) if (isFoe(o) && wres(o) < 100) anyHurt = true;
+        bool anyHurt = false, anyHurtAll = false; int reachR = u.ch.attackRange(*gd) + u.ch.move + 1;
+        for (auto& o : cb.units) if (isFoe(o) && wres(o) < 100) { anyHurtAll = true; if (unitDist(o, u.x, u.y) <= reachR) anyHurt = true; }   // near = what it can get at this turn
         bool spells = false; for (auto& sid : u.ch.spells) if (auto* sp = gd->spell(sid)) if (sp->dmgMax > 0 && u.ch.mp >= sp->cost) spells = true;
+        // everything in reach resists the weapon: an oil that does better on one of them is worth the AP
+        { bool imbued = false; for (auto& e : u.ch.effects) if (startsWith(e.id, "imbue_")) imbued = true;
+          int minRes = 999; for (auto& o : cb.units) if (isFoe(o) && unitDist(o, u.x, u.y) <= reachR) minRes = std::min(minRes, wres(o));
+          if (!imbued && anyHurt && minRes >= 50 && minRes < 999) for (auto& sl : party.inventory) { const ItemDef* d = gd->item(sl.id); if (!d || sl.count <= 0 || !startsWith(d->effect, "imbue_") || u.ch.ap < itemAP(*d) + u.ch.attackAP(*gd)) continue;
+              int ty = dmgTypeFromName(d->effect.substr(6)); bool better = false; for (auto& o : cb.units) if (isFoe(o) && unitDist(o, u.x, u.y) <= reachR && o.ch.resist(ty, *gd) <= minRes - 50) better = true;
+              if (better) { combatUseItem(cb.selectedUnit, sl.id, cb.selectedUnit); return; } } }
         if (!anyHurt && !spells) {
             for (auto& sl : party.inventory) { const ItemDef* d = gd->item(sl.id); if (!d || sl.count <= 0 || !startsWith(d->effect, "imbue_") || u.ch.ap < itemAP(*d)) continue;
                 int ty = dmgTypeFromName(d->effect.substr(6)); bool works = false; for (auto& o : cb.units) if (isFoe(o) && o.ch.resist(ty, *gd) < 100) works = true;
                 if (works) { combatUseItem(cb.selectedUnit, sl.id, cb.selectedUnit); return; } }
             bool engaged = false; for (auto& o : cb.units) if (isFoe(o) && unitDist(o, u.x, u.y) <= 1) engaged = true;
-            if (engaged && u.ch.move > 0 && cb.aiAction <= 1) {   // step out of reach first, so the party can get away next turn
+            if (engaged && !anyHurtAll && u.ch.move > 0 && cb.aiAction <= 1) {   // step out of reach first, so the party can get away next turn
                 int keepSel = cb.selectedUnit; combatComputeReachable(); cb.selectedUnit = keepSel; cb.reachDirty = true;
                 int bx = -1, by = -1, bd = -1;
                 for (auto& r : cb.reachable) { int dmin = 99; for (auto& o : cb.units) if (isFoe(o)) dmin = std::min(dmin, chebyshev(r.first, r.second, o.x, o.y)); if (dmin > bd) { bd = dmin; bx = r.first; by = r.second; } }
                 if (bx >= 0 && bd > 1) { auto pth = aiWalkTo(cb.selectedUnit, bx, by); if (!pth.empty()) { cb.aiPath = pth; cb.stepTimer = 0; return; } }
             }
-            if (u.ch.ap >= u.ch.maxAP(*gd) && combatTryFlee(cb.selectedUnit)) return;
-            u.ch.addEffect("defend", 1, 0); combatEndTurn(); return;
+            if (!anyHurtAll || (cb.round >= 4 && engaged)) {   // nothing on the field can be hurt, or (from round 4) only untouchable foes hem it in: get away
+                if (u.ch.ap >= u.ch.maxAP(*gd) && combatTryFlee(cb.selectedUnit)) return;
+                u.ch.addEffect("defend", 1, 0); combatEndTurn(); return; }
         }
     }
     // target choice: close, hittable right now, and wounded beats healthy (they focus fire); a little noise keeps it from being predictable

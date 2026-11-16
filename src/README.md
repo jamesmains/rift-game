@@ -53,6 +53,25 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   cost more further from home; towns have a civic project the party pays for.
 * **The Tutorial** now has bones at the quarry bridge that steel can't hurt (fire oil and a club are in the crate by
   Wick) and a goblin archer behind a crate that you have to walk round or flank.
+* **Field Notes:** what you learn about a monster (what hurts it, what it shrugs off, what it casts) is written to
+  `Field Notes.txt` on the desktop and kept across reloads and save slots - a wipe still teaches you something. The
+  combat tooltip and the bestiary read it too.
+* **Sneak, distract, lure:** throw Rattle Stones, a Clatter Bottle or a Clockwork Rattler (Items > Throw... or the
+  hotbar) and nearby groups go to look; walk past, or draw them under a cracked ceiling or into a bear trap. Groups
+  that can't see in the dark notice an unlit party later.
+* **Deadly places, signposted:** the Broodmother's nest behind thick webs in Greywood Cave and the Sealed Ossuary in
+  Hesk's Barrow (the dead there are immune to steel) are optional and lethal early - come back with fire, magic or
+  Blessed Oil. Every boss has a save shrine close by, and entering any dungeon autosaves.
+* **Choices that cost:** spared goblins really leave (they can't be bumped into or killed by accident any more); going
+  back to attack them anyway is a clear choice the whole world remembers. Each companion has one red line - Bram at the
+  goblin peace, Orin at a betrayal, Tessa when the converts are judged, Nyx when Ashwing goes free, Elowen when the
+  shards are broken - with a CHA / INT / WIS way to talk them round, and otherwise they leave or die off screen. Towns
+  everywhere talk about what you did, and notice boards pin up the news.
+* **Trial recipes** (the Tempered Blade Blank and the other masters' pieces) only appear once the master asks for them.
+* **For campaign makers:** `data/contradictions.txt` lists flags that must never both be true; Check all reports any
+  route that can set both, and the game warns if it happens. New actions `leave=`, `fell=`, `fight=`, `recipe=`, map
+  `[trap]` objects, item effect `lure`, board notes (`kind=note`), item `family=` / `weight=` / `req=` / `wornby=`,
+  class `weapons=` / `wears=`, and weapon-trait keys in creature `res=`.
 
 ## 1.4.0 deeper fights, puzzles, and more ways through quests
 

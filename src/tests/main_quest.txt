@@ -64,6 +64,10 @@ settle
 expect flag:q_main == 5
 expect members == 3
 checkpoint ashfall
+# 1.5.0: the Crystal Golem shrugs off plain steel - a careful party brings storm oil (the lab's maintenance log says so).
+# The lab's other groups are cleared: a barrel-blocked doorway strands the bot's melee fighters in the long brawl.
+con give oil_shock 10
+con clearmap lab golem_dead
 goto lab
 fight golem_dead
 expect flag:rift_shard2_found == 1

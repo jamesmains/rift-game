@@ -339,7 +339,7 @@ class=scavenger
 when=firstsight
 seen=golem
 flag=fs_golem
-text=Crystal. Hit it with something blunt and it'll shatter.
+text=Crystal and clockwork. Hit it with something blunt and it shatters - or give it a jolt.
 
 [banter]
 class=ranger
