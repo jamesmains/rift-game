@@ -190,7 +190,8 @@ void Game::updateMenu(InputState& in, float dt) {
             if (!d) { menuSubFocus = false; return; }
             // actions: Use / Equip (choose member), Drop
             std::vector<std::string> acts;
-            if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
+            if (d->effect == "lure" || startsWith(d->effect, "lure:")) acts.push_back("Throw...");   // 1.5.0 (#99): a noisemaker is thrown, not used on someone
+            else if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
             if (d->equippable()) acts.push_back("Equip on...");
             acts.push_back(d->quest ? "Quest item - can't drop" : "Drop");
             if (menuPrompt.empty()) {
@@ -201,6 +202,7 @@ void Game::updateMenu(InputState& in, float dt) {
                 if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= 330 && in.mouseX < 600 && in.mouseY >= INV_ACT_Y && in.mouseY < INV_ACT_Y + na * 18)) {
                     std::string a = acts[clampi(menuSub, 0, na - 1)];
                     if (a == "Quest item - can't drop") { log(d->name + " is needed for a quest. You keep it."); gAudio.play("ui_error"); }
+                    else if (a == "Throw...") { menuSubFocus = false; useItemOn(d->id, party.members[0], false); return; }
                     else if (a == "Drop") { log("Dropped " + d->name + "."); party.removeItem(d->id, 1); menuSubFocus = false; menuSel = clampi(menuSel, 0, std::max(0, (int)invView().size() - 1)); }
                     else { menuPrompt = a == "Use on..." ? "use" : "equipitem"; menuMember = 0; }
                 }
@@ -325,7 +327,8 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             drawItemDetails(cv, *d, 330, 98, 280, INV_ACT_Y - 14);   // panel bottom (INV_ACT_Y - 6) less 8 px of padding
             if (menuSubFocus) {
                 std::vector<std::string> acts;
-                if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
+                if (d->effect == "lure" || startsWith(d->effect, "lure:")) acts.push_back("Throw...");   // 1.5.0 (#99)
+                else if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
                 if (d->equippable()) acts.push_back("Equip on...");
                 acts.push_back(d->quest ? "Quest item - can't drop" : "Drop");
                 for (size_t i = 0; i < acts.size(); i++) { bool sel = (int)i == menuSub && menuPrompt.empty(); listRow(ctx, in, 330, INV_ACT_Y + (int)i * 18, 270, 18, sel); UI::text(ctx, 340, INV_ACT_Y + 3 + (int)i * 18, acts[i], sel ? C::Yellow : C::White); }

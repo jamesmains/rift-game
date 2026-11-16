@@ -356,6 +356,11 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             Plate p; p.x = geti(kv, "x", 0); p.y = geti(kv, "y", 0); p.group = trim(gets(kv, "group")); p.onPress = gets(kv, "onpress"); p.onRelease = gets(kv, "onrelease");
             kvTile(kv, "sprite", p.sprite); kvColor(kv, "color", p.hasColor, p.color);
             m.plates.push_back(p);
+        } else if (type == "trap") {   // 1.5.0 (#99)
+            Trap t; t.x = geti(kv, "x", 0); t.y = geti(kv, "y", 0); t.name = gets(kv, "name", "Spike pit"); t.flag = trim(gets(kv, "flag")); t.text = gets(kv, "text"); t.onSpring = gets(kv, "onspring");
+            t.hurt = clampi(geti(kv, "hurt", 100), 0, 100); t.damage = std::max(0, geti(kv, "damage", 10));
+            kvTile(kv, "sprite", t.sprite); kvTile(kv, "sprungsprite", t.sprungSprite); kvColor(kv, "color", t.hasColor, t.color);
+            m.traps.push_back(t);
         } else if (type == "lever") {
             Lever l; l.x = geti(kv, "x", 0); l.y = geti(kv, "y", 0); l.flag = gets(kv, "flag"); l.msg = gets(kv, "text"); l.name = gets(kv, "name", "Lever"); l.toggle = geti(kv, "toggle", 1) != 0;
             kvTile(kv, "sprite", l.sprite); kvTile(kv, "onsprite", l.onSprite); kvText(kv, "sound", l.sound); kvText(kv, "onuse", l.onUse);

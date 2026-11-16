@@ -103,6 +103,7 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     }
     // hide the enemy groups on the map while fighting
     for (int g : groupIndices) if (g >= 0 && g < (int)map->enemies.size()) map->enemies[g].defeated = true;
+    for (auto& u : cb.units) if (u.partyIndex < 0) applyGroupHurt(u, u.groupIndex);   // 1.5.0 (#99): a group a trap hurt starts the fight hurt
     for (size_t i = 0; i < cb.units.size(); i++) cb.order.push_back((int)i);
     std::stable_sort(cb.order.begin(), cb.order.end(), [&](int a, int b) { return cb.units[a].initiative > cb.units[b].initiative; });
     // groups that noticed the party at the same moment fight from round one (each placed around its own position)
@@ -151,6 +152,7 @@ bool Game::combatAddGroup(int gi, bool announce) {
             if (!cand.empty()) { auto p = rng.pick(cand); ux = p.first; uy = p.second; }
         }
         if (ux < 0) continue;
+        applyGroupHurt(u, gi);   // 1.5.0 (#99): what a trap took off it
         u.x = ux; u.y = uy; u.ch.ap = u.ch.maxAP(*gd); u.ch.move = u.ch.maxMove(*gd); u.initiative = u.ch.stat(ST_DEX, *gd) + rng.range(1, 8);
         cb.units.push_back(u); cb.order.push_back((int)cb.units.size() - 1); names.push_back(u.ch.name);
     }
@@ -812,7 +814,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
         int eff = res; if ((t.ch.undead || t.ch.mechanical) && dmgType == DT_POISON) eff = 100; if (t.ch.mechanical && dmgType == DT_SHOCK) eff = std::min(eff, -50);
         std::string key = "rk_" + t.ch.creatureId; int known = atoi(extra[key].c_str());
         if (!(known & (1 << dmgType))) { extra[key] = std::to_string(known | (1 << dmgType)); }
-        noteCreature(t.ch.creatureId, 1 << dmgType);   // 1.5.0 (#96): and in the Field Notes, which outlive the save
+        noteCreature(t.ch.creatureId, atoi(extra[key].c_str()));   // 1.5.0 (#96): the whole rk_ int (damage types, and weapon traits in bits 8+) goes into the Field Notes, which outlive the save
         if (eff <= -25) addFloat(t.x, t.y - 1, "WEAK!", C::Yellow); else if (eff >= 100) addFloat(t.x, t.y - 1, "immune", C::Gray); else if (eff >= 40) addFloat(t.x, t.y - 1, "resists", C::Gray);
     }
     t.ch.hp -= dmg;
@@ -1986,7 +1988,7 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
             int lo = t.ch.mDmgMin, hi = t.ch.mDmgMax;
             lines.push_back({fmt("Hits %d-%d %s, range %d", lo, hi, dmgTypeName(t.ch.mDmgType), t.ch.attackRange(*gd)), C::LtGray});
             int known = knownResBits(t.ch.creatureId);   // 1.5.0 (#96): this save's hits, the Field Notes, or 3 slain
-            bool all = known == (1 << DT_COUNT) - 1;
+            bool all = (known & ((1 << DT_COUNT) - 1)) == (1 << DT_COUNT) - 1;
             std::string weak, strong;
             for (int d = 0; d < DT_COUNT; d++) {
                 if (!all && !(known & (1 << d))) continue;

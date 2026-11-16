@@ -55,7 +55,7 @@ void Game::loadSystems() {
 void Game::onKill(const Character& victim, const Combatant* killer) {
     if (victim.isPlayerSide || victim.creatureId.empty()) return;
     stats.kills++; bestiary[victim.creatureId]++;
-    if (bestiary[victim.creatureId] >= 3) noteCreature(victim.creatureId, (1 << DT_COUNT) - 1, "studied");   // 1.5.0 (#96): three slain = all of it known, for good
+    if (bestiary[victim.creatureId] >= 3) noteCreature(victim.creatureId, FN_ALL, "studied");   // 1.5.0 (#96): three slain = all of it known, for good
     bountyEvent("kill", victim.creatureId, 1);
     (void)killer;
 }
@@ -150,7 +150,7 @@ int Game::knownResBits(const std::string& creature) const {
     int known = 0;
     auto it = extra.find("rk_" + creature); if (it != extra.end()) known |= atoi(it->second.c_str());
     auto fn = fieldNotes.find(creature); if (fn != fieldNotes.end()) known |= fn->second.res;
-    auto bit = bestiary.find(creature); if (bit != bestiary.end() && bit->second >= 3) known = (1 << DT_COUNT) - 1;
+    auto bit = bestiary.find(creature); if (bit != bestiary.end() && bit->second >= 3) known = FN_ALL;
     return known;
 }
 // how a creature takes a damage type: its res= plus the rules every undead / machine shares (poison does nothing,

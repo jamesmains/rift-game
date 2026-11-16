@@ -141,6 +141,10 @@ struct EnemyGroup {
     int leash = 0; bool chasing = false, temp = false;
     // 1.4.0 (#78) goal= protect:CREATURE | reach:X,Y[,W,H] | hold:ROUNDS | close:CREATURE, goaltext=, ongoal= / ongoalfail= actions
     std::string goal, goalText, onGoal, onGoalFail;
+    // 1.5.0 (#99): a thrown noisemaker pulls the group to (distractX, distractY) for distractSteps party steps (it barely
+    // notices the party meanwhile), then it walks home (returning). hurt = % of its HP lost to a trap before the fight.
+    // None of it is saved.
+    int distractX = -1, distractY = -1, distractSteps = 0, hurt = 0; bool returning = false;
 };
 
 // 1.1.1: look and use keys every object type can take from its [type] entry in objects.txt (or its template, or set
@@ -166,6 +170,10 @@ struct Crate { int x = 0, y = 0, homeX = 0, homeY = 0, heavy = 0; std::string id
 // 1.4.0 (#76): a pressure plate: down while a crate or the party's leader stands on it. group= ties plates into one
 // puzzle (script functions plates/platesdown); onpress= / onrelease= are action lists run when it goes down / comes up.
 struct Plate { int x = 0, y = 0; std::string group, onPress, onRelease; Tile sprite; bool hasColor = false; Color8 color = C::White; bool down = false; };
+// 1.5.0 (#99): a trap (spike pit, deadfall...). An enemy group that walks onto it while chasing, walking to a noise or
+// walking home loses hurt% of its HP (100 = gone for good, its flag set); the party stepping on it takes damage= each.
+// Sprung until the next visit, or for good with flag=. onspring= runs actions when it goes off.
+struct Trap { int x = 0, y = 0; std::string name, flag, text, onSpring; int hurt = 100, damage = 10; Tile sprite, sprungSprite; bool hasColor = false; Color8 color = C::White; bool sprung = false; };
 // A lever or switch: toggles a flag; doors (openif=), changes and obstacles react to flags.
 struct Lever { int x = 0, y = 0; std::string flag, msg, name; bool toggle = true; Tile sprite, onSprite; std::string sound, onUse; };
 // A part of the map that looks different while a condition holds (a bridge appears, a wall crumbles, water drains).
@@ -233,6 +241,8 @@ struct Map {
     std::vector<Plate> plates;
     Crate* crateAt(int x, int y) { for (auto& c : crates) if (c.x == x && c.y == y) return &c; return nullptr; }
     Plate* plateAt(int x, int y) { for (auto& p : plates) if (p.x == x && p.y == y) return &p; return nullptr; }
+    std::vector<Trap> traps;       // 1.5.0 (#99)
+    Trap* trapAt(int x, int y, bool armedOnly = true) { for (auto& t : traps) if (t.x == x && t.y == y && (!armedOnly || !t.sprung)) return &t; return nullptr; }
     Obstacle* obstacleAt(int x, int y) { for (auto& o : obstacles) if (!o.cleared && x >= o.x && y >= o.y && x < o.x + o.w && y < o.y + o.h) return &o; return nullptr; }
     Lever* leverAt(int x, int y) { for (auto& l : levers) if (l.x == x && l.y == y) return &l; return nullptr; }
     GatherNode* gatherAt(int x, int y) { for (auto& g : gathers) if (g.x == x && g.y == y) return &g; return nullptr; }
