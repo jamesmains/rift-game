@@ -15,6 +15,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+// 1.7.1 (#147): the updater unpacks the downloaded zip with stb_image's inflate (raw deflate; -1 = damaged)
+int triffallInflateRaw(char* out, int olen, const char* in, int ilen) { return stbi_zlib_decode_noheader_buffer(out, olen, in, ilen); }
+
 bool Image8::load(const std::string& path) {
     int n = 0;
     unsigned char* data = stbi_load(path.c_str(), &w, &h, &n, 4);

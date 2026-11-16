@@ -52,6 +52,13 @@ endif()
 option(TRIFFALL_STEAM "Build with Steamworks achievements/overlay support" OFF)
 set(STEAM_SDK "" CACHE PATH "Path to the extracted Steamworks SDK (the folder containing public/ and redistributable_bin/)")
 set(TRIFFALL_STEAM_APPID "480" CACHE STRING "Steam App ID (480 = Spacewar test app)")
+# 1.7.1 (#147 #149): the in-game updater (Update button; update-source.txt names a releases folder or the public GitHub
+# releases address). Steam updates the game itself, so a Steam build never has it; -DTRIFFALL_SELF_UPDATE=OFF drops it
+# from any build (e.g. once the website downloads stop).
+option(TRIFFALL_SELF_UPDATE "The game can update itself (Update button)" ON)
+if(TRIFFALL_STEAM OR EMSCRIPTEN OR NOT TRIFFALL_SELF_UPDATE)
+  add_compile_definitions(TRIFFALL_NO_SELF_UPDATE=1)
+endif()
 
 # 1.3.0: the folder packed into index.data. build-web.ps1 passes a trimmed copy (tools/web_assets.py: only the music the
 # demo plays, smaller files, no local campaigns); by default the whole assets folder.

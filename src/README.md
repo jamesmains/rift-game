@@ -29,6 +29,18 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.7.1 the Update button for downloaded copies
+
+* A copy of the full game downloaded as a zip (from the website) now gets the Update button too: it looks for a
+  new version when it starts and then every few hours. Update downloads the new version (with a progress bar and a
+  Cancel button), checks that the file is exactly the one released, and only then closes, updates and restarts.
+  Offline or a damaged download: a message, and nothing changes.
+* Updating keeps your own changes: maps and data you edited in the Editor and adventures you made or added. If the
+  new version changed a file you had edited too, it uses the new one and puts yours in `saves\editor-edits-<version>`
+  (the message after the update says so).
+* Copies installed by the itch app never update themselves (the itch app does that), and neither will the Steam
+  version.
+
 ## 1.7.0 updates from inside the game, deleting adventures
 
 * An installed copy of Triffall now notices when a newer version is ready: an Update button appears on the

@@ -338,15 +338,28 @@ void Desktop::runAction(const std::string& a) {
 // 1.7.0 (#140): the Update button (taskbar, launcher's About page): what's new, what happens, then the updater
 void Desktop::askUpdate() {
     if (!gUpdater.available()) {
-        showDialog("Triffall Update", gUpdater.enabled() ? std::string("Triffall is up to date (version ") + TRIFFALL_VERSION + ")." : "This copy of Triffall is updated by the store or site it came from.");
+        showDialog("Triffall Update", gUpdater.enabled() ? std::string("Triffall is up to date (version ") + TRIFFALL_VERSION + ")." : gUpdater.offReason == "itch" ? "The itch app keeps this copy of Triffall up to date." : "This copy of Triffall is updated by the store or site it came from.");
         return;
     }
     std::string v = gUpdater.newVersion(), notes = gUpdater.notes();
     if (notes.size() > 220) { notes = notes.substr(0, 217); size_t sp = notes.find_last_of(' '); if (sp != std::string::npos && sp > 150) notes.resize(sp); notes += "..."; }
     std::string t = "Version " + v + " is ready (you have " + TRIFFALL_VERSION + ")." + (notes.empty() ? "" : " New: " + notes) +
         " Triffall closes, updates itself and starts again in a few seconds. Saves and settings are kept.";
+    if (gUpdater.remote()) {   // 1.7.1 (#147): from the public releases page: download (and check) first, then close
+        long long sz = gUpdater.newSize();
+        char mbs[32]; if (sz < 1048576) snprintf(mbs, sizeof mbs, "under 1 MB"); else snprintf(mbs, sizeof mbs, "%.0f MB", sz / (1024.0 * 1024.0));
+        t = "Version " + v + " is ready (you have " + TRIFFALL_VERSION + ")." + (notes.empty() ? "" : " New: " + notes) +
+            " Triffall downloads it" + (sz > 0 ? std::string(" (") + mbs + ")" : std::string("")) + ", then closes, updates itself and starts again. Saves, settings and your Editor changes are kept.";
+    }
     if (game->running) t += " The adventure you're playing now closes too: progress since your last save is lost.";
-    showDialog("Update Triffall", t, [this]() { if (req) req->startUpdate = true; }, true);
+    showDialog("Update Triffall", t, [this]() {
+        if (gUpdater.remote()) {   // the download window shows the progress and starts the update when it's done
+            gUpdater.startDownload();
+            DeskWindow w; w.type = "download"; w.title = "Downloading Triffall " + gUpdater.newVersion(); w.noClose = true;
+            w.w = 340; w.h = 130; w.x = (UI::SCREEN_W - w.w) / 2; w.y = (UI::SCREEN_H - TASKBAR_H - w.h) / 2;
+            windows.push_back(w);
+        } else if (req) req->startUpdate = true;
+    }, true);
 }
 
 // 1.7.0 (#145): delete an adventure (campaign folder + its saves). The main story and the Tutorial can't be deleted.
@@ -510,7 +523,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     // after an update: say how it went (once)
     if (!updateResultShown && gUpdater.resultPending && !isModal) {
         updateResultShown = true; gUpdater.resultPending = false;
-        if (gUpdater.resultOk) showDialog("Triffall Update", "Triffall was updated to version " + (gUpdater.resultVersion.empty() ? std::string(TRIFFALL_VERSION) : gUpdater.resultVersion) + ". Your saves and settings were kept.");
+        if (gUpdater.resultOk) showDialog("Triffall Update", "Triffall was updated to version " + (gUpdater.resultVersion.empty() ? std::string(TRIFFALL_VERSION) : gUpdater.resultVersion) + ". Your saves and settings were kept." + (gUpdater.resultText.empty() ? std::string("") : " " + gUpdater.resultText));
         else showDialog("Triffall Update", "The update to " + gUpdater.resultVersion + " didn't finish" + (gUpdater.resultText.empty() ? std::string(".") : ": " + gUpdater.resultText) + " Triffall " + TRIFFALL_VERSION + " is still installed, so nothing was lost.");
     }
     // taskbar app button (resume game)
@@ -907,6 +920,26 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
             bool hasTutorial = false; for (auto& c : listCampaigns(assetDir)) if (c.id == "tutorial") hasTutorial = true;
             if (next("Finish")) { w.wantClose = true; if (openNow) openLauncher(LP_PLAY, hasTutorial ? std::string("tutorial") : std::string("triffall")); return; }
         }
+    } else if (w.type == "download") {   // 1.7.1 (#147): the update's download, then its check and unpacking
+        Updater::Stage st = gUpdater.stage();
+        if (st == Updater::READY) { w.wantClose = true; if (req) req->startUpdate = true; return; }
+        if (st == Updater::FAILED || st == Updater::IDLE) {
+            std::string why = gUpdater.downloadError(); w.wantClose = true;
+            if (st == Updater::FAILED) { gUpdater.cancelDownload(); showDialog("Triffall Update", "The update couldn't be installed. " + (why.empty() ? std::string("The download failed.") : why) + " Nothing was changed: Triffall " + TRIFFALL_VERSION + " keeps running as it is."); }
+            return;   // showDialog may move the window list: nothing more with w
+        }
+        long long got = gUpdater.gotBytes(), all = gUpdater.totalBytes();
+        std::string line = st == Updater::UNPACKING ? "Checking and unpacking the download..." : "Downloading the new version...";
+        f.draw(cv, *ctx.ts, x, y + 2, line, DKSHADOW);
+        int bx = x, by = y + 22, bw = w.w - 20;
+        bevelBox(cv, bx, by, bw, 18, true);
+        float frac = st == Updater::UNPACKING ? 1.0f : all > 0 ? (float)((double)got / (double)all) : 0.0f;
+        if (st == Updater::DOWNLOADING && all <= 0) { int seg = (int)(fmodf(ctx.time, 1.6f) / 1.6f * (bw - 40)); cv.fillRect(bx + 2 + seg, by + 2, 36, 14, RGB(0, 0, 128)); }
+        else for (int i = 0; i < (int)((bw - 4) * std::min(1.0f, frac)) / 10; i++) cv.fillRect(bx + 2 + i * 10, by + 2, 8, 14, RGB(0, 0, 128));
+        char sz[64];
+        if (all > 0) snprintf(sz, sizeof sz, "%.1f of %.1f MB", got / 1048576.0, all / 1048576.0); else snprintf(sz, sizeof sz, "%.1f MB", got / 1048576.0);
+        if (st == Updater::DOWNLOADING) f.draw(cv, *ctx.ts, x, y + 46, sz, DKSHADOW);
+        if (win98Button(cv, in, w.x + w.w / 2 - 40, w.y + w.h - 34, 80, 24, "Cancel", true, true, active) || (active && in.pressed[K_ESCAPE])) { gUpdater.cancelDownload(); w.wantClose = true; }
     } else if (w.type == "msg" || w.type == "yesno") {
         drawIcon(cv, w.type == "yesno" ? 2 : 2, w.type == "yesno" ? 10 : 3, x + 4, y, 1);
         f.drawWrapped(cv, *ctx.ts, x + 44, y + 2, w.w - 64, w.text, DKSHADOW);

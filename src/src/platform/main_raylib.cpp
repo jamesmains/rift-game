@@ -31,6 +31,8 @@ struct RlAudio : AudioBackend {
 };
 
 int main(int argc, char** argv) {
+    // 1.7.1 (#147): a copy of this exe in %TEMP% is the updater's helper (core/updater.h): no window, no game
+    if (argc >= 3 && std::strcmp(argv[1], "--apply-update") == 0) return Updater::applyMain(argv[2]);
     std::string base = rl_app_dir();
     std::string assets = base + "assets";
     std::string saves = base + "saves";

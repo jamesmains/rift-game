@@ -5,6 +5,8 @@
 #include "bot.h"
 #include "../core/updater.h"
 #include <cstdio>
+#include <fstream>
+#include <sstream>
 #include <map>
 #include <chrono>
 #include <algorithm>
@@ -30,6 +32,7 @@ int main(int argc, char** argv) {
     auto step = [&](int n) { for (int i = 0; i < n; i++) { if (padMode) in.gamepadActive = true; app.frame(in, dt); if (app.req.hasClipboardOut) { clip = app.req.setClipboard; app.req.hasClipboardOut = false; } bool c = in.down[K_CTRL], sh = in.down[K_SHIFT]; in.beginFrame(); in.down[K_CTRL] = c; in.down[K_SHIFT] = sh; if (c) in.clipboard = clip; if (app.wantsQuit()) break; } };
     Bot bot(app, in, step, fails);
     const std::string scriptDir = std::filesystem::path(argv[1]).parent_path().string();   // 1.7.0: test fixtures next to the script
+    std::string updateApplied = "none";   // 1.7.1: what the last updateapply said
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
             // 1.6.0 game commands
@@ -51,8 +54,41 @@ int main(int argc, char** argv) {
             if (cmd == "launchcampaign") { app.desktop.openLauncher(-1, p[1]); step(2); return true; }   // the launcher with this adventure picked
             // 1.7.0 (#140): updatesource DIR = look for updates in that releases\ folder (the script is only written, never run);
             // updatelaunch = do what the Update dialog's Yes leads to (writes the helper script into <outdir>/triffall-update)
-            if (cmd == "updatesource") { gUpdater.dryRun = true; std::error_code uec; std::string usrc = std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1]; gUpdater.setSource(usrc, app.saveDir); gUpdater.checkNow(true); step(2); printf("  update: %s\n", gUpdater.available() ? gUpdater.newVersion().c_str() : "none"); return true; }
+            if (cmd == "updatesource") { gUpdater.dryRun = true; std::error_code uec; std::string usrc = Updater::isUrl(p[1]) || std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1]; gUpdater.setSource(usrc, app.saveDir); gUpdater.checkNow(true); step(2); printf("  update: %s\n", gUpdater.available() ? gUpdater.newVersion().c_str() : "none"); return true; }
             if (cmd == "updatelaunch") { gUpdater.dryRun = true; std::string err; bool ok = gUpdater.launch(err); printf("  updatelaunch ok=%d %s %s\n", ok ? 1 : 0, gUpdater.scriptPath.c_str(), err.c_str()); step(1); return true; }
+            // 1.7.1 (#147-#149): updatemirror DIR = answer the updater's web fetches from files in DIR (by the address's last
+            // part; nothing goes to the network); updateinit DIR = start the updater as the game does for an exe in DIR
+            // (update-source.txt, .itch\); updatedownload = Yes on a web update: download, check, unpack (waits);
+            // updateapply FIXTURE [fail] = copy FIXTURE/old to <outdir>/apply/copy and run the helper's swap on it with
+            // FIXTURE/new (in-process; "fail" = fail after the copy, to test the rollback)
+            if (cmd == "updatemirror") {
+                std::error_code uec; std::string dir = std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1];
+                gUpdater.fetchHook = [dir](const std::string& url, const std::string& toFile, std::string& body, std::string& err) -> bool {
+                    std::string name = url.substr(url.find_last_of('/') + 1);
+                    std::filesystem::path f = std::filesystem::path(dir) / name; std::error_code e;
+                    if (!std::filesystem::exists(f, e)) { err = "Not found on the update server."; return false; }
+                    if (!toFile.empty()) { std::filesystem::copy_file(f, std::filesystem::u8path(toFile), std::filesystem::copy_options::overwrite_existing, e); if (e) { err = e.message(); return false; } return true; }
+                    std::ifstream in(f, std::ios::binary); std::stringstream ss; ss << in.rdbuf(); body = ss.str(); return true;
+                };
+                step(1); return true;
+            }
+            if (cmd == "updateinit") { gUpdater.dryRun = true; std::error_code uec; std::string dir = std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1]; printf("  updateinit %s\n", dir.c_str()); gUpdater.init(dir + "/", app.saveDir, ""); gUpdater.checkNow(true); step(2); return true; }
+            if (cmd == "updateprogress") { gUpdater.testProgress(atoll(p[1].c_str()), atoll(p[2].c_str())); step(2); return true; }   // fake download progress (GOT TOTAL; -1 = idle)
+            if (cmd == "httpget") { std::string err; bool ok = gUpdater.download(p[1], p[2], err); printf("  httpget ok=%d got=%lld %s\n", ok ? 1 : 0, gUpdater.gotBytes(), err.c_str()); step(1); return true; }   // the real WinHTTP fetch (manual checks)
+            if (cmd == "updatewait") { gUpdater.finishDownload(true); step(1); return true; }   // the download started by Yes has finished
+            if (cmd == "updatedownload") { gUpdater.dryRun = true; bool st = gUpdater.startDownload(); gUpdater.finishDownload(true); printf("  updatedownload started=%d stage=%d %s\n", st ? 1 : 0, (int)gUpdater.stage(), gUpdater.downloadError().c_str()); step(2); return true; }
+            if (cmd == "updateapply") {
+                namespace fsx = std::filesystem; std::error_code uec;
+                std::string fix = fsx::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1];
+                fsx::path copy = fsx::path(app.saveDir) / "apply" / "copy";
+                fsx::remove_all(copy, uec); fsx::create_directories(copy, uec);
+                fsx::copy(fsx::path(fix) / "old", copy, fsx::copy_options::recursive, uec);
+                Updater::Plan pl; pl.dest = copy.u8string(); pl.from = (fsx::path(fix) / "new").u8string(); pl.version = "99.0.0";
+                pl.saves = (copy / "saves").u8string(); pl.result = (copy / "saves" / "update-result.txt").u8string(); pl.log = (fsx::path(app.saveDir) / "apply" / "update.log").u8string();
+                pl.restartGame = false; pl.testFail = p.size() > 2 && p[2] == "fail";
+                std::string text; bool ok = Updater::apply(pl, text);
+                updateApplied = std::string(ok ? "ok" : "fail") + ": " + text; printf("  updateapply %s\n", updateApplied.c_str()); step(1); return true;
+            }
             // 1.7.0 (#145): deletecampaign ID = what the launcher's / Editor's Delete does after Yes (run from a copy of assets!)
             if (cmd == "deletecampaign") { std::string err; bool ok = app.deleteCampaign(p[1], err); printf("  deletecampaign %s ok=%d %s\n", p[1].c_str(), ok ? 1 : 0, err.c_str()); step(2); return true; }
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
@@ -227,6 +263,18 @@ int main(int argc, char** argv) {
                 if (key == "update") { got = gUpdater.available() ? gUpdater.newVersion() : "none"; num = false; return true; }
                 if (key == "updaterequest") { got = app.req.startUpdate ? "1" : "0"; return true; }
                 if (key == "updatebutton") { got = app.desktop.updBtnW > 0 ? "1" : "0"; return true; }
+                // 1.7.1: updatestage (idle/downloading/unpacking/ready/failed), updateerror, updateurl (last address fetched),
+                // updateoff (why this copy has no updater), updateenabled, updateapplied (ok|fail: text), applyfile:<path in the
+                // updated copy> (its first line, "none" = no such file), sha256:<text>
+                if (key == "updatestage") { static const char* n[] = {"idle", "downloading", "unpacking", "ready", "failed"}; got = n[(int)gUpdater.stage()]; num = false; return true; }
+                if (key == "updateerror") { got = gUpdater.downloadError(); if (got.empty()) got = "none"; num = false; return true; }
+                if (key == "updateurl") { got = gUpdater.lastUrl; num = false; return true; }
+                if (key == "updateoff") { got = gUpdater.offReason.empty() ? "none" : gUpdater.offReason; num = false; return true; }
+                if (key == "updateenabled") { got = gUpdater.enabled() ? "1" : "0"; return true; }
+                if (key == "updateapplied") { got = updateApplied; num = false; return true; }
+                if (key.rfind("applyfile:", 0) == 0) { std::ifstream f(std::filesystem::path(app.saveDir) / "apply" / "copy" / std::filesystem::u8path(key.substr(10))); std::string l; if (f && std::getline(f, l)) { if (!l.empty() && l.back() == '\r') l.pop_back(); got = l; } else got = "none"; num = false; return true; }
+                if (key.rfind("unpacked:", 0) == 0) { std::ifstream f(std::filesystem::path(app.saveDir) / "triffall-update" / "v99.0.0" / std::filesystem::u8path(key.substr(9))); std::string l; if (f && std::getline(f, l)) got = l.substr(0, 20); else got = "none"; num = false; return true; }   // a file of the unpacked test download (first 20 chars)
+                if (key.rfind("sha256:", 0) == 0) { std::string s = key.substr(7); got = Updater::sha256Hex(s.data(), s.size()); num = false; return true; }
                 if (key == "updatescript") { std::error_code ec; got = !gUpdater.scriptPath.empty() && std::filesystem::exists(gUpdater.scriptPath, ec) ? "1" : "0"; return true; }
                 if (key == "campaigns") { got.clear(); for (auto& c : listCampaigns(app.assetDir)) got += (got.empty() ? "" : ",") + c.id; num = false; return true; }
 #ifndef TRIFFALL_NO_EDITOR

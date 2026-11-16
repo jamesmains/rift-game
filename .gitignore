@@ -4,6 +4,7 @@ requests/
 data-backups/
 .ideajotter-import.*
 *.zip
+!src/tests/fixtures/**/*.zip
 *.mp4
 *.webm
 *.gif

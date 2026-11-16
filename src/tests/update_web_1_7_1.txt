@@ -1,0 +1,100 @@
+# 1.7.1 (#147 #148 #149): updates from the public releases page, the player's own changes kept, no updater in itch-app installs.
+installed
+frames 3
+expect sha256:abc == BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD
+#
+# #149: a copy the itch app installed (.itch\ next to the exe) never looks for updates, even with update-source.txt
+updateinit fixtures/update_itch
+expect updateenabled == 0
+expect updateoff == itch
+expect update == none
+deskaction update
+frames 2
+expect topwindow == Triffall Update
+shot update_itch.png
+key ENTER
+frames 2
+#
+# #147: a website copy (update-source.txt = the releases address). The fetches are answered from fixtures/update_remote.
+updatemirror fixtures/update_remote
+updateinit fixtures/update_web
+expect updateenabled == 1
+expect updateoff == none
+expect update == 99.0.0
+expect updateurl == https://github.com/test/triffall-releases/releases/latest/download/latest.json
+frames 3
+expect updatebutton == 1
+deskaction update
+frames 2
+expect topwindow == Update Triffall
+shot update_web_dialog.png
+# Yes: the download window (headless: the mirror answers at once, so it may already be done)
+key ENTER
+updatewait
+frames 2
+expect updaterequest == 1
+expect updatestage == ready
+expect updateurl == https://github.com/test/triffall-releases/releases/download/v99.0.0/triffall-v99.0.0-windows.zip
+expect unpacked:Triffall.exe == web exe
+expect unpacked:assets/data/a.txt == a from the web xxxxx
+expect unpacked:assets/data/sub/e.txt == e from the web
+updatelaunch
+expect updatescript == 1
+#
+# the download window (progress faked; going idle = cancelled, it closes)
+deskaction update
+frames 2
+updateprogress 41943040 103722459
+key ENTER
+frames 3
+expect window == download
+shot update_downloading.png
+updateprogress -1 0
+frames 2
+expect window != download
+#
+# a zip whose SHA-256 differs from latest.json is refused, nothing unpacked
+updatemirror fixtures/update_badhash
+updateinit fixtures/update_web
+expect update == 99.0.0
+deskaction update
+frames 2
+key ENTER
+updatewait
+frames 3
+expect updatestage == idle
+expect topwindow == Triffall Update
+shot update_badhash.png
+updatedownload
+expect updatestage == failed
+expect updateerror contains SHA-256
+#
+# #148: the swap. old = a copy with the player's changes (b, c edited; own campaign "mine"; campaign "gone" deleted)
+updateapply fixtures/update_apply
+expect updateapplied contains ok: Your own changes (3 files made in the Editor or added) were kept. The update also changed 1 file you had edited (data\c.txt): the game now uses the new version, and yours is in
+expect applyfile:Triffall.exe == new exe
+expect applyfile:README.txt == new readme
+expect applyfile:version.txt == 99.0.0
+expect applyfile:assets/data/a.txt == a new
+expect applyfile:assets/data/b.txt == b edited by player
+expect applyfile:assets/data/c.txt == c new
+expect applyfile:saves/editor-edits-99.0.0/data/c.txt == c edited by player
+expect applyfile:assets/data/d.txt == d new
+expect applyfile:assets/campaigns/mine/campaign.txt == my campaign
+expect applyfile:assets/campaigns/mine/maps/start.txt == my map
+expect applyfile:assets/campaigns/gone/campaign.txt == none
+expect applyfile:saves/slot1.sav == my save
+expect applyfile:update-source.txt == https://example.invalid/releases/latest/download/
+expect applyfile:.update-old/Triffall.exe == none
+# the same with a failure after the copy: everything is put back
+updateapply fixtures/update_apply fail
+expect updateapplied contains fail: Copying the new version failed (a test asked the update to fail here). The old version was put back.
+expect applyfile:Triffall.exe == old exe
+expect applyfile:README.txt == old readme
+expect applyfile:assets/data/a.txt == a old
+expect applyfile:assets/data/b.txt == b edited by player
+expect applyfile:assets/data/d.txt == none
+expect applyfile:assets/campaigns/mine/campaign.txt == my campaign
+expect applyfile:saves/slot1.sav == my save
+expect applyfile:saves/editor-edits-99.0.0/data/c.txt == none
+expect applyfile:.update-old/Triffall.exe == none
