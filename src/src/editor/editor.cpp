@@ -8,8 +8,28 @@
 namespace fs = std::filesystem;
 using namespace ED;
 
-static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs", "Scripts"};
-static const int NTABS = 26;
+// Tab numbers are fixed (tests, the headless "tab N" command and FlagUse::tab use them): new tabs only go at the end.
+static const char* TABS[] = {"Maps", "Tiles", "World", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achiev.", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs", "Scripts",
+                             "Lore", "Epilogue", "Credits", "Hints", "Contradict.", "Dun.styles", "Healers", "Combat", "Formulas"};   // 26-34: 1.6.0
+// 1.6.0 (#108): the names the workspace sub-tab row shows (room for whole words there)
+static const char* TAB_LONG[] = {"Maps", "Tile kinds", "World map", "Items", "Creatures", "Spells", "Classes", "Shops", "Encounters", "Quests", "Dungeons", "Dialogue", "Sounds", "Tileset", "Recipes", "Affixes", "Banter", "Achievements", "Campaign", "Flags", "Bounties", "Factions", "Objects", "Resources", "NPCs", "Scripts",
+                                 "Lore files", "Epilogue", "Credits", "Hints", "Contradictions", "Dungeon styles", "Healers", "Combat rules", "Formulas"};
+static const int NTABS = 35;
+// 1.6.0 (#108): the tabs grouped into workspaces (first row of the header); each lists its tabs in sub-tab order
+struct EdWorkspace { const char* name; std::vector<int> tabs; const char* tip; };
+static const std::vector<EdWorkspace>& workspaces() {
+    static const std::vector<EdWorkspace> ws = {
+        {"Campaign", {18, 28, 29}, "The campaign itself: its name, where a new game starts, how it ends, the end credits and the Training hints."},
+        {"World", {0, 2, 10, 31, 1, 13}, "Places: maps, the world map, generated dungeons and their styles, tile kinds and the sprite sheets."},
+        {"People", {24, 11, 7, 32, 16}, "Characters: NPCs, what they say, their shops, healers, and the party's banter."},
+        {"Story", {9, 19, 20, 21, 17, 26, 27, 30}, "Quests, story flags, notice boards, towns' reputation, achievements, desktop lore files, the epilogue and story contradictions."},
+        {"Fights", {4, 8, 5, 6, 33, 34}, "Monsters, random encounters, spells, classes, combos and statuses, and the core formulas."},
+        {"Things", {3, 14, 15, 23, 22}, "Items, crafting recipes, item affixes, resource nodes and object types."},
+        {"Sound & Scripts", {12, 25}, "Music and sound effects, and scripts."},
+    };
+    return ws;
+}
+static int workspaceOf(int t) { auto& ws = workspaces(); for (size_t i = 0; i < ws.size(); i++) for (int x : ws[i].tabs) if (x == t) return (int)i; return 0; }
 int gEdTop = 28;                      // tab bar height: 28 for one row of tabs, 50 when they need two rows
 #define TOP gEdTop
 static const int BOTTOM = 18;
@@ -343,10 +363,62 @@ void Editor::drawPopup(InputState& in) {
     } else if (pop == P_SHEET) {
         drawSheetImport(in, close);
     }
+
+    else if (drawPopupBuilders(in, close)) {}   // 1.6.0: editor_builders.cpp (condition / action builders, search, Check all)
+
+    else if (drawPopupStory(in, close)) {}      // 1.6.0: editor_story.cpp
+
+    else if (drawPopupRules(in, close)) {}      // 1.6.0: editor_rules.cpp
+
+    else if (drawPopupHub(in, close)) {}        // 1.6.0: editor_hub.cpp (NPC hub, bounties, Test this)
+
+    else if (drawPopupQuests(in, close)) {}     // 1.6.0: editor_quests.cpp (quest builder, starter campaign, checklist)
+
     if (close && popOpenedFrame == frameNo) { ui.modal = true; in.eatMouse(); in.eatKeys(); }   // the callback opened the next popup (e.g. New campaign -> name prompt): keep that one
     else if (close) { pop = P_NONE; ui.modal = false; ui.blur(); in.eatMouse(); in.eatKeys(); if (bigRefocus) { ui.focus = bigTarget; bigRefocus = false; } }
     else ui.modal = true;
     ui.bigAllowed = true;
+}
+
+// 1.6.0 (#108): unsaved changes per tab (the * on tabs and workspaces)
+bool Editor::tabDirty(int i) {
+    switch (i) {
+        case 0: return mapDirty;
+        case 1: return kindsDirty;
+        case 2: return gens[8].dirty;
+        case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10: return gens[i - 3].dirty;
+        case 11: return te.dirty;
+        case 12: return sndDirty;
+        case 14: case 15: case 16: case 17: return gens[i - 5].dirty;
+        case 18: return camp.dirty;
+        case 19: return flagDocsDirty;
+        case 20: return gens[13].dirty;
+        case 21: return gens[14].dirty;
+        case 22: return gens[15].dirty;
+        case 23: return gens[16].dirty;
+        case 24: return gens[17].dirty;
+        case 25: return ste.dirty;
+
+        case 26: case 27: case 28: case 29: case 30: return tabDirtyStory(i);
+
+        case 31: case 32: case 33: case 34: return tabDirtyRules(i);
+
+        default: return false;
+    }
+}
+bool Editor::anyDirty() { for (int i = 0; i < NTABS; i++) if (tabDirty(i)) return true; return false; }
+// 1.6.0 (#108): the Editor's own preferences (saves/editor.ini, next to settings.ini)
+void Editor::loadPrefs() {
+    prefsLoaded = true; std::string t;
+    if (prefsPath.empty() || !readFile(prefsPath, t)) return;
+    for (auto& sec : parseConfig(t)) for (auto& kv : sec.kv) {
+        if (kv.first == "flattabs") flatTabs = kv.second == "1";
+    }
+}
+void Editor::savePrefs() {
+    if (prefsPath.empty()) return;
+    std::string s = "[editor]\nflattabs=" + std::string(flatTabs ? "1" : "0") + "\n";
+    writeFile(prefsPath, s);
 }
 
 // ---------------- main ----------------
@@ -361,20 +433,64 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
     // tabs flow into a second row when they do not fit beside the Exit button
     // 1.3.1 (#46): one row = Campaign | Guide | Check all | Exit side by side (needs W - 382 for the tabs); else the
     // buttons stack in two rows at the right (W - 250 for the tabs) and the bar is at least two rows high
-    { int tabsW = 4; for (int i = 0; i < NTABS; i++) tabsW += font->width(TABS[i]) + 10;
-      hdrWide = tabsW <= W - 382;
-      int lim = hdrWide ? W - 382 : W - 250;
-      int rows = 1, fx = 4; for (int i = 0; i < NTABS; i++) { int tw = font->width(TABS[i]) + 8; if (fx + tw > lim) { rows++; fx = 4; } fx += tw + 2; }
-      if (!hdrWide && rows < 2) rows = 2;
-      gEdTop = 6 + 22 * rows; }   // 28 / 50 / 72
-    cv.fillRect(0, 0, W, TOP, PANEL);
-    int tx = 4, trow = 0;
-    for (int i = 0; i < NTABS; i++) {
-        int tw = font->width(TABS[i]) + 8;
-        if (tx + tw > (hdrWide ? W - 382 : W - 250)) { trow++; tx = 4; }
-        bool dirty = (i == 0 && mapDirty) || (i == 1 && kindsDirty) || (i >= 2 && i <= 10 && gens[i == 2 ? 8 : i - 3].dirty) || (i == 11 && te.dirty) || (i == 12 && sndDirty) || (i >= 14 && i <= 17 && gens[i - 5].dirty) || (i == 18 && camp.dirty) || (i == 19 && flagDocsDirty) || (i == 20 && gens[13].dirty) || (i == 21 && gens[14].dirty) || (i == 22 && gens[15].dirty) || (i == 23 && gens[16].dirty) || (i == 24 && gens[17].dirty) || (i == 25 && ste.dirty);
-        if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (dirty ? "*" : ""), true, tab == i)) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; }
-        tx += tw + 2;
+    // 1.6.0 (#108): tabs are grouped into workspaces (row 1) with their tabs underneath (row 2); when everything fits
+    // beside the header buttons it is one row (workspaces | tabs). "All tabs" (editor.ini flattabs=1) = the old flat bar.
+    if (!prefsLoaded) loadPrefs();
+    auto pickTab = [&](int i) { tab = i; ui.blur(); if (i != 1) kindReturnTab = -1; if (i == 19 || i == 8) flagIndexDirty = true; wsLastTab[workspaceOf(i)] = i; };
+    const char* flatLbl = flatTabs ? "Workspaces" : "All tabs";
+    int flatW = font->width(flatLbl) + 8;
+    if (flatTabs) {
+        int tabsW = 4; for (int i = 0; i < NTABS; i++) tabsW += font->width(TABS[i]) + 10;
+        tabsW += flatW + 10;
+        hdrWide = tabsW <= W - 382;
+        int lim = hdrWide ? W - 382 : W - 250;
+        int rows = 1, fx = 4; for (int i = 0; i <= NTABS; i++) { int tw = (i < NTABS ? font->width(TABS[i]) + 8 : flatW); if (fx + tw > lim) { rows++; fx = 4; } fx += tw + 2; }
+        if (!hdrWide && rows < 2) rows = 2;
+        gEdTop = 6 + 22 * rows;   // 28 / 50 / 72
+        cv.fillRect(0, 0, W, TOP, PANEL);
+        int tx = 4, trow = 0;
+        for (int i = 0; i <= NTABS; i++) {
+            int tw = i < NTABS ? font->width(TABS[i]) + 8 : flatW;
+            if (tx + tw > lim) { trow++; tx = 4; }
+            if (i == NTABS) {
+                if (ui.button(tx, 4 + trow * 22, tw, 20, flatLbl, true, false, DIM)) { flatTabs = false; savePrefs(); }
+                if (ui.hover(tx, 4 + trow * 22, tw, 20)) ui.tip("Group the tabs into workspaces again (World, People, Story...).");
+                break;
+            }
+            if (ui.button(tx, 4 + trow * 22, tw, 20, std::string(TABS[i]) + (tabDirty(i) ? "*" : ""), true, tab == i)) pickTab(i);
+            tx += tw + 2;
+        }
+    } else {
+        auto& ws = workspaces(); int cw = workspaceOf(tab);
+        auto wsW = [&](size_t i) { return font->width(ws[i].name) + 14; };
+        auto subW = [&](int t) { return font->width(TAB_LONG[t]) + 10; };
+        int row1 = 4; for (size_t i = 0; i < ws.size(); i++) row1 += wsW(i) + 2;
+        int maxSub = 0; for (auto& w : ws) { int s = 0; for (int t : w.tabs) s += subW(t) + 2; maxSub = std::max(maxSub, s); }
+        hdrWide = row1 + 14 + maxSub + flatW + 6 <= W - 382;   // the widest workspace decides, so the bar doesn't jump between workspaces
+        gEdTop = hdrWide ? 28 : 50;
+        cv.fillRect(0, 0, W, TOP, PANEL);
+        int tx = 4;
+        for (size_t i = 0; i < ws.size(); i++) {
+            bool d = false; for (int t : ws[i].tabs) if (tabDirty(t)) d = true;
+            int w = wsW(i);
+            if (ui.button(tx, 4, w, 20, std::string(ws[i].name) + (d ? "*" : ""), true, (int)i == cw, (int)i == cw ? ACCENT2 : TEXT)) {
+                int t = wsLastTab[i] >= 0 ? wsLastTab[i] : ws[i].tabs[0]; pickTab(t);
+            }
+            if (ui.hover(tx, 4, w, 20)) ui.tip(ws[i].tip);
+            tx += w + 2;
+        }
+        cw = workspaceOf(tab);
+        int sx = hdrWide ? tx + 12 : 4, sy = hdrWide ? 4 : 26;
+        if (hdrWide) cv.fillRect(tx + 5, 6, 1, 16, DIM);
+        else cv.fillRect(0, 24, W - 246, 1, BORDER);
+        for (int t : ws[cw].tabs) {
+            int w = subW(t);
+            if (ui.button(sx, sy, w, 20, std::string(TAB_LONG[t]) + (tabDirty(t) ? "*" : ""), true, tab == t)) pickTab(t);
+            sx += w + 2;
+        }
+        int fxx = hdrWide ? W - 382 - flatW : tx + 8;
+        if (ui.button(fxx, 4, flatW, 20, flatLbl, true, false, DIM)) { flatTabs = true; savePrefs(); }
+        if (ui.hover(fxx, 4, flatW, 20)) ui.tip("Show every tab in one bar, one per data file (the Editor's layout before 1.6.0).");
     }
     if (tab == 1 && kindReturnTab >= 0 && !ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE]) { tab = kindReturnTab; kindReturnTab = -1; in.eatKeys(); }
     {
@@ -385,7 +501,7 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
             names.push_back("+ New campaign...");
             openListPicker("Campaign to edit", names, cur, [this, all](int i) {
                 if (i >= (int)all.size()) { openTextPrompt("Name of the new campaign (it starts empty)", "", [this](const std::string& nm) { newCampaign(nm); }); return; }
-                bool any = mapDirty || kindsDirty || te.dirty || ste.dirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
+                bool any = anyDirty();
                 std::string id = all[i].id;
                 if (any) openConfirm("Unsaved changes will be lost. Switch campaign anyway?", [this, id]() { setCampaign(id); }); else setCampaign(id);
             });
@@ -400,11 +516,11 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
       if (ui.button(kx, ky, 64, 20, "Check all", true, false, ACCENT2) && pop == P_NONE) { runCampaignCheck(); popOpenedFrame = frameNo; pop = P_REPORT; ui.modal = true; ui.blur(); }
       if (ui.hover(kx, ky, 64, 20)) ui.tip("Check the whole campaign: maps, dialogue, flags, quests, shops, classes, creatures, recipes, tables..."); }
     if (ui.button(W - 70, 4, 64, 20, "Exit", true, false, DANGER) || (!ui.typing() && pop == P_NONE && in.pressed[K_ESCAPE] && !mapPanning)) {
-        bool any = mapDirty || kindsDirty || te.dirty || ste.dirty || sndDirty || camp.dirty || flagDocsDirty; for (auto& g : gens) if (g.dirty) any = true;
+        bool any = anyDirty();
         if (any) openConfirm("There are unsaved changes. Exit anyway? (Save each tab with its Save button.)", [this]() { wantsClose = true; });
         else wantsClose = true;
     }
-    if (tab != lastTab) { if (tab == 25) flagIndexDirty = true; if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; }
+    if (tab != lastTab) { if (tab == 25) flagIndexDirty = true; if (tab == 3 || tab == 4 || tab == 5 || tab == 7 || tab == 8 || tab == 9 || tab == 11 || tab == 19 || tab == 20 || tab == 22 || tab == 23 || tab == 24) flagIndexDirty = true; if (tab == 22 || tab == 23 || tab == 24) poNeedScan = true; if (tab == 24) npcJoinsDirty = true; lastTab = tab; wsLastTab[workspaceOf(tab)] = tab; }
     // 1.2.0 (#36): a PNG dropped on the window opens the sprite sheet import (the import window takes it itself)
     if (pop == P_NONE) for (auto& d : in.dropped) if (toLower(fs::path(d).extension().string()) == ".png") { tab = 13; openSheetImport(d); break; }
     switch (tab) {
@@ -424,6 +540,15 @@ void Editor::update(InputState& in, float dt, Canvas& cv) {
         case 24: drawGeneric(gens[17], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;   // 1.1.9: NPCs (the info box is drawn under the fields)
         case 25: drawScripts(in); break;   // 1.1.10 (#34)
         case 14: case 15: case 16: case 17: drawGeneric(gens[tab - 5], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
+
+        case 9: drawGeneric(gens[6], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;   // Quests
+
+        // 1.6.0 tabs 26-30 (Lore, Epilogue, Credits, Hints, Contradictions): editor_story.cpp
+        case 26: case 27: case 28: case 29: case 30: drawTabStory(in); break;
+
+        // 1.6.0 tabs 31-34 (Dungeon styles, Healers, Combat rules, Formulas): editor_rules.cpp
+        case 31: case 32: case 33: case 34: drawTabRules(in); break;
+
         default: drawGeneric(gens[tab - 3], 4, TOP + 4, W - 8, H - TOP - BOTTOM - 8, in); break;
     }
     // status bar

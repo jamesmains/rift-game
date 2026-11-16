@@ -133,7 +133,23 @@ private:
     std::string toast; float toastT = 0;
     void say(const std::string& s) { toast = s; toastT = 3; }
     // ---- popups ----
-    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT, P_BIGTEXT, P_SHEET } pop = P_NONE;
+    enum PopKind { P_NONE, P_TILE, P_LIST, P_CONFIRM, P_TEXT, P_HELP, P_REPORT, P_IMPORT, P_BIGTEXT, P_SHEET,
+        // 1.6.0 builders (editor_builders.cpp)
+        P_BUILDERS_FIRST,
+
+        // 1.6.0 story tabs (editor_story.cpp)
+        P_STORY_FIRST,
+
+        // 1.6.0 rules tabs (editor_rules.cpp)
+        P_RULES_FIRST,
+
+        // 1.6.0 hub (editor_hub.cpp)
+        P_HUB_FIRST,
+
+        // 1.6.0 quests (editor_quests.cpp)
+        P_QUESTS_FIRST,
+
+        P_LAST } pop = P_NONE;
     std::function<void()> popCancel;   // 1.2.0: run when a list / text popup is cancelled (the tile picker reopens itself)
     std::function<void(Tile)> popTile; std::function<void(int)> popList; std::function<void()> popYes; std::function<void(const std::string&)> popText;
     std::vector<std::string> popItems; std::string popTitle, popValue; int popSel = 0, popScroll = 0; int tileScrollX = 0, tileScrollY = 0; Tile popCur;
@@ -403,5 +419,42 @@ public:
     void bakeOverworld();
     bool bakeDungeon(const EdSection& s, std::string& err);
     const std::vector<EdSection>& dungeonSections() { return gens[7].secs; }
+    // ---- 1.6.0 (#108) workspaces (editor.cpp) ----
+    std::string prefsPath;                     // saves/editor.ini (set by the app)
+    bool prefsLoaded = false, flatTabs = false; int wsLastTab[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+    void loadPrefs(); void savePrefs();
+    bool tabDirty(int tab); bool anyDirty();
+    // ---- 1.6.0 playtest extras (#114, editor_hub.cpp): what the game does when a "Test this" playtest starts ----
+    struct PlayExtra {
+        std::vector<std::string> actions;      // action lists run at the start (set=flag, item:id:1...), in order
+        std::string talkFile, talkNode;        // open this dialogue (at this node; empty = start) once the game runs
+        std::string fight;                     // start this fight at once: "encounter:<id>" or "creature:<id>[:count]"
+        bool active = false;
+    } playExtra;
+    void requestPlayHere(const std::string& map, int x, int y, const PlayExtra& ex);   // save all, close, play there with the extras
+
+    // ---- 1.6.0 builders (editor_builders.cpp): #112 condition / action builders, #119 search, #121 Check all ----
+    void openCondBuilder(const std::string& cur, std::function<void(const std::string&)> cb);     // condition popup; cb gets the text
+    void openActionBuilder(const std::string& cur, std::function<void(const std::string&)> cb);   // action list popup
+    std::string condSentence(const std::string& cond);       // "Shows when: ..." wording without the prefix
+    std::string actionSentence(const std::string& actions);  // plain words for an action list
+    int condField(int x, int y, int w, std::string& v, bool actions = false);   // text field + builder button + sentence; returns the height used
+    bool drawPopupBuilders(InputState& in, bool& close);
+
+    // ---- 1.6.0 story tabs (editor_story.cpp): #123 Lore 26, #124 Epilogue 27, #125 Credits 28, #126 Hints 29, #127 Contradictions 30 ----
+    void drawTabStory(InputState& in); bool tabDirtyStory(int tab); bool saveDirtyStory();
+    bool drawPopupStory(InputState& in, bool& close);
+
+    // ---- 1.6.0 rules tabs (editor_rules.cpp): #128 Dungeon styles 31, #129 Healers 32, #130 Combat rules 33, #131 Formulas 34 ----
+    void drawTabRules(InputState& in); bool tabDirtyRules(int tab); bool saveDirtyRules();
+    bool drawPopupRules(InputState& in, bool& close);
+
+    // ---- 1.6.0 hub (editor_hub.cpp): #109 NPC hub, #111 bounties, #114 Test this / previews / names ----
+    bool drawPopupHub(InputState& in, bool& close);
+
+    // ---- 1.6.0 quests (editor_quests.cpp): #110 quest builder, #113 starter campaign / checklist / walkthrough ----
+    void newQuestFor(const std::string& npcId);   // "Make them a quest giver" (called from the NPC hub)
+    bool drawPopupQuests(InputState& in, bool& close);
+
 private:
 };

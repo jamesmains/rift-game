@@ -152,3 +152,15 @@ Expect keys: `recipe:ID`, `fieldnote:ID`, `fieldknown:ID`, `deskfieldnotes`, `be
 1.5.2 (#105, #106): `fav_craft_1_5_2` (a favourite set in a fight survives the fight; the crafting quantity stops at
 what can be made). Command: `craftsel RECIPE` (select a recipe on the open crafting window's Craft tab). Expect keys:
 `favs:<member>` (the 8 hotbar slots, comma list), `craftqty`.
+
+<!-- 1.6.0 game -->
+
+<!-- 1.6.0 rules -->
+
+<!-- 1.6.0 story -->
+
+<!-- 1.6.0 builders -->
+
+<!-- 1.6.0 hub -->
+
+<!-- 1.6.0 quests -->

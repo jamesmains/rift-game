@@ -732,6 +732,15 @@ private:                                         // nearby map groups that hear 
     bool loadQuests();
     bool loadEncounters();
     std::vector<uint8_t> visMask;
+public:
+    // ---- 1.6.0 game UX (#115-#118) ----
+
+    // ---- 1.6.0 rules data (#128-#131) ----
+
+    // ---- 1.6.0 story/lore (#122) ----
+
+    // ---- 1.6.0 hub/playtest (#114) ----
+
 };
 
 std::string flagDescribe(const std::string& f);

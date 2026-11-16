@@ -9,7 +9,8 @@
 using namespace ED;
 
 static const char* TAB_TOPICS[] = {"tab.maps", "tab.tiles", "tab.world", "tab.items", "tab.creatures", "tab.spells", "tab.classes", "tab.shops", "tab.encounters", "tab.quests",
-                                   "tab.dungeons", "tab.dialogue", "tab.sounds", "tab.tileset", "tab.recipes", "tab.affixes", "tab.banter", "tab.achievements", "tab.campaign", "tab.flags", "tab.bounties", "tab.factions", "tab.objects", "tab.resources", "tab.npcs", "tab.scripts"};
+                                   "tab.dungeons", "tab.dialogue", "tab.sounds", "tab.tileset", "tab.recipes", "tab.affixes", "tab.banter", "tab.achievements", "tab.campaign", "tab.flags", "tab.bounties", "tab.factions", "tab.objects", "tab.resources", "tab.npcs", "tab.scripts",
+                                   "tab.lore", "tab.epilogue", "tab.credits", "tab.hints", "tab.contradictions", "tab.dungeonstyles", "tab.healers", "tab.combatrules", "tab.formulas"};   // 26-34: 1.6.0
 
 void Editor::loadGuide() {
     guide.clear(); guideIdx.clear();

@@ -16,7 +16,7 @@ bool App::init(const std::string& assets, const std::string& saves, AudioBackend
     game.saveDir = saves;
     game.init(&data, &settings, assets, &tileset, &font);
 #ifndef TRIFFALL_NO_EDITOR
-    editor.init(&tileset, &font, &data, assets, &req); editor.exportDir = saves + "/exports";
+    editor.init(&tileset, &font, &data, assets, &req); editor.exportDir = saves + "/exports"; editor.prefsPath = saves + "/editor.ini";
     editor.onSwitchCampaign = [this](const std::string& id) { if (game.running && game.campaignId != id) game.running = false; return game.switchCampaign(id); };
 #endif
     if (!desktop.init(&tileset, &font, &data, &game, &settings, &req, saves, assets + "/icons.png")) { error = "Missing " + assets + "/icons.png"; return false; }

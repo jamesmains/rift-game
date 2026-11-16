@@ -7,7 +7,7 @@ teleport hollowmere 20 20
 frames 120
 expect npc:bram == Bram;121,0;bram;bram
 expect npc:elder == Elder Mara;141,1;elder_mara;elder_mara
-expect npc:board == Notice Board;29,20;;notice_board
+expect npc:board == Notice Board;28,20;;notice_board
 expect npc:coach == Coachman;104,0;;coachman
 shot hollowmere_npcs.png
 # one NPC, three placements: two give themselves their own name and dialogue

@@ -12,15 +12,20 @@ maps, people, monsters, items, spells, quests, dialogue, sounds - lives in
 plain text files, and Editor gives each kind of file its own tab with forms,
 pickers and previews so you rarely have to touch the text by hand.
 
-The tabs, left to right: Maps (paint maps and place objects), Tiles (what each
-map cell type looks like and does), World (overworld locations), Items,
-Creatures, Spells, Classes, Shops, Encounters (random fight tables), Quests,
-Dungeons (generated dungeons), Dialogue, Sounds, Tileset (browse the art),
-Recipes, Affixes, Banter, Achiev. (achievements), Campaign, Flags, Bounties
-(notice boards), Factions (town reputation), Objects (object templates and every
-placed object), Resources (gather node types) and NPCs (the people and animals
-of the world, companions too). A tab with unsaved changes shows a * after its
-name.
+The tabs are grouped into workspaces (the first row of the header); pick one
+and its tabs show underneath:
+- Campaign: Campaign (name, start, ending), Credits, Hints (the Training panel).
+- World: Maps (paint maps, place objects), World map (overworld locations), Dungeons (generated dungeons), Dungeon styles, Tile kinds (what each map cell looks like and does), Tileset (the sprite sheets).
+- People: NPCs (the people and animals of the world, companions too), Dialogue, Shops, Healers, Banter.
+- Story: Quests, Flags, Bounties (notice boards), Factions (town reputation), Achievements, Lore files (the desktop's documents), Epilogue (the ending slides), Contradictions.
+- Fights: Creatures, Encounters (random fight tables), Spells, Classes, Combat rules (combos, statuses, weapon traits, damage types), Formulas (hit, crit, XP).
+- Things: Items, Recipes, Affixes, Resources (gather node types), Objects (object types, templates and every placed object).
+- Sound & Scripts: Sounds, Scripts.
+
+A tab with unsaved changes shows a * after its name, and so does its
+workspace. "All tabs" at the end of the workspace row shows every tab in one
+bar instead (one tab per data file, the layout before 1.6.0); "Workspaces"
+there switches back. The choice is remembered.
 
 The Campaign button in the header picks which campaign you are editing, or
 makes a new one. Each campaign is a separate game with its own files.
@@ -7714,3 +7719,19 @@ flag>=N there): the first time one becomes true it writes "story
 contradiction" to the message log (and the scripts' last error, which the
 console's scripts command shows).
 
+# ---- 1.6.0 builders topics (condition / action builders, search, Check all) ----
+
+
+# ---- 1.6.0 story topics (lore, epilogue, credits, hints, contradictions) ----
+
+
+# ---- 1.6.0 rules topics (dungeon styles, healers, combat rules, formulas) ----
+
+
+# ---- 1.6.0 hub topics (NPC hub, bounties, Test this) ----
+
+
+# ---- 1.6.0 quests topics (quest builder, starter campaign, checklist, walkthrough) ----
+
+
+# ---- 1.6.0 game topics ----

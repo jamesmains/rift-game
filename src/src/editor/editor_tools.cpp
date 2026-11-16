@@ -87,6 +87,11 @@ bool Editor::saveAllDirty() {
     if (sndDirty) { if (gAudio.saveDefs()) sndDirty = false; else ok = false; }
     if (flagDocsDirty && !saveFlagDocs()) ok = false;
     if (play.dirty && !savePlayState()) ok = false;
+
+    if (!saveDirtyStory()) ok = false;   // 1.6.0 tabs 26-30 (editor_story.cpp)
+
+    if (!saveDirtyRules()) ok = false;   // 1.6.0 tabs 31-34 (editor_rules.cpp)
+
     return ok;
 }
 void Editor::requestPlay(int x, int y) {

@@ -30,6 +30,18 @@ int main(int argc, char** argv) {
     Bot bot(app, in, step, fails);
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
+            // 1.6.0 game commands
+
+            // 1.6.0 rules commands
+
+            // 1.6.0 story commands
+
+            // 1.6.0 builders commands
+
+            // 1.6.0 hub commands
+
+            // 1.6.0 quests commands
+
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
             if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
@@ -179,6 +191,18 @@ int main(int argc, char** argv) {
             std::string key = p[1], op = p[2], want = p[3]; for (size_t i = 4; i < p.size(); i++) want += " " + p[i];
             Game& g = app.game; std::string got; bool num = true;
             auto edExpect = [&]() -> bool {   // 1.1.11 editor text checks (outside the else-if chain: MSVC limits its depth)
+                // 1.6.0 game expects
+
+                // 1.6.0 rules expects
+
+                // 1.6.0 story expects
+
+                // 1.6.0 builders expects
+
+                // 1.6.0 hub expects
+
+                // 1.6.0 quests expects
+
                 // 1.2.4 (#41): map enemy groups - "groups" = x,y,c(hasing) of each one on the map, "enemydist" = steps to the nearest one (-1 none)
                 if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
