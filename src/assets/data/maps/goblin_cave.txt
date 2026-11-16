@@ -11,56 +11,55 @@ onenter=clear:goblins_packing
 
 [legend]
 # = wall_cave
+, = rock
 . = floor_cave
+: = web_nw
 < = stairs_up
+= = web_ne
 M = mushroom2
 b = bones
 c = crystal
 m = mushroom
 r = rocks
 w = web
-X = rock
-1 = web_nw
-3 = web_ne
-B = rocks
 
 [rows]
-XXXXXXXXXXXXXXXXXXXXXXXX######XXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXX###....##XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXX#######1.m....#XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXX##.....Bb...wr.#XXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXX#....m....##.b.##XXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXX##.....r..####...##XXXXXXXXXXXXXXX
-XXXXXXXXXXXXXX#........##XX#.M..####XXXXXXXXXXXX
-XX#####XXXXXXX#......###XX##...wm.3###XXXXXXXXXX
-X##1..##XXXXXX#.....##XXXX#.c...cb...##XXXXXXXXX
-X#m....#XXXXX##.w....#XXX##.........b3#XXXXXXXXX
-X#.....#XXXX##......w#XXX#1b..........#XXXXXXXXX
-X##....#XXX##........#XXX#..m....b....#XXXXXXXXX
-X##...##XX##.........##XX##cm.....m.B##XXXXXXXXX
-X#..<.##X##.b........3#XXX#..........#####XXXXXX
-X#.....###.m....c.m...#XXX#..........#...#XXXXXX
-X##......B.r..........##XX#........b.....#XXXXXX
-XX#.....m....b..b......#XX######mr...#...#XXXXXX
-XX#......m...r..b.....c##XXXXXX##...######XXXXXX
-XX#....r...br....m.....3#######X#####XXXXXXXXXXX
-XX##cw......m................w#XXXXXXXXXXXXXXXXX
-XXX#Br...r.##..........######.#XXXXXXXXXXXXXXXXX
-XX##...b..##########.m##XXXX#w#XXXXXXXXXXXXXXXXX
-XX#b......######XXX####XXXXX#.#XXXXXXXXXXXXXXXXX
-XX#.....m##....#XXXXXXXXX####.###############XXX
-XX#b...M.......#XXXXXXXXX#1w.....b....w....3#XXX
-XX#.....###....#XXXXXXXXX#w..b......w.....bw#XXX
-XX#.cc.##X######XXXXXXXXX#.....w.......b....#XXX
-X##..b##XXXXXXXXXXXXXXXXX#..b......w........#XXX
-X#b..##XXXXXXXXXXXXXXXXXX#w.....b.....w....w#XXX
-X#...#XXXXXXXXXXXXXXXXXXX#.w..b......b...w..#XXX
-X#...#XXXXXXXXXXXXXXXXXXX#b...w....b......wb#XXX
-X##.##XXXXXXXXXXXXXXXXXXX####################XXX
-XX###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+,,,,,,,,,,,,,,,,,,,,,,,,######,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,###....##,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,#######:.m....#,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,##.....rb...wr.#,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,#....m....##.b.##,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,##.....r..####...##,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,#........##,,#.M..####,,,,,,,,,,,,
+,,#####,,,,,,,#......###,,##...wm.=###,,,,,,,,,,
+,##:..##,,,,,,#.....##,,,,#.c...cb...##,,,,,,,,,
+,#m....#,,,,,##.w....#,,,##.........b=#,,,,,,,,,
+,#.....#,,,,##......w#,,,#:b..........#,,,,,,,,,
+,##....#,,,##........#,,,#..m....b....#,,,,,,,,,
+,##...##,,##.........##,,##cm.....m.r##,,,,,,,,,
+,#..<.##,##.b........=#,,,#..........#####,,,,,,
+,#.....###.m....c.m...#,,,#..........#...#,,,,,,
+,##......r.r..........##,,#........b.....#,,,,,,
+,,#.....m....b..b......#,,######mr...#...#,,,,,,
+,,#......m...r..b.....c##,,,,,,##...######,,,,,,
+,,#....r...br....m.....=#######,#####,,,,,,,,,,,
+,,##cw......m................w#,,,,,,,,,,,,,,,,,
+,,,#rr...r.##..........######.#,,,,,,,,,,,,,,,,,
+,,##...b..##########.m##,,,,#w#,,,,,,,,,,,,,,,,,
+,,#b......######,,,####,,,,,#.#,,,,,,,,,,,,,,,,,
+,,#.....m##....#,,,,,,,,,####.###############,,,
+,,#b...M.......#,,,,,,,,,#:w.....b....w....=#,,,
+,,#.....###....#,,,,,,,,,#w..b......w.....bw#,,,
+,,#.cc.##,######,,,,,,,,,#.....w.......b....#,,,
+,##..b##,,,,,,,,,,,,,,,,,#..b......w........#,,,
+,#b..##,,,,,,,,,,,,,,,,,,#w.....b.....w....w#,,,
+,#...#,,,,,,,,,,,,,,,,,,,#.w..b......b...w..#,,,
+,#...#,,,,,,,,,,,,,,,,,,,#b...w....b......wb#,,,
+,##.##,,,,,,,,,,,,,,,,,,,####################,,,
+,,###,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 [enemy]
 group=goblin,goblin,bat
@@ -69,7 +68,6 @@ y=16
 aggro=5
 flag=goblin_cave_grp_2
 
-# 1.5.0: only the archer group still comes with the chief (the whole cave used to pour into one fight)
 [enemy]
 group=goblin,goblin
 x=30
@@ -207,7 +205,6 @@ items=shovel:1,oil_fire:2,iron_ore:3
 gold=35
 flag=gc_rockfall_chest
 
-# 1.0: the chief asks to talk before his hall (story choice: spare the tribe or fight)
 [trigger]
 x=25
 y=1
@@ -239,8 +236,6 @@ items=potion_red:2,oil_fire:1,gem_rough:1
 gold=45
 flag=gc_barricade_stash
 
-# 1.5.0 (#85): after the spare, the tribe packs up in the hall until the party next enters the cave (onenter= clears
-# goblins_packing). Coming back down here - or talking to Grakk or a packer - offers the betrayal (goblin_betrayal).
 [trigger]
 x=28
 y=5
@@ -271,7 +266,6 @@ x=31
 y=10
 show=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
 
-# 1.5.0 (#95): the lone spider is the lesson - fire burns them
 [chest]
 x=22
 y=19
@@ -286,7 +280,6 @@ y=19
 title=Scratched on a rock
 text=Spiders in the back tunnels. Their hide turns a blade, but they go up like dry leaves - fire oil, a torch, anything that burns.
 
-# 1.5.0 (#99): a scout's advice by the entrance - noise and darkness
 [sign]
 template=paper_sign
 x=2
@@ -294,8 +287,6 @@ y=17
 title=Scout's note
 text=Goblins are curious as cats and half as clever. Throw a rattle stone past them (Items or the hotbar) and they go to look - walk on by while their backs are turned. They see in the dark, so dousing your torch won't hide you from them. Bats and spiders neither. - R.
 
-# 1.5.0 (#97): the Broodmother's nest - optional, deadly early (a level 7 boss in a level 1 cave). Webs that need fire,
-# a warning, and a shrine past the webs so a wipe costs a minute.
 [obstacle]
 x=24
 y=19
@@ -332,7 +323,7 @@ items=potion_red2:2,antidote:2,gem_rough:2,arcane_dust:2
 gold=120
 flag=gc_brood_chest
 
-# 1.5.0 (#97): a shrine just before the chief's end of the cave (past the other east-cave groups)
 [savepoint]
 x=27
 y=13
+

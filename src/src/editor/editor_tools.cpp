@@ -351,7 +351,7 @@ void Editor::drawSounds(InputState& in) {
         }
     }
     cy += 4;
-    if (ui.button(fx + keyW, cy, 90, 22, d.kind == "music" ? "Play track" : "Play", !d.files.empty(), false, OK)) { if (d.kind == "music") { previewingMusic = true; gAudio.music(d.id); } else gAudio.play(d.id); }
+    if (ui.button(fx + keyW, cy, 90, 22, d.kind == "music" ? "Play track" : "Play", !d.files.empty(), false, OK)) { if (d.kind == "music") { previewingMusic = true; gAudio.music(d.id, true); } else gAudio.play(d.id); }
     if (d.kind == "music" && ui.button(fx + keyW + 96, cy, 60, 22, "Stop", !gAudio.currentMusic.empty())) { gAudio.music(""); previewingMusic = false; }
     ui.text(fx + keyW + 170, cy + 5, d.kind == "music" && gAudio.currentMusic == d.id ? "playing (volume follows the Settings sliders)" : d.kind == "sfx" ? "plays with its pitch / volume variation and crunch" : "", DIM);
     cy += 32;

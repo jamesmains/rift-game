@@ -307,7 +307,8 @@ public:
     void updateLocalMap(InputState& in); void drawLocalMap(Canvas& cv, InputState& in);
     // crafting / affixes (craft.cpp)
     void openCraft(const std::string& station); void updateCraft(InputState& in, float dt); void drawCraft(Canvas& cv, InputState& in);
-    bool canCraft(const Recipe& r) const; bool craft(const Recipe& r);
+    bool canCraft(const Recipe& r) const; bool craft(const Recipe& r); int craftMax(const Recipe& r, int cap = 20) const;
+    std::string craftSelect(const std::string& recipeId);   // headless: select a recipe on the Craft tab; "" = not listed
     std::string makeAffixed(const std::string& baseId, int tier);   // returns the generated item id (registered in gd->items)
     // crafting depth: station skills, recipe discovery, success/quality rolls, upgrades (+1..+3), enchanting, salvage
     int craftTab = 0, craftQty = 1;                                  // 0 craft, 1 upgrade, 2 enchant, 3 salvage

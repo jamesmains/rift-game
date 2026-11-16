@@ -1158,7 +1158,7 @@ void Game::combatCheckEnd() {
 
 void Game::combatFinish() {
     // sync party members back
-    for (auto& u : cb.units) if (u.partyIndex >= 0) { Character& m = party.members[u.partyIndex]; int keepX = u.x, keepY = u.y; u.ch.x = keepX; u.ch.y = keepY; m = u.ch; m.effects.erase(std::remove_if(m.effects.begin(), m.effects.end(), [](const StatusEffect& e) { return e.id == "defend" || e.id == "aim" || e.id == "stun" || e.id == "freeze" || e.id == "chilled" || e.id == "slow" || e.id == "marked" || e.id == "tagged" || e.id == "routed" || e.id == "blind"; }), m.effects.end()); }
+    for (auto& u : cb.units) if (u.partyIndex >= 0) { Character& m = party.members[u.partyIndex]; int keepX = u.x, keepY = u.y; u.ch.x = keepX; u.ch.y = keepY; std::string keepFavs[8]; for (int f = 0; f < 8; f++) keepFavs[f] = m.favs[f]; m = u.ch; for (int f = 0; f < 8; f++) m.favs[f] = keepFavs[f]; /* 1.5.2 (#105): favorites set during the fight live on the party member */ m.effects.erase(std::remove_if(m.effects.begin(), m.effects.end(), [](const StatusEffect& e) { return e.id == "defend" || e.id == "aim" || e.id == "stun" || e.id == "freeze" || e.id == "chilled" || e.id == "slow" || e.id == "marked" || e.id == "tagged" || e.id == "routed" || e.id == "blind"; }), m.effects.end()); }
     int mapLeader = activeLeader();
     for (auto& u : cb.units) if (u.partyIndex == mapLeader) { px = u.x; py = u.y; break; }
     lastFightWon = cb.victory;   // 1.1.10: a script's "won" after a fight

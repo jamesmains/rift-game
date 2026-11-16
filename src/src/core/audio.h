@@ -57,7 +57,8 @@ public:
     void play(const std::string& ev);                  // one-shot sfx (unknown events are ignored, recorded in `missing`; a trigger falls back)
     std::string resolve(const std::string& ev) const;  // the entry an event plays: itself, else its trigger fallback(s), else ""
     static void crunch(float* samples, int frames, int channels, int srcRate, int rate, int bits);   // lo-fi in place (1.3.4)
-    void music(const std::string& ev);                 // switch music (fades); "" = stop
+    void music(const std::string& ev, bool again = false); // switch music (fades); "" = stop. A one-shot (loop=0) track
+                                                       // that ended stays silent while the same id is asked for; again = play it anyway
     void stopMusic() { music(""); }
     void ambient(const std::string& ev);               // switch the ambient loop (crossfades); "" = silence
     std::string currentAmbient, pendingAmbient; float ambFade = 0; bool ambFadingOut = false;
@@ -74,6 +75,7 @@ public:
     std::map<std::string, SoundDef> defs;
     std::vector<std::string> order;        // ids in file order (editor display)
     std::string currentMusic, pendingMusic;
+    std::string finishedOneShot;          // 1.5.2 (#104): the one-shot track that played to its end (not restarted)
     std::vector<std::string> recent;       // last played events (tests / editor)
     std::vector<std::string> missing;
     std::string lastError;

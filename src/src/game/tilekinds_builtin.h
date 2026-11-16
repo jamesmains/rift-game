@@ -3663,7 +3663,6 @@ bg=0,0,0
 encounter=0
 biome=
 cost=1
-light=0
 under=1
 kindle=brazier
 )TK",

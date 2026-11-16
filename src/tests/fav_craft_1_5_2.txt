@@ -1,0 +1,45 @@
+# 1.5.2 (#105): a favourite set in a fight stays on the hotbar after the fight (the fight's copy of the member used to
+# overwrite it). (#106): the crafting quantity stops at what the party can make (it went up to 20).
+newgame Kai mage 1 20261116
+god
+con clearmap hollowmere
+teleport hollowmere 20 20
+frames 120
+expect favs:0 == ,,,,,,,
+combat rat
+cb forcehit 1
+frames 60
+cb turn 0
+frames 5
+key B
+frames 5
+key 2
+frames 5
+shot fav_set.png
+expect favs:0 == ,spell:spark,,,,,,
+key ESC
+frames 5
+con kill
+frames 120
+shot victory.png
+key ENTER
+frames 60
+expect mode == EXPLORE
+expect favs:0 == ,spell:spark,,,,,,
+# crafting quantity
+con give wolf_pelt 2
+con craft any
+frames 10
+craftsel torch_pelt
+keys RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT
+frames 5
+expect craftqty == 2
+shot craft_qty.png
+keys LEFT LEFT LEFT
+frames 5
+expect craftqty == 1
+keys RIGHT RIGHT RIGHT
+key ENTER
+frames 10
+expect item:wolf_pelt == 0
+expect craftqty == 1

@@ -167,6 +167,14 @@ bool Game::canCraft(const Recipe& r) const {
     for (auto& m : r.mats) if (party.countItem(m.first) < m.second) return false;
     return gd->item(r.result) != nullptr;
 }
+// 1.5.2 (#106): how many times the party can make it in a row with what it has now (materials and gold), up to cap
+int Game::craftMax(const Recipe& r, int cap) const {
+    if (!canCraft(r)) return 0;
+    int n = cap;
+    if (r.gold > 0) n = std::min(n, party.gold / r.gold);
+    for (auto& m : r.mats) if (m.second > 0) n = std::min(n, party.countItem(m.first) / m.second);
+    return std::max(1, n);
+}
 bool Game::craft(const Recipe& r) {
     if (!canCraft(r)) { log("You lack the materials."); gAudio.play("ui_error"); return false; }
     std::string st = r.station == "any" ? "field" : r.station;
@@ -261,6 +269,12 @@ static bool tabAvailable(const std::string& st, int tab) {
     if (tab == 2) return st == "alchemy" || st == "all";
     return false;
 }
+// headless (1.5.2): select a recipe in the open crafting window's Craft tab; returns "qty;max" or "" when it isn't listed
+std::string Game::craftSelect(const std::string& recipeId) {
+    craftTab = 0; auto list = recipesFor(*this, craftStation);
+    for (size_t i = 0; i < list.size(); i++) if (list[i]->id == recipeId) { craftSel = (int)i; craftScroll = std::max(0, craftSel - 8); return fmt("%d;%d", craftQty, craftMax(*list[i])); }
+    return "";
+}
 void Game::updateCraft(InputState& in, float dt) {
     (void)dt;
     if (actP(in, A_CANCEL)) { popMode(); return; }
@@ -285,7 +299,7 @@ void Game::updateCraft(InputState& in, float dt) {
         const Recipe& r = *list[craftSel];
         const ItemDef* rd = gd->item(r.result);
         bool batch = rd && !rd->equippable();
-        if (batch) { if (actP(in, A_RIGHT)) craftQty = std::min(craftQty + 1, 20); if (actP(in, A_LEFT)) craftQty = std::max(1, craftQty - 1); }
+        if (batch) { int mx = std::max(1, craftMax(r)); if (actP(in, A_RIGHT)) craftQty = std::min(craftQty + 1, mx); if (actP(in, A_LEFT)) craftQty = std::max(1, craftQty - 1); craftQty = clampi(craftQty, 1, mx); }
         if (go) { int q = batch ? craftQty : 1; for (int i = 0; i < q && canCraft(r); i++) craft(r); craftQty = 1; }
         return;
     }
@@ -374,7 +388,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
                 if (d->equippable()) { int over = craftSkill(r.station) - r.difficulty, stat = craftStat(r.station); UI::text(ctx, x, cy, fmt("Fine %d%%  Masterwork %d%%", clampi(8 + over * 10 + (stat - 10), 3, 60), clampi(over * 5 + (stat - 12), 0, 25)), C::Cyan); cy += 13; }
                 if (ch < 100) { UI::text(ctx, x, cy, "A failure ruins half the materials.", C::DkGray); cy += 13; }
                 bool batch = !d->equippable();
-                if (batch) UI::text(ctx, x, SCREEN_H - 84, fmt("Quantity: < %d >  (Left/Right)", craftQty), C::LtGray);
+                if (batch) { craftQty = clampi(craftQty, 1, std::max(1, craftMax(r))); UI::text(ctx, x, SCREEN_H - 84, fmt("Quantity: < %d > of %d  (Left/Right)", craftQty, craftMax(r)), C::LtGray); }
             }
             button(ctx, in, 350, SCREEN_H - 64, 150, 24, craftQty > 1 ? fmt("Craft x%d", craftQty) : "Craft", canCraft(r), canCraft(r));
         }

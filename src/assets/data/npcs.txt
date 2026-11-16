@@ -250,8 +250,9 @@ dialogue=elder_mara
 [npc]
 id=innkeeper_doss
 name=Innkeeper Doss
-sprite=105,0
+sprite=117,0
 dialogue=innkeeper_doss
+color=255,250,219
 
 [npc]
 id=merchant_ilsa
@@ -490,3 +491,10 @@ name=Raider at the Pump
 sprite=114,22
 dialogue=well_guard
 notes=Sunscar's pump after Water Rights ends in a toll (well_toll) or the middle way (well_shared).
+
+[npc]
+id=villager_3
+name=Villager
+sprite=104,0
+dialogue=
+

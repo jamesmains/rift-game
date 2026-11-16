@@ -25,6 +25,9 @@ frames 30
 expect mode == EXPLORE
 expect map == hollowmere_home
 shot pad_cottage.png
+# 1.5.2: the cottage door is at x=3 now (owner's Editor edit), two steps left of the spawn
+keys PADLEFT PADLEFT
+frames 20
 hold PADDOWN 40
 frames 90
 expect map == hollowmere

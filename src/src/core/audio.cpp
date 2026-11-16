@@ -126,9 +126,11 @@ void Audio::crunch(float* x, int frames, int channels, int srcRate, int rate, in
 }
 
 
-void Audio::music(const std::string& ev) {
+void Audio::music(const std::string& ev, bool again) {
     if (!enabled) return;
     std::string want = ev;
+    if (again || want != finishedOneShot) finishedOneShot.clear();
+    else if (currentMusic.empty()) { pendingMusic = want; fadingOut = false; return; }   // 1.5.2 (#104): it already played once
     if (!want.empty()) { auto it = defs.find(want); if (it == defs.end() || it->second.kind != "music") { if (std::find(missing.begin(), missing.end(), want) == missing.end()) missing.push_back(want); return; } }
     if (want == currentMusic) { pendingMusic = currentMusic; fadingOut = false; return; }
     pendingMusic = want;
@@ -170,7 +172,7 @@ void Audio::update(float dt) {
             auto it = defs.find(currentMusic);
             float v = it == defs.end() ? 1.0f : it->second.volume / 100.0f;
             be->setMusicVolume(masterV * musicV * v * fade);
-            if (it != defs.end() && !it->second.loop && !be->musicPlaying() && fade >= 1) currentMusic.clear(); // one-shot track ended
+            if (it != defs.end() && !it->second.loop && !be->musicPlaying() && fade >= 1) { finishedOneShot = currentMusic; currentMusic.clear(); } // one-shot track ended
         }
         be->update();
     }
@@ -178,7 +180,7 @@ void Audio::update(float dt) {
 
 void Audio::refresh(SoundDef& d) {
     loadHandles(d);
-    if (d.kind == "music" && d.id == currentMusic) { currentMusic.clear(); if (be) be->stopMusic(); music(d.id); }
+    if (d.kind == "music" && d.id == currentMusic) { currentMusic.clear(); if (be) be->stopMusic(); music(d.id, true); }
 }
 bool Audio::importFile(const std::string& srcPath, const std::string& sub, std::string& relOut) {
     std::error_code ec; std::filesystem::path src(srcPath);

@@ -28,6 +28,12 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.5.2 fixes
+
+* The victory tune plays once: waiting on the victory screen no longer starts it over and over.
+* A favourite spell or item put on the hotbar during a fight stays there after the fight.
+* The crafting quantity stops at how many you can actually make with what you carry (it used to go up to 20).
+
 ## 1.5.1 message titles fit their box
 
 * A sign's or letter's title no longer runs out of the gold box above the message; a title too long for the box is

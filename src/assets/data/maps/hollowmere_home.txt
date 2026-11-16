@@ -23,10 +23,10 @@ o = barrel
 #.....#
 #o....#
 #o....#
-####=D#
+###D=##
 
 [exit]
-x=5
+x=3
 y=8
 to=hollowmere
 tx=20
