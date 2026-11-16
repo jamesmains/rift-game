@@ -116,6 +116,8 @@ expect flag:orin_left_goblins == 1
 expect flag:goblins_betrayed == 1
 expect flag:goblin_chief_spared == 0
 expect flag:goblins_packing == 0
+# the fight may break off before the chief falls (he keeps to his lair): finish it
+fight goblin_chief_dead
 expect flag:goblin_chief_dead == 1
 expect mode == EXPLORE
 expect queststatus:main contains you killed him anyway

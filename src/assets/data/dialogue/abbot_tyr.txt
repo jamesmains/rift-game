@@ -5,7 +5,7 @@ option=I will.|quest|!q_frost>=1
 option=The colossus is destroyed.|done|q_frost_done&!q_frost>=2
 option=Heal us.|heal
 option=Perform the Rite of Renewal.|rite
-option=Has Orin come home?|orin_left|left_cleric&!fell_cleric
+option=Has Orin come home?|orin_left|left_cleric
 option=Brother Orin wrote to you?|orin_letter|joined_cleric&goblins_betrayed&orin_goblins_ok
 option=Anything strange on the peaks?|ashwing_north|ashwing_gone
 option=Goodbye.|end

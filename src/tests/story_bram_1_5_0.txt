@@ -117,6 +117,7 @@ expect talk contains Grakk's hall is all noise
 choose Attack them anyway
 choose Attack them anyway
 expect flag:goblins_betrayed == 1
+fight goblin_chief_dead
 expect flag:goblin_chief_dead == 1
 expect flag:goblin_chief_spared == 0
 expect members == 2

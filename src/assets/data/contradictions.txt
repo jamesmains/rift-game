@@ -30,7 +30,6 @@ hermit_friend & hermit_robbed
 fell_warrior & joined_warrior | Bram is dead
 fell_mage & joined_mage | Elowen is gone
 fell_scavenger & joined_scavenger | Tessa is dead
-fell_cleric & joined_cleric | Orin is dead
 fell_ranger & joined_ranger | Nyx is dead
 joined_warrior & left_warrior
 joined_mage & left_mage

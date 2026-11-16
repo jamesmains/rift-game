@@ -320,13 +320,6 @@ text=Nyx disappeared into the hills the day after the Scar, as quietly as she ha
 
 [slide]
 group=orin
-if=fell_cleric
-title=Orin
-member=cleric
-text=Orin is buried under the shrine in the snows. The Abbot reads his name with the others every morning.
-
-[slide]
-group=orin
 if=orin_left_goblins&left_cleric
 title=Orin
 member=cleric

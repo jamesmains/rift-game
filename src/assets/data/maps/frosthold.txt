@@ -103,7 +103,6 @@ npc=orin
 x=16
 y=11
 hide=joined_cleric
-show=!fell_cleric
 
 [npc]
 id=abbot

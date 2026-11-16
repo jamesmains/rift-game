@@ -1,15 +1,15 @@
 [start]
 speaker=Orin
 text=You've the look of someone the Rift has noticed. The Abbot says I'm needed here, tending candles. I say the old shrines were built by people who walked out to meet the dark. Let me come.
-option=About the way we parted...|sorry|left_cleric&!fell_cleric
-option=Join me.|join|!left_cleric&!fell_cleric
+option=About the way we parted...|sorry|left_cleric
+option=Join me.|join|!left_cleric
 option=Who are you?|who
 option=Not now.|end
 
 [who]
 speaker=Orin
 text=Orin, cleric of Frosthold. I mend wounds, lift curses and hit things with a mace when prayer runs short. Which it does.
-option=Join me.|join|!left_cleric&!fell_cleric
+option=Join me.|join|!left_cleric
 option=Later.|end
 
 [join]

@@ -103,8 +103,13 @@ expect item:rift_key == 1
 # story choice #2: Vell's followers
 goto ashfall
 talk ilse
+# 1.5.0 (#88): Tessa's red line - the bot talks her round (INT 13) so she stays for the Wreck
+con setstat int 13
 choose answer to Brasswick
+choose Read the bounty
 expect flag:converts_judged == 1
+expect flag:tessa_converts_ok == 1
+expect flag:joined_scavenger == 1
 checkpoint hierophant
 
 # --- the Wreck ---

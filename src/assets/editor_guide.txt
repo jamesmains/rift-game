@@ -163,6 +163,7 @@ What it looks at:
 - Shops, classes, creatures, recipes, encounter tables, dungeons and world locations that name missing items, spells, creatures or maps; encounter tables nothing uses.
 - Quests: pins to unknown places, quests without stages, objectives for a stage that does not exist.
 - Items whose effect=revealmap: names a missing map.
+- Story contradictions (1.5.0): pairs of flags in contradictions.txt that must never both be true, where some route in the content could set both. See contradictions.
 
 Tick "errors only" to hide the warnings, press Run again after fixing
 things, and click any line to jump to the map object, dialogue line, form
@@ -5885,7 +5886,9 @@ Items and money:
 - give=id:n,id (item= is the same). take=id:n. gold=n (negative pays; never below 0). xp=n (shared by the living party).
 
 Party:
-- join=<npc id>: add that companion NPC (NPCs tab, companion= a class) to the party (4 max): its name, class, party picture, level, stats, gear and spells. Sets joined_<class>. An empty join= adds the NPC being talked to. The older join=class:Name:col,row (Name and sprite optional) still works. leave=class.
+- join=<npc id>: add that companion NPC (NPCs tab, companion= a class) to the party (4 max): its name, class, party picture, level, stats, gear and spells. Sets joined_<class>. An empty join= adds the NPC being talked to. The older join=class:Name:col,row (Name and sprite optional) still works.
+- leave=class or leave=class|text (1.5.0): that companion walks out the way an unhappy one does - gear to the pack, joined_<class> cleared, left_<class> set, back where you met them (amends= in their dialogue can bring them back). The text is logged.
+- fell=class|text (1.5.0): that companion is gone for good, off screen (a red line crossed). Gear to the pack, joined_<class> cleared, fell_<class> set; their NPC stays hidden. Give their join and amends options !fell_<class>, and their map placement show=!fell_<class>.
 - approve=class:n,class:n (or all:n). rep=faction:n,faction:n: change the party's reputation with a town or group (Factions tab), + or -.
 - teach=who:spell or teach=who:spell|loyal_spell: a lasting ability (1.4.0, see Teaching abilities). who = a companion NPC id (bram), a class id, a member's name, or hero.
 - heal=1: full HP/MP and sleep to 07:00. rest=1: inn rest - full HP/MP, revives, clears effects, morning. healer=1 or healer=<greeting>: paid healer menu. respec=1 (paid at a shrine) or respec=free.
@@ -5893,6 +5896,7 @@ Party:
 Places and things:
 - teleport=map,x,y (0,0 = spawn). shop=id. craft=forge|alchemy|workbench|any. board=town map id. travel=1: coach.
 - combat=creature,creature: fight now. spawn=creature,x,y[,creature...]: add a group on this map (not saved).
+- fight=FLAG (1.5.0): the enemy group on this map with that flag= attacks now, with its linked groups (link=) - as if the party walked into it, so its flag= and ondefeat= work as usual. If the party is far away it walks up first. Clear a hide= condition before it in the same node (actions run in order).
 - npcmove=npc_id,x,y and mapset=x,y,tilekind: move an NPC / change a cell on the current map (saved).
 - hidenpc=id: hide an NPC on this map for good (saved; the NPC needs an id). shownpc=id: bring it back. join= and combat= also hide the speaking NPC for good.
 - savepoint=1: a save shrine where the party stands (not saved).
@@ -6578,6 +6582,7 @@ The board id that posts this notice.
 == bounty.kind | Kind
 see: bounty
 kill (kill need of a creature after taking the notice), fetch (bring need of an item) or deliver (carry a letter to another board, then come back for the pay).
+note (1.5.0): news, not a job - only title=, text= (about two lines) and require=. While require= holds it is pinned at the top of the board (two at most), and it changes as soon as the story does. Use it to let towns react to big choices.
 
 == bounty.target | Target
 see: bounty, bounty.kind
@@ -7499,3 +7504,34 @@ console's reset_files locks them again.
 The base game chains its terminals this way: annex_memo is always there (the
 Annex password), the Annex vault unlocks metro_dispatch (the metro password),
 the metro vault unlocks ship_manifest (the ship password).
+
+== contradictions | Story contradictions (contradictions.txt)
+see: editor.check, tab.flags, dlg.actions, obj.enemy
+
+data/contradictions.txt (1.5.0) lists flag combinations that must never all
+be true at once - outcomes of one choice:
+
+  goblin_chief_spared & goblin_chief_dead | Grakk can't be both spared and killed
+
+One line per combination, terms joined by &, a note after |. A campaign's own
+contradictions.txt is added to the base game's.
+
+Check all looks for a route in the content that could set both flags of a
+two-flag line, and reports it as an error. Every place that sets a flag counts
+(dialogue nodes, enemy groups and their ondefeat=, triggers, chests, doors,
+levers, obstacles, map onenter=, scripts, dungeon bosses, and a companion
+leaving at -40 approval), with the conditions that must hold for it to happen:
+the option conditions on the way to a dialogue node, the show=/hide=/require=
+of whatever starts the talk, an enemy group's show= and one-term hide=. It is
+fine when the second setter clears the first flag, or its conditions say the
+first flag (or another flag the first setter sets for good) is not set.
+Counters (set=q_x=2) are taken to only go up.
+
+Fix a report by adding the missing condition: hide= on the group, !flag on the
+option, require= on the trigger - or by clearing the other flag first.
+
+While playing, the game also watches every line (terms may be !flag or
+flag>=N there): the first time one becomes true it writes "story
+contradiction" to the message log (and the scripts' last error, which the
+console's scripts command shows).
+
