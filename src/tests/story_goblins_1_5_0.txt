@@ -1,0 +1,155 @@
+# 1.5.0 (#84, #85, #102): the three goblin routes, and what the world says afterwards.
+#  A. fight Grakk     B. spare him (the hall empties; nothing hidden can be bumped; Snig comes)     C. spare, go back, betray
+# Each route checks the flags, the quest log, Mara and Tobb, Snig, the epilogue, and that no story contradiction fired.
+# New keys: npcshown:<placement id>, epilogue (the slides the ending would show now).
+god
+# ================= A. fight =================
+newgame Mira ranger 1 11
+con flag q_main 1
+con bestiary goblin 4
+teleport goblin_cave 20 4
+walk 25 3
+choose You took Tobb's boy
+fight goblin_chief_dead
+expect flag:goblin_chief_dead == 1
+expect flag:goblin_chief_spared == 0
+expect flag:goblins_betrayed == 0
+expect queststatus:main contains The goblin chief is dead
+teleport hollowmere 7 7
+talk elder
+expect answers contains The goblin chief is dead
+expect answers lacks surrendered
+choose The goblin chief is dead
+expect flag:q_main == 2
+talk villager1
+expect answers contains The chief is dead
+expect answers lacks I let them leave
+choose The chief is dead
+expect flag:tobb_thanked == 1
+con flag q_main 3
+con time 10:00
+teleport millbrook 30 12
+expect npcshown:snig == 0
+expect epilogue lacks let them walk
+expect epilogue lacks packed its pots
+expect scripterror lacks contradiction
+# ================= B. spare =================
+newgame Mira ranger 1 12
+con flag q_main 1
+con bestiary goblin 4
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+expect flag:goblin_chief_spared == 1
+expect flag:goblins_packing == 1
+expect npcshown:grakk_packing == 1
+expect queststatus:main contains led his tribe out
+# back into the cave later: the tribe is gone, and the hall is empty - the hidden chief's group is not there to bump
+con run teleport:goblin_cave,5,13
+frames 150
+expect flag:goblins_packing == 0
+expect npcshown:grakk_packing == 0
+walk 36 16
+expect x == 36
+expect y == 16
+expect mode == EXPLORE
+walk 30 15
+walk 28 15
+expect mode == EXPLORE
+expect flag:goblin_chief_dead == 0
+expect groups lacks 36,16
+teleport hollowmere 7 7
+talk elder
+expect answers contains surrendered this crown
+expect answers lacks The goblin chief is dead
+choose surrendered this crown
+expect flag:q_main == 2
+expect cond:goblin_chief_spared&!goblin_chief_dead&!goblins_betrayed&q_main>=2 == 1
+talk villager1
+expect answers contains I let them leave
+choose I let them leave
+talk innkeeper
+expect answers contains What are people saying about Greywood
+choose What are people saying about Greywood
+con dialogue innkeeper_doss greywood_spared
+expect talk contains nobody's lost a sow
+key ESC
+settle
+con flag q_main 3
+con time 10:00
+teleport millbrook 30 12
+expect npcshown:snig == 1
+talk snig
+choose tribe
+expect flag:goblins_allies == 1
+expect epilogue contains Grakk kept his promise
+expect scripterror lacks contradiction
+# ================= C. spare, go back, betray (with Orin: his red line) =================
+newgame Mira ranger 1 13
+con flag q_main 1
+con bestiary goblin 4
+con join orin
+expect members == 2
+teleport goblin_cave 20 4
+walk 25 3
+choose Why should I believe
+choose Hand over the crown
+walk 35 15
+expect mode == DIALOGUE
+expect talk contains Grakk's hall is all noise
+choose Attack them anyway
+expect talk contains There is no taking it back
+choose Attack them anyway
+expect talk contains They SURRENDERED
+expect answers lacks A promise made to save my own neck
+con setstat cha 13
+frames 2
+expect answers contains A promise made to save my own neck
+con setstat cha 8
+frames 2
+choose Then go, Orin.
+expect members == 1
+expect flag:left_cleric == 1
+expect flag:joined_cleric == 0
+expect flag:orin_left_goblins == 1
+expect flag:goblins_betrayed == 1
+expect flag:goblin_chief_spared == 0
+expect flag:goblins_packing == 0
+expect flag:goblin_chief_dead == 1
+expect mode == EXPLORE
+expect queststatus:main contains you killed him anyway
+expect scripterror lacks contradiction
+teleport hollowmere 7 7
+talk elder
+expect answers contains The goblin chief is dead
+expect answers lacks surrendered
+choose The goblin chief is dead
+expect flag:q_main == 2
+expect item:goblin_crown == 0
+talk villager1
+expect answers lacks I let them leave
+choose The chief is dead
+talk innkeeper
+expect answers contains What are people saying about Greywood
+choose What are people saying about Greywood
+con dialogue elder_mara done_betrayed
+expect talk contains the tale got here before you
+con dialogue farmer_tobb betrayed
+expect talk contains Packing their pots
+con dialogue innkeeper_doss greywood_betrayed
+expect talk contains Nobody drinks to the second
+key ESC
+settle
+con flag q_main 3
+con time 10:00
+teleport millbrook 30 12
+expect npcshown:snig == 0
+expect cond:goblin_chief_spared&!goblin_chief_dead&!goblins_betrayed&q_main>=2 == 0
+expect epilogue contains a tribe cut down while it packed its pots
+expect epilogue contains He prays for the goblins of Greywood
+teleport frosthold 16 13
+expect npcshown:orin == 1
+talk orin
+expect answers contains About the way we parted
+expect scripterror lacks contradiction

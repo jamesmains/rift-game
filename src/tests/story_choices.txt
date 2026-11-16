@@ -16,9 +16,15 @@ expect flag:q_goblins_done == 1
 expect item:goblin_crown == 1
 expect rep:hollowmere == -5
 expect queststatus:main contains led his tribe out
-# the chief's hall is empty now: walk right through it
+# 1.5.0 (#85): the tribe packs up in the hall; going back down offers the betrayal - leave them to it, then walk
+# right through (the hidden groups are not there to bump into)
+walk 35 15
+expect mode == DIALOGUE
+expect talk contains Grakk's hall is all noise
+choose No. Go.
 walk 35 15
 expect mode == EXPLORE
+expect flag:goblin_chief_dead == 0
 teleport hollowmere 7 7
 talk elder
 choose surrendered this crown

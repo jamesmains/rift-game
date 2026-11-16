@@ -55,8 +55,8 @@ option=(Draw.)|attack
 [attack]
 speaker=Grakk, Goblin Chief
 text=(The hall goes silent. Then Grakk spits on the stone between you.) Tall-folk word is WIND. Hunters! For the old ones - FIGHT!
-set=goblins_betrayed
 clear=goblin_chief_spared,goblins_packing
+set=goblins_betrayed
 approve=warrior:5,ranger:-3
 quest=The Rift Stirs - you turned on Grakk's tribe
 fight=goblin_chief_dead

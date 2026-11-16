@@ -178,6 +178,10 @@ int main(int argc, char** argv) {
                 if (key == "groups") { got.clear(); if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) got += (got.empty() ? "" : ";") + fmt("%d,%d", e.x, e.y) + (e.chasing ? ",c" : "") + (e.temp ? ",t" : ""); if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "enemydist") { int best = -1; if (g.map) for (auto& e : g.map->enemies) if (!e.defeated && !e.hidden) { int d = chebyshev(e.x, e.y, g.px, g.py); if (best < 0 || d < best) best = d; } got = std::to_string(best); return true; }
                 // 1.3.3: heard:<event> = 1 if that sound played since the last "audio" command (which clears the list)
+                // 1.5.0 (#102): npcshown:<placement id> = 1 if that NPC on this map is there now; epilogue = the slides the ending
+                // would show right now (title: text, " || " between), the same choice as Game::startEnding
+                if (startsWith(key, "npcshown:")) { got = "0"; if (g.map) for (auto& n : g.map->npcs) if (n.id == key.substr(9)) { bool h = g.extra.count("hidenpc_" + g.mapId + "_" + n.id) > 0 || (!n.showFlag.empty() && !g.evalCond(n.showFlag)) || (!n.hideFlag.empty() && g.evalCond(n.hideFlag)); got = h ? "0" : "1"; } return true; }
+                if (key == "epilogue") { got.clear(); std::set<std::string> done; for (auto& sec : g.mergedConfig("epilogue.txt")) { if (sec.name != "slide") continue; std::string grp = sec.get("group"); if (!grp.empty() && done.count(grp)) continue; if (sec.has("if") && !g.evalCond(sec.get("if"))) continue; if (!grp.empty()) done.insert(grp); got += (got.empty() ? "" : " || ") + g.endingText(sec.get("title")) + ": " + g.endingText(sec.get("text")); } num = false; return true; }
                 if (startsWith(key, "cb:")) { got = app.game.combatProbe(key.substr(3)); num = !got.empty() && (isdigit((unsigned char)got[0]) || (got[0] == '-' && got.size() > 1)) && got.find_first_of(",;:") == std::string::npos; return true; }   // 1.4.0
 
                 // 1.4.0 (#75-#77): obstacle:X,Y = 1 while an uncleared obstacle covers it; kind:X,Y = its tile kind; crate:ID = x,y;
