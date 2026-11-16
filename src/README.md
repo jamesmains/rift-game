@@ -28,6 +28,32 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   bounties; town reputation that moves shop prices; 33 achievements
 * A Win98 desktop with Minesweeper, Solitaire, My Computer lore files and a screensaver
 
+## 1.5.0 a hard game on purpose: choices that cost, monsters with weak spots
+
+* **One difficulty, and it is hard.** No more Story / Normal / Hard: every monster has the old Hard numbers built in and
+  plays smart (flanks, focus fire, goes for the exposed). The New Game window says so.
+* **Cover and position decide fights.** About 70% to hit in the open, ~45% into half cover, ~30% into full cover from the
+  front; flanked or exposed is +20% (the two don't add up). Enemies use the same rules - keep your own people in cover.
+* **Crits are a treat again:** 3% + DEX/4 + the weapon, +15 aimed, +10 for the best of flanked / exposed / marked,
+  never above 35% (a target tagged by Scan Weakness is still a sure crit). x1.5 damage, armour halved. The target box
+  shows "to hit" and "crit" side by side.
+* **Every monster family has a lock and a key:** resists (half), immune (nothing), weak (double). Skeletons shrug off
+  blades but maces break them; spirits ignore steel and fear magic and Blessed Oil; machines short out on shock; spiders,
+  slimes, trolls and rotting dead burn; fire-born things want ice. Weapon traits count: crush, reach, backstab can get
+  through armour that stops a sword. The box says IMMUNE / resists / WEAK!, and what you learn shows in the tooltip.
+* **Learning the trick safely:** a lone bone rat in Dunmarrow's first corridor, a lone spider and a single drone before
+  the real packs, dead adventurers' notes with the answer, warning notices on the boards, and companions who call out
+  what works the first time they see a new kind of monster.
+* **Gear for the class:** each class is trained in some weapon families and armour weights. Off-class weapons cost 1 AP
+  more, hit 10% less and lose their trait; armour too heavy for the class costs evasion and makes spells dearer and
+  likely to fizzle; items with stat needs hit or dodge worse when they aren't met. The item panel, the equip picker, the
+  shop and the character sheet say what an item costs the member it's for.
+* **Losing someone costs something:** a member who goes down gets up **Wounded** (-15% max HP, -5% to hit, up to three
+  times) until a night at an inn or a healer treats it. Potions heal less and shops keep only a few; inns and healers
+  cost more further from home; towns have a civic project the party pays for.
+* **The Tutorial** now has bones at the quarry bridge that steel can't hurt (fire oil and a club are in the crate by
+  Wick) and a goblin archer behind a crate that you have to walk round or flank.
+
 ## 1.4.0 deeper fights, puzzles, and more ways through quests
 
 * **Cover you can plan around:** when you move, every tile you can reach shows a bar on each side that would give

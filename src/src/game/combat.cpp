@@ -112,6 +112,8 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     cb.turnPos = -1; cb.round = 1; cb.lastRoundJoined = 1;
     log("Combat begins!");
     firstSightBanter();   // 1.5.0 (#95)
+    // 1.5.0 (#93): say so when someone goes into the fight with gear they don't use well
+    for (auto& u : cb.units) if (u.partyIndex >= 0) for (int sl = 0; sl < SL_COUNT; sl++) if (!u.ch.equip[sl].empty()) if (const ItemDef* it = gd->item(u.ch.equip[sl])) { std::string w = gearWarning(*it, u.ch); if (!w.empty()) cb.log.push_back(u.ch.name + "'s " + it->name + ": " + w); }
     shake = 0.2f;
     if (mode != GMode::COMBAT) pushMode(GMode::COMBAT);
     revealAround();
@@ -1321,6 +1323,13 @@ void Game::combatAI(float dt) {
             for (auto& sl : party.inventory) { const ItemDef* d = gd->item(sl.id); if (!d || sl.count <= 0 || !startsWith(d->effect, "imbue_") || u.ch.ap < itemAP(*d)) continue;
                 int ty = dmgTypeFromName(d->effect.substr(6)); bool works = false; for (auto& o : cb.units) if (isFoe(o) && o.ch.resist(ty, *gd) < 100) works = true;
                 if (works) { combatUseItem(cb.selectedUnit, sl.id, cb.selectedUnit); return; } }
+            bool engaged = false; for (auto& o : cb.units) if (isFoe(o) && unitDist(o, u.x, u.y) <= 1) engaged = true;
+            if (engaged && u.ch.move > 0 && cb.aiAction <= 1) {   // step out of reach first, so the party can get away next turn
+                int keepSel = cb.selectedUnit; combatComputeReachable(); cb.selectedUnit = keepSel; cb.reachDirty = true;
+                int bx = -1, by = -1, bd = -1;
+                for (auto& r : cb.reachable) { int dmin = 99; for (auto& o : cb.units) if (isFoe(o)) dmin = std::min(dmin, chebyshev(r.first, r.second, o.x, o.y)); if (dmin > bd) { bd = dmin; bx = r.first; by = r.second; } }
+                if (bx >= 0 && bd > 1) { auto pth = aiWalkTo(cb.selectedUnit, bx, by); if (!pth.empty()) { cb.aiPath = pth; cb.stepTimer = 0; return; } }
+            }
             if (u.ch.ap >= u.ch.maxAP(*gd) && combatTryFlee(cb.selectedUnit)) return;
             u.ch.addEffect("defend", 1, 0); combatEndTurn(); return;
         }

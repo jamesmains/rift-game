@@ -14,7 +14,7 @@ id=violet_splinter
 name=Violet Splinter
 type=material
 tile=30,13
-value=40
+value=65
 desc=A sliver of violet glass that grew out of a rat's back like a second spine. Warm to the touch. Pedlars buy it and don't ask where it came from.
 
 [item]

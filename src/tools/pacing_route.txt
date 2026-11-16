@@ -73,6 +73,7 @@ expect queststatus:main contains Tessa
 
 # --- Ashfall, the Annex ---
 goto ashfall
+waituntil 10
 talk tessa
 choose shard inside the Annex
 settle

@@ -107,6 +107,8 @@ choose Who taught you
 choose I'll find it
 con level 9
 settle
+# 1.5.0: Ashwing alone takes a solo bot longer than settle allows now - this test is about the music box
+con clearmap old_mine
 teleport old_mine 11 21
 bump 6 25
 expect item:music_box == 1

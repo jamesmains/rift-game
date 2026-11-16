@@ -56,6 +56,8 @@ expect queststatus:main contains Tessa
 
 # --- Ashfall, the Annex ---
 goto ashfall
+# 1.5.0: Tessa's workshop is shut at night (fights take longer now)
+waituntil 10
 talk tessa
 choose shard inside the Annex
 settle

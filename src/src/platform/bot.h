@@ -124,10 +124,13 @@ struct Bot {
             auto stock = G.shopItems(shop); std::string potion, torch; int potionHeal = 0;
             for (auto& it : stock) if (auto* d = G.gd->item(it.first)) { if (d->type == IT_CONSUMABLE && d->heal > 0 && d->effect.empty() && G.itemBuyPrice(*d) * 4 <= G.party.gold && d->heal > potionHeal) { potion = it.first; potionHeal = d->heal; } if (it.first == "torch_item") torch = it.first; }
             int torches = G.party.countItem("torch_item");
-            if ((potion.empty() || healingPotions() >= want) && (torch.empty() || torches >= 4)) continue;
+            bool oilsWanted = false; for (auto& it : stock) if (auto* d = G.gd->item(it.first)) if (startsWith(d->effect, "imbue_") && d->effect != "imbue_poison" && G.party.countItem(it.first) < 2) oilsWanted = true;
+            if ((potion.empty() || healingPotions() >= want) && (torch.empty() || torches >= 4) && !oilsWanted) continue;
             if (!talk(n.id)) continue; if (G.mode == GMode::DIALOGUE && !opt.empty()) choose(opt); if (G.mode != GMode::SHOP) { settle(); continue; }
             int budget = G.party.gold * 2 / 5;
             if (!torch.empty()) while (G.party.countItem("torch_item") < 4) { int pr = G.itemBuyPrice(*G.gd->item(torch)); if (pr > budget) break; budget -= pr; G.party.gold -= pr; G.stats.goldSpent += pr; G.party.addItem(torch, 1, *G.gd); }
+            // 1.5.0 (#92): a careful player also carries a couple of each weapon oil the shop has (spirits, machines, bones)
+            for (auto& it : stock) if (auto* d = G.gd->item(it.first)) if (startsWith(d->effect, "imbue_") && d->effect != "imbue_poison") while (G.party.countItem(it.first) < 2) { int pr = G.itemBuyPrice(*d); if (pr > budget) break; budget -= pr; G.party.gold -= pr; G.stats.goldSpent += pr; G.party.addItem(it.first, 1, *G.gd); }
             if (!potion.empty()) { int bought = 0; while (healingPotions() < want) { int pr = G.itemBuyPrice(*G.gd->item(potion)); if (pr > budget) break; budget -= pr; G.party.gold -= pr; G.stats.goldSpent += pr; G.party.addItem(potion, 1, *G.gd); bought++; } if (verbose && bought) printf("  bot: bought %d %s\n", bought, potion.c_str()); }
             settle();
         }

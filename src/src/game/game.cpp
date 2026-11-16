@@ -1853,7 +1853,7 @@ bool Game::loadEncounters() {
 // reputation with the open shop's faction: up to 15% off when Honoured, up to 25% more when Hated (sell: +10% / -20%)
 static int repPct(const Game& g, bool buy) { if (g.mode != GMode::SHOP || g.shopFaction.empty()) return 0; auto it = g.reputation.find(g.shopFaction); int r = it == g.reputation.end() ? 0 : it->second; return buy ? clampi(-r / 4, -15, 25) : clampi(r / 6, -20, 10); }
 int Game::itemBuyPrice(const ItemDef& d) const { int cha = party.members.empty() ? 8 : party.members[0].stat(ST_CHA, *gd); return std::max(1, d.value * (110 - std::min(30, cha * 2) + repPct(*this, true)) / 100); }
-int Game::itemSellPrice(const ItemDef& d) const { int cha = party.members.empty() ? 8 : party.members[0].stat(ST_CHA, *gd); return std::max(d.value > 0 ? 1 : 0, d.value * (18 + std::min(17, cha)) * (100 + repPct(*this, false)) / 10000); }
+int Game::itemSellPrice(const ItemDef& d) const { int cha = party.members.empty() ? 8 : party.members[0].stat(ST_CHA, *gd); return std::max(d.value > 0 ? 1 : 0, d.value * (14 + std::min(17, cha)) * (100 + repPct(*this, false)) / 10000); }   // 1.5.0 (#100): was 18 + CHA
 
 std::string Game::shopFactionOf(const std::string& shop) const {
     auto secs = mergedConfig("shops.txt"); std::reverse(secs.begin(), secs.end());
