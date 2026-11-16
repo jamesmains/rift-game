@@ -140,3 +140,11 @@ Water Rights patched + the middle way, Ashwing reasoned with) and companion ques
 version swapping in and out, a companion taught while away, save/load). Console: `setstat STAT N [MEMBER]`,
 `stealth [N]`, `spellsof [MEMBER]`. Expect keys: `answers` (the answers as shown, tags included, " | " between) and
 `spells:<member>` (comma list).
+
+1.5.0 (#86, #96, #97, #99): `recipes_gated_1_5_0` (trial recipes known=0, taught by the dialogue's `recipe=`, given to
+old saves by migrations.txt `[learn]`), `field_notes_1_5_0` (fieldnotes.ini survives a wipe and reload; the desktop's
+Field Notes.txt), `stealth_1_5_0` (noisemakers aimed and thrown, the crypt deadfall and the bandit bear trap, darkness
+against eyes that need light, a hurt group's fight), `save_points_1_5_0` (a shrine near every boss, the dungeon arrival
+autosave). Commands: `throwat X Y ITEM`, `aimthrow ITEM`, `groupmove I X Y`; console `light [N]`, `reset_fieldnotes`.
+Expect keys: `recipe:ID`, `fieldnote:ID`, `fieldknown:ID`, `deskfieldnotes`, `bestiaryids`, `group:I`, `trap:X,Y`,
+`aim`, `aggro:I`, `bossshrine`, `groupshrine:I`, `lastautosave`.
