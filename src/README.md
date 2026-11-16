@@ -29,6 +29,12 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.7.2 updates from the game's own GitHub page
+
+* Downloaded copies of the full game now look for new versions on the game's GitHub page
+  (github.com/jamesmains/rift-game). Copies of 1.7.1 looked at an address that never went up: download 1.7.2 once
+  by hand, and from then on the Update button does the rest.
+
 ## 1.7.1 the Update button for downloaded copies
 
 * A copy of the full game downloaded as a zip (from the website) now gets the Update button too: it looks for a

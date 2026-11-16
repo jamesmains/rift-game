@@ -1,4 +1,5 @@
-# Triffall - publish a release to the public GitHub releases repo (1.7.1, #150), so website copies of the game find it
+# Triffall - publish a release to the public GitHub repo in releases-repo.txt (1.7.1, #150; since 1.7.2 the game's own
+# public repo, jamesmains/rift-game, #151), so website copies of the game find it
 # through their Update button (update-source.txt = https://github.com/<repo>/releases/latest/download/).
 #   .\tools\publish-release.ps1                 publish the version in releases\latest.json (build.ps1 -Release runs this)
 #   .\tools\publish-release.ps1 -Version 1.7.1  publish an older release again (its zip must still be in releases\)
@@ -25,8 +26,7 @@ $token = $env:TRIFFALL_GITHUB_TOKEN
 if (-not $token) { $token = $env:GITHUB_TOKEN }
 $tokenFile = Join-Path $env:APPDATA "triffall-publish\github-token.txt"
 if (-not $token -and (Test-Path $tokenFile)) { $token = (Get-Content $tokenFile -Raw).Trim() }
-if (-not $token -and (Get-Command gh -ErrorAction SilentlyContinue)) { $t = (& gh auth token 2>$null); if ($LASTEXITCODE -eq 0 -and $t) { $token = "$t".Trim() } }
-if (-not $token) { Note "not signed in, so this release wasn't published to $Repo (see tools\publish-release.ps1 to set it up). Nothing else is affected."; exit 0 }
+if (-not $token -and (Get-Command gh -ErrorAction SilentlyContinue)) { $t = (& gh auth token 2>$null); if ($LASTEXITCODE -eq 0 -and $t) { $token = "$t".Trim() } }if (-not $token) { Note "not signed in, so this release wasn't published to $Repo (see tools\publish-release.ps1 to set it up). Nothing else is affected."; exit 0 }
 $h = @{ Authorization = "Bearer $token"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28"; "User-Agent" = "triffall-publish" }
 $api = "https://api.github.com"
 
