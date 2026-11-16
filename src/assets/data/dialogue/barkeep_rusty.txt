@@ -6,6 +6,11 @@ option=Sleep.|poor|!gold:20
 option=You look like you lost something.|still|!q_still>=1
 option=I found your coil.|still_back|item:copper_coil&q_still>=1&!q_still>=2
 option=Any rumours?|rumour
+option=How's the market taking the Sky Wardens?|wardens|converts_spared
+option=How's the market taking the trial?|court|converts_judged&!tessa_fell_road
+option=(The market has painted something on your wall.)|tessa_fell|tessa_fell_road
+option=Seen Tessa?|tessa_left|left_scavenger&!fell_scavenger
+option=What happened to the cultist in the square?|cult_talked|cult_talked
 option=Goodbye.|end
 
 [room]
@@ -48,3 +53,29 @@ xp=120
 set=q_still=2
 rep=ashfall:10
 option=To the Last Call.|end
+
+# 1.5.0 (#98): Ashfall remembers the cult and Tessa
+[wardens]
+speaker=Barkeep Rusty
+text=Grumbling, then trading, then gossiping. Ilse's lot come down off the chapel roof for soup and tell us when the sky looks wrong. Twice it did. Twice we got the kids inside in time. I'll pour for them any night.
+option=Good.|end
+
+[court]
+speaker=Barkeep Rusty
+text=Nine of ours, walking to Brasswick with their hands tied. Some of them deserved it. Some of them sang in the chapel choir with my daughter. Folk here won't forget whose idea it was. Drink up.
+option=...|end
+
+[tessa_fell]
+speaker=Barkeep Rusty
+text=A girl with a crowbar and a drone, ten feet high. The market painted it the week she died. Her drone sleeps on my shelf now. (He doesn't offer you a drink.) We're closing early tonight.
+option=I'll go.|end
+
+[tessa_left]
+speaker=Barkeep Rusty
+text=On her stall, same as ever, fixing things nobody brings back. Ask about you and she gets very busy with a screwdriver.
+option=I see.|end
+
+[cult_talked]
+speaker=Barkeep Rusty
+text=The lad in the robe? Walked out the north gate and kept going. His sister in Brasswick writes that he works at the clock-mender's now. Says he still dreams about violet light, but he wakes up.
+option=Good for him.|end

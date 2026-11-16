@@ -5,6 +5,8 @@ option=Let's see your wares.|shop
 option=Could you brew something from these herbs?|alchemy
 option=Can you teach me rarer brews?|herb1|!q_herbal>=1
 option=Here is the distilled essence.|herb1_done|q_herbal>=1&!q_herbal>=2&item:distilled_essence
+option=About Elowen...|elowen_fell|elowen_fell_scar
+option=About Elowen...|elowen_left|left_mage&!fell_mage
 option=Goodbye.|end
 
 [shop]
@@ -32,3 +34,14 @@ xp=150
 set=q_herbal=2
 quest=The Alchemist's Trial - done
 option=Thank you.|end
+
+# 1.5.0 (#98): Morrow and Elowen
+[elowen_fell]
+speaker=Arcanist Morrow
+text=Through. After her mother. (He sets down his pestle very carefully.) I told her she was reckless for eleven years. I suppose I was right. I would very much rather have been wrong. Her desk stays as it is.
+option=I'm sorry.|end
+
+[elowen_left]
+speaker=Arcanist Morrow
+text=She's in the archive, buried in notes, and she won't talk about you. That is, for Elowen, the loudest thing she has ever said.
+option=I understand.|end

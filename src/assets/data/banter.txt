@@ -175,3 +175,83 @@ class=ranger
 when=dungeon
 text=Can't shoot what I can't see. Throw a flare if it gets thick down here.
 
+# ---- 1.5.0 (#87/#88/#98): the big choices, and the companions who are gone ----
+[banter]
+class=any
+when=idle
+if=fell_warrior
+flag=b_bram_gone
+text=I keep looking for Bram at the back of the line. Then I remember.
+
+[banter]
+class=any
+when=idle
+if=fell_ranger
+flag=b_nyx_gone
+text=Quiet without Nyx. She never said much, but you noticed when she wasn't saying it.
+
+[banter]
+class=any
+when=idle
+if=fell_scavenger
+flag=b_tessa_gone
+text=Every time something beeps I expect Tessa to tell us not to touch it.
+
+[banter]
+class=warrior
+when=idle
+if=goblins_betrayed
+flag=b_bram_betrayed
+text=Grakk had it coming. ...Didn't he?
+
+[banter]
+class=cleric
+when=idle
+if=goblins_betrayed&orin_goblins_ok
+flag=b_orin_betrayed
+text=I still hear the pots in that hall. I said the words over them. It did not help as much as it should have.
+
+[banter]
+class=warrior
+when=idle
+if=bram_goblins_ok
+flag=b_bram_goblins_ok
+text=Tobb took it better than I thought. Threw a turnip at me, mind. Fair enough.
+
+[banter]
+class=scavenger
+when=idle
+if=converts_judged&tessa_converts_ok
+flag=b_tessa_letter
+text=Got a letter from Ilse. They feed them, at least. She says the road crews sing in the evenings - Vell's hymns, with new words.
+
+[banter]
+class=scavenger
+when=idle
+if=converts_spared
+flag=b_tessa_wardens
+text=Sky Wardens. Ilse on a roof with a spyglass. A year ago I'd have charged you for that joke.
+
+[banter]
+class=ranger
+when=overworld
+if=ashwing_gone&nyx_ashwing_ok
+flag=b_nyx_ashwing
+text=Every time the wind comes off the snow I check the sky. Habit now. Don't mention it.
+
+[banter]
+class=any
+when=enter
+map=millbrook
+if=goblins_allies
+flag=b_snig_millbrook
+text=Is that the goblin peddler? Selling Ada a ladle? ...Strange times.
+
+[banter]
+class=any
+when=enter
+map=goblin_cave
+if=goblins_betrayed&goblin_chief_dead
+flag=b_cave_after_betrayal
+text=It's very quiet in here now.
+

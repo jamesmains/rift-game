@@ -4,6 +4,9 @@ text=Hmph. Graves don't tend themselves. My brother's in that one - went up to R
 option=Is something troubling you?|barrow|!q_barrow>=1
 option=I found your grandfather's medal.|medal|item:hesk_medal&!q_barrow>=2
 option=About the barrow...|reminder|q_barrow>=1&!q_barrow>=2
+option=What do you make of the goblin business?|gob_spared|goblin_chief_spared&!goblin_chief_dead
+option=What do you make of the goblin business?|gob_betrayed|goblins_betrayed
+option=Bram used to sit with you.|bram_fell|fell_warrior
 option=Sorry for your loss.|end
 
 [barrow]
@@ -32,3 +35,19 @@ set=q_barrow=2
 xp=180
 gold=40
 option=Rest easy, Warden.|end
+
+# 1.5.0 (#98): Hesk on Greywood and Bram
+[gob_spared]
+speaker=Old Hesk
+text=My grandfather would have hanged the lot. My grandfather also lost three sons to the Barrow wars. I'll take a quiet winter and a goblin selling nails over that.
+option=Fair.|end
+
+[gob_betrayed]
+speaker=Old Hesk
+text=The Wardens had a rule: a surrendered enemy is a guest until he leaves your land. (He looks at the fire.) Old rules. Nobody keeps them now. Apparently.
+option=...|end
+
+[bram_fell]
+speaker=Old Hesk
+text=Every evening, my table, his pint, my stories. He'd heard them all and laughed anyway. (He nudges an empty stool with his boot.) I keep the stool out. Daft, at my age.
+option=It isn't daft.|end

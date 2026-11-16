@@ -3,6 +3,9 @@ speaker=Trapper Jory
 text=Wolves've been thick as fleas this year. I pay thirty gold for four good pelts if you've a mind to thin them out.
 option=I'll bring pelts.|quest|!q_pelts>=1
 option=I have four pelts.|turnin|q_pelts>=1&!q_pelts>=2&item:wolf_pelt
+option=Has Nyx been by?|nyx_fell|nyx_fell_ashwing
+option=Has Nyx been by?|nyx_left|left_ranger&!fell_ranger
+option=Seen anything odd in the hills?|ashwing_north|ashwing_gone&!fell_ranger
 option=Goodbye.|end
 
 [quest]
@@ -20,3 +23,19 @@ gold=30
 give=long_bow:1
 xp=120
 option=Thanks.|end
+
+# 1.5.0 (#98): Jory - Nyx and the dragon
+[nyx_fell]
+speaker=Trapper Jory
+text=A Frosthold man brought her cloak down. Scorched. (He turns a snare over in his hands.) She tracked for me two winters. Never missed, never talked. I set her snares now. Feels wrong to let them rust.
+option=She'd like that.|end
+
+[nyx_left]
+speaker=Trapper Jory
+text=She's back on the high trails. Comes down for salt and arrows and won't say your name. Whatever you did, she's carrying it around like a stone in her boot.
+option=I'll find her.|end
+
+[ashwing_north]
+speaker=Trapper Jory
+text=Smoke over the peaks, far north, past Frosthold. Big wings at dusk. The deer are coming down early this year. Something up there's eating well - and it isn't us, so I'm not complaining.
+option=Keep an eye on it.|end

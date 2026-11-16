@@ -1,4 +1,17 @@
 [start]
 speaker=Veteran
 text=I was at the Wreck once, as a lad. The crew weren't people, you know. Not all of them. Some were made of metal, and some were... grey. They're still in there.
+option=You heard about Bram?|bram_fell|fell_warrior
+option=Ever hear of a scavenger called Tessa?|tessa_fell|tessa_fell_road
 option=Unsettling.|end
+
+# 1.5.0 (#98): the old soldier hears about the companions
+[bram_fell]
+speaker=Veteran
+text=Sedge's lad from the old militia? Aye, I heard. Charged a goblin hall alone, they say. (He drinks.) Sedge would have clouted him for it. Then he'd have bought the next round in his name. So I will.
+option=Thank you.|end
+
+[tessa_fell]
+speaker=Veteran
+text=The girl on the north road? I was on that escort's relief. Crowbar and a little flying lamp, against six crossbows, in the dark. The guards don't talk about it. The ones who were there won't take the north road any more.
+option=...|end

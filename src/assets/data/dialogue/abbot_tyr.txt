@@ -5,6 +5,9 @@ option=I will.|quest|!q_frost>=1
 option=The colossus is destroyed.|done|q_frost_done&!q_frost>=2
 option=Heal us.|heal
 option=Perform the Rite of Renewal.|rite
+option=Has Orin come home?|orin_left|left_cleric&!fell_cleric
+option=Brother Orin wrote to you?|orin_letter|joined_cleric&goblins_betrayed&orin_goblins_ok
+option=Anything strange on the peaks?|ashwing_north|ashwing_gone
 option=Goodbye.|end
 
 [quest]
@@ -30,3 +33,19 @@ healer=1
 speaker=Abbot Tyr
 text=Kneel, then. Forget what you were; choose what you will be.
 respec=1
+
+# 1.5.0 (#98): Frosthold - Orin and the dragon in the snow
+[orin_left]
+speaker=Abbot Tyr
+text=He has. He prays more than he eats and will not say why. (The old man studies you.) He is a good priest. Whatever broke between you, I hope it can be mended. The shrine does not judge. Its priests sometimes do.
+option=I hope so too.|end
+
+[orin_letter]
+speaker=Abbot Tyr
+text=He wrote that he stood beside you in a goblin hall and did something he will be praying about for a long time. He did not say what. He asked me to pray for both of you. I do.
+option=Thank you, Abbot.|end
+
+[ashwing_north]
+speaker=Abbot Tyr
+text=Wings over the high snow, and a great shape asleep on the north face. It has taken no pilgrims. It has taken a great many goats. The brothers have decided this is a lesson in humility and stopped counting.
+option=Good.|end
