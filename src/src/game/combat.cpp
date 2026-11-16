@@ -111,6 +111,7 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     std::stable_sort(cb.order.begin(), cb.order.end(), [&](int a, int b) { return cb.units[a].initiative > cb.units[b].initiative; });
     cb.turnPos = -1; cb.round = 1; cb.lastRoundJoined = 1;
     log("Combat begins!");
+    firstSightBanter();   // 1.5.0 (#95)
     shake = 0.2f;
     if (mode != GMode::COMBAT) pushMode(GMode::COMBAT);
     revealAround();

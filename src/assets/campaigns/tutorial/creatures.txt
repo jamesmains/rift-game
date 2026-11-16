@@ -17,3 +17,23 @@ level=1
 gold=0-1
 ai=melee
 faction=wild
+
+# 1.5.0 (#101): the tutorial's lesson in resistances - immune to plain blows, broken by fire or a blunt weapon
+[creature]
+id=tut_bones
+name=Quarry Bones
+sprite=114,10
+hp=14
+res=physical:100,crush:-100,fire:-100,poison:100
+stats=str:6,dex:8,con:6,int:1,wis:1,cha:1
+dmg=1-3
+accuracy=0
+apmax=5
+move=3
+xp=12
+level=1
+gold=0-2
+ai=melee
+undead=1
+faction=undead
+sound=death_bones

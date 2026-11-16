@@ -17,6 +17,7 @@ item=bandage:6
 item=torch_item
 item=flare
 item=oil_fire:4
+item=oil_blessed:2
 item=arrows
 item=iron_dagger
 item=club
@@ -189,6 +190,8 @@ item=ring_dex
 item=band_speed
 
 # 1.0: Snig the goblin peddler (Millbrook), only if Grakk's tribe was spared in Greywood
+item=oil_blessed:3
+
 [shop]
 id=snig_wares
 hours=6-22

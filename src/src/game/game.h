@@ -119,7 +119,7 @@ enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, G
 // ---- newer systems (journal.cpp, worldmap.cpp, craft.cpp, console.cpp, bounty.cpp) ----
 struct GameStats { int kills = 0, fightsWon = 0, fightsFled = 0, goldEarned = 0, goldSpent = 0, chests = 0, crits = 0, damageDealt = 0, damageTaken = 0, spellsCast = 0, crafted = 0, bounties = 0, travels = 0, knockouts = 0, questsDone = 0; };
 struct AchievementDef { std::string id, name, desc, cond; Tile tile; bool hidden = false; };
-struct BanterLine { std::string cls, when, map, text, flag, cond; };
+struct BanterLine { std::string cls, when, map, text, flag, cond; std::vector<std::string> seen; };   // 1.5.0: seen= creatures (when=firstsight)
 struct Recipe { std::string id, name, result, station, category, reveal; int count = 1, gold = 0, level = 1, difficulty = 1, skill = 1; bool known = true; std::vector<std::pair<std::string, int>> mats; };
 struct AffixDef { std::string id, name, dmgType; bool prefix = true; int tier = 1, valuePct = 160; std::vector<std::string> types; std::vector<std::pair<std::string, int>> mods; };
 struct Bounty { std::string id, kind, target, targetName, where, whereName, town, title, text; int need = 1, have = 0, reward = 0, xp = 0, posted = 0; bool done = false, taken = false; };
@@ -267,7 +267,9 @@ public:
     std::string consoleBuf; std::vector<std::string> consoleHist, consoleOut; int consoleHistPos = -1;
     void loadSystems();                           // banter, achievements, recipes, affixes, locations
     void onKill(const Character& victim, const Combatant* killer);
-    void onSeen(const std::string& creatureId) { if (!bestiary.count(creatureId)) bestiary[creatureId] = 0; }
+    void onSeen(const std::string& creatureId) { if (!bestiary.count(creatureId)) { bestiary[creatureId] = 0; freshSeen.push_back(creatureId); } }
+    std::vector<std::string> freshSeen;   // 1.5.0 (#95): creature kinds met for the first time in the fight being set up
+    void firstSightBanter();              // a companion names the trick against a family the first time the party meets it
     void addNote(const std::string& title, const std::string& text);
     void banterTrigger(const std::string& when);
     void drawBanter(Canvas& cv);

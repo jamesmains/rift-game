@@ -1401,3 +1401,24 @@ attacksound=attack_laser
 sound=death_machine
 role=sniper
 
+# ================= 1.5.0 (#95) teaching versions =================
+[creature]
+id=bone_rat
+name=Bone Rat
+sprite=105,40
+color=225,220,195
+hp=10
+res=physical:50,crush:-100,poison:100,cold:50
+stats=str:5,dex:11,con:5,int:1,wis:1,cha:1
+dmg=1-3
+accuracy=6
+apmax=6
+move=4
+evasion=4
+xp=10
+level=1
+gold=0-0
+ai=melee
+undead=1
+faction=undead
+sound=death_bones

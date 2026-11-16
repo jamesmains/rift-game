@@ -40,3 +40,52 @@ map=sunscar
 id=millbrook
 name=Millbrook Farm
 map=millbrook
+
+# 1.5.0 (#95): notices that warn about dangerous ordinary monsters and say what works on them
+[bounty]
+id=warn_crypt_bones
+board=hollowmere
+kind=kill
+target=skeleton
+need=3
+where=crypt
+reward=70
+xp=40
+title=Bones in Dunmarrow
+text=The dead are walking in the old crypt again. Whoever goes: blades skip off bare bone. Take a mace or a hammer - Hald at the smithy sells them.
+
+[bounty]
+id=warn_marsh_lights
+board=murkwater
+kind=kill
+target=wraith
+need=2
+where=marsh
+reward=140
+xp=90
+title=Lights in the marsh
+text=Two of our cutters went after the lights and didn't come back. The lights are the drowned dead: steel goes through them. Blessed Oil, or someone who knows spells.
+
+[bounty]
+id=warn_scrap_drones
+board=brasswick
+kind=kill
+target=scrap_drone
+need=3
+where=lab
+reward=80
+xp=50
+title=Scrap drones at the Annex
+text=Drones from the Annex keep stripping our fences. Bullets bounce off the plating - give them a jolt instead. Storm oil from the scrapyard works.
+
+[bounty]
+id=warn_frost_wolves
+board=frosthold
+kind=kill
+target=frost_wolf
+need=2
+where=overworld
+reward=90
+xp=60
+title=Frost wolves on the pass
+text=The white wolves are back on the pass. Cold doesn't bother them - they ARE the cold. Fire drives them off.

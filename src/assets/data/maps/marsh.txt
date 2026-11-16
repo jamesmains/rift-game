@@ -292,3 +292,18 @@ y=33
 title=Carved stone
 text=HERE THE DROWNED KEEP WHAT THE MIRE GAVE BACK. TAKE, AND REMEMBER THEM.
 sprite=27,14
+
+# 1.5.0 (#95): the marsh's ghosts are immune to steel - a warning and the key at the door
+[sign]
+template=paper_sign
+x=13
+y=3
+title=A drowned man's satchel
+text=Lights in the fog are not lanterns. They are the drowned dead, and steel goes through them like smoke. Blessed oil on the blade, or magic. Turn back if you have neither.
+
+[chest]
+x=8
+y=2
+items=oil_blessed:2
+gold=0
+flag=marsh_teach_chest

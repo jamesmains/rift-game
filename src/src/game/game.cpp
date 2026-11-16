@@ -121,7 +121,7 @@ void Game::newGame(const std::string& hn, const std::string& classId, int diff) 
     modeStack.clear(); mode = GMode::EXPLORE; trail.clear(); levelUpQueue.clear(); gameOver = false; running = true; requestDesktop = false;
     playtimeSec = 0; lastAutosave = 0; stepCounter = 0; heroName = hn; worldSeed = 1337; rng.reseed(fixedSeed ? fixedSeed : (uint64_t)time(nullptr));
     lightSteps = stealthSteps = detectSteps = 0; lastTownMap.clear(); clockMin = 8 * 60; day = 1; weather = "clear"; weatherSteps = 900; extra.clear();   // a new game starts on a calm, clear morning
-    stats = GameStats(); bestiary.clear(); approval.clear(); reputation.clear(); leader = 0; notes.clear(); bounties.clear(); bountyOffers.clear(); dynItems.clear(); consoleOut.clear(); banterT = 0; banterCooldown = 60;
+    stats = GameStats(); bestiary.clear(); freshSeen.clear(); approval.clear(); reputation.clear(); leader = 0; notes.clear(); bounties.clear(); bountyOffers.clear(); dynItems.clear(); consoleOut.clear(); banterT = 0; banterCooldown = 60;
     const ClassDef* c = gd->cls(classId); if (!c) c = gd->cls(gd->classOrder.empty() ? "" : gd->classOrder[0]);
     Character hero; if (c) hero.initFromClass(*gd, *c, hn);
     party.members.push_back(hero);
@@ -1995,7 +1995,7 @@ bool Game::deserialize(const std::string& text) {
     if (!switchCampaign(secs[0].get("campaign", "triffall"))) return false;   // a save from another campaign loads that campaign's data first
     party = Party(); flags.clear(); visited.clear(); maps.clear(); exploredSave.clear(); map = nullptr; msgLog.clear(); msgTime.clear(); modeStack.clear(); mode = GMode::EXPLORE; levelUpQueue.clear(); difficulty = 2;
     gameOver = false; running = true; requestDesktop = false; floats.clear(); notifications.clear(); notifTime.clear(); hintShown = -1; hintFade = 0; desktopAction.clear();
-    notes.clear(); dynItems.clear(); bounties.clear(); bountyOffers.clear(); stats = GameStats(); bestiary.clear(); approval.clear(); reputation.clear(); leader = 0; banterT = 0;
+    notes.clear(); dynItems.clear(); bounties.clear(); bountyOffers.clear(); stats = GameStats(); bestiary.clear(); freshSeen.clear(); approval.clear(); reputation.clear(); leader = 0; banterT = 0;
     for (auto& sec : secs) if (sec.name == "dynitem") dynItems[sec.get("id")] = sec.get("spec");
     restoreDynItems();   // generated items must exist before the inventory is read
     std::string mid; int sx = 1, sy = 1;

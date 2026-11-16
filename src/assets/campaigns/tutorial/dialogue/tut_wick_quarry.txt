@@ -20,7 +20,7 @@ option=Glad to have you.|join
 
 [join]
 speaker=Old Wick
-text=Right. You lead. In a fight I take my own turn after yours - you'll be telling me where to stand. The winch on the wall there drops the old bridge across the water. Pull it, and let's see what's on the other side.
+text=Right. You lead. In a fight I take my own turn after yours - you'll be telling me where to stand. The winch on the wall there drops the old bridge across the water. Mind: something rattles on the far side - bones, by the sound. A sword won't bite on bare bone. Take the fire oil and the club from the crate there first.
 join=wick
 option=Let's go.|end
 

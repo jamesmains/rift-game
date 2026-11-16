@@ -24,6 +24,7 @@ void Game::loadSystems() {
     for (auto& sec : mergedConfig("banter.txt")) {
         if (sec.name != "banter") continue;
         BanterLine b; b.cls = sec.get("class"); b.when = sec.get("when", "idle"); b.map = sec.get("map"); b.flag = sec.get("flag"); b.cond = sec.get("if");
+        for (auto& c : split(sec.get("seen"), ',')) if (!trim(c).empty()) b.seen.push_back(trim(c));   // 1.5.0 (#95)
         for (auto& kv : sec.kv) if (kv.first == "text") { BanterLine c = b; c.text = kv.second; banters.push_back(c); }
     }
     for (auto& sec : mergedConfig("achievements.txt")) {
@@ -91,6 +92,27 @@ void Game::banterTrigger(const std::string& when) {
     size_t hp; while ((hp = banterText.find("$hero")) != std::string::npos) banterText.replace(hp, 5, heroName);
     if (!pick.second->flag.empty()) setFlag("_banter_" + pick.second->flag);
     log(party.members[banterMember].name + ": \"" + banterText + "\"");
+    gAudio.play("banter");
+}
+// 1.5.0 (#95): when=firstsight seen=creature,... - the first time the party meets one of those, a companion in the party
+// says the line in the fight (combat log + a float over them). Once per game per line.
+void Game::firstSightBanter() {
+    std::vector<std::string> fresh; fresh.swap(freshSeen);
+    if (fresh.empty() || !inCombat() || (settings && settings->banter == 0)) return;
+    std::vector<std::pair<int, const BanterLine*>> cands;
+    for (auto& b : banters) {
+        if (b.when != "firstsight" || b.seen.empty()) continue;
+        bool hit = false; for (auto& c : b.seen) for (auto& f : fresh) if (c == f) hit = true;
+        if (!hit || (!b.flag.empty() && hasFlag("_banter_" + b.flag)) || (!b.cond.empty() && !evalCond(b.cond))) continue;
+        for (size_t i = 0; i < cb.units.size(); i++) { auto& u = cb.units[i]; if (u.partyIndex <= 0 || !u.ch.alive) continue; if (b.cls == u.ch.classId || b.cls == "any") cands.push_back({(int)i, &b}); }
+    }
+    if (cands.empty()) return;
+    auto pick = cands[rng.range(0, (int)cands.size() - 1)];
+    std::string t = pick.second->text; size_t hp; while ((hp = t.find("$hero")) != std::string::npos) t.replace(hp, 5, heroName);
+    const Combatant& u = cb.units[pick.first];
+    cb.log.push_back(u.ch.name + ": \"" + t + "\""); log(u.ch.name + ": \"" + t + "\"");
+    addFloat(u.x, u.y - 1, "!", C::Cyan, 2);
+    if (!pick.second->flag.empty()) setFlag("_banter_" + pick.second->flag);
     gAudio.play("banter");
 }
 void Game::drawBanter(Canvas& cv) {

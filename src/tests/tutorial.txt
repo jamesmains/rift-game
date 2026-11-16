@@ -199,11 +199,21 @@ expect hint contains winch
 bump 13 9 winch
 frames 5
 expect flag:tut_winch == 1
-expect hint contains Goblins
+expect hint contains Bones rattle
 shot tut_bridge.png
+# 1.5.0 (#101): the crate by Wick holds fire oil and a club; the bones are immune to plain steel
+bump 11 12 crate
+frames 5
+settle
+expect item:oil_fire >= 2
+fight tut_bones
+settle
+expect flag:tut_bones == 1
+expect hint contains archer
 fight tut_goblins
 settle
 expect flag:tut_goblins == 1
+expect flag:tut_archer == 1
 expect hint contains crater
 fight tut_drone
 settle
