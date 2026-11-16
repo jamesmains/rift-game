@@ -318,3 +318,26 @@ y=21
 items=oil_blessed:2,elixir:1,amulet_wis:1
 gold=150
 flag=crypt_reliquary
+
+# 1.5.0 (#95): a lone bone rat past the stairs teaches that blades bounce off bones; the chest and note give the answer
+[enemy]
+group=bone_rat
+x=18
+y=22
+aggro=4
+level=0
+flag=crypt_bonerat
+
+[chest]
+x=13
+y=23
+items=iron_mace:1,oil_blessed:1
+gold=0
+flag=crypt_teach_chest
+
+[sign]
+template=paper_sign
+x=10
+y=23
+title=A dead adventurer's note
+text=My sword just skipped off them. Bones want breaking, not cutting - I left the groundskeeper's mace in the chest by the stairs like a fool. And the cold thing in the north hall... steel went straight through it. Only the priest's blessed oil marked it.

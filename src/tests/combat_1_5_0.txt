@@ -1,0 +1,93 @@
+# 1.5.0 (#83 #91 #92 #93 #94): hit chance and cover, crits and their cap, resistance tiers with weapon-trait keys,
+# class gearing drawbacks and Wounded. Built on a floor in the hermit's clearing like combat_1_4_0.
+newgame Kai warrior 1 20261116
+con join mage
+frames 30
+teleport hermit_hut 4 14
+frames 120
+cb arena 2 11 21 7
+combat skeleton,bandit_archer,rat
+frames 2
+unitplace 0 4 14
+unitplace 1 4 16
+unitplace 2 20 16
+unitplace 3 12 14
+unitplace 4 21 12
+cb turn 0
+cb hp 2 300
+cb hp 3 300
+cb hp 4 300
+# ---- #91 hit chance: about 70% in the open, half cover costs 25, full cover 40
+expect cb:hit:0:3 >= 60
+expect cb:hit:0:3 <= 85
+cb cellkind 11 14 crate
+expect cb:cover:0:3 == 1
+expect cb:hit:0:3 >= 35
+expect cb:hit:0:3 <= 60
+cb cellkind 11 14 rock
+expect cb:cover:0:3 == 2
+expect cb:hit:0:3 >= 20
+expect cb:hit:0:3 <= 45
+# ---- exposed from the open side is clearly better (+20)
+unitplace 0 12 11
+expect cb:exposed:0:3 == 1
+expect cb:hit:0:3 >= 80
+unitplace 0 4 14
+# ---- #83 crits: 3 + DEX/4 + weapon crit; aimed +15; the best of flanked/exposed/marked +10; never over 35
+expect cb:crit:0:3 == 5
+expect cb:critaim:0:3 == 20
+unitplace 0 11 15
+unitplace 1 13 15
+cb cellkind 11 14 floor_stone
+expect cb:why:0:3 contains flanked
+expect cb:crit:0:3 == 15
+cb equip 0 katana
+cb status 3 marked 3 0
+expect cb:critaim:0:3 == 35
+cb clearfx 3
+# ---- #92 skeletons: half from blades, double from crush weapons, and the hammer's trait is learned by hitting
+cb equip 0 iron_sword
+expect cb:wresist:2:0 == 50
+cb equip 0 war_hammer
+expect cb:wresist:2:0 == -100
+cb forcehit 1
+unitplace 0 19 16
+cb attack 0 2
+expect cb:known:2 == 2049
+expect cblog contains crush weapons
+# ---- #93 class gearing: a mage in plate fizzles and pays MP; a mace costs the mage 1 AP more; short of STR
+cb equip 1 plate_armor
+expect cb:spellfail:1 == 20
+expect cb:gearwarn:1:plate_armor contains too heavy
+cb equip 1 iron_mace
+expect cb:apcost:1 == 5
+expect cb:gearwarn:1:iron_mace contains untrained
+expect cb:gearwarn:0:great_sword contains short
+expect cb:gearwarn:0:plate_armor contains 1 stat point short
+expect cb:gearwarn:0:chain_mail == none
+cb equip 1 oak_staff
+cb equip 1 apprentice_robe
+expect cb:spellfail:1 == 0
+# ---- #94 a member who goes down is Wounded after the fight
+cb hp 0 1
+unitplace 0 4 14
+unitplace 4 5 14
+cb attack 4 0
+cb hp 2 1
+cb hp 3 1
+cb hp 4 1
+cb attack 1 2
+cb attack 1 3
+cb attack 1 4
+frames 240
+key ENTER
+frames 60
+key ENTER
+frames 30
+expect mode == EXPLORE
+expect cb:wounds:0 == 1
+expect cb:maxhp:0 < 50
+con run rest:1
+frames 5
+expect cb:wounds:0 == 0
+expect log contains Wounded

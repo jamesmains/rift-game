@@ -1,8 +1,8 @@
 [start]
 speaker=Innkeeper Fenna
-text=The Copper Kettle. Beds are fifteen gold and the kettle's always on.
-option=Rent a bed. (15 gold)|room|gold:15
-option=Rent a bed.|poor|!gold:15
+text=The Copper Kettle. Beds are thirty-five gold and the kettle's always on.
+option=Rent a bed. (35 gold)|room|gold:35
+option=Rent a bed.|poor|!gold:35
 option=I carry a letter from your brother Doss.|letter|item:doss_letter&!q_letter>=2
 option=I found something of your mother's.|ring|q_letter>=2&item:mothers_ring&!letter_ring&!letter_burned
 option=Any news from the road?|news_goblins_killed|q_goblins_done&!goblin_chief_spared&!goblins_betrayed
@@ -13,13 +13,13 @@ option=Goodbye.|end
 [room]
 speaker=Innkeeper Fenna
 text=Sleep tight. Mind the bard - he snores in verse.
-gold=-15
+gold=-35
 rest=1
 option=Thanks.|end
 
 [poor]
 speaker=Innkeeper Fenna
-text=Fifteen gold, love. The kettle's free, the bed's not.
+text=Thirty-five gold, love. The kettle's free, the bed's not.
 option=Right.|end
 
 [letter]

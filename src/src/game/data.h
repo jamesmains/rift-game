@@ -57,6 +57,10 @@ struct ItemDef {
     // (key:value list, also filled by affix mods; see fxText / Character::fx): ignorehalfcover flankcrit noowpenalty ...
     std::string trait;
     std::map<std::string, int> fx;
+    // 1.5.0 (#93) class gearing: family= weapon family (blade dagger mace axe spear staff wand bow crossbow gun; empty = anyone
+    // uses it well), weight= light|medium|heavy (armour, helms, boots, shields), req=str:14 (stat needs), wornby= classes
+    // that wear it without a weight penalty whatever it weighs (power armour for the scavenger)
+    std::string family; int weight = 0; int req[ST_COUNT] = {}; std::vector<std::string> wornby;
     bool stackable() const { return type == IT_CONSUMABLE || type == IT_MATERIAL || type == IT_AMMO || type == IT_KEY; }
     int slot() const {
         switch (type) { case IT_WEAPON: return SL_WEAPON; case IT_OFFHAND: return SL_OFFHAND; case IT_HELM: return SL_HEAD;
@@ -102,6 +106,11 @@ std::string fxText(const std::map<std::string, int>& fx);
 // plain words for an fx key / a weapon trait (item details, level-up screen, Editor)
 std::string fxDescribe(const std::string& key, int v);
 std::string traitDescribe(const std::string& trait);
+// 1.5.0 (#92): the weapon traits in a fixed order (their discovery bits are 8 + index in rk_<creature>)
+const std::vector<std::string>& weaponTraits();
+int traitIndex(const std::string& trait);   // -1 = not a trait
+// res= text into damage-type values and weapon-trait values
+void parseResList(const std::string& s, int* res, std::map<std::string, int>* traitRes);
 
 struct CreatureDef {
     std::string id, name;
@@ -126,6 +135,7 @@ struct CreatureDef {
     std::string role, windup, ward;
     bool snuff = false;
     std::map<std::string, int> fx;
+    std::map<std::string, int> traitRes;   // 1.5.0 (#92): res= keys naming a weapon trait (crush:-100): replaces physical for such weapons
 };
 
 struct ClassDef {
@@ -141,7 +151,12 @@ struct ClassDef {
     // (spell:id teaches a spell). Character::fx adds them up for the ranks a character has in the class.
     struct Perk { int rank = 1; std::string name, desc, spell; std::map<std::string, int> fx; };
     std::vector<Perk> perks;
+    // 1.5.0 (#93): weapons= the weapon families it is trained in (empty = all), wears= the heaviest armour it wears well
+    std::vector<std::string> weapons; int wears = 2;
+    bool trained(const std::string& family) const { if (family.empty() || weapons.empty()) return true; for (auto& w : weapons) if (w == family) return true; return false; }
 };
+const char* weightName(int w);   // 1.5.0 (#93): light / medium / heavy
+int weightFromName(const std::string& s);
 
 // the category an item is filed under in the inventory and shop windows
 std::string itemCategory(const ItemDef& d);

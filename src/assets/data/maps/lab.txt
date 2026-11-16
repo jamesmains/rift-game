@@ -265,3 +265,26 @@ y=29
 items=emp_grenade:2
 gold=35
 flag=lab_lift_cache2
+
+# 1.5.0 (#95): a single scrap drone in the entry corridor, and storm oil to learn that shock fries machines
+[enemy]
+group=scrap_drone
+x=8
+y=17
+aggro=4
+level=0
+flag=lab_teach_drone
+
+[chest]
+x=15
+y=22
+items=oil_shock:2
+gold=0
+flag=lab_teach_chest
+
+[sign]
+template=paper_sign
+x=10
+y=22
+title=Maintenance log, last page
+text=Drones and turrets shrug off bullets on their plating. A jolt through the casing shorts them out: storm oil on a blade, a stun baton, anything with a charge.

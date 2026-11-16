@@ -255,3 +255,109 @@ if=goblins_betrayed&goblin_chief_dead
 flag=b_cave_after_betrayal
 text=It's very quiet in here now.
 
+# ================= 1.5.0 (#95) first sight: the first time the party meets a family, a companion names its trick =================
+# when=firstsight seen=creature,creature - said in the fight, once per game (flag=)
+[banter]
+class=warrior
+when=firstsight
+seen=skeleton,skeleton_archer,skull_golem,bone_rat
+flag=fs_bones
+text=Bones! Blades just skip off them - get a mace or a hammer on them!
+
+[banter]
+class=warrior
+when=firstsight
+seen=boar,bear
+flag=fs_hide
+text=Hide like a barn door. A spear or a dagger finds the gaps - a sword won't.
+
+[banter]
+class=warrior
+when=firstsight
+seen=scorpion
+flag=fs_shell
+text=That shell's like a barrel. Crack it with something blunt.
+
+[banter]
+class=mage
+when=firstsight
+seen=slime,slime_big
+flag=fs_slime
+text=Slimes. Steel sinks in and they barely notice. Fire - and lots of it.
+
+[banter]
+class=mage
+when=firstsight
+seen=imp,demon,dragonling,cult_zealot,dragon
+flag=fs_fireborn
+text=Fire-born. Don't you dare throw fire at it - ice, cold, frost oil!
+
+[banter]
+class=mage
+when=firstsight
+seen=frost_wolf
+flag=fs_frost
+text=Frost wolves. Cold won't touch them. Fire will.
+
+[banter]
+class=cleric
+when=firstsight
+seen=wraith,rift_wisp,barrow_wight,ghoul,lich
+flag=fs_spirit
+text=A spirit. Steel goes straight through it - only magic, prayer, or Blessed Oil on the blade!
+
+[banter]
+class=cleric
+when=firstsight
+seen=zombie,bog_zombie
+flag=fs_rot
+text=Rotting dead burn well. Fire, if you have it.
+
+[banter]
+class=cleric
+when=firstsight
+seen=troll
+flag=fs_troll
+text=Trolls knit their wounds shut. Fire stops it - burn it while you cut.
+
+[banter]
+class=scavenger
+when=firstsight
+seen=scrap_drone,security_bot,turret,android,mech,vigil
+flag=fs_machine
+text=Machines! Shock 'em - one good zap and they fry. Bullets just ping off the armoured ones.
+
+[banter]
+class=scavenger
+when=firstsight
+seen=drowned
+flag=fs_drowned
+text=Waterlogged dead. Water carries a charge - shock them!
+
+[banter]
+class=scavenger
+when=firstsight
+seen=golem
+flag=fs_golem
+text=Crystal. Hit it with something blunt and it'll shatter.
+
+[banter]
+class=ranger
+when=firstsight
+seen=spider,giant_spider
+flag=fs_spider
+text=Spiders. They go up like dry leaves - get a torch or a fire oil on them.
+
+[banter]
+class=ranger
+when=firstsight
+seen=wolf
+flag=fs_wolf
+text=Wolves hate fire, and they hunt together. Watch your flanks.
+
+[banter]
+class=ranger
+when=firstsight
+seen=cultist,cult_acolyte,cult_leader,rift_horror
+flag=fs_cult
+text=Their robes drink spells. Arrows and blades - and lightning, they hate lightning.

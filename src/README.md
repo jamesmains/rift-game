@@ -14,7 +14,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * Darkness that matters: torches, lanterns, light spells and flares; enemies with darkvision
 * World objects: rubble to dig or blast, ice to melt, levers, sluices, NPCs that move when the story says so
 * Deep crafting: station skill, formulas, failure chance, fine/masterwork rolls, reinforcing, enchanting, salvage
-* Easy / Normal / Hard difficulty
+* One difficulty, and it is hard on purpose: cover, flanking and the right weapon decide fights
 * Swords, bows, guns, lasers, spells; 50+ monsters; 130+ items; 20 side quests (three or four in every town), 5 companion quests and a 7-stage
   main quest with three choices that change the ending (break, bury or keep the shards)
 * Proximity-triggered tactical combat fought in place: AP, movement points, hit chances,
@@ -637,9 +637,12 @@ Load/Save icons still work when no game is running.
 
 ## Systems
 
-* **Combat**: standing next to a wall, tree or other blocking tile gives **half cover** (-20% to be hit) or
-  **full cover** (-40%) against attacks coming from that side; a target with an enemy adjacent on two sides is
-  **flanked** (+15% to hit, +15% crit). **Overwatch** (O) spends the turn to fire at the first enemy that moves
+* **Combat**: about 70% to hit in the open. Standing next to a wall, tree or other blocking tile gives **half cover**
+  (-25% to be hit) or **full cover** (-40%) against attacks coming from that side; a target with an enemy of yours next
+  to it is **flanked**, one shot from the open side of its cover **exposed** (+20% to hit, +10% crit, not both).
+  Crits (3% + DEX/4 + weapon, +15 aimed) never pass 35% and do x1.5 damage. Monsters resist (half), are immune to or
+  are weak (double) to damage types and weapon traits; each class is trained in some weapons and armour; whoever goes
+  down gets up **Wounded** until an inn night or a healer. **Overwatch** (O) spends the turn to fire at the first enemy that moves
   into range and line of sight. Walking out of a melee enemy's reach draws an **attack of opportunity**.
   Fights start with everyone exactly where they stood on the map (the leader in front, followers on their
   trail), so a narrow corridor really does keep the fighter in front. **Fleeing** needs a full turn, nobody in
@@ -703,7 +706,7 @@ Load/Save icons still work when no game is running.
   popped up Win98-style and listed in the desktop Achievements window. With a Steam build they are forwarded
   to Steam (see `STEAM.md`).
 * **Dev console** (`, debug builds only: `build.ps1 -Dev`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
-  weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run, difficulty,
+  weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run,
   auto (lets the AI fight for the party - handy for balance testing)...
 * **Desktop toys**: Minesweeper, Solitaire, My Computer (lore files in `assets/data/lore`), and a starfield
   screensaver after 90 seconds idle.

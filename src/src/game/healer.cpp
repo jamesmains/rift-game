@@ -1,6 +1,7 @@
 // Healers (temples, shrines, the village healer). Inns are where you rest: full HP and MP overnight for a few coins.
 // Healers do what an inn can't, for a fee and without the night going by:
-//   tend wounds (HP only, right now), cleanse lingering poison/burns/curses, raise a fallen companion,
+//   tend wounds (HP only, right now), treat the Wounded (1.5.0: members who went down in a fight), cleanse lingering
+//   poison/burns/curses, raise a fallen companion,
 //   and a blessing that shields and mends the party at the start of their next few fights.
 // Dialogue use: an action node with  healer=1  (or healer=<greeting text>).
 #include "game.h"
@@ -13,10 +14,11 @@ static bool lingering(const StatusEffect& e) { return e.id == "poison" || e.id =
 
 int Game::healerCost(const std::string& svc) const {
     int lvl = party.members.empty() ? 1 : party.members[0].level;
-    if (svc == "wounds") { int missing = 0; for (auto& m : party.members) if (m.alive) missing += std::max(0, m.maxHP(*gd) - m.hp); return missing <= 0 ? 0 : std::max(3, (missing + 4) / 5); }
-    if (svc == "cleanse") return 6 + lvl;
-    if (svc == "raise") { int c = 0; for (auto& m : party.members) if (!m.alive) c += 20 + 6 * m.level; return c; }
-    if (svc == "bless") return 15 + 5 * lvl;
+    if (svc == "wounds") { int missing = 0; for (auto& m : party.members) if (m.alive) missing += std::max(0, m.maxHP(*gd) - m.hp); return missing <= 0 ? 0 : std::max(5, (missing + 2) / 3); }   // 1.5.0 (#100): dearer
+    if (svc == "cleanse") return 10 + 2 * lvl;
+    if (svc == "wounded") { int w = 0; for (auto& m : party.members) w += m.wounds; return w * (30 + 6 * lvl); }   // 1.5.0 (#94 #100)
+    if (svc == "raise") { int c = 0; for (auto& m : party.members) if (!m.alive) c += 40 + 10 * m.level; return c; }
+    if (svc == "bless") return 25 + 8 * lvl;
     return 0;
 }
 
@@ -34,6 +36,7 @@ void Game::healerMenu(const std::string& greeting) {
     bool ail = false; for (auto& m : party.members) for (auto& e : m.effects) if (lingering(e)) ail = true;
     bool down = false; for (auto& m : party.members) if (!m.alive) down = true;
     if (missing > 0) opt(fmt("Tend our wounds. (%d HP, %d gold)", missing, healerCost("wounds")), "wounds");
+    { int w = 0; for (auto& m : party.members) w += m.wounds; if (w > 0) opt(fmt("Treat the Wounded. (%d wound%s, %d gold)", w, w == 1 ? "" : "s", healerCost("wounded")), "wounded"); }
     if (ail) opt(fmt("Cleanse poison, burns and curses. (%d gold)", healerCost("cleanse")), "cleanse");
     if (down) opt(fmt("Raise our fallen. (%d gold)", healerCost("raise")), "raise");
     int bl = atoi(extra.count("blessing") ? extra.at("blessing").c_str() : "0");
@@ -52,6 +55,7 @@ void Game::healerService(const std::string& svc) {
     int cost = healerCost(svc);
     if (party.gold < cost) { log(fmt("That costs %d gold.", cost)); gAudio.play("ui_error"); healerReopen = true; return; }
     if (svc == "wounds") { for (auto& m : party.members) if (m.alive) m.hp = m.maxHP(*gd); log("Your wounds are dressed and stitched."); }
+    else if (svc == "wounded") { for (auto& m : party.members) { m.wounds = 0; if (m.alive) m.hp = std::min(m.hp, m.maxHP(*gd)); } log("The Wounded are set, splinted and stitched. They can fight at full strength again."); }
     else if (svc == "cleanse") { for (auto& m : party.members) m.effects.erase(std::remove_if(m.effects.begin(), m.effects.end(), lingering), m.effects.end()); log("The poison and the fever are drawn out."); }
     else if (svc == "raise") { for (auto& m : party.members) if (!m.alive) { m.alive = true; m.hp = std::max(1, m.maxHP(*gd) / 2); log(m.name + " opens their eyes."); } }
     else if (svc == "bless") { extra["blessing"] = "3"; log("A blessing settles over the party: the next three fights start shielded and mending."); }

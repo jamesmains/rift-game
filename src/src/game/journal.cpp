@@ -24,6 +24,7 @@ void Game::loadSystems() {
     for (auto& sec : mergedConfig("banter.txt")) {
         if (sec.name != "banter") continue;
         BanterLine b; b.cls = sec.get("class"); b.when = sec.get("when", "idle"); b.map = sec.get("map"); b.flag = sec.get("flag"); b.cond = sec.get("if");
+        for (auto& c : split(sec.get("seen"), ',')) if (!trim(c).empty()) b.seen.push_back(trim(c));   // 1.5.0 (#95)
         for (auto& kv : sec.kv) if (kv.first == "text") { BanterLine c = b; c.text = kv.second; banters.push_back(c); }
     }
     for (auto& sec : mergedConfig("achievements.txt")) {
@@ -92,6 +93,27 @@ void Game::banterTrigger(const std::string& when) {
     size_t hp; while ((hp = banterText.find("$hero")) != std::string::npos) banterText.replace(hp, 5, heroName);
     if (!pick.second->flag.empty()) setFlag("_banter_" + pick.second->flag);
     log(party.members[banterMember].name + ": \"" + banterText + "\"");
+    gAudio.play("banter");
+}
+// 1.5.0 (#95): when=firstsight seen=creature,... - the first time the party meets one of those, a companion in the party
+// says the line in the fight (combat log + a float over them). Once per game per line.
+void Game::firstSightBanter() {
+    std::vector<std::string> fresh; fresh.swap(freshSeen);
+    if (fresh.empty() || !inCombat() || (settings && settings->banter == 0)) return;
+    std::vector<std::pair<int, const BanterLine*>> cands;
+    for (auto& b : banters) {
+        if (b.when != "firstsight" || b.seen.empty()) continue;
+        bool hit = false; for (auto& c : b.seen) for (auto& f : fresh) if (c == f) hit = true;
+        if (!hit || (!b.flag.empty() && hasFlag("_banter_" + b.flag)) || (!b.cond.empty() && !evalCond(b.cond))) continue;
+        for (size_t i = 0; i < cb.units.size(); i++) { auto& u = cb.units[i]; if (u.partyIndex <= 0 || !u.ch.alive) continue; if (b.cls == u.ch.classId || b.cls == "any") cands.push_back({(int)i, &b}); }
+    }
+    if (cands.empty()) return;
+    auto pick = cands[rng.range(0, (int)cands.size() - 1)];
+    std::string t = pick.second->text; size_t hp; while ((hp = t.find("$hero")) != std::string::npos) t.replace(hp, 5, heroName);
+    const Combatant& u = cb.units[pick.first];
+    cb.log.push_back(u.ch.name + ": \"" + t + "\""); log(u.ch.name + ": \"" + t + "\"");
+    addFloat(u.x, u.y - 1, "!", C::Cyan, 2);
+    if (!pick.second->flag.empty()) setFlag("_banter_" + pick.second->flag);
     gAudio.play("banter");
 }
 void Game::drawBanter(Canvas& cv) {
@@ -200,10 +222,16 @@ static std::vector<std::pair<std::string, Color8>> tacticsText() {
     std::vector<std::pair<std::string, Color8>> t;
     auto h = [&](const char* s) { t.push_back({s, C::Gold}); }; auto l = [&](const std::string& s) { t.push_back({s, C::LtGray}); }; auto gap = [&]() { t.push_back({"", C::LtGray}); };
     h("Cover");
-    l("A wall on the side facing the shooter is full cover (-40% to hit), a table, crate or rock half cover (-20%). Right next to someone there is no cover. When you move, every tile you can reach shows a bar on each side that would give cover against the enemies who can see it.");
-    l("Exposed: someone beside cover that doesn't face you is +15% to hit and to crit - walk round to the open side. Flanked (an ally next to them too) works the same up close.");
-    l("Defend in cover doubles it (half 40%, full 80%). Spells aimed at one target lose a quarter of their damage to half cover and half to full cover; blasts, lines, cones, chains and grenades don't care.");
+    l("Most attacks hit about 70% of the time in the open. A wall on the side facing the shooter is full cover (-40% to hit), a table, crate or rock half cover (-25%). Shooting at someone in full cover from the front is a bad bet. Right next to someone there is no cover. When you move, every tile you can reach shows a bar on each side that would give cover against the enemies who can see it.");
+    l("Exposed: someone beside cover that doesn't face you is +20% to hit and +10% to crit - walk round to the open side. Flanked (an ally next to them too) works the same up close. The two don't add up. Enemies use the same rules: keep your own people in cover.");
+    l("Critical hits do half again as much damage and halve armour. The chance starts small (3% + DEX/4 + the weapon's crit); aiming adds 15%, flanked, exposed or marked 10% (the best one). It never goes above 35% - except a foe tagged by Scan Weakness, whose next hit is always a critical. The target box shows both chances.");
+    l("Defend in cover doubles it (half 50%, full 80%). Spells aimed at one target lose a quarter of their damage to half cover and half to full cover; blasts, lines, cones, chains and grenades don't care.");
     l("Smoke blocks sight: whoever stands in it can only be hit from right next to them. Grenades and blasts smash crates and tables; fire burns wooden ones. Shield Bash shoves a foe out of its cover.");
+    gap(); h("Resistances");
+    l("Every kind of monster shrugs something off and has a weak spot. RESISTS = half damage, IMMUNE = nothing, WEAK! = double. Skeletons laugh at blades but maces and hammers (crush) break them; spirits ignore steel and fear magic and Blessed Oil; machines short out on shock; slimes and spiders burn. Bring the right weapon or switch - the target box and the Bestiary show what you have learned.");
+    gap(); h("Gear and wounds");
+    l("Each class is trained in some weapon families and some armour. Off-class weapons cost 1 AP more, hit 10% less and lose their trait; armour heavier than the class wears costs evasion, and makes spells dearer and likely to fizzle. Items with a stat need hit or dodge worse when it isn't met. The item panel says what something costs the member it's for.");
+    l("Whoever goes down in a fight gets up Wounded (-15% max HP, -5% to hit, up to three times). A night at an inn or a healer cures it. Potions are scarce: shops keep only a few.");
     gap(); h("Ground");
     l("Shock spreads through water to everyone standing in it. Fire spells set grass alight; burning ground spreads and burns whoever walks in or starts a turn there. Cold blasts leave ice that costs a move more. Lit braziers can be put out by some monsters - and lit again by you (stand next to one, click it, 2 AP).");
     gap(); h("Status combos");
@@ -341,7 +369,7 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
                 { std::vector<std::string> info = {fmt("XP %d", cd->xp), "AI: " + cd->ai}; if (cd->undead) info.push_back("undead"); if (cd->mechanical) info.push_back("mechanical"); if (cd->darkvision) info.push_back("sees in the dark"); flow(info, kills >= 1 ? C::LtGray : C::DkGray); }
                 cy += 5;
                 UI::text(ctx, dx, cy, "Resistances:", kills >= 3 ? C::Gold : C::DkGray); cy += 14;
-                if (kills >= 3) { std::vector<std::string> rs; for (int i = 0; i < DT_COUNT; i++) if (cd->res[i] != 0) rs.push_back(fmt("%s %+d%%", dmgTypeName(i), cd->res[i])); bool poisonListed = cd->res[DT_POISON] >= 100; if ((cd->undead || cd->mechanical) && !poisonListed) rs.push_back("immune to poison"); if (cd->mechanical) rs.push_back("weak to shock"); if (rs.empty()) rs.push_back("none"); flow(rs, C::White); }
+                if (kills >= 3) { std::vector<std::string> rs; for (int i = 0; i < DT_COUNT; i++) if (cd->res[i] != 0) rs.push_back(fmt("%s %+d%%", dmgTypeName(i), cd->res[i])); bool poisonListed = cd->res[DT_POISON] >= 100; if ((cd->undead || cd->mechanical) && !poisonListed) rs.push_back("immune to poison"); if (cd->mechanical && cd->res[DT_SHOCK] == 0) rs.push_back("weak to shock"); for (auto& kv : cd->traitRes) rs.push_back(fmt("%s weapons %+d%%", kv.first.c_str(), kv.second)); if (rs.empty()) rs.push_back("none"); flow(rs, C::White); }
                 else { UI::text(ctx, dx, cy, fmt("(revealed after 3 kills - %d more)", 3 - kills), C::DkGray); cy += 13; }
                 cy += 5;
                 UI::text(ctx, dx, cy, "Loot:", kills >= 5 ? C::Gold : C::DkGray); cy += 14;

@@ -119,7 +119,7 @@ enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, G
 // ---- newer systems (journal.cpp, worldmap.cpp, craft.cpp, console.cpp, bounty.cpp) ----
 struct GameStats { int kills = 0, fightsWon = 0, fightsFled = 0, goldEarned = 0, goldSpent = 0, chests = 0, crits = 0, damageDealt = 0, damageTaken = 0, spellsCast = 0, crafted = 0, bounties = 0, travels = 0, knockouts = 0, questsDone = 0; };
 struct AchievementDef { std::string id, name, desc, cond; Tile tile; bool hidden = false; };
-struct BanterLine { std::string cls, when, map, text, flag, cond; };
+struct BanterLine { std::string cls, when, map, text, flag, cond; std::vector<std::string> seen; };   // 1.5.0: seen= creatures (when=firstsight)
 struct Recipe { std::string id, name, result, station, category, reveal; int count = 1, gold = 0, level = 1, difficulty = 1, skill = 1; bool known = true; std::vector<std::pair<std::string, int>> mats; };
 struct AffixDef { std::string id, name, dmgType; bool prefix = true; int tier = 1, valuePct = 160; std::vector<std::string> types; std::vector<std::pair<std::string, int>> mods; };
 struct Bounty { std::string id, kind, target, targetName, where, whereName, town, title, text; int need = 1, have = 0, reward = 0, xp = 0, posted = 0; bool done = false, taken = false; };
@@ -209,7 +209,7 @@ public:
     int playtimeSec = 0; float playtimeAcc = 0;
     int worldSeed = 1337;
     uint64_t fixedSeed = 0;          // tests: a fixed RNG seed instead of the clock (0 = clock)
-    int difficulty = 1;
+    int difficulty = 2;   // 1.5.0 (#90): always 2 (the old Hard); kept for old saves, never chosen
     std::string heroName;
     // ---- world clock & weather (systems.cpp) ----
     int clockMin = 8 * 60, day = 1;      // minutes into the day, day counter
@@ -278,7 +278,9 @@ public:
     std::string consoleBuf; std::vector<std::string> consoleHist, consoleOut; int consoleHistPos = -1;
     void loadSystems();                           // banter, achievements, recipes, affixes, locations
     void onKill(const Character& victim, const Combatant* killer);
-    void onSeen(const std::string& creatureId) { if (!bestiary.count(creatureId)) bestiary[creatureId] = 0; }
+    void onSeen(const std::string& creatureId) { if (!bestiary.count(creatureId)) { bestiary[creatureId] = 0; freshSeen.push_back(creatureId); } }
+    std::vector<std::string> freshSeen;   // 1.5.0 (#95): creature kinds met for the first time in the fight being set up
+    void firstSightBanter();              // a companion names the trick against a family the first time the party meets it
     void addNote(const std::string& title, const std::string& text);
     void banterTrigger(const std::string& when);
     void drawBanter(Canvas& cv);
@@ -493,7 +495,6 @@ public:
     std::string keptVar(const std::string& name) const { auto it = extra.find("var_" + name); return it == extra.end() ? std::string() : it->second; }
     void startCombat(const std::vector<std::string>& creatureIds, int cx, int cy, int levelBonus, const std::vector<int>& groupIndices, const std::string& onDefeat = "");
     std::vector<int> combatExtraGroups;   // map groups that join the next startCombat from round one
-    void applyDifficulty(Character& enemy) const;
     void startCutscene(const std::vector<std::string>& lines, std::function<void()> done);
     bool evalCond(const std::string& cond) const;
     void applyMapFlags(Map& m);
@@ -610,6 +611,10 @@ private:
     void combatFinish();
     int  combatUnitAt(int x, int y) const;
     int  hitChance(const Combatant& a, const Combatant& d, bool aimed) const;
+    int  critChance(const Combatant& a, const Combatant& t, bool aimed) const;
+    bool combatTryFlee(int unitIndex);   // 1.5.0: the Flee action (also the auto party's way out of a fight it can't win)   // 1.5.0 (#83): capped at CRIT_CAP (tagged = sure crit outside it)
+    static constexpr int CRIT_CAP = 35;
+    std::string dmgTrait;   // 1.5.0 (#92): the weapon trait of the hit applyDamage is handling ("" = not a weapon hit)
     int  coverAt(const Combatant& a, const Combatant& d) const;      // 0 none, 1 half, 2 full
     bool flanked(const Combatant& a, const Combatant& d) const;
     std::string hitBreakdown(const Combatant& a, const Combatant& d, bool aimed) const;
@@ -660,7 +665,7 @@ private:                                         // nearby map groups that hear 
     void goalSetup(const EnemyGroup& g, int gi);
     void goalCheck(bool roundStart);
     void unitGone(Combatant& u, const std::string& why);
-    int  aiSmart() const { return clampi(difficulty, 0, 2); }
+    int  aiSmart() const { return 2; }   // 1.5.0 (#90): enemies always play smart (the old Hard)
     // menus (menus.cpp)
     void updateMenu(InputState& in, float dt);
     void drawMenu(Canvas& cv, InputState& in);
@@ -676,7 +681,10 @@ private:                                         // nearby map groups that hear 
     void drawVictory(Canvas& cv, InputState& in);
     void updatePause(InputState& in, float dt);
     void drawPause(Canvas& cv, InputState& in);
-    int drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY);   // stats grid + description (1.1.3); returns the y below it
+    int drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY, const Character* who = nullptr);
+    // 1.5.0 (#93): plain lines about who uses an item well and what it costs `who` (red = a drawback for them)
+    std::vector<std::pair<std::string, Color8>> gearNotes(const ItemDef& d, const Character* who) const;
+    std::string gearWarning(const ItemDef& d, const Character& who) const;   // one short line, "" = no drawback   // stats grid + description (1.1.3); returns the y below it
     void openPause();                // Esc in explore or combat, the combat bar's Menu button
     struct PauseEntry { int id; const char* label; bool enabled; };
     std::vector<PauseEntry> pauseEntries() const;

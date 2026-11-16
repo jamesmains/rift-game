@@ -9,7 +9,7 @@ name=Rusty
 pos=prefix
 tier=2
 types=weapon
-mods=dmg:-1,crit:5
+mods=dmg:-1,crit:3
 value=90
 
 [affix]
@@ -18,7 +18,7 @@ name=Keen
 pos=prefix
 tier=2
 types=weapon
-mods=accuracy:8,crit:5
+mods=accuracy:8,crit:3
 value=160
 
 [affix]
@@ -175,7 +175,7 @@ name=Slaying
 pos=suffix
 tier=3
 types=weapon
-mods=dmg:2,crit:10
+mods=dmg:2,crit:5
 value=320
 
 [affix]
@@ -184,7 +184,7 @@ name=Masterwork
 pos=prefix
 tier=3
 types=any
-mods=accuracy:6,def:1,crit:4
+mods=accuracy:6,def:1,crit:2
 value=260
 
 # ---- 1.4.0 (#67): affixes that change how you play (effect mods, see the Editor guide topic affix.mods) ----
@@ -212,7 +212,7 @@ name=Searing
 pos=prefix
 tier=3
 types=weapon
-mods=critburn:1,crit:5
+mods=critburn:1,crit:3
 value=220
 
 [affix]
@@ -230,7 +230,7 @@ name=the Flanker
 pos=suffix
 tier=3
 types=weapon
-mods=flankcrit:20
+mods=flankcrit:10
 value=220
 
 [affix]

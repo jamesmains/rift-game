@@ -81,7 +81,7 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     // enemies
     for (auto& id : creatureIds) {
         const CreatureDef* cd = gd->creature(id); if (!cd) { log("(unknown creature " + id + ")"); continue; }
-        Combatant u; u.ch.initFromCreature(*gd, *cd, cd->boss ? levelBonus / 2 : levelBonus); applyDifficulty(u.ch); u.partyIndex = -1; u.groupIndex = groupIndices.empty() ? -1 : groupIndices[0]; onSeen(id);
+        Combatant u; u.ch.initFromCreature(*gd, *cd, cd->boss ? levelBonus / 2 : levelBonus); u.partyIndex = -1; u.groupIndex = groupIndices.empty() ? -1 : groupIndices[0]; onSeen(id);
         int ux = cx, uy = cy;
         {
             std::vector<std::pair<int, int>> cand;
@@ -111,6 +111,7 @@ void Game::startCombat(const std::vector<std::string>& creatureIds, int cx, int 
     std::stable_sort(cb.order.begin(), cb.order.end(), [&](int a, int b) { return cb.units[a].initiative > cb.units[b].initiative; });
     cb.turnPos = -1; cb.round = 1; cb.lastRoundJoined = 1;
     log("Combat begins!");
+    firstSightBanter();   // 1.5.0 (#95)
     shake = 0.2f;
     if (mode != GMode::COMBAT) pushMode(GMode::COMBAT);
     revealAround();
@@ -138,7 +139,7 @@ bool Game::combatAddGroup(int gi, bool announce) {
     std::vector<std::string> names;
     for (auto& id : g.creatures) {
         const CreatureDef* cd = gd->creature(id); if (!cd) continue;
-        Combatant u; u.ch.initFromCreature(*gd, *cd, cd->boss ? g.levelBonus / 2 : g.levelBonus); applyDifficulty(u.ch); u.partyIndex = -1; u.groupIndex = gi; onSeen(id);
+        Combatant u; u.ch.initFromCreature(*gd, *cd, cd->boss ? g.levelBonus / 2 : g.levelBonus); u.partyIndex = -1; u.groupIndex = gi; onSeen(id);
         int ux = -1, uy = -1;
         for (int r = 0; r <= 5 && ux < 0; r++) {
             std::vector<std::pair<int, int>> cand;
@@ -313,21 +314,39 @@ void Game::applyStatusTick(Combatant& u) {
 }
 
 int Game::hitChance(const Combatant& a, const Combatant& d, bool aimed) const {
+    // 1.5.0 (#91): a lower base, so cover and position decide fights. Was 72 + DEX*2 (+5 melee): a DEX 9 warrior hit 95% in
+    // melee and half cover barely mattered. Now about 70% in the open, ~45% into half cover, ~30% into full cover.
     int dist = chebyshev(a.x, a.y, d.x, d.y);
-    int chance = 72 + a.ch.stat(ST_DEX, *gd) * 2 + a.ch.accuracy(*gd) - d.ch.evasion(*gd);
+    int chance = 72 + a.ch.stat(ST_DEX, *gd) + a.ch.accuracy(*gd) - d.ch.evasion(*gd);
     if (!a.ch.meleeWeapon(*gd)) { if (a.ch.trait(*gd) != "steady") chance -= std::max(0, dist - 2) * 4; } else chance += 5;   // (#68) rifles: steady
-    if (aimed) chance -= 15;
+    if (aimed) chance -= 10;
     if (a.ch.hasEffect("reaction") && a.ch.fx("noowpenalty", *gd) <= 0) chance -= 10;
     if (d.ch.size == 2) chance += 15;
-    // cover; (#59) defending in cover doubles its penalty (half 20 -> 40, full 40 -> 80), defending in the open is -20
-    int cov = effCover(a, d); int pen = cov == 1 ? (aimed ? 10 : 20) : cov == 2 ? (aimed ? 20 : 40) : 0;
+    // cover: half -25, full -40 (an aimed shot halves it); (#59) defending in cover doubles its penalty, defending in the open is -20
+    int cov = effCover(a, d); int pen = cov == 1 ? (aimed ? 12 : 25) : cov == 2 ? (aimed ? 20 : 40) : 0;
     if (d.ch.hasEffect("defend")) chance -= pen > 0 ? pen * 2 : 20; else chance -= pen;
-    if (flanked(a, d)) chance += 15;
-    if (exposed(a, d)) chance += 15 + a.ch.fx("exposedhit", *gd);   // (#56)
-    if (marked(a, d)) chance += 15;                                  // (#65)
+    // flanked / exposed: the best of the two (+20), they don't stack
+    bool fl = flanked(a, d), ex = exposed(a, d);
+    if (fl || ex) chance += 20 + (ex ? a.ch.fx("exposedhit", *gd) : 0);   // (#56)
+    if (marked(a, d)) chance += 15;                                       // (#65)
     chance += a.ch.fx("hit", *gd);
+    chance -= a.ch.gearHitPenalty(*gd);                                     // 1.5.0 (#93): off-class weapon, unmet requirements
+    chance -= a.ch.woundHitPenalty();                                     // 1.5.0 (#94)
     chance -= darknessPenalty(a, d);
     return clampi(chance, 5, 95);
+}
+// 1.5.0 (#83): critical chance for a weapon attack. Was 5 + DEX/2 + weapon + aimed 30 + flanked 15 + exposed 15 + marked 15
+// (all stacking, no cap): 35-80% was normal. Now 3 + DEX/4 + weapon crit=, +15 aimed, the best ONE of flanked / exposed /
+// marked +10, perks; capped at CRIT_CAP. A tagged target (EXPLOIT) is still a sure crit, outside the cap.
+int Game::critChance(const Combatant& a, const Combatant& t, bool aimed) const {
+    const ItemDef* w = a.ch.weapon(*gd);
+    bool fl = flanked(a, t), ex = exposed(a, t), mk = marked(a, t);
+    std::string trait = a.ch.trait(*gd);
+    int c = 3 + a.ch.stat(ST_DEX, *gd) / 4 + (w ? w->crit : 0) + (aimed ? 15 : 0) + ((fl || ex || mk) ? 10 : 0);
+    if (fl || ex) c += a.ch.fx("flankcrit", *gd) + (trait == "backstab" ? 12 : 0);   // (#67 #68)
+    if (t.ch.mechanical) c += a.ch.fx("machinecrit", *gd);
+    c += a.ch.fx("crit", *gd);
+    return clampi(c, 0, CRIT_CAP);
 }
 // Attacking someone who stands in the dark is hard - unless you see in the dark (undead, machines, cave dwellers).
 int Game::darknessPenalty(const Combatant& a, const Combatant& d) const {
@@ -747,7 +766,7 @@ void Game::goalCheck(bool roundStart) {
                 Combatant r = cb.units[i]; int ux = -1, uy = -1;
                 for (int yy = r.y - 1; yy <= r.y + 1 && ux < 0; yy++) for (int xx = r.x - 1; xx <= r.x + 1; xx++) if (map->walkable(xx, yy) && combatUnitAt(xx, yy) < 0 && !map->chestAt(xx, yy)) { ux = xx; uy = yy; break; }
                 if (ux < 0) continue;
-                Combatant s; s.ch.initFromCreature(*gd, *cd, 0); applyDifficulty(s.ch); s.partyIndex = -1; s.groupIndex = r.groupIndex; s.summoned = true; s.summoner = (int)i;
+                Combatant s; s.ch.initFromCreature(*gd, *cd, 0); s.partyIndex = -1; s.groupIndex = r.groupIndex; s.summoned = true; s.summoner = (int)i;
                 s.ch.xpReward = 0; s.ch.loot.clear(); s.x = ux; s.y = uy; s.ch.ap = s.ch.maxAP(*gd); s.ch.move = s.ch.maxMove(*gd); s.initiative = s.ch.stat(ST_DEX, *gd) + rng.range(1, 8);
                 cb.units.push_back(s); cb.order.push_back((int)cb.units.size() - 1); alive++;
                 addFloat(ux, uy, "through the rift!", C::Purple); cb.log.push_back("Something claws its way out of the rift!");
@@ -800,18 +819,28 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
     // 1.4.0 (#72) ward=creature: a boss shielded by its servants takes half damage while one of them stands
     if (!t.ch.ward.empty()) { for (auto& o : cb.units) if (o.ch.alive && &o != &t && o.ch.creatureId == t.ch.ward) { dmg = std::max(1, dmg / 2); addFloat(t.x, t.y - 1, "warded", C::Purple); break; } }
     int res = t.ch.resist(dmgType, *gd);
+    // 1.5.0 (#92): a weapon trait the creature has a res= key for replaces its physical value (skeletons: crush:-100)
+    int traitBit = -1;
+    if (dmgType == DT_PHYS && !dmgTrait.empty()) { auto f = t.ch.traitRes.find(dmgTrait); if (f != t.ch.traitRes.end()) { res = f->second; traitBit = 8 + traitIndex(dmgTrait); } }
+    bool shockBonus = t.ch.mechanical && dmgType == DT_SHOCK && res == 0;   // machines without a shock res= in their data
     dmg = dmg * (100 - res) / 100;
-    if (dmg <= 0 && res < 100) dmg = res >= 100 ? 0 : 1;
+    if (dmg <= 0 && res < 100) dmg = 1;
+    if (res >= 100) dmg = 0;
     if (godMode && t.partyIndex >= 0) dmg = 0;
     if (t.ch.undead && dmgType == DT_POISON) dmg = 0;
     if (t.ch.mechanical && dmgType == DT_POISON) dmg = 0;
-    if (t.ch.mechanical && dmgType == DT_SHOCK) dmg = dmg * 3 / 2;
-    // learning by hitting: the first time a damage type lands on a kind of creature, its reaction is noted (journal + tile info)
+    if (shockBonus) dmg = dmg * 3 / 2;
+    // learning by hitting: the first time a damage type (or weapon trait) lands on a kind of creature, its reaction is noted
     if (!t.friendly() && !t.ch.creatureId.empty()) {
-        int eff = res; if ((t.ch.undead || t.ch.mechanical) && dmgType == DT_POISON) eff = 100; if (t.ch.mechanical && dmgType == DT_SHOCK) eff = std::min(eff, -50);
+        int eff = res; if ((t.ch.undead || t.ch.mechanical) && dmgType == DT_POISON) eff = 100; if (shockBonus) eff = -50;
         std::string key = "rk_" + t.ch.creatureId; int known = atoi(extra[key].c_str());
-        if (!(known & (1 << dmgType))) { extra[key] = std::to_string(known | (1 << dmgType)); }
-        if (eff <= -25) addFloat(t.x, t.y - 1, "WEAK!", C::Yellow); else if (eff >= 100) addFloat(t.x, t.y - 1, "immune", C::Gray); else if (eff >= 40) addFloat(t.x, t.y - 1, "resists", C::Gray);
+        int bits = (1 << dmgType) | (traitBit >= 8 ? (1 << traitBit) : 0);
+        bool fresh = (known & bits) != bits;
+        if (fresh) { extra[key] = std::to_string(known | bits);
+            if (traitBit >= 8 && !(known & (1 << traitBit)) && res < t.ch.resist(DT_PHYS, *gd)) cb.log.push_back(fmt("%s: %s weapons %s!", t.ch.name.c_str(), dmgTrait.c_str(), res < 0 ? "hit it hard" : "get through")); }
+        if (eff <= -50) addFloat(t.x, t.y - 1, "WEAK!", C::Yellow); else if (eff >= 100) addFloat(t.x, t.y - 1, "IMMUNE", C::Gray, 2); else if (eff >= 40) addFloat(t.x, t.y - 1, "resists", C::Gray);
+        if (traitBit >= 8 && res < t.ch.resist(DT_PHYS, *gd)) addFloat(t.x, t.y - 2, dmgTrait + " gets through", C::Cyan);
+        if (eff >= 100 && fresh && attacker && attacker->partyIndex >= 0) cb.log.push_back(fmt("%s is immune to %s%s.", t.ch.name.c_str(), traitBit >= 8 ? (dmgTrait + "-trait ").c_str() : "", dmgTypeName(dmgType)));
     }
     t.ch.hp -= dmg;
     if (t.ch.hp <= 0 && dmg > 0 && !t.lastStandUsed && t.ch.fx("laststand", *gd) > 0) { t.ch.hp = 1; t.lastStandUsed = true; addFloat(t.x, t.y - 1, "LAST STAND", C::Yellow, 2); cb.log.push_back(t.ch.name + " refuses to fall!"); }   // (#71)
@@ -826,6 +855,8 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
     if (t.friendly()) stats.damageTaken += dmg; else { stats.damageDealt += dmg; if (crit) stats.crits++; }
     if (t.ch.hp <= 0) {
         t.ch.hp = 0; t.ch.alive = false; cb.reachDirty = true;   // the corpse no longer blocks the way
+        // 1.5.0 (#94): a party member who goes down is Wounded (up to 3) until an inn night or a healer
+        if (t.partyIndex >= 0 && !t.summoned) { t.ch.wounds = std::min(3, t.ch.wounds + 1); cb.log.push_back(fmt("%s is down - Wounded (x%d) until treated.", t.ch.name.c_str(), t.ch.wounds)); }
         { int ti = (int)(&t - &cb.units[0]); for (auto& o : cb.units) if (o.summoned && o.summoner == ti && o.ch.alive) { o.ch.alive = false; o.ch.hp = 0; cb.log.push_back(o.ch.name + " crumbles without its master."); addFloat(o.x, o.y, "unmade", C::Gray); } }
         if (t.summoned) { cb.log.push_back(t.ch.name + " is unmade."); log(t.ch.name + " fades away."); addFloat(t.x, t.y, "unmade", C::Gray); return; }   // a summon: no body, no XP, no loot
         if (t.friendly()) stats.knockouts++; else onKill(t.ch, attacker);
@@ -880,13 +911,11 @@ bool Game::combatAttack(int ai, int ti, bool aimed) {
     for (auto& e : a.ch.effects) if (startsWith(e.id, "imbue_")) { imbued = dmgTypeFromName(e.id.substr(6)); type = imbued; lo += 2; hi += 2; if (--e.power <= 0) e.turns = 0; break; }
     a.ch.effects.erase(std::remove_if(a.ch.effects.begin(), a.ch.effects.end(), [](const StatusEffect& e) { return startsWith(e.id, "imbue_") && e.turns <= 0; }), a.ch.effects.end());
     int dmg = rng.range(lo, hi); if (clubbing) dmg = std::max(1, dmg / 2);
-    int critChance = 5 + a.ch.stat(ST_DEX, *gd) / 2 + (w ? w->crit : 0) + (aimed ? 30 : 0) + (fl ? 15 : 0) + (ex ? 15 : 0) + (mk ? 15 : 0);
-    if (fl || ex) critChance += a.ch.fx("flankcrit", *gd) + (trait == "backstab" ? 25 : 0);   // (#67 #68)
-    if (t.ch.mechanical) critChance += a.ch.fx("machinecrit", *gd);
+    int critC = critChance(a, t, aimed);   // 1.5.0 (#83)
     bool tagged = t.ch.hasEffect("tagged") && t.friendly() != a.friendly();   // (#65) a tagged target: the next hit is a critical
-    bool crit = tagged || rng.chance(critChance);
+    bool crit = tagged || rng.chance(critC);
     if (tagged) { t.ch.removeEffect("tagged"); addFloat(t.x, t.y - 1, "EXPLOIT", C::Cyan, 2); cb.log.push_back(a.ch.name + " hits the weak point " + t.ch.name + " was tagged on!"); }
-    if (crit) dmg = dmg * 2;
+    if (crit) dmg = dmg * 3 / 2;   // 1.5.0 (#83): x1.5 (was x2); armour is still halved below
     if (a.ch.hasEffect("strength")) dmg += a.ch.effect("strength")->power / 2;
     // (#67 #71) damage against particular targets
     int pct = 100;
@@ -898,7 +927,7 @@ bool Game::combatAttack(int ai, int ti, bool aimed) {
     // armour soaks hits but can't make them harmless: at least 35% of the blow always lands (maces: 60%)
     int floorPct = trait == "crush" ? 60 : 35;
     dmg = std::max((dmg * floorPct + 99) / 100, dmg - t.ch.defense(*gd) / (crit ? 2 : 1)); dmg = std::max(1, dmg);
-    applyDamage(t, dmg, type, a.ch.name, crit, &a);
+    dmgTrait = trait; applyDamage(t, dmg, type, a.ch.name, crit, &a); dmgTrait.clear();   // 1.5.0 (#92): trait res=
     if (t.ch.alive && !a.ch.onHitEffect.empty() && rng.chance(35)) { t.ch.addEffect(a.ch.onHitEffect, 3, 3); cb.log.push_back(t.ch.name + " is " + a.ch.onHitEffect + "ed!"); }
     int elem = imbued >= 0 ? imbued : (w ? w->dmgType : -1);
     if (t.ch.alive && crit && a.ch.fx("critburn", *gd) > 0) { t.ch.addEffect("burn", 2, 3); addFloat(t.x, t.y - 1, "set alight", C::Orange); }
@@ -913,7 +942,7 @@ bool Game::combatAttack(int ai, int ti, bool aimed) {
         if (trait == "cleave") { for (size_t i = 0; i < cb.units.size(); i++) { auto& o = cb.units[i]; if ((int)i != ti && o.ch.alive && o.friendly() != a.friendly() && unitDist(o, a.x, a.y) <= 1 && unitDist(o, t.x, t.y) <= 1) extra.push_back((int)i); } }
         else { SpellDef cone; cone.shape = "cone"; cone.range = std::min(4, chebyshev(a.x, a.y, t.x, t.y) + 2); auto tiles = spellTiles(ai, cone, t.x, t.y);
             for (size_t i = 0; i < cb.units.size(); i++) { auto& o = cb.units[i]; if ((int)i == ti || (int)i == ai || !o.ch.alive) continue; for (auto& q : tiles) if (q.first == o.x && q.second == o.y) { extra.push_back((int)i); break; } } }
-        for (int i : extra) { auto& o = cb.units[i]; addFloat(o.x, o.y - 1, trait == "cleave" ? "cleaved" : "buckshot", C::Orange); applyDamage(o, std::max(1, dmg / 2 - o.ch.defense(*gd) / 2), type, a.ch.name, false, &a); }
+        for (int i : extra) { auto& o = cb.units[i]; addFloat(o.x, o.y - 1, trait == "cleave" ? "cleaved" : "buckshot", C::Orange); dmgTrait = trait; applyDamage(o, std::max(1, dmg / 2 - o.ch.defense(*gd) / 2), type, a.ch.name, false, &a); dmgTrait.clear(); }
     }
     shake = std::max(shake, crit ? 0.2f : 0.08f);
     return true;
@@ -943,13 +972,15 @@ std::vector<int> Game::spellVictims(int ci, const SpellDef& sp, int tx, int ty) 
 void Game::combatCast(int ci, const std::string& spellId, int tx, int ty) {
     const SpellDef* sp0 = gd->spell(spellId); if (!sp0) return;
     SpellDef spv = castSpell(cb.units[ci].ch, *sp0); const SpellDef* sp = &spv;   // 1.4.0 (#66): rank upgrades
-    int cost = std::max(0, sp->cost * (100 - cb.units[ci].ch.fx("mpcost", *gd)) / 100);
+    int cost = std::max(0, sp->cost * (100 - cb.units[ci].ch.fx("mpcost", *gd) + cb.units[ci].ch.spellCostPct(*gd)) / 100);   // 1.5.0 (#93): heavy armour costs casters MP
     {
         Combatant& c = cb.units[ci];
         if (c.partyIndex >= 0 && c.ch.level < sp->level) { log(fmt("%s needs level %d to cast %s.", c.ch.name.c_str(), sp->level, sp->name.c_str())); return; }
         if (c.ch.ap < sp->ap) { if (c.partyIndex >= 0) log("Not enough AP."); return; }
         if (c.ch.mp < cost) { if (c.partyIndex >= 0) log("Not enough MP."); return; }
         c.ch.ap -= sp->ap; c.ch.mp -= cost; cb.actionThisRound = true;
+        // 1.5.0 (#93): armour too heavy for the caster's class can make the spell fizzle (AP and MP are spent)
+        if (int fail = c.ch.spellFail(*gd)) if (rng.chance(fail)) { cb.log.push_back(fmt("%s's spell fizzles - the armour is too heavy (%d%% fail).", c.ch.name.c_str(), fail)); addFloat(c.x, c.y - 1, "fizzle", C::Gray, 2); gAudio.play("miss"); return; }
         cb.log.push_back(c.ch.name + " casts " + sp->name + "!"); gAudio.play(spellSound(*sp)); if (c.partyIndex >= 0) stats.spellsCast++;
         if (sp->chainJumps <= 0) { CombatAnim an; an.kind = sp->shape == "line" ? 0 : 1; an.x0 = c.x; an.y0 = c.y; an.x1 = tx; an.y1 = ty; an.color = sp->utility == "light" ? C::Cream : dmgColor(sp->dmgType); an.dur = 0.35f; an.tile = sp->tile; cb.anims.push_back(an); }
     }
@@ -987,7 +1018,7 @@ void Game::combatCast(int ci, const std::string& spellId, int tx, int ty) {
             dmg = dmg * (100 + c.ch.fx("spelldmg", *gd) + (t.ch.undead ? c.ch.fx("vsundead", *gd) : 0) + (marked(c, t) ? c.ch.fx("markdmg", *gd) : 0)) / 100;
             if (t.ch.hasEffect("freeze") || t.ch.hasEffect("chilled")) dmg = dmg * (100 + c.ch.fx("vsfrozen", *gd)) / 100;
             if (!chain.empty()) { for (int k = 0; k < jump; k++) dmg = dmg * (100 - sp->chainFalloff) / 100; jump++; }
-            bool crit = rng.chance(5 + power / 3);
+            bool crit = rng.chance(clampi(3 + power / 5 + c.ch.fx("crit", *gd), 0, CRIT_CAP));   // 1.5.0 (#83): was 5 + power/3
             if (crit) dmg = dmg * 3 / 2;
             int cp = spellCoverPct(c, t, *sp);   // (#57) single-target spells lose damage to cover
             if (cp > 0) { dmg = dmg * (100 - cp) / 100; addFloat(t.x, t.y - 1, fmt("cover -%d%%", cp), C::Gray); }
@@ -1050,7 +1081,7 @@ void Game::combatSummon(int ci, const SpellDef& sp, int tx, int ty) {
                 if (ok) cand.push_back({xx, yy}); }
             if (!cand.empty()) { auto pk = rng.pick(cand); ux = pk.first; uy = pk.second; } }
         if (ux < 0) break;
-        Combatant s; s.ch.initFromCreature(*gd, *cd, c.partyIndex >= 0 ? c.ch.level / 3 : 0); if (!c.friendly()) applyDifficulty(s.ch);
+        Combatant s; s.ch.initFromCreature(*gd, *cd, c.partyIndex >= 0 ? c.ch.level / 3 : 0);
         s.partyIndex = -1; s.ally = c.friendly(); s.summoned = true; s.summoner = ci; s.summonTurns = sp.duration; s.groupIndex = -1;
         s.ch.xpReward = 0; s.ch.loot.clear(); s.ch.lootGold = "0";
         s.x = ux; s.y = uy; s.ch.ap = s.ch.maxAP(*gd); s.ch.move = s.ch.maxMove(*gd); s.initiative = s.ch.stat(ST_DEX, *gd) + rng.range(1, 8);
@@ -1154,7 +1185,7 @@ void Game::combatFinish() {
     } else if (!campaign.defeat.empty()) {
         // 1.1.7 campaign defeat=: a lost fight isn't the end (the tutorial). The party gets back up healed, the groups
         // in the fight are whole again and stay put a moment (like after fleeing), and the campaign's script runs.
-        for (auto& m : party.members) m.fullHeal(*gd);
+        for (auto& m : party.members) { m.wounds = 0; m.fullHeal(*gd); }   // 1.5.0: a do-over, no wounds
         for (auto& u : cb.units) if (!u.friendly() && u.groupIndex >= 0 && u.groupIndex < (int)map->enemies.size()) { map->enemies[u.groupIndex].defeated = false; map->enemies[u.groupIndex].wanderTimer = 4000; }
         flags["_fleegrace"] = 8;
         popMode(); trail.clear(); for (int i = 0; i < 8; i++) trail.push_back({px, py}); updateCamera();
@@ -1203,6 +1234,22 @@ std::vector<std::pair<int, int>> Game::aiWalkTo(int ui, int x, int y) {
     std::vector<std::pair<int, int>> walk; int spent = 0; for (auto& p : path) { spent += tileMoveCost(p.first, p.second); if (spent > u.ch.move) break; walk.push_back(p); }
     return walk;
 }
+// Flee: a whole turn, nobody in melee reach, and a roll. true = the attempt was made (escaped, or failed and the turn ended).
+bool Game::combatTryFlee(int ui) {
+    Combatant& u = cb.units[ui];
+    bool adjacent = false; for (auto& o : cb.units) if (o.ch.alive && !o.friendly()) for (auto& p : cb.units) if (p.ch.alive && p.friendly() && chebyshev(o.x, o.y, p.x, p.y) <= 1) adjacent = true;
+    if (adjacent) { log("Can't flee while engaged in melee!"); return false; }
+    if (u.ch.ap < u.ch.maxAP(*gd)) { log("Fleeing takes a whole turn - try it before acting."); return false; }
+    // base 20% + DEX; every enemy that can see the party and is within 5 tiles makes it harder; bosses nearly pin you down
+    int chance = 20 + u.ch.stat(ST_DEX, *gd) * 2; int watchers = 0; bool boss = false;
+    for (auto& o : cb.units) if (o.ch.alive && !o.friendly()) { int best = 99; for (auto& p : cb.units) if (p.ch.alive && p.friendly()) best = std::min(best, chebyshev(o.x, o.y, p.x, p.y)); if (best <= 5) watchers++; if (o.ch.boss) boss = true; }
+    chance -= watchers * 12; if (boss) chance -= 25; if (u.ch.hasEffect("haste")) chance += 20; if (stealthSteps > 0) chance += 15;
+    chance = clampi(chance, 5, 75);
+    if (rng.chance(chance)) { cb.ending = true; cb.fled = true; cb.endTimer = 0.3f; gAudio.play("flee"); int drop = party.gold / 20; if (drop > 0) { party.gold -= drop; log(fmt("You escape, dropping %d gold in the scramble.", drop)); } }
+    else { log(fmt("Failed to escape (%d%% chance). The enemy closes in!", chance)); u.ch.ap = 0; u.ch.move = 0; combatEndTurn(); }
+    return true;
+}
+
 void Game::combatAI(float dt) {
     Combatant& u = cb.units[cb.selectedUnit];
     if (!u.ch.alive) { combatEndTurn(); return; }
@@ -1264,6 +1311,20 @@ void Game::combatAI(float dt) {
     }
     // choose target: nearest alive opponent with LOS preference
     auto isFoe = [&](const Combatant& o) { return o.ch.alive && o.friendly() != u.friendly(); };
+    // 1.5.0 (#92): what this unit's weapon does to a foe (resist %; 100 = can't hurt it)
+    auto wres = [&](const Combatant& o) { int lo, hi, ty; u.ch.attackDamage(*gd, lo, hi, ty); for (auto& e : u.ch.effects) if (startsWith(e.id, "imbue_")) ty = dmgTypeFromName(e.id.substr(6));
+        int r = o.ch.resist(ty, *gd); std::string tr = u.ch.trait(*gd); if (ty == DT_PHYS && !tr.empty()) { auto f = o.ch.traitRes.find(tr); if (f != o.ch.traitRes.end()) r = f->second; } return r; };
+    if (u.partyIndex >= 0 && autoCombat) {   // the party on auto: oil the weapon with something that works, or get away
+        bool anyHurt = false; for (auto& o : cb.units) if (isFoe(o) && wres(o) < 100) anyHurt = true;
+        bool spells = false; for (auto& sid : u.ch.spells) if (auto* sp = gd->spell(sid)) if (sp->dmgMax > 0 && u.ch.mp >= sp->cost) spells = true;
+        if (!anyHurt && !spells) {
+            for (auto& sl : party.inventory) { const ItemDef* d = gd->item(sl.id); if (!d || sl.count <= 0 || !startsWith(d->effect, "imbue_") || u.ch.ap < itemAP(*d)) continue;
+                int ty = dmgTypeFromName(d->effect.substr(6)); bool works = false; for (auto& o : cb.units) if (isFoe(o) && o.ch.resist(ty, *gd) < 100) works = true;
+                if (works) { combatUseItem(cb.selectedUnit, sl.id, cb.selectedUnit); return; } }
+            if (u.ch.ap >= u.ch.maxAP(*gd) && combatTryFlee(cb.selectedUnit)) return;
+            u.ch.addEffect("defend", 1, 0); combatEndTurn(); return;
+        }
+    }
     // target choice: close, hittable right now, and wounded beats healthy (they focus fire); a little noise keeps it from being predictable
     int best = -1, bestScore = 1 << 30;
     bool noAmmo = false; { const ItemDef* w = u.ch.weapon(*gd); noAmmo = u.partyIndex >= 0 && w && !w->ammo.empty() && !party.hasItem(w->ammo); }
@@ -1282,6 +1343,7 @@ void Game::combatAI(float dt) {
         if ((int)i == (u.friendly() ? cb.focusParty : cb.focusEnemy)) sc -= u.friendly() ? 12 : (aiSmart() == 0 ? 5 : aiSmart() == 1 ? 12 : 24);   // the side piles onto one target (1.4.0: harder on Hard)
         if (!u.friendly() && aiSmart() >= 2 && (o.ch.hasEffect("stun") || o.ch.hasEffect("freeze") || exposed(u, o))) sc -= 10;   // Hard: goes for the helpless and the exposed
         if (o.summoned) sc += 8;                                                      // the summoner matters more than the summon
+        { int r = wres(o); if (r >= 100) sc += 200; else if (r >= 50) sc += 15; else if (r < 0) sc -= 15; }   // 1.5.0 (#92): hit what the weapon can hurt
         { bool wards = false; for (auto& w : cb.units) if (w.ch.alive && &w != &o && w.friendly() == o.friendly() && !w.ch.ward.empty() && w.ch.ward == o.ch.creatureId) wards = true; if (wards) sc -= 25; }   // 1.4.0: kill whatever shields the boss first
         if (map->dark && !u.ch.darkvision && !lit(o.x, o.y)) sc += 12;
         sc += rng.range(0, !u.friendly() && aiSmart() == 0 ? 20 : 8);
@@ -1478,18 +1540,7 @@ void Game::updateCombat(InputState& in, float dt) {
             case 4: u.ch.addEffect("defend", 1, 0); u.ch.ap = 0; log(u.ch.name + " takes a defensive stance."); combatEndTurn(); break;
             case 5: if (u.ch.ap < u.ch.attackAP(*gd)) { log("Overwatch needs enough AP for one attack."); break; } u.overwatch = true; u.ch.ap = 0; log(u.ch.name + " is on overwatch: the first enemy to move into range and sight gets shot (-10% to hit)."); addFloat(u.x, u.y, "overwatch", C::Yellow); combatEndTurn(); break;
             case 6: combatEndTurn(); break;
-            case 7: {
-                bool adjacent = false; for (auto& o : cb.units) if (o.ch.alive && !o.friendly()) for (auto& p : cb.units) if (p.ch.alive && p.friendly() && chebyshev(o.x, o.y, p.x, p.y) <= 1) adjacent = true;
-                if (adjacent) { log("Can't flee while engaged in melee!"); cb.mode = 0; break; }
-                if (u.ch.ap < u.ch.maxAP(*gd)) { log("Fleeing takes a whole turn - try it before acting."); cb.mode = 0; break; }
-                // base 20% + DEX; every enemy that can see the party and is within 5 tiles makes it harder; bosses nearly pin you down
-                int chance = 20 + u.ch.stat(ST_DEX, *gd) * 2; int watchers = 0; bool boss = false;
-                for (auto& o : cb.units) if (o.ch.alive && !o.friendly()) { int best = 99; for (auto& p : cb.units) if (p.ch.alive && p.friendly()) best = std::min(best, chebyshev(o.x, o.y, p.x, p.y)); if (best <= 5) watchers++; if (o.ch.boss) boss = true; }
-                chance -= watchers * 12; if (boss) chance -= 25; if (u.ch.hasEffect("haste")) chance += 20; if (stealthSteps > 0) chance += 15;
-                chance = clampi(chance, 5, 75);
-                if (rng.chance(chance)) { cb.ending = true; cb.fled = true; cb.endTimer = 0.3f; gAudio.play("flee"); int drop = party.gold / 20; if (drop > 0) { party.gold -= drop; log(fmt("You escape, dropping %d gold in the scramble.", drop)); } }
-                else { log(fmt("Failed to escape (%d%% chance). The enemy closes in!", chance)); u.ch.ap = 0; u.ch.move = 0; combatEndTurn(); }
-            } break;
+            case 7: { if (!combatTryFlee(cb.selectedUnit)) cb.mode = 0; } break;
         }
         if (cb.mode == 3) cb.mode = 0;
     };
@@ -1831,7 +1882,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
             auto& t = cb.units[tu];
             int dist = unitDist(t, u.x, u.y); bool inRange = dist <= u.ch.attackRange(*gd) && combatLOS(u.x, u.y, t.x, t.y);
             int hc = hitChance(u, t, cb.aimed);
-            std::string st = inRange ? fmt("%d%% to hit%s%s", hc, cb.aimed ? " (aimed)" : "", hitBreakdown(u, t, cb.aimed).c_str()) : fmt("out of range (%d/%d)", dist, u.ch.attackRange(*gd));
+            std::string st = inRange ? fmt("%d%% to hit, %d%% crit%s%s", hc, t.ch.hasEffect("tagged") ? 100 : critChance(u, t, cb.aimed), cb.aimed ? " (aimed)" : "", hitBreakdown(u, t, cb.aimed).c_str()) : fmt("out of range (%d/%d)", dist, u.ch.attackRange(*gd));
             label(lx, ly, st, inRange ? hitColor(hc) : C::Gray);
             label(lx, ly + 13, fmt("%s %d/%d", t.ch.name.c_str(), t.ch.hp, t.ch.maxHP(*gd)), C::White);
             // cover: a thick bar on the side of the target that faces you, and a word for it
@@ -1990,6 +2041,11 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
                 int r = t.ch.resist(d, *gd); if ((t.ch.undead || t.ch.mechanical) && d == DT_POISON) r = 100; if (t.ch.mechanical && d == DT_SHOCK) r = std::min(r, -50);
                 if (r < 0) weak += std::string(weak.empty() ? "" : ", ") + dmgTypeName(d); else if (r >= 30) strong += std::string(strong.empty() ? "" : ", ") + dmgTypeName(d) + (r >= 100 ? " (immune)" : "");
             }
+            // 1.5.0 (#92): weapon traits that get through (or break it): learned by hitting it with such a weapon
+            std::string through;
+            for (auto& kv : t.ch.traitRes) { int b = 8 + traitIndex(kv.first); if (b < 8 || (!all && !(known & (1 << b)))) continue;
+                if (kv.second < 0) weak += std::string(weak.empty() ? "" : ", ") + kv.first + " weapons"; else if (kv.second < t.ch.resist(DT_PHYS, *gd)) through += std::string(through.empty() ? "" : ", ") + kv.first; }
+            if (!through.empty()) lines.push_back({"Gets through: " + through + " weapons", C::Cyan});
             if (!weak.empty()) lines.push_back({"Weak: " + weak, C::Yellow});
             if (!strong.empty()) lines.push_back({"Resists: " + strong, C::Gray});
             if (weak.empty() && strong.empty()) lines.push_back({all ? "No notable resistances" : "Resistances: hit it to find out", C::DkGray});
@@ -2018,16 +2074,6 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
     cv.fillRect(x, y, w, h, RGB(10, 10, 18, 215)); cv.rect(x, y, w, h, C::DkGray);
     for (size_t i = 0; i < lines.size(); i++) ctx.font->draw(cv, *ctx.ts, x + 7, y + 3 + (int)i * 12, lines[i].first, lines[i].second);
     uiRect(x, y, w, h);
-}
-
-// Difficulty: 0 Story, 1 Normal, 2 Hard (chosen in the New Game window, kept in the save).
-void Game::applyDifficulty(Character& e) const {
-    static const int hpPct[3] = {80, 105, 130}, dmgPct[3] = {80, 105, 125}, acc[3] = {-5, 0, 6};
-    int d = clampi(difficulty, 0, 2);
-    e.baseHP = std::max(1, e.baseHP * hpPct[d] / 100);
-    e.mDmgMin = std::max(1, e.mDmgMin * dmgPct[d] / 100); e.mDmgMax = std::max(e.mDmgMin, e.mDmgMax * dmgPct[d] / 100);
-    e.mAcc += acc[d];
-    e.hp = e.maxHP(*gd);
 }
 
 // ---------------- 1.4.0 test hooks ----------------
@@ -2066,6 +2112,17 @@ std::string Game::combatProbe(const std::string& what) {
     if (k == "spelltiles") { const SpellDef* sp = q.size() > 2 ? gd->spell(q[1]) : nullptr; int ci = I(2); if (!sp || !unit(ci)) return "none"; std::string o; for (auto& t : spellTiles(ci, castSpell(cb.units[ci].ch, *sp), I(3), I(4))) o += (o.empty() ? "" : ";") + fmt("%d,%d", t.first, t.second); return o.empty() ? "none" : o; }
     if (k == "chain") { const SpellDef* sp = q.size() > 2 ? gd->spell(q[1]) : nullptr; int ci = I(2); if (!sp || !unit(ci)) return "none"; std::string o; for (int v : chainTargets(ci, castSpell(cb.units[ci].ch, *sp), I(3))) o += (o.empty() ? "" : ",") + std::to_string(v); return o.empty() ? "none" : o; }
     if (k == "spell") { const SpellDef* sp = q.size() > 2 ? gd->spell(q[1]) : nullptr; int mi = I(2); if (!sp || mi < 0 || mi >= (int)party.members.size()) return "none"; SpellDef s = castSpell(party.members[mi], *sp); return fmt("area=%d,shape=%s,ground=%s,effect=%s,dmg=%d-%d", s.area, s.shape.c_str(), s.ground.c_str(), s.effect.c_str(), s.dmgMin, s.dmgMax); }
+    // 1.5.0 (#83 #92 #93 #94)
+    if (k == "crit" || k == "critaim") { Combatant* a = unit(I(1)); Combatant* d = unit(I(2)); return a && d ? std::to_string(critChance(*a, *d, k == "critaim")) : "-1"; }
+    if (k == "apcost") { Combatant* u = unit(I(1)); return u ? std::to_string(u->ch.attackAP(*gd)) : "-1"; }
+    if (k == "spellfail") { Combatant* u = unit(I(1)); return u ? std::to_string(u->ch.spellFail(*gd)) : "-1"; }
+    if (k == "evasion") { Combatant* u = unit(I(1)); return u ? std::to_string(u->ch.evasion(*gd)) : "-1"; }
+    if (k == "wresist") { Combatant* t = unit(I(1)); Combatant* a = unit(I(2)); if (!t || !a) return "none"; int lo, hi, ty; a->ch.attackDamage(*gd, lo, hi, ty);
+        int r = t->ch.resist(ty, *gd); std::string tr = a->ch.trait(*gd); if (ty == DT_PHYS && !tr.empty()) { auto f = t->ch.traitRes.find(tr); if (f != t->ch.traitRes.end()) r = f->second; } return std::to_string(r); }
+    if (k == "known") { Combatant* t = unit(I(1)); if (!t) return "0"; auto it = extra.find("rk_" + t->ch.creatureId); return it == extra.end() ? "0" : it->second; }
+    if (k == "wounds") { int mi = I(1); return mi >= 0 && mi < (int)party.members.size() ? std::to_string(party.members[mi].wounds) : "-1"; }
+    if (k == "maxhp") { int mi = I(1); return mi >= 0 && mi < (int)party.members.size() ? std::to_string(party.members[mi].maxHP(*gd)) : "-1"; }
+    if (k == "gearwarn") { int mi = I(1); const ItemDef* d = q.size() > 2 ? gd->item(q[2]) : nullptr; if (mi < 0 || mi >= (int)party.members.size() || !d) return "none"; std::string w = gearWarning(*d, party.members[mi]); return w.empty() ? "none" : w; }
     if (k == "memberfx") { int mi = I(1); if (mi < 0 || mi >= (int)party.members.size() || q.size() < 3) return "-1"; return std::to_string(party.members[mi].fx(q[2], *gd)); }
     if (k == "knows") { int mi = I(1); if (mi < 0 || mi >= (int)party.members.size() || q.size() < 3) return "0"; auto& s = party.members[mi].spells; return std::find(s.begin(), s.end(), q[2]) != s.end() ? "1" : "0"; }
     return "?";

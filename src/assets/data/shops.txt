@@ -3,19 +3,21 @@
 # 1.1.2: potions, scrolls, grenades and other strong consumables have limited stock (restocks every 3 days), so gold
 # alone can't buy an endless supply. item=id:N:REP only shows once standing with the shop's faction is at least REP.
 # faction=ID (factions.txt) makes prices follow the party's reputation with that town.
+# 1.5.0 (#94 #100): healing is something to ration - 3 small potions per shop per restock, bandages limited too.
 [shop]
 id=hollowmere_general
 faction=hollowmere
 hours=7-20
 item=bread
 item=cheese
-item=potion_red:6
-item=potion_blue:5
+item=potion_red:3
+item=potion_blue:3
 item=antidote:6
-item=bandage
+item=bandage:6
 item=torch_item
 item=flare
 item=oil_fire:4
+item=oil_blessed:2
 item=arrows
 item=iron_dagger
 item=club
@@ -53,9 +55,9 @@ hours=6-22
 item=map_aldmoor:1
 item=bread
 item=stew
-item=potion_red:6
-item=potion_red2:3
-item=potion_blue:5
+item=potion_red:3
+item=potion_red2:2
+item=potion_blue:3
 item=antidote:6
 item=potion_str:2
 item=potion_shield:2
@@ -96,7 +98,7 @@ item=formula_steel:1:60
 id=brasswick_arcane
 faction=brasswick
 hours=10-23
-item=potion_blue:5
+item=potion_blue:3
 item=potion_blue2:2
 item=scroll_fire:2
 item=scroll_frost:2
@@ -163,8 +165,8 @@ item=elixir:1
 
 [shop]
 id=shrine_keeper
-item=potion_red:6
-item=potion_red2:3
+item=potion_red:3
+item=potion_red2:2
 item=antidote:6
 item=phoenix_feather:1
 item=potion_purple:2
@@ -176,7 +178,7 @@ item=oil_blessed:4
 [shop]
 id=dunmarrow_trader
 hours=8-20
-item=potion_red:6
+item=potion_red:3
 item=antidote:6
 item=arrows
 item=ammo_pistol
@@ -187,6 +189,8 @@ item=ranger_cloak
 item=ring_dex
 item=band_speed
 
+item=oil_blessed:3
+
 # 1.0: Snig the goblin peddler (Millbrook), only if Grakk's tribe was spared in Greywood. 1.5.0: the shop has no condition
 # of its own - Snig (millbrook.txt show=) only appears if Grakk was spared, lived, and was not betrayed.
 [shop]
@@ -194,7 +198,7 @@ id=snig_wares
 hours=6-22
 item=torch_item
 item=arrows
-item=bandage
+item=bandage:6
 item=shovel:1
 item=herb_moon:3
 item=grakk_tooth:1

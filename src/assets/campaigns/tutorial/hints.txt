@@ -92,14 +92,18 @@ text=Wick travels with you now. Pull the winch on the wall by the water ({intera
 
 [hint]
 if=tut_inquarry&tut_lit&joined_ranger&tut_winch
-text=Goblins across the bridge - one with a bow. Crates and boulders give cover. Cross when you're ready.
+text=Bones rattle at the far end of the bridge. Steel won't hurt them: take the fire oil and club from the crate by Wick, then cross.
 
 [hint]
-if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_goblins
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_bones
+text=Goblins ahead - and an archer behind the crate. From the front you'll mostly miss: point at it to see. Walk round to its open side, or flank it with Wick.
+
+[hint]
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_bones&tut_goblins&tut_archer
 text=Something whirs in the glowing crater ahead. Go and see what fell.
 
 [hint]
-if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_goblins&tut_drone
+if=tut_inquarry&tut_lit&joined_ranger&tut_winch&tut_bones&tut_goblins&tut_archer&tut_drone
 text=Take what fell: the violet shard at the heart of the crater.
 
 # ---------------- while a screen or a fight is open (these win) ----------------
@@ -154,8 +158,19 @@ if=mode:combat&tut_rats&!tut_goblins
 title=Combat
 text=Wick takes his own turn after yours. Keep a crate or boulder between you and the archer: cover makes you harder to hit. {defend} braces, {overwatch} shoots the next thing that moves, {items} items, {spells} spells, 1-8 the hotbar.
 
+# 1.5.0 (#101): the immune bones, then cover and flanking
 [hint]
-if=mode:combat&tut_goblins&!tut_drone
+if=mode:combat&tut_winch&!tut_bones
+title=Combat: IMMUNE
+text=Your blade does nothing (IMMUNE). Point at the bones: the box top left says what it resists and is weak to. Use Fire Oil ({items}) on your weapon, or switch to the club - fire and blunt blows break them.
+
+[hint]
+if=mode:combat&tut_bones&!tut_archer
+title=Combat: cover and flanking
+text=The archer is in cover: the target box shows a low chance from here. Walk round to its open side (EXPOSED, +20%) or stand next to it with Wick beside you (FLANKED). Keep your own people behind crates.
+
+[hint]
+if=mode:combat&tut_goblins&tut_archer&!tut_drone
 title=Combat
 text=A machine from another world: it shoots lightning from afar. Close in, or shoot back from cover. Aimed shots ({attackmode} twice) cost more AP and hit harder. If it goes badly, {flee}.
 

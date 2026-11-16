@@ -280,3 +280,18 @@ npc=goblin_packer
 x=31
 y=10
 show=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
+
+# 1.5.0 (#95): the lone spider is the lesson - fire burns them
+[chest]
+x=22
+y=19
+items=oil_fire:1,torch_item:1
+gold=0
+flag=goblin_cave_teach_chest
+
+[sign]
+template=paper_sign
+x=18
+y=19
+title=Scratched on a rock
+text=Spiders in the back tunnels. Their hide turns a blade, but they go up like dry leaves - fire oil, a torch, anything that burns.

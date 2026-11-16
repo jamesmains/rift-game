@@ -91,6 +91,19 @@ flag=tut_winch
 toggle=0
 text=The winch shrieks, the chain runs out, and an old plank bridge slaps down across the flooded cut.
 
+[chest]
+x=11
+y=12
+flag=tut_oilchest
+items=oil_fire:2,club:1
+
+[sign]
+template=paper_sign
+x=12
+y=12
+title=Chalked on the crate
+text=BONES IN THE CUT. Blades go through the gaps and do nothing. Burn them (fire oil on your weapon) or smash them (club). - J.
+
 [change]
 x=16
 y=11
@@ -99,13 +112,33 @@ h=1
 kind=bridge
 if=tut_winch
 
+# 1.5.0 (#101): the bridgehead bones are immune to steel (fire oil / a club in the crate by Wick); then a goblin up front
+# and its archer behind the crate at 29,9 - shots from the west mostly miss: walk round (exposed) or flank it with Wick
 [enemy]
-group=goblin,goblin_archer
-x=24
+group=tut_bones
+x=21
 y=11
-aggro=5
+aggro=3
+flag=tut_bones
+ondefeat=xp:40;notify:The bones fall apart and stay down.
+
+[enemy]
+group=goblin
+x=27
+y=11
+aggro=3
 flag=tut_goblins
-ondefeat=xp:80
+link=tut_gob
+ondefeat=xp:40
+
+[enemy]
+group=goblin_archer
+x=30
+y=9
+aggro=4
+flag=tut_archer
+link=tut_gob
+ondefeat=xp:40
 
 [enemy]
 group=scrap_drone

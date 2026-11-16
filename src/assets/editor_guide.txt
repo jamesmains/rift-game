@@ -3386,8 +3386,10 @@ right stat lets a weapon suit one class better than another.
 == item.accuracy | Item accuracy
 see: item.crit, item.evasion
 
-Bonus (or penalty) to hit, in percent points. Base hit chance is 72% + DEX x
-2 + accuracy - the target's evasion, then cover and darkness apply.
+Bonus (or penalty) to hit, in percent points. Base hit chance is 72% + DEX +
+accuracy - the target's evasion (which includes its DEX), +5 in melee, then
+cover (half -25, full -40), flanked/exposed (+20), darkness and range apply,
+between 5% and 95% (1.5.0).
 
 Format: whole number, can be negative. Default: 0.
 
@@ -3398,13 +3400,53 @@ Positive accuracy suits fine weapons and scopes; negative accuracy balances very
 == item.crit | Item critical chance
 see: item.accuracy
 
-Bonus to the critical hit chance, in percent points. Base crit chance is 5% +
-DEX / 2; aimed shots add 30 and flanking 15. Crits deal more damage and halve
-the target's defence.
+Bonus to the critical hit chance, in percent points. Base crit chance is 3% +
+DEX / 4; aimed shots add 15 and the best one of flanked / exposed / marked 10.
+Rolled crits never go above 35% (a target tagged by Scan Weakness is always
+crit). Crits deal x1.5 damage and halve the target's defence. Weapon values
+run 3-10 since 1.5.0.
 
 Format: whole number. Default: 0.
 
-  crit=10
+  crit=5
+
+== item.family | Weapon family (1.5.0)
+see: class.weapons, item.trait, item.req
+
+Which kind of weapon it is: blade, dagger, mace, axe, spear, staff, wand, bow,
+crossbow or gun. A character none of whose classes is trained in the family
+(classes.txt weapons=) pays 1 AP more per attack, is 10% less likely to hit and
+loses the weapon's trait. Empty = anyone uses it well (tools, odd things).
+
+  family=mace
+
+== item.weight | Armour weight (1.5.0)
+see: class.wears, item.wornby
+
+light, medium or heavy, for body armour, helms, boots and shields. Every step
+heavier than the wearer's classes wear (classes.txt wears=) costs 5 evasion
+and, for spells, 15% more MP and a 10% chance the spell fizzles (AP and MP
+spent). Empty = light.
+
+  weight=heavy
+
+== item.req | Stat needs (1.5.0)
+see: item.family, item.weight
+
+Stats the item needs, like stats=. Each point the wearer is short (counting
+their other gear, not the item's own bonus) is -4 to hit for a weapon, -3
+evasion for armour (at most -30). The item panel shows what it costs the
+member it's for.
+
+  req=str:14
+
+== item.wornby | Worn well by (1.5.0)
+see: item.weight
+
+Classes that wear this armour without the weight penalty, whatever it weighs
+(power armour for the Scavenger).
+
+  wornby=scavenger
 
 == item.twohanded | Two-handed
 see: item.type
@@ -3839,9 +3881,15 @@ Percent resistance to each damage type; negative values are weaknesses (they
 take more). The party learns them by hitting the creature and sees them in the
 bestiary.
 
-Format: type:value,... (six number boxes). Default: none. Capped at 90.
+Format: type:value,... (six number boxes). Default: none. 1.5.0: use three
+tiers - 50 resists (half damage), 100 immune (nothing), -100 weak (double) -
+and give each family one lock and one key. Weapon-trait keys (crush, reach,
+backstab, cleave, arc, steady, quick, spread) replace the physical value for
+weapons with that trait: skeletons are physical:50,crush:-100 (maces and
+hammers break them); armoured beasts physical:50,reach:0,backstab:0 (spears and
+daggers get through). Trait keys are typed in the file; the boxes keep them.
 
-  res=physical:20,poison:100,fire:-40,cold:-20
+  res=physical:50,crush:-100,poison:100,cold:50
 
 Weaknesses make fights interesting: a slime weak to fire rewards a torch or a
 fire spell.
@@ -3931,7 +3979,8 @@ Stationary enemies (move=0) still attack anything within their range. Movement d
 == creature.accuracy | Creature accuracy
 see: item.accuracy
 
-Bonus to hit in percent points, on top of 72% + DEX x 2.
+Bonus to hit in percent points, on top of 72% + DEX (1.5.0: the old Hard
+level's +6 is already in every creature's number).
 
 Format: whole number, can be negative. Default: 0.
 
@@ -4223,13 +4272,15 @@ see: combat.combos, tilekind.fights, spell.shape, creature.role, creature.windup
 What decides a fight besides the numbers:
 
 - Cover: a blocking tile on the side facing the shooter gives half cover
-  (-20% to hit; impassable but see-through: tables, crates, rocks) or full cover
-  (-40%; walls). Point blank there is no cover. The move preview marks every
+  (-25% to hit; impassable but see-through: tables, crates, rocks) or full cover
+  (-40%; walls). Base hit chance is about 70%, so a shooter in full cover is a
+  real problem until it is flanked, smoked or flushed out. Point blank there is no cover. The move preview marks every
   tile you can reach with a bar on each side that would give cover against the
   foes who can see it there (short bar = half, long = full).
 - Exposed: a target standing next to cover that doesn't face the attacker
-  (shot from the open side) is +15% to hit and +15% crit, like a flanked one.
-- Hunker down: Defend in cover doubles the cover (half 40%, full 80%);
+  (shot from the open side) is +20% to hit and +10% crit, like a flanked one
+  (the two don't add up).
+- Hunker down: Defend in cover doubles the cover (half 50%, full 80%);
   Defend in the open is -20%.
 - Spells: single-target damage spells do 25% less against half cover and 50%
   less against full cover. Area spells, lines, cones, chains, grenades and
@@ -4254,8 +4305,14 @@ What decides a fight besides the numbers:
   gone a turn later.
 - Bosses with windup= announce their big attack: the marked tiles get hit at
   the start of the boss's next turn.
-- Difficulty: Hard foes flank, focus fire harder, go for exposed and helpless
-  targets and drink a draught when hurt; Story foes do less of that.
+- Foes play smart (1.5.0: one fixed difficulty, the old Hard): they flank,
+  focus fire, go for exposed and helpless targets and drink a draught when hurt.
+- Crits: 3% + DEX/4 + weapon crit, +15 aimed, +10 for the best of flanked /
+  exposed / marked, never over 35%; x1.5 damage and half armour.
+- Resistances: 50 / 100 / -100 tiers, one lock and key per family (see
+  creature.res). The wrong damage type is hopeless; switch weapons or spells.
+- Wounded: a party member who goes down gets up Wounded (-15% max HP, -5% to
+  hit each, up to 3); an inn night (rest=1) or a healer cures it.
 
 == combat.combos | Status combos
 see: combat.tactics, spell.effect
@@ -4273,7 +4330,7 @@ Tactics page lists them for players.
 - STEAM: cold on a burning target - puts the fire out and blinds them.
 
 Primers: every cold hit leaves the target chilled (2 turns). Mark Target
-(effect=marked) gives everyone +15% to hit and crit against the target;
+(effect=marked) gives everyone +15% to hit and +10% crit against the target;
 Scan Weakness (effect=tagged) makes the next hit on it a critical. The Mage's
 passive makes combos 50% stronger and primers last a turn longer.
 
@@ -4450,7 +4507,7 @@ The weapon family's trait:
 
 - reach: hits enemies 2 tiles away in a straight line (spears; range=1).
 - cleave: also hits foes next to both you and the target, for half (axes).
-- backstab: +25% crit against flanked or exposed targets (daggers).
+- backstab: +12% crit against flanked or exposed targets (daggers).
 - crush: armour soaks at most 40% of a blow instead of 65% (maces).
 - arc: shoots over half cover, for 25% less damage (bows).
 - steady: loses no accuracy at long range (rifles).
@@ -4470,7 +4527,26 @@ healpower:N, healcure, smoketurns:N, hit:N, exposedhit:N. Class passives and
 perks use the same keys. smoke:N on a smoke bomb is how many rounds its cloud
 lasts.
 
-  fx=ignorehalfcover:1,flankcrit:15
+  fx=ignorehalfcover:1,flankcrit:8
+
+== class.weapons | Weapon families (1.5.0)
+see: item.family, class.wears
+
+The weapon families the class is trained in, comma separated (blade, dagger,
+mace, axe, spear, staff, wand, bow, crossbow, gun). Anything else costs 1 AP
+more, hits 10% less and loses its trait. A multiclassed character is trained in
+what any of their classes knows. Empty = every family.
+
+  weapons=staff,wand,dagger
+
+== class.wears | Armour the class wears (1.5.0)
+see: item.weight
+
+The heaviest armour the class wears well: light, medium or heavy (default
+heavy). Heavier pieces cost evasion and make spells dearer and likely to
+fizzle.
+
+  wears=light
 
 == class.passive | Class passive and perks
 see: class.learn, item.fx, spell.upgrade
@@ -4610,7 +4686,7 @@ Format: dropdown. Default: empty.
 Spells without damage always apply the effect; with damage it lands 50% of the
 time. Bosses resist stun.
 
-1.4.0: marked (everyone gets +15% to hit and crit against the target), tagged
+1.4.0: marked (everyone gets +15% to hit and +10% crit against the target), tagged
 (the next hit on it is a critical), override (an enemy machine fights for the
 caster's side for the duration; not bosses), slow (half move). Every cold hit
 also leaves the target chilled - see combat.combos.

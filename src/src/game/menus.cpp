@@ -105,6 +105,9 @@ void Game::drawCharacterSheet(Canvas& cv, InputState& in, int mi, int x, int y, 
         else UI::text(ctx, x + 94, sy, "-", C::DkGray);
         sy += 14;
     }
+    // 1.5.0 (#94 #93): Wounded, and gear the member doesn't use well
+    if (m.wounds > 0) { UI::text(ctx, x + 8, sy + 4, fmt("WOUNDED x%d: -%d%% max HP, -%d to hit. An inn night or a healer cures it.", m.wounds, 15 * m.wounds, 5 * m.wounds), RGB(235, 105, 95)); sy += 14; }
+    for (int s = 0; s < SL_COUNT; s++) if (!m.equip[s].empty()) if (const ItemDef* it = gd->item(m.equip[s])) { std::string wv = gearWarning(*it, m); if (!wv.empty()) { UI::text(ctx, x + 8, sy + 4, it->name + ": " + wv, RGB(235, 150, 95)); sy += 14; } }
     if (m.statPoints > 0 || m.rankPoints > 0) UI::text(ctx, x + 8, sy + 4, fmt("%d stat points and %d class rank%s to assign (Level Up)", m.statPoints, m.rankPoints, m.rankPoints == 1 ? "" : "s"), C::Cyan);
 }
 
@@ -272,6 +275,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             if (m.recolor) ctx.ts->drawRecolor(cv, m.tile, 26, 56 + i * 40, 2, m.color); else ctx.ts->draw(cv, m.tile, 26, 56 + i * 40, 2);
             UI::text(ctx, 56, 54 + i * 40, m.name.substr(0, 11), m.alive ? C::White : C::Red);
             UI::text(ctx, 56, 68 + i * 40, fmt("L%d %d/%d", m.level, m.hp, m.maxHP(*gd)), C::Gray);
+            if (m.wounds > 0) UI::text(ctx, 128, 68 + i * 40, fmt("W%d", m.wounds), RGB(235, 105, 95));   // 1.5.0 (#94)
         }
     }
     if (menuTab == 0) {
@@ -294,7 +298,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
                 if (i == 0) UI::text(ctx, lx + 12, ly + 26, "(remove)", sel ? C::Yellow : C::Gray);
                 else { const ItemDef* d = gd->item(cands[i - 1]); drawItemTile(*ctx.ts, cv, *d, lx + 10, ly + 25 + i * 16, 1); UI::text(ctx, lx + 26, ly + 26 + i * 16, d->name, sel ? C::Yellow : C::White); }
             }
-            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 26 + std::min(14, n) * 16 + detH); }   // 1.1.5 (#26): 8 px above the panel bottom
+            if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 26 + std::min(14, n) * 16 + detH, &party.members[menuMember]); }   // 1.1.5 (#26): 8 px above the panel bottom
         } else {
             if (menuSubFocus) { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "slot"); keyHint(ctx, 290, SCREEN_H - 30, "Enter", "change"); keyHint(ctx, 380, SCREEN_H - 30, gKeys.label(A_ITEMS), "unequip"); keyHint(ctx, 490, SCREEN_H - 30, "Left", "back to party"); }
             else { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "member"); keyHint(ctx, 300, SCREEN_H - 30, "Right", "equipment"); keyHint(ctx, 420, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, 540, SCREEN_H - 30, "Esc", "back"); }
@@ -322,7 +326,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             drawItemTile(*ctx.ts, cv, *d, 330, 70, 2);
             ctx.font->bold = true; UI::text(ctx, 362, 70, d->name, C::Gold); ctx.font->bold = false;
             UI::text(ctx, 362, 83, itemCategory(*d), C::Gray);   // 1.1.5 (#26): the item type sits under the name, not on the panel's bottom edge
-            drawItemDetails(cv, *d, 330, 98, 280, INV_ACT_Y - 14);   // panel bottom (INV_ACT_Y - 6) less 8 px of padding
+            drawItemDetails(cv, *d, 330, 98, 280, INV_ACT_Y - 14, d->equippable() && menuMember < (int)party.members.size() ? &party.members[menuMember] : nullptr);   // panel bottom (INV_ACT_Y - 6) less 8 px of padding
             if (menuSubFocus) {
                 std::vector<std::string> acts;
                 if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
@@ -537,7 +541,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
         UI::text(ctx, 392, 83, itemCategory(*cur), C::Gray);   // 1.1.5 (#26)
         // 1.1.5 (#26): text stops 8 px above the panel's bottom edge (panel 60..240)
         drawItemDetails(cv, *cur, 360, 98, 250, cur->equippable() ? 177 : 232);
-        if (cur->equippable()) { int y = 180; for (auto& m : party.members) { const ItemDef* e = m.equip[cur->slot()].empty() ? nullptr : gd->item(m.equip[cur->slot()]); std::string cmp = e ? e->name : "-"; UI::text(ctx, 360, y, m.name.substr(0, 10) + ": " + cmp, C::Gray); y += 13; if (y + 13 > 232) break; } }
+        if (cur->equippable()) { int y = 180; for (auto& m : party.members) { const ItemDef* e = m.equip[cur->slot()].empty() ? nullptr : gd->item(m.equip[cur->slot()]); std::string cmp = e ? e->name : "-"; bool bad = !gearWarning(*cur, m).empty(); UI::text(ctx, 360, y, m.name.substr(0, 10) + ": " + cmp + (bad ? "  (poor fit)" : ""), bad ? RGB(235, 105, 95) : C::Gray); y += 13; if (y + 13 > 232) break; } }
         // quantity + total
         int maxQ = shopMaxQty(shopTab, curReal), q = std::max(1, shopQty);
         int unit = shopTab == 0 ? itemBuyPrice(*cur) : itemSellPrice(*cur);
@@ -561,7 +565,31 @@ void Game::drawShop(Canvas& cv, InputState& in) {
 // on its own, in a softer colour under a rule. Whatever does not fit above maxY is left out (the description before any stat).
 // 1.1.4 (owner's #25): rows come in groups (weapon / defense + stat boosts / resists / use) and a group always starts
 // on a new line, so boosts and resists never share one; every value in a column starts at the same x.
-int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY) {
+std::vector<std::pair<std::string, Color8>> Game::gearNotes(const ItemDef& d, const Character* who) const {
+    std::vector<std::pair<std::string, Color8>> out; const Color8 INFO = RGB(170, 170, 190), BAD = RGB(235, 105, 95);
+    auto classesWith = [&](bool weapon) { std::string s; for (auto& id : gd->classOrder) if (const ClassDef* c = gd->cls(id)) {
+            bool ok = weapon ? c->trained(d.family) : (d.weight <= c->wears || std::find(d.wornby.begin(), d.wornby.end(), id) != d.wornby.end());
+            if (ok) s += (s.empty() ? "" : ", ") + c->name; } return s; };
+    if (d.type == IT_WEAPON && !d.family.empty()) { std::string c = classesWith(true); out.push_back({"Family: " + d.family + (c.empty() ? "" : " - trained: " + c), INFO}); }
+    if (d.equippable() && d.type != IT_WEAPON && d.type != IT_ACCESSORY && d.weight > 0) { std::string c = classesWith(false); std::string wn = weightName(d.weight); wn[0] = (char)toupper((unsigned char)wn[0]); out.push_back({wn + " armour - worn well by: " + (c.empty() ? "nobody" : c), INFO}); }
+    { std::string rq; for (int s = 0; s < ST_COUNT; s++) if (d.req[s] > 0) rq += (rq.empty() ? "" : ", ") + std::string(statName(s)) + " " + std::to_string(d.req[s]); if (!rq.empty()) out.push_back({"Needs " + rq, INFO}); }
+    if (who && d.equippable()) { std::string wv = gearWarning(d, *who); if (!wv.empty()) out.push_back({who->name + ": " + wv, BAD}); }
+    return out;
+}
+std::string Game::gearWarning(const ItemDef& d, const Character& who) const {
+    std::string s;
+    if (d.type == IT_WEAPON && !who.trainedWith(d, *gd)) s += "untrained: +1 AP, -10 to hit, no trait. ";
+    if (d.type != IT_WEAPON && d.type != IT_ACCESSORY && !who.wearsWell(d, *gd)) {
+        int best = 0; if (who.ranks.empty()) { if (auto* c = gd->cls(who.classId)) best = c->wears; } else for (auto& r : who.ranks) if (r.second > 0) if (auto* c = gd->cls(r.first)) best = std::max(best, c->wears);
+        int st = std::max(1, d.weight - best);
+        s += fmt("too heavy: -%d evasion, spells +%d%% MP, %d%% fail. ", 5 * st, 15 * st, 10 * st);
+    }
+    int sh = who.reqShort(d, *gd);
+    if (sh > 0) s += d.type == IT_WEAPON ? fmt("%d stat point%s short: -%d to hit.", sh, sh == 1 ? "" : "s", std::min(30, sh * 4)) : fmt("%d stat point%s short: -%d evasion.", sh, sh == 1 ? "" : "s", std::min(30, sh * 3));
+    return trim(s);
+}
+
+int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int maxY, const Character* who) {
     const Color8 UP = RGB(120, 215, 120), DOWN = RGB(235, 105, 95), LABEL = RGB(150, 150, 165);
     struct Row { std::string label, value; Color8 col; bool full; int group; };
     std::vector<Row> rows;
@@ -642,6 +670,11 @@ int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int
         if (!fxl.empty() && cy > y) cy += 3;
         for (auto& f : fxl) for (auto& l : ctx.font->wrap(f, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, C::Cyan); cy += lh; }
     }
+    {   // 1.5.0 (#93): who uses it well, and what it costs the member it is for
+        auto notes = gearNotes(d, who);
+        if (!notes.empty() && cy > y) cy += 3;
+        for (auto& n : notes) for (auto& l : ctx.font->wrap(n.first, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, n.second); cy += lh; }
+    }
     if (!trim(d.desc).empty() && cy + lh <= maxY) {
         if (cy > y) { cy += 3; cv.fillRect(x, cy, w, 1, RGB(70, 70, 90)); cy += 5; }
         for (auto& l : ctx.font->wrap(d.desc, w)) { if (cy + lh > maxY) break; UI::text(ctx, x, cy, l, RGB(200, 195, 175)); cy += lh; }
@@ -655,7 +688,7 @@ int Game::drawItemDetails(Canvas& cv, const ItemDef& d, int x, int y, int w, int
 const char* statHelp(int s) {
     switch (s) {
         case ST_STR: return "Melee damage with STR weapons (+1 per 2 points over 8).";
-        case ST_DEX: return "+2% to hit, +1 evasion, crits; +1 AP per 5, +1 Move per 3. Bows, guns, daggers.";
+        case ST_DEX: return "+1% to hit, +1 evasion, crits; +1 AP per 5, +1 Move per 3. Bows, guns, daggers.";
         case ST_CON: return "+3 max HP per point.";
         case ST_INT: return "+2 MP; arcane and tech spell damage (+1 per 2 over 8).";
         case ST_WIS: return "+2 MP; healing power (+1 per point over 8); holy spells.";

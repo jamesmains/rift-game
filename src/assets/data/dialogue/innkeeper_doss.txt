@@ -1,8 +1,8 @@
 [start]
 speaker=Innkeeper Doss
-text=Welcome to the Weary Goat! A room's ten gold and the stew's free with it. What'll it be?
-option=Rent a room. (10 gold)|room|gold:10
-option=Rent a room.|poor|!gold:10
+text=Welcome to the Weary Goat! A room's twenty gold and the stew's free with it. What'll it be?
+option=Rent a room. (20 gold)|room|gold:20
+option=Rent a room.|poor|!gold:20
 option=You look like you've something on your mind.|letter|q_main>=2&!q_letter>=1
 option=About that letter...|letter_ask|q_letter>=1&!q_letter>=2
 option=Fenna says the kettle's on.|letter_done|q_letter>=2&!letter_burned&!doss_thanked
@@ -16,13 +16,13 @@ option=Nothing, thanks.|end
 [room]
 speaker=Innkeeper Doss
 text=Sleep well. Mind the goat.
-gold=-10
+gold=-20
 rest=1
 option=Thanks.|end
 
 [poor]
 speaker=Innkeeper Doss
-text=Ten gold, friend. I'm not a charity, whatever the goat tells you.
+text=Twenty gold, friend. I'm not a charity, whatever the goat tells you.
 option=Right.|end
 
 [rumour]

@@ -42,6 +42,8 @@ struct Character {
     std::string favs[8];                // favorites hotbar: "spell:id" or "item:id"
     // 1.4.0: creature extras (creatures.txt role= windup= ward= snuff= fx=); party members get fx from gear and class perks
     std::string role, windup, ward; bool snuff = false; std::map<std::string, int> cfx;
+    std::map<std::string, int> traitRes;   // 1.5.0 (#92): creatures' weapon-trait resistances (crush:-100)
+    int wounds = 0;                     // 1.5.0 (#94): party members - 0..3; -15% max HP and -5 to hit each; inn night / healer cure
     int bond = 0;                       // companions: +1 Loyal (+10 hit, +5 evasion), -1 Strained (-10 / -5); Game::syncBonds
     // multiclassing: every level is a rank in some class (D&D style). level == sum of ranks.
     std::map<std::string, int> ranks;   // class id -> rank
@@ -67,6 +69,15 @@ struct Character {
     std::string trait(const GameData& gd) const;  // 1.4.0 (#68): the weapon's family trait ("" = none)
     int fx(const std::string& key, const GameData& gd) const;   // 1.4.0: gear fx= + class passives/perks + creature fx
     bool hasShield(const GameData& gd) const;     // an off-hand with def (a shield) is worn
+    // 1.5.0 (#93) class gearing: drawbacks, not bans
+    bool trainedWith(const ItemDef& d, const GameData& gd) const;   // a weapon of a family one of its classes knows (creatures: always)
+    bool wearsWell(const ItemDef& d, const GameData& gd) const;     // armour no heavier than its classes wear (or wornby= one of them)
+    int  armorOver(const GameData& gd) const;     // weight steps over the class's armour, summed over worn pieces
+    int  reqShort(const ItemDef& d, const GameData& gd) const;      // stat points missing for the item's req= (base stats + other gear)
+    int  gearHitPenalty(const GameData& gd) const;                  // untrained weapon -10, weapon req short -4 a point (max 30)
+    int  spellFail(const GameData& gd) const { return std::min(50, armorOver(gd) * 10); }   // % a spell fizzles (armour too heavy)
+    int  spellCostPct(const GameData& gd) const { return armorOver(gd) * 15; }              // % more MP per spell
+    int  woundHitPenalty() const { return wounds * 5; }
     void attackDamage(const GameData& gd, int& lo, int& hi, int& type) const;
     bool hasEffect(const std::string& id) const { for (auto& e : effects) if (e.id == id) return true; return false; }
     StatusEffect* effect(const std::string& id) { for (auto& e : effects) if (e.id == id) return &e; return nullptr; }

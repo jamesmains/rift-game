@@ -1,18 +1,18 @@
 [start]
 speaker=Innkeeper Ule
-text=The Sunken Boot. Beds are twelve gold and only slightly damp.
-option=Rent a bed. (12 gold)|room|gold:12
-option=Rent a bed.|poor|!gold:12
+text=The Sunken Boot. Beds are thirty gold and only slightly damp.
+option=Rent a bed. (30 gold)|room|gold:30
+option=Rent a bed.|poor|!gold:30
 option=Goodbye.|end
 
 [room]
 speaker=Innkeeper Ule
 text=Sleep well. If something knocks on the window, it's the frogs. Probably.
-gold=-12
+gold=-30
 rest=1
 option=Thanks.|end
 
 [poor]
 speaker=Innkeeper Ule
-text=Twelve gold. The damp is free.
+text=Thirty gold. The damp is free.
 option=Right.|end
