@@ -15,7 +15,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * World objects: rubble to dig or blast, ice to melt, levers, sluices, NPCs that move when the story says so
 * Deep crafting: station skill, formulas, failure chance, fine/masterwork rolls, reinforcing, enchanting, salvage
 * One difficulty, and it is hard on purpose: cover, flanking and the right weapon decide fights
-* Swords, bows, guns, lasers, spells; 50+ monsters; 130+ items; 20 side quests (three or four in every town), 5 companion quests and a 7-stage
+* Swords, bows, guns, lasers, spells; 50+ monsters; 200+ items; 20 side quests (three or four in every town), 5 companion quests and a 7-stage
   main quest with three choices that change the ending (break, bury or keep the shards)
 * Proximity-triggered tactical combat fought in place: AP, movement points, hit chances,
   aimed shots, cover-free line of sight, area spells, grenades, status effects, fleeing
@@ -26,8 +26,15 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * Day/night, weather, shop hours; crafting and random affixes on loot; world map with fast travel
 * Journal with quests (map pins, checklists, branching endings and failure), bestiary, stats, notes; notice-board
   bounties; town reputation that moves shop prices; 33 achievements
-* A Win98 desktop with the Triffall launcher (play, saves, How to Play, Field Notes, achievements, recovered files),
+* A Win98 desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
+
+## 1.6.2 a tidier launcher
+
+* The launcher's Field Notes and Files pages are gone. What you learn about monsters is still kept for every save:
+  the combat info box and the Journal's Bestiary show it.
+* The terminal passwords' clues are now found in the world: a memo and a machine's log in the Research Annex, and
+  the data disks in the vaults show their text when you find them (and it goes into the Journal's Notes).
 
 ## 1.6.1 the Triffall launcher
 
@@ -772,7 +779,7 @@ Load/Save icons still work when no game is running.
   itself is just a map; to **travel**, talk to the **coachman** in any town square: he takes you to any place you
   have visited for a fare (8 gold + 6 per league). Travel takes game time and can be interrupted by an ambush.
 * **Journal** (J): quests with "show on map", bounties, a **bestiary** that fills in kills and reveals
-  resistances as you fight each creature, play stats, notes picked up from signs and lore files, achievements.
+  resistances as you fight each creature, play stats, notes picked up from signs and documents, achievements.
 * **Bounties**: each town's notice board posts a few offers per day; take up to 3 at a time, drop one from the
   journal (E), hand them in at the board. Courier jobs give you a letter and send you one way only.
 * **Achievements**: `achievements.txt` (conditions over stats and flags), unlocked across all save slots,
@@ -781,7 +788,7 @@ Load/Save icons still work when no game is running.
 * **Dev console** (`, debug builds only: `build.ps1 -Dev`): `help` lists everything: teleport, give, gold, xp, level, flag, god, heal, time,
   weather, spawn, kill, join, learn, approve, achieve, reveal, stats, shop, dialogue, run,
   auto (lets the AI fight for the party - handy for balance testing)...
-* **Desktop toys**: Minesweeper, Solitaire, My Computer (lore files in `assets/data/lore`), and a starfield
+* **Desktop toys**: Minesweeper, Solitaire, My Computer (the PC's drives), and a starfield
   screensaver after 90 seconds idle.
 
 ## The editor (Editor)
@@ -964,7 +971,7 @@ renders frames to PNG without a window - see `tests/`).
 A campaign is a separate game in `assets/campaigns/<id>/`: `campaign.txt` plus its own data files, in the same
 layout as `assets/data` (`maps/`, `dialogue/`, `items.txt`, `creatures.txt`, `classes.txt`, `spells.txt`, `shops.txt`,
 `quests.txt`...). It uses only its own folder; tiles (`tilekinds.txt` can be added to change or add tile kinds),
-sprites, sounds and the My Computer lore are shared. Each campaign gets its own **desktop icon**; double-clicking it
+sprites and sounds are shared. Each campaign gets its own **desktop icon**; double-clicking it
 opens New Game for that campaign, and saves remember which campaign they belong to.
 
 The easiest way to make one is the Editor's **Campaign > New campaign**, then the **Campaign tab**. `campaign.txt`:
@@ -1036,8 +1043,8 @@ Almost everything is plain text:
 * `assets/data/overworld.txt` - where locations sit on the overworld and which roads link them.
 * `assets/data/tilekinds.txt` - the tile kinds (what each map cell type looks like and does).
   Delete it to regenerate the built-in defaults.
-* `assets/data/recipes.txt`, `affixes.txt`, `banter.txt`, `achievements.txt`, `lore/*.txt` - crafting, loot affixes,
-  companion lines, achievements and the My Computer files. Each has a format comment at the top.
+* `assets/data/recipes.txt`, `affixes.txt`, `banter.txt`, `achievements.txt` - crafting, loot affixes,
+  companion lines and achievements. Each has a format comment at the top.
 * `assets/data/bounties.txt`, `factions.txt` - notice boards and hand-written bounties, and the towns the party has a
   reputation with. A campaign's `hints.txt` is tutorial guidance (see Campaigns).
 * `assets/data/sounds.txt` - sound events and music tracks (`[sound]` / `[music]` blocks with `id`, `file`,

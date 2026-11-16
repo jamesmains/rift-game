@@ -221,6 +221,21 @@ title=Annex vault terminal
 text=
 onuse=script:terminal,RIFT0,lab_vault_open,ANNEX-NET vault terminal
 
+# 1.6.2 (#137): the vault password's clues, here in the lab now that the desktop has no Files page
+[sign]
+template=paper_sign
+x=13
+y=2
+title=ANNEX-NET memo
+text=To all annex staff, re: the records vault. The vault terminal by the cryo room has been "upgraded" again. Security, in their wisdom, have set the password to the name of the remote authority that keeps pushing directives into the maintenance unit - the one in its log. Letters and digits only, no dash. Yes, really. If the unit asks you why, do not answer it. It has opinions. - Facilities
+
+[sign]
+x=17
+y=12
+sprite=70,21
+title=Maintenance unit log
+text=[0001] Power restored. 14 of 61 subsystems respond. [0002] Occupants: 0. Last occupant logout: 14,616 days ago. [0144] Perimeter breach, sector 1. Classification: UNKNOWN. Response: all units. [0145] Correction. Classification: human. Query: humans do not do that. [0300] Directive updated by remote authority "RIFT-0". Content redacted. [0301] This unit objects to the updated directive. [0302] Objection noted. Objection overruled. [0303] This unit remembers the objection.
+
 [door]
 x=8
 y=3
@@ -235,7 +250,7 @@ y=2
 items=disk_dispatch:1,cell_pack:1,potion_red2:1
 gold=120
 flag=lab_vault_chest
-onuse=lorefile:metro_dispatch
+onuse=message:Data Disk - Metro Dispatch|METRO DISPATCH - LINE 3, night shift notes. 22:10 Service suspended past Ashfall Central. Sky "doing something". 22:41 Last train out: number 1407, driver Margot. Full, standing room only. 22:58 Dispatch vault re-keyed for the evacuation. New code = the last train's number, then its driver's name. Write it down somewhere SAFE, not on the wall like last time. 23:40 Margot never reached the depot. If anyone finds this: the vault is by the market stalls, behind the terminal in the corner.
 
 [chest]
 x=3

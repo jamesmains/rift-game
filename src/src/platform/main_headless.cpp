@@ -42,13 +42,19 @@ int main(int argc, char** argv) {
 
             // 1.6.0 quests commands
 
-            // 1.6.1 desktop / launcher: run a desktop action (launcher, load, fieldnotes, new...); mark the installer as done
+            // 1.6.1 desktop / launcher: run a desktop action (launcher, load, readme, new...); mark the installer as done
             if (cmd == "deskaction") { app.desktop.runAction(p[1]); step(2); return true; }
             if (cmd == "todesktop") { app.game.requestDesktop = true; step(2); return true; }   // the game hands back to the desktop (as Exit does)
             if (cmd == "installed") { app.desktop.markInstalled(); app.desktop.refreshCampaignIcons(); step(2); return true; }
             if (cmd == "launchcampaign") { app.desktop.openLauncher(-1, p[1]); step(2); return true; }   // the launcher with this adventure picked
             if (cmd == "ctrlshift") { in.down[K_CTRL] = true; in.down[K_SHIFT] = true; in.clipboard = clip; in.press(keyMap[p[1]]); step(1); in.release(keyMap[p[1]]); in.down[K_CTRL] = false; in.down[K_SHIFT] = false; in.clipboard.clear(); step(1);  return true; }
             if (cmd == "rtap") { int nx = atoi(p[1].c_str()), ny = atoi(p[2].c_str()); in.mouseX = nx; in.mouseY = ny; in.mouseDX = in.mouseDY = 0; step(2); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); in.mouseDown[2] = false; in.mouseReleased[2] = true; step(3); return true; }   // 1.2.0: right click (press + release)
+            // 1.6.2 (#136): aim [unit] = put the combat cursor on that unit (else the enemy nearest the active one), no confirm
+            if (cmd == "aim") { auto& G = app.game; int best = p.size() > 1 ? atoi(p[1].c_str()) : -1;
+                if (best < 0) { int bd = 1 << 20, ax = 0, ay = 0; if (G.cb.selectedUnit >= 0) { ax = G.cb.units[G.cb.selectedUnit].x; ay = G.cb.units[G.cb.selectedUnit].y; }
+                    for (size_t i = 0; i < G.cb.units.size(); i++) { auto& u = G.cb.units[i]; if (!u.ch.alive || u.friendly()) continue; int d = std::max(abs(u.x - ax), abs(u.y - ay)); if (d < bd) { bd = d; best = (int)i; } } }
+                if (best >= 0 && best < (int)G.cb.units.size()) { G.cb.selX = G.cb.units[best].x; G.cb.selY = G.cb.units[best].y; }
+                step(1); return true; }
             if (cmd == "unitplace") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].x = atoi(p[2].c_str()); u[i].y = atoi(p[3].c_str()); app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitplace <unit> <x> <y> (combat)
             if (cmd == "unitkill") { int i = atoi(p[1].c_str()); auto& u = app.game.cb.units; if (i >= 0 && i < (int)u.size()) { u[i].ch.hp = 0; u[i].ch.alive = false; app.game.cb.reachDirty = true; } step(1); return true; }   // 1.3.4: unitkill <unit> (no end-of-fight check)
             if (cmd == "craftsel" && p.size() >= 2) { printf("  craftsel %s\n", app.game.craftSelect(p[1]).c_str()); step(1); return true; }   // 1.5.2 (#106)
@@ -203,7 +209,7 @@ int main(int argc, char** argv) {
                 // 1.6.0 story expects
 
                 // 1.6.0 builders expects
-                // 1.6.1: the launcher's page (0 Play, 1 Saves, 2 How to Play, 3 Field Notes, 4 Achievements, 5 Files, 6 About), the
+                // 1.6.1: the launcher's page (0 Play, 1 Saves, 2 How to Play, 3 Achievements, 4 About; 1.6.2), the
                 // desktop's icons (actions), the adventure picked, and which of its slots hold a save (e.g. 1001 = slot 1 + autosave)
                 if (key == "launcherpage") { got = "none"; for (auto& w : app.desktop.windows) if (w.type == "launcher") got = std::to_string(w.page); return true; }
                 if (key == "deskicons") { got.clear(); for (auto& d : app.desktop.iconDefs) got += (got.empty() ? "" : ",") + d.action; num = false; return true; }
@@ -238,13 +244,14 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "crate:")) { got = "none"; if (g.map) for (auto& c : g.map->crates) if (c.id == key.substr(6)) got = fmt("%d,%d", c.x, c.y); num = false; return true; }
                 if (startsWith(key, "lorefile:")) { got = g.foundFiles.count(key.substr(9)) ? "1" : "0"; return true; }
                 if (key == "inputtext") { got = g.inputBuf; num = false; return true; }
-                if (key == "deskfiles") { got.clear(); for (auto& f : app.desktop.loreFiles()) got += (got.empty() ? "" : ",") + f; num = false; return true; }   // My Computer's list
+                // 1.6.2 (#137): notes = the Journal's Notes joined by " || "; message = the open message box "title: text"
+                if (key == "notes") { got.clear(); for (auto& n : g.notes) got += (got.empty() ? "" : " || ") + n; if (got.empty()) got = "none"; num = false; return true; }
+                if (key == "message") { got = g.mode == GMode::MESSAGE ? g.pendingMessageTitle + ": " + g.pendingMessage : std::string("none"); num = false; return true; }
                 // 1.5.0: recipe:ID = 1 if the crafting lists show it (#86); fieldnote:ID = "res bits;tags" from fieldnotes.ini,
-                // fieldknown:ID = the resistance bits the tooltip shows, deskfieldnotes = the desktop's Field Notes.txt (#96)
+                // fieldknown:ID = the resistance bits the tooltip shows (#96; the desktop's Field Notes page is gone since 1.6.2)
                 if (startsWith(key, "recipe:")) { got = "0"; for (auto& r : g.recipes) if (r.id == key.substr(7) && g.recipeVisible(r)) got = "1"; return true; }
                 if (startsWith(key, "fieldnote:")) { auto it = g.fieldNotes.find(key.substr(10)); got = "none"; if (it != g.fieldNotes.end()) { got = std::to_string(it->second.res) + ";"; for (auto& t : it->second.tags) got += t + ","; } num = false; return true; }
                 if (startsWith(key, "fieldknown:")) { got = std::to_string(g.knownResBits(key.substr(11))); return true; }
-                if (key == "deskfieldnotes") { got = g.fieldNotesText(); num = false; return true; }
                 if (key == "bestiaryids") { got.clear(); for (auto& b : g.bestiaryIds()) got += (got.empty() ? "" : ",") + b; if (got.empty()) got = "none"; num = false; return true; }   // the Journal's bestiary list
                 // 1.5.0 (#99): group:I = "x,y" + ",gone" / ",d<steps>" (at a noise) / ",r" (walking home) / ",h<hurt%>"; trap:X,Y = armed|sprung|none;
                 // aim = "x,y" of the throw cursor ("none" when not aiming); aggro:I = how near group I lets the party come

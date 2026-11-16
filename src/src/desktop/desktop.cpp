@@ -321,9 +321,7 @@ void Desktop::runAction(const std::string& a) {
     // 1.6.1 (#133 #134): these live in the launcher now (F1 / F9 and old action names still work)
     else if (a == "load" || a == "saves") openLauncher(LP_SAVES, game->running ? game->campaignId : "");
     else if (a == "readme" || a == "help") openLauncher(LP_HELP);
-    else if (a == "fieldnotes") openLauncher(LP_NOTES);
     else if (a == "achievements") openLauncher(LP_ACHIEV);
-    else if (a == "files") openLauncher(LP_FILES);
     else if (a == "about") openLauncher(LP_ABOUT);
     else if (a == "settings") openWindow("settings");
     else if (a == "wishlist") { if (req && game && !game->storeUrl.empty()) req->openURL = game->storeUrl; showToast("Opening the Triffall store page..."); }

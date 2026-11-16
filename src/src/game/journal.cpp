@@ -177,48 +177,12 @@ int Game::knownResBits(const std::string& creature) const {
     return known;
 }
 // how a creature takes a damage type: its res= plus the rules every undead / machine shares (poison does nothing,
-// machines short out on shock). The combat tooltip, the bestiary and the Field Notes all read it this way.
+// machines short out on shock). The combat tooltip and the bestiary read it this way.
 int creatureResistance(const CreatureDef& cd, int d) {
     int r = cd.res[d];
     if ((cd.undead || cd.mechanical) && d == DT_POISON) r = 100;
     if (cd.mechanical && d == DT_SHOCK) r = std::min(r, -50);
     return r;
-}
-std::string Game::fieldNotesText() const {
-    std::string s = "FIELD NOTES\n===========\n\n";
-    s += "What our party has found out about the creatures of Aldmoor, the hard way.\n";
-    s += "This file lives on this computer, not in a save: a lost fight still\nteaches something, and every save slot reads the same notes.\n\n";
-    std::vector<std::pair<std::string, std::string>> rows;   // name, id
-    for (auto& kv : fieldNotes) if (const CreatureDef* cd = gd->creature(kv.first)) rows.push_back({cd->name, kv.first});
-    std::sort(rows.begin(), rows.end());
-    if (rows.empty()) s += "(Nothing yet. Hit a monster with a weapon or a spell and see how it\ntakes it: what you learn is written down here.)\n";
-    for (auto& r : rows) {
-        const CreatureDef* cd = gd->creature(r.second); const FieldNote& n = fieldNotes.at(r.second);
-        s += r.first + (cd->boss ? "  (boss)" : "") + "\n";
-        std::string weak, normal, resists, immune;
-        auto add = [](std::string& to, const std::string& w) { to += (to.empty() ? "" : ", ") + w; };
-        for (int d = 0; d < DT_COUNT; d++) if (n.res & (1 << d)) { int v = creatureResistance(*cd, d); if (v < 0) add(weak, dmgTypeName(d)); else if (v >= 100) add(immune, dmgTypeName(d)); else if (v >= 30) add(resists, dmgTypeName(d)); else add(normal, dmgTypeName(d)); }
-        if (!weak.empty()) s += "  Weak to: " + weak + "\n";
-        if (!immune.empty()) s += "  Immune to: " + immune + "\n";
-        if (!resists.empty()) s += "  Resists: " + resists + "\n";
-        if (!normal.empty()) s += "  Takes normal damage from: " + normal + "\n";
-        {   // 1.5.0 (#92): weapon traits that get through its guard (bits 8+)
-            std::string tr; for (auto& kv : cd->traitRes) { int b = 8 + traitIndex(kv.first); if (b >= 8 && (n.res & (1 << b))) add(tr, kv.first + (kv.second < 0 ? " weapons hit it hard" : " weapons get through")); }
-            if (!tr.empty()) s += "  " + tr + "\n"; }
-        int untried = 0; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) untried++;
-        if (untried) { std::string u; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) add(u, dmgTypeName(d)); s += "  Not tried yet: " + u + "\n"; }
-        std::string casts, other;
-        for (auto& t : n.tags) {
-            if (startsWith(t, "spell:")) { const SpellDef* sp = gd->spell(t.substr(6)); add(casts, sp ? sp->name : t.substr(6)); }
-            else if (startsWith(t, "windup:")) { const SpellDef* sp = gd->spell(t.substr(7)); add(other, "winds up " + (sp ? sp->name : t.substr(7)) + " (get out of the marked tiles)"); }
-            else if (startsWith(t, "ward:")) { const CreatureDef* w = gd->creature(t.substr(5)); add(other, "takes half damage while a " + (w ? w->name : t.substr(5)) + " stands"); }
-            else if (t == "darkvision") add(other, "sees in the dark (bring light or be seen first)");
-        }
-        if (!casts.empty()) s += "  Casts: " + casts + "\n";
-        if (!other.empty()) s += "  Seen: " + other + "\n";
-        s += "\n";
-    }
-    return s;
 }
 // the bestiary's list: every creature this save has met, plus every creature in the Field Notes (met in a lost fight)
 std::vector<std::string> Game::bestiaryIds() const {
@@ -231,8 +195,7 @@ void Game::unlockLoreFile(const std::string& name) {
     foundFiles.insert(name);
     std::string s = "# Triffall desktop files found while playing (global, not per save slot)\n[found]\n"; for (auto& f : foundFiles) s += f + "=1\n";
     writeFile(saveDir + "/files.ini", s);
-    log("A new file turned up in the Triffall launcher: Files > " + name + "."); notify("New file in the launcher: " + name);   // 1.6.1: lore moved from My Computer
-    gAudio.play("achievement");
+    // 1.6.2 (#137): the launcher's Files page is gone, so this only records the name (scripts can still ask lorefile(name))
 }
 void Game::saveAchievementState() const {
     std::string s = "# Triffall achievements (global, not per save slot)\n[unlocked]\n"; for (auto& u : unlocked) s += u + "=1\n";

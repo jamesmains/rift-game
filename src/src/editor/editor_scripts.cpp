@@ -199,7 +199,7 @@ void Editor::drawScripts(InputState& in) {
         "mid(t, start, len)  squash(t)",
         "  squash = letters+digits, capitals",
         "plates(g) platesdown(g)  crateat(x,y)",
-        "lorefile(name)  (desktop file found)"};
+        "lorefile(name)  (1 once lorefile:name ran)"};
     static const char* ref2[] = {
         "Every dialogue action, as a line:",
         "give potion:2    take key:1",

@@ -1,7 +1,8 @@
 // 1.6.1 (#134): the Triffall launcher - the game's own window on the fake desktop, opened by the "Triffall" icon that the
 // first-run installer puts there. It is the hub for everything about the game: continue / start / load an adventure
-// (each campaign keeps its own saves, #135), How to Play, Field Notes, Achievements, the recovered files, settings,
-// the Editor and the credits. Win98 window outside, the game's own night-and-rift look inside.
+// (each campaign keeps its own saves, #135), How to Play, Achievements, settings, the Editor and the credits.
+// 1.6.2 (#137): the Field Notes and Files pages were removed (little used); what you learn about monsters is in the
+// Journal's Bestiary, and the documents that hold terminal passwords are found in the world (signs, data disks). Win98 window outside, the game's own night-and-rift look inside.
 #include "desktop.h"
 #include "../core/audio.h"
 #include "../core/version.h"
@@ -15,8 +16,8 @@ namespace {
 const Color8 L_BG = RGB(16, 14, 28), L_PANEL = RGB(28, 24, 46), L_EDGE = RGB(92, 70, 146), L_TEXT = RGB(226, 220, 206),
              L_DIM = RGB(140, 134, 162), L_AMBER = RGB(255, 205, 90), L_VIOLET = RGB(176, 120, 246), L_SEL = RGB(62, 42, 104),
              L_HOVER = RGB(78, 56, 128), L_GOOD = RGB(120, 220, 140);
-const char* PAGE_NAMES[] = {"Play", "Saves", "How to Play", "Field Notes", "Achievements", "Files", "About"};
-const char* PAGE_ACTIONS[] = {"launcher", "saves", "readme", "fieldnotes", "achievements", "files", "about"};
+const char* PAGE_NAMES[] = {"Play", "Saves", "How to Play", "Achievements", "About"};
+const char* PAGE_ACTIONS[] = {"launcher", "saves", "readme", "achievements", "about"};
 }
 
 // The old Readme.txt, now the launcher's How to Play page
@@ -38,8 +39,8 @@ static const std::vector<std::string>& howToPlayLines() {
         "CRAFTING", "  Smiths (forge), alchemists (alchemy) and tinkers (workbench) in", "  towns open a crafting screen; field recipes work from the Items", "  menu (C). Each station has a skill that grows as you use it.", "  Recipes have a difficulty: above your skill they can fail and", "  ruin half the materials; well below it they can come out fine or", "  masterwork. Forges and workbenches also Reinforce gear (+1 to +3)", "  and Salvage it for parts; alchemy benches Enchant it with rift", "  dust. Boss trophies unlock masterwork recipes; formulas teach more.", "",
         "THE WORLD", "  Rubble, vines, ice and boulders block some paths: dig with a", "  shovel, blast with a charge (light it and RUN) or a fire spell,", "  burn, melt or shove. Levers open doors and drain water. Glinting", "  spots are ore veins and herb patches - they grow back in a few days.", "  Notice boards post three bounties a day; take up to three at once.", "  Shops sell stacks: Left/Right sets the quantity, E buys the most.", "  Weapons and armour are in limited stock and restock every 3 days.", "",
         "SNEAKING AND NOISE", "  Not every fight has to happen. Throw Rattle Stones or a bottle", "  (Items > Throw..., or the hotbar) where monsters can hear it:", "  they go to look and barely notice you while they do. Lead them", "  over a trap and they may never reach you. In the dark, with no", "  light, people and beasts that can't see in the dark notice you", "  later - the dead and machines see you anyway.", "",
-        "FIELD NOTES", "  What you find out about a monster - what hurts it, what it", "  casts - goes into the Field Notes page here, for every save.", "  Lost a fight? Reload: you still know what you learned.", "  Hesk's Barrow and Greywood Cave hide places marked as deadly:", "  come back with the right weapon or element. There is always a", "  save shrine close by.", "",
-        "FILES", "  Old machines in the world keep secrets on disk. Disks and", "  terminals you find unlock documents on the Files page.", "",
+        "WHAT YOU LEARN", "  What you find out about a monster - what hurts it, what it", "  casts - goes into the Journal's Bestiary, for every save.", "  Lost a fight? Reload: you still know what you learned.", "  Hesk's Barrow and Greywood Cave hide places marked as deadly:", "  come back with the right weapon or element. There is always a", "  save shrine close by.", "",
+        "TERMINALS", "  Old machines in the world ask for passwords. Notes, logs and", "  data disks nearby hold the clues; what you read is kept in", "  the Journal, under Notes.", "",
         "FAVORITES", "  In the Spells or Items menu, highlight something and press 1-8.", "  Utility spells (Light, Knock, Recall, Sense Treasure, Camouflage,", "  healing) can be cast from the Spells menu outside combat.", "",
         "EDITOR", "  Edits maps (the overworld and every dungeon are plain map files", "  you can paint), tile kinds, items, monsters, spells, classes, shops,", "  quests, dungeons, recipes and dialogue. The Campaign button picks", "  which campaign you edit or creates a new one; new campaigns show", "  up on the Play page.", "",
         "THE DESKTOP", "  Double-click an icon to open it. Right-click it (or E / pad X)", "  to change its picture. Drag icons anywhere: the desktop keeps", "  their places, pictures and the wallpaper for next time.",
@@ -150,7 +151,7 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
     drawLauncherBanner(cv, bx, by, bw, bh);
     // ---- the page list (left) ----
     int nx = w.x + 6, ny = by + bh + 6, nw = 128, ch = w.y + w.h - 6 - ny;
-    static const int ICONS[][2] = {{2, 7}, {0, 3}, {1, 4}, {3, 4}, {3, 8}, {3, 1}, {3, 3}};
+    static const int ICONS[][2] = {{2, 7}, {0, 3}, {1, 4}, {3, 8}, {3, 3}};
     for (int p = 0; p < LP_COUNT; p++) {
         int ry = ny + p * 26; bool sel = w.page == p;
         bool hv = active && !mouseUsed && in.mouseX >= nx && in.mouseX < nx + nw && in.mouseY >= ry && in.mouseY < ry + 24;
@@ -276,11 +277,6 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
         heading(cx, cy + 2, "How to Play");
         std::vector<std::string> lines; for (auto& l : howToPlayLines()) { if (f.width(l) <= cw - 20) { lines.push_back(l); continue; } for (auto& wl : f.wrap(l, cw - 20)) lines.push_back(wl); }
         launchScrollText(cv, in, w, cx, cy + 18, cw, ch - 18, lines, active);
-    } else if (w.page == LP_NOTES) {
-        heading(cx, cy + 2, "Field Notes");
-        f.draw(cv, *ctx.ts, cx + 100, cy + 2, "what your parties learned about monsters", L_DIM);
-        std::vector<std::string> lines; for (auto& raw : split(game ? game->fieldNotesText() : std::string(), '\n')) { if (raw.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(raw, cw - 20)) lines.push_back(wl); }
-        launchScrollText(cv, in, w, cx, cy + 18, cw, ch - 18, lines, active);
     } else if (w.page == LP_ACHIEV) {
         auto& A = game->achievements; int n = (int)A.size();
         heading(cx, cy + 2, "Achievements");
@@ -300,32 +296,6 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
             if (got) f.draw(cv, *ctx.ts, cx + cw - 70, ry + 8, "unlocked", L_GOOD);
         }
         if (n > maxShow) { int sx = cx + cw - 8, sy = ly + 3, sh = lh - 6, th = std::max(14, sh * maxShow / n), ty = sy + (sh - th) * w.scroll / std::max(1, n - maxShow); cv.fillRect(sx, sy, 5, sh, RGB(32, 28, 50)); cv.fillRect(sx, ty, 5, th, L_EDGE); }
-    } else if (w.page == LP_FILES) {
-        // 1.4.0 (#77) lore files, in the launcher since 1.6.1: #locked ones appear once a game unlocks them
-        heading(cx, cy + 2, "Files");
-        f.draw(cv, *ctx.ts, cx + 50, cy + 2, "recovered documents", L_DIM);
-        std::vector<std::string> files = loreFiles();
-        int lw = 150, ly = cy + 18, lh = ch - 18;
-        cv.fillRect(cx, ly, lw, lh, RGB(10, 9, 18)); cv.rect(cx, ly, lw, lh, L_EDGE);
-        for (size_t i = 0; i < files.size(); i++) {
-            int ry = ly + 4 + (int)i * 15; if (ry > ly + lh - 16) break;
-            bool sel = (int)i == w.pick;
-            bool hv = active && !mouseUsed && in.mouseX >= cx + 2 && in.mouseX < cx + lw - 2 && in.mouseY >= ry && in.mouseY < ry + 14;
-            if (active) hot(cx + 2, ry, lw - 4, 14);
-            if (sel) cv.fillRect(cx + 2, ry, lw - 4, 14, L_SEL); else if (hv) cv.fillRect(cx + 2, ry, lw - 4, 14, L_HOVER);
-            cv.fillRect(cx + 6, ry + 2, 7, 9, L_TEXT); cv.hline(cx + 8, ry + 5, 3, L_DIM); cv.hline(cx + 8, ry + 7, 3, L_DIM);
-            std::string label = files[i]; while (f.width(label) > lw - 24 && !label.empty()) label.pop_back();
-            f.draw(cv, *ctx.ts, cx + 18, ry + 1, label, sel ? L_AMBER : L_TEXT);
-            if (hv && in.mousePressed[0]) { if (w.pick != (int)i) { w.pick = (int)i; w.scroll = 0; } mouseUsed = true; gAudio.play("desktop_click"); }
-        }
-        int tx = cx + lw + 6, tw = cx + cw - tx;
-        if (w.pick >= 0 && w.pick < (int)files.size()) {
-            std::string text; readFile(assetDir + "/data/lore/" + files[w.pick] + ".txt", text);
-            if (startsWith(text, "#locked")) { size_t nl = text.find('\n'); text = nl == std::string::npos ? std::string() : text.substr(nl + 1); }
-            std::vector<std::string> lines; for (auto& raw : split(text, '\n')) { std::string l = raw; if (!l.empty() && l.back() == '\r') l.pop_back(); if (l.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(l, tw - 20)) lines.push_back(wl); }
-            launchScrollText(cv, in, w, tx, ly, tw, lh, lines, active);
-            if (game && game->running && w.status != files[w.pick]) { w.status = files[w.pick]; game->addNote("File " + files[w.pick] + ".txt", lines.empty() ? "" : lines[0]); }
-        } else { cv.fillRect(tx, ly, tw, lh, RGB(10, 9, 18)); cv.rect(tx, ly, tw, lh, L_EDGE); f.draw(cv, *ctx.ts, tx + 8, ly + 6, files.empty() ? "No files recovered yet." : "Pick a file to read it.", L_DIM); }
     } else if (w.page == LP_ABOUT) {
         heading(cx, cy + 2, "About Triffall");
         int y = cy + 22;

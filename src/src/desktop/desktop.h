@@ -76,7 +76,7 @@ public:
     SaveSlotInfo slots[4];   // 3 save slots + the autosave of slotsCampaign
     std::string slotsCampaign = "triffall";   // 1.6.1 (#135): whose saves slots[] holds (each campaign has its own)
     std::string launchCampaign = "triffall";  // 1.6.1 (#134): the adventure picked in the launcher (desktop.ini campaign=)
-    enum { LP_PLAY, LP_SAVES, LP_HELP, LP_NOTES, LP_ACHIEV, LP_FILES, LP_ABOUT, LP_COUNT };   // launcher pages
+    enum { LP_PLAY, LP_SAVES, LP_HELP, LP_ACHIEV, LP_ABOUT, LP_COUNT };   // launcher pages (1.6.2 #137: no Field Notes / Files)
     void openLauncher(int page = -1, const std::string& campaign = "");
     int newestSlot() const;                   // the newest of slots[] (-1: none)
     std::string iconFlash; float iconFlashT = 0;   // an icon that just appeared (the installer's shortcut) sparkles a while
@@ -112,7 +112,6 @@ public:
     void refreshCampaignIcons();           // one desktop icon per campaign folder in assets/campaigns
     void openNewGame(const std::string& campaignId);
 
-    std::vector<std::string> loreFiles() const;   // 1.4.0 (#77): the files My Computer lists (#locked ones once a game unlocked them)
 private:
     void drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool active);
     void updateWindow(DeskWindow& w, InputState& in, float dt, bool active);

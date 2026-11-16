@@ -545,7 +545,6 @@ public:
     void loadFieldNotes(); void saveFieldNotes() const;
     bool noteCreature(const std::string& creature, int resBits, const std::string& tag = "");   // true = something new (saved at once)
     int knownResBits(const std::string& creature) const;   // this save's rk_ bits | field notes | every type once 3 are slain
-    std::string fieldNotesText() const;                     // the desktop's Field Notes.txt
     std::vector<std::string> bestiaryIds() const;           // the Journal's bestiary list: met in this save + in the Field Notes
     void applyLearnMigrations();                            // 1.5.0 (#86): migrations.txt [learn] recipe=id|condition
     // 1.5.0 (#99) stealth and avoidance (stealth.cpp): noticing, thrown noisemakers (effect=lure), traps

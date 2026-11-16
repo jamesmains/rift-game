@@ -24,7 +24,7 @@ static const std::vector<EdWorkspace>& workspaces() {
         {"Campaign", {18, 28, 29}, "The campaign itself: its name, where a new game starts, how it ends, the end credits and the Training hints."},
         {"World", {0, 2, 10, 31, 1, 13}, "Places: maps, the world map, generated dungeons and their styles, tile kinds and the sprite sheets."},
         {"People", {24, 11, 7, 32, 16}, "Characters: NPCs, what they say, their shops, healers, and the party's banter."},
-        {"Story", {9, 19, 20, 21, 17, 26, 27, 30}, "Quests, story flags, notice boards, towns' reputation, achievements, desktop lore files, the epilogue and story contradictions."},
+        {"Story", {9, 19, 20, 21, 17, 27, 30}, "Quests, story flags, notice boards, towns' reputation, achievements, the epilogue and story contradictions."},   // 1.6.2 (#137): no Lore tab (26) - the desktop lore files are gone
         {"Fights", {4, 8, 5, 6, 33, 34}, "Monsters, random encounters, spells, classes, combos and statuses, and the core formulas."},
         {"Things", {3, 14, 15, 23, 22}, "Items, crafting recipes, item affixes, resource nodes and object types."},
         {"Sound & Scripts", {12, 25}, "Music and sound effects, and scripts."},

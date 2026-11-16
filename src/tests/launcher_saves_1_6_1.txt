@@ -34,8 +34,10 @@ frames 3
 launchcampaign triffall
 expect deskslots == 1000
 # old shortcuts lead into the launcher's pages
-deskaction fieldnotes
+deskaction achievements
 expect launcherpage == 3
+deskaction about
+expect launcherpage == 4
 deskaction load
 expect launcherpage == 1
 deskaction readme

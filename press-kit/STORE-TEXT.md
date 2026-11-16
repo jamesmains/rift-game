@@ -1,6 +1,6 @@
-# Triffall - store text (as of 1.3.0)
+# Triffall - store text (as of 1.6.2)
 
-Text for the Steam and itch.io pages, checked against the game as it is at 1.3.0. Pictures: `press-kit/art/` (key
+Text for the Steam and itch.io pages, checked against the game as it is at 1.6.2 (first written at 1.3.0). Pictures: `press-kit/art/` (key
 art, capsules, itch cover and banner) and `press-kit/screenshots/16x9_1920x1080/` (combat first). Remake both with
 `.\tools\make-presskit.ps1` after a build.
 
@@ -8,7 +8,15 @@ What changed from the old text: no "bonus campaign" (The Gullwatch Light was rem
 extra campaign), the music line (it's now the Pixel Fantasy soundtrack, not generated), wide-screen support, the size
 on disk, and the item count. The old key art (AI-made) is no longer used - see `press-kit/RIGHTS.md`.
 
+1.6.2 (#136): the Steam capsules and the library logo carry only the art and the name - **no tagline** (Valve's capsule
+rules allow only artwork, the game's name and an official subtitle; a marketing line can cost sale and event
+eligibility). The tagline below is for the page text, the key art and itch.io only. The screenshots were re-shot at
+1.6.2 (the 1.5 combat UI: hit and crit chances in the target box, IMMUNE / WEAK! labels; the 1.6.1 desktop and
+launcher). The desktop no longer has lore files or Field Notes (#137), and the game has one difficulty (1.5.0).
+
 ## Name and tagline
+
+Not for Steam capsules (see above).
 
 **Triffall** - An old-school tactical RPG hiding inside a Windows 98 desktop.
 
@@ -40,7 +48,7 @@ And it all starts on a lovingly faked Windows 98 desktop - Minesweeper and Solit
 - Darkness that matters: torches, lanterns, light spells and enemies that see in the dark
 - Deep crafting with skill, failure, fine and masterwork results, enchanting and salvage
 - Day and night, weather, shop hours, town reputation and fast travel by coach
-- A Windows 98 desktop with Minesweeper, Solitaire, lore files and a screensaver
+- A Windows 98 desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
 - A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
 - Fills any screen shape, wide monitors included (a classic 4:3 mode is in Settings)
 - Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
@@ -94,3 +102,43 @@ has to change.
 
 RPG, Turn-Based Tactics, Party-Based RPG, Open World, Pixel Graphics, Retro, Fantasy, Sci-fi, Crafting, Level Editor,
 Old School, Singleplayer
+
+## Idea Jotter's brief (paste-ready, 1.6.2)
+
+The project's brief in Idea Jotter still had store-facing lines from before 1.5 ("Easy / Normal / Hard", "130+ items",
+"a bonus campaign", generated music, lore files in My Computer). Corrected text for its fields:
+
+**Features** (one per line):
+
+```
+Turn-based tactical combat with action points, cover, flanking, overwatch and aimed shots
+Swords, bows, guns, lasers, spells and grenades; 50+ monsters and 200+ items
+5 classes you multiclass into rank by rank, and 5 recruitable companions with banter, approval and personal quests
+A hand-made overworld, 6 towns, dungeons and an extra chapter
+A 7-stage main quest with three choices and three endings; 20 side quests and town bounties
+Darkness that matters: torches, lanterns, light spells and enemies that see in the dark
+Deep crafting with skill, failure, fine and masterwork results, enchanting and salvage
+Day and night, weather, shop hours, town reputation and fast travel by coach
+A Windows 98 desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
+A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
+Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
+Accessibility: large text, clear font, text speed, colour-blind colours, reduced flashing
+Soundtrack: the Pixel Fantasy music pack by AlkaKrab
+```
+
+**More info**, first line: `Requirements: Windows 10 or later (64-bit), any x64 CPU, 2 GB RAM, OpenGL 3.3, about 200 MB.`
+(the rest of that field is still right).
+
+**Brief sections** with outdated lines:
+- core, step 1: "the first launch runs a setup wizard" -> "the first launch runs a setup wizard that puts the Triffall
+  launcher on the desktop".
+- core, step 2: "From the desktop you start a New Game (base game, the Tutorial, or another campaign)" -> "From the
+  Triffall launcher you continue, load or start an adventure (the main story, the Tutorial, or another campaign)".
+- core, step 7: "lore files in My Computer, achievements" -> "achievements in the launcher".
+- look: "Chiptune music per area with ambient loops (wind, rain, caves, town, machines)" -> "Music per area from the
+  Pixel Fantasy pack by AlkaKrab; crunchy Pixel Combat sound effects by Helton Yan".
+- nice: drop "Hand-made or replaced music and sound effects (current ones are generated)" (done at 1.3.0/1.3.3).
+- assets: "campaigns (Tutorial, The Gullwatch Light)" -> "campaigns (Tutorial)".
+- questions: "Do the generated music and ambient loops sound good by ear?" -> "Do the music picks and the crunched
+  sound effects sound right by ear?"; "the project folder is riftfall" is no longer true (it's C:\Apps\Triffall).
+- ask: "at 1.0.10" -> "at 1.6.2".

@@ -348,7 +348,7 @@ y=21
 items=disk_manifest:1,elixir:1,power_core:1
 gold=140
 flag=metro_vault_chest
-onuse=lorefile:ship_manifest
+onuse=message:Data Disk - Cargo Manifest|CARGO MANIFEST, recovered from a scorched disk. Vessel: EVENSTAR (survey tender, 9 crew). Port of origin: not on any chart we know. Cargo: sealed survey cores (4), ration packs, a "do not open" crate. Captain: H. Ilvane. A note in someone else's hand: "The captain changed the cabin terminal word again. It's the old joke - the ship's own name, read the wrong way round. She thinks nobody knows. Everybody knows." Final entry: "Hull breach. Going down over the desert. If this reaches anyone - the cores are not cargo. They are seeds."
 
 # 1.5.0 (#97): a shrine before the Vigil platform
 [savepoint]

@@ -2583,7 +2583,7 @@ type=key
 tile=54,10
 color=120,200,255
 value=0
-desc=A disk labelled METRO DISPATCH - LINE 3. The old computer on the desktop can read it: look in the Triffall launcher, under Files.
+desc=A disk labelled METRO DISPATCH - LINE 3. Its night-shift notes are copied into your Journal (Notes): the dispatch vault was re-keyed to the last train's number, then its driver's name.
 
 [item]
 id=disk_manifest
@@ -2593,4 +2593,4 @@ type=key
 tile=54,10
 color=255,160,90
 value=0
-desc=A scorched disk labelled CARGO MANIFEST. The old computer on the desktop can read it: look in the Triffall launcher, under Files.
+desc=A scorched disk labelled CARGO MANIFEST of the EVENSTAR. Copied into your Journal (Notes): the captain's cabin word is the ship's own name, read the wrong way round.

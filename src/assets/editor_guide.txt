@@ -17,7 +17,7 @@ and its tabs show underneath:
 - Campaign: Campaign (name, start, ending), Credits, Hints (the Training panel).
 - World: Maps (paint maps, place objects), World map (overworld locations), Dungeons (generated dungeons), Dungeon styles, Tile kinds (what each map cell looks like and does), Tileset (the sprite sheets).
 - People: NPCs (the people and animals of the world, companions too), Dialogue, Shops, Healers, Banter.
-- Story: Quests, Flags, Bounties (notice boards), Factions (town reputation), Achievements, Lore files (the desktop's documents), Epilogue (the ending slides), Contradictions.
+- Story: Quests, Flags, Bounties (notice boards), Factions (town reputation), Achievements, Epilogue (the ending slides), Contradictions.
 - Fights: Creatures, Encounters (random fight tables), Spells, Classes, Combat rules (combos, statuses, weapon traits, damage types), Formulas (hit, crit, XP).
 - Things: Items, Recipes, Affixes, Resources (gather node types), Objects (object types, templates and every placed object).
 - Sound & Scripts: Sounds, Scripts.
@@ -235,7 +235,7 @@ live in assets/campaigns/<id>/ with the same layout. Which tab edits which file:
   (renames for old saves), demo.txt (the demo build) - see the topics "The ending" and "Saves and patches"
 
 Shared by every campaign: the tileset art (assets/tiles.png), the desktop
-icons, the sounds and music, and the My Computer lore files. A campaign can add
+icons and the sounds and music. A campaign can add
 its own tilekinds.txt to change or add tile kinds.
 
 Every data file is plain text: [section] lines start an entry and key=value
@@ -7372,7 +7372,7 @@ Functions:
 - Lists are text with commas: count(l), at(l, 2), contains(l, x), add(l, x).
 - len(t), upper(t), lower(t), find(t, part) (position, 0 = not there), min(a, b), max(a, b), abs(n), var("name").
 - 1.4.0: mid(t, start, length) - part of a text (start at 1; no length = to the end). squash(t) - only the letters and digits, in capitals: compare typed codes with squash(code) == squash(arg1) and "rift-0", "Rift 0" and "RIFT0" all match.
-- 1.4.0: plates(group), platesdown(group) - pressure plates on this map with that group= (all of them / those down now). crateat(x, y) - 1 if a crate stands there. lorefile(name) - 1 once that desktop file is unlocked.
+- 1.4.0: plates(group), platesdown(group) - pressure plates on this map with that group= (all of them / those down now). crateat(x, y) - 1 if a crate stands there. lorefile(name) - 1 once a game ran the action lorefile:<name> (kept for older campaigns; 1.6.2 has no Files page).
 
 == scripting.actions | Actions in scripts
 see: dlg.actions, scripting.commands
@@ -7403,7 +7403,7 @@ New in 1.1.10, for scripts and dialogue nodes alike:
 
 New in 1.4.0:
 - resetcrates[=message] - every crate on this map goes back to its placed spot (a "tipping lever" for a stuck plate puzzle).
-- lorefile=name - a #locked desktop file (data/lore/<name>.txt) appears in My Computer, for every save slot. See desktop.lorefiles.
+- lorefile=name - only records the name for every save slot (the script function lorefile(name) asks it). Since 1.6.2 nothing shows on the desktop: give documents to the player with message:Title|Text or a sign. See desktop.lorefiles.
 
 == scripting.hooks | Where scripts run
 see: tab.scripts, obj.npc.script, map.onenter, concepts.scripts
@@ -7572,9 +7572,9 @@ What the party finds out about a creature - each damage type it was hit with
 (and, with weapon traits, each trait), the spells it was seen casting, its
 wind-ups and wards, that it saw the party in the dark - is written to
 fieldnotes.ini in the save folder, for every save slot. Slaying three of a kind
-notes everything. The combat info box and the Journal's bestiary read it, and
-the desktop has a Field Notes.txt that lists it, so a lost fight and a reload
-still teach the player something. A fresh save folder starts empty.
+notes everything. The combat info box and the Journal's bestiary read it, so a
+lost fight and a reload still teach the player something. (The launcher's Field
+Notes page was removed at 1.6.2.) A fresh save folder starts empty.
 
 == obj.plate | Pressure plate object (1.4.0)
 see: obj.plate.group, obj.plate.onpress, obj.crate, puzzle.plates
@@ -7666,32 +7666,36 @@ statement).
 Place it as a sign with no text (Objects tab template combo_lock, a padlock):
 onuse=script:combination_lock,<code>,<solved>,<title>. Upper/lower case, spaces
 and dashes in the answer don't matter. Hide the code elsewhere: a note, a
-dialogue, a desktop file.
+dialogue, a chest that shows a document (onuse=message:Title|Text).
 
 == puzzle.terminal | Terminal password
 see: scripting.puzzles, desktop.lorefiles
 
 scripts/terminal.txt - an old machine asks for a password. Two wrong tries and
-the log hints that the old computer (My Computer on the desktop) knows more.
+the log hints to look for notes, logs or data disks nearby (what the player has
+read is in the Journal, under Notes).
 
   args: password, solved, title
 
 Place it as a sign with no text (Objects tab template terminal):
 onuse=script:terminal,<password>,<solved>,<title>.
 
-== desktop.lorefiles | Recovered files (the launcher's Files page)
+== desktop.lorefiles | Recovered files (removed at 1.6.2)
 see: puzzle.terminal, scripting.actions
 
-The text files in data/lore show on the Files page of the Triffall launcher
-(My Computer until 1.6.1). A file whose
-first line is #locked stays hidden until a game unlocks it with the action
-lorefile:<name> (a chest's onuse=, a dialogue, a script). Unlocked files stay
-for every save slot (files.ini in the save folder, like achievements); the dev
-console's reset_files locks them again.
+Until 1.6.1 the text files in data/lore showed on the Files page of the
+Triffall launcher. That page (and the base game's lore files) were removed at
+1.6.2. The action lorefile:<name> still records the name for every save slot
+(files.ini in the save folder) so older campaigns load, and the script function
+lorefile(name) can still ask for it, but nothing appears on the desktop.
 
-The base game chains its terminals this way: annex_memo is always there (the
-Annex password), the Annex vault unlocks metro_dispatch (the metro password),
-the metro vault unlocks ship_manifest (the ship password).
+Give the player documents in the world instead: a sign (its text also goes into
+the Journal's Notes) or a chest with onuse=message:Title|Text (the same).
+
+The base game chains its terminals this way: in the Research Annex a memo and
+the maintenance unit's log give the Annex password; the Annex vault's chest shows
+the metro dispatch disk (the metro password); the metro vault's chest shows the
+ship's cargo manifest (the ship password).
 
 == contradictions | Story contradictions (contradictions.txt)
 see: editor.check, tab.flags, dlg.actions, obj.enemy

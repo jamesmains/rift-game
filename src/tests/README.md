@@ -132,7 +132,7 @@ Annex, metro and ship terminals; desktop lore files unlocked by the vault chests
 outside a fight, as from the Spells menu), `clearmap [MAP]` (the map's enemy groups gone for this visit - use it
 before teleporting there), `reset_files` (lock the desktop files again). Expect keys: `obstacle:X,Y` (1 while an
 obstacle blocks it), `kind:X,Y` (tile kind), `crate:ID` (x,y), `plate:X,Y` (1 while down), `lorefile:NAME` (1 once
-unlocked), `deskfiles` (what My Computer lists), `inputtext` (the text box). The text box is mode NAME; `type` fills it.
+unlocked), `inputtext` (the text box), `message` (the open message box, "title: text"), `notes` (the Journal's Notes; 1.6.2). The text box is mode NAME; `type` fills it.
 
 1.4.0: `dialogue_1_4_0` - stat checks in dialogue (#73: `stat:cha>=12`, `partystat:str>=14`, the `[CHA 12]` tags, script
 `stat()` / `partystat()`, `stealthy`), other ways through quests (#74: the Stolen Caravan talked out and sneaked out,
@@ -146,7 +146,7 @@ old saves by migrations.txt `[learn]`), `field_notes_1_5_0` (fieldnotes.ini surv
 Field Notes.txt), `stealth_1_5_0` (noisemakers aimed and thrown, the crypt deadfall and the bandit bear trap, darkness
 against eyes that need light, a hurt group's fight), `save_points_1_5_0` (a shrine near every boss, the dungeon arrival
 autosave). Commands: `throwat X Y ITEM`, `aimthrow ITEM`, `groupmove I X Y`; console `light [N]`, `reset_fieldnotes`.
-Expect keys: `recipe:ID`, `fieldnote:ID`, `fieldknown:ID`, `deskfieldnotes`, `bestiaryids`, `group:I`, `trap:X,Y`,
+Expect keys: `recipe:ID`, `fieldnote:ID`, `fieldknown:ID`, `bestiaryids`, `group:I`, `trap:X,Y`,
 `aim`, `aggro:I`, `bossshrine`, `groupshrine:I`, `lastautosave`.
 
 1.5.2 (#105, #106): `fav_craft_1_5_2` (a favourite set in a fight survives the fight; the crafting quantity stops at
@@ -165,6 +165,6 @@ what can be made). Command: `craftsel RECIPE` (select a recipe on the open craft
 
 <!-- 1.6.0 quests -->
 - 1.6.1 desktop / launcher: commands `installed` (setup done: the Triffall icon appears), `deskaction ACTION` (launcher,
-  new, load, readme, fieldnotes, achievements, mycomputer...), `launchcampaign ID`, `todesktop`; expects `launcherpage`,
+  new, load, readme, achievements, about, mycomputer...), `launchcampaign ID`, `todesktop`; expects `launcherpage`,
   `deskicons`, `launchcampaign`, `deskslots` (e.g. 0100), `campaignsave:ID:N`. Desktop icons no longer include New Game:
   tests start a game with `deskaction new` (or `newgame`). Test `launcher_saves_1_6_1`.

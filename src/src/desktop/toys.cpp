@@ -183,17 +183,9 @@ void Desktop::drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool acti
     (void)dbl;
 }
 
-// ======================================================================= My Computer (drives) + the lore files (shown in the launcher)
-// 1.4.0 (#77): a file whose first line is "#locked" stays hidden until a game unlocks it (action lorefile:<name>)
-std::vector<std::string> Desktop::loreFiles() const {
-    std::string loreDir = assetDir + "/data/lore"; std::error_code ec;
-    auto locked = [&](const std::string& stem) { std::string t; if (!readFile(loreDir + "/" + stem + ".txt", t)) return false; return startsWith(t, "#locked") && !(game && game->foundFiles.count(stem)); };
-    std::vector<std::string> files; for (auto& e : std::filesystem::directory_iterator(loreDir, ec)) if (e.path().extension() == ".txt" && !locked(e.path().stem().string())) files.push_back(e.path().stem().string());
-    std::sort(files.begin(), files.end());
-    return files;
-}
+// ======================================================================= My Computer (drives)
 void Desktop::drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
-    // 1.6.1 (#133): the lore files moved into the launcher (Files); My Computer is the PC's drives now. The CD in D: is
+    // 1.6.1 (#133): My Computer is the PC's drives (the lore files it used to list are gone since 1.6.2, #137). The CD in D: is
     // Triffall: opening it opens the launcher, like a game disc's autorun.
     Font& f = *ctx.font;
     int lx = w.x + 6, ly = w.y + 26, lw = w.w - 12, lh = w.h - 50;
