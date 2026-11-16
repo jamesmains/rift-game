@@ -1,15 +1,15 @@
 [start]
 speaker=Elowen
 text=You carry Rift-touched things, don't you? I can feel them from here, like a draught under a door. I've studied the Rift my whole life and never seen it. Take me with you.
-option=About the way we parted...|sorry|left_mage
-option=Join me.|join|!left_mage
+option=About the way we parted...|sorry|left_mage&!fell_mage
+option=Join me.|join|!left_mage&!fell_mage
 option=Who are you?|who
 option=Not now.|end
 
 [who]
 speaker=Elowen
 text=Elowen, journeyman of the Gilded Circle, and bored to tears of inventory spells. I know fire, frost and the sky's own lightning. Morrow says I'm reckless. Morrow is correct.
-option=Join me.|join|!left_mage
+option=Join me.|join|!left_mage&!fell_mage
 option=Later.|end
 
 [join]

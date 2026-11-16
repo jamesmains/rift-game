@@ -45,17 +45,77 @@ next=spare
 speaker=Grakk, Goblin Chief
 text=Hah! Grakk owes you a life. Goblins remember. Here - take the singing thing. Grakk is glad to be rid of it.
 give=goblin_crown
-set=goblin_chief_spared,q_goblins_done
+set=goblin_chief_spared,q_goblins_done,goblins_packing
 rep=hollowmere:-5
 xp=150
 quest=The Rift Stirs - the goblins are leaving Greywood
 next=spare2
 
+# 1.5.0 (#85): the tribe packs up in the hall below; going back down there offers the betrayal (goblin_betrayal.txt).
+# goblins_packing holds until the party next enters the cave (goblin_cave onenter= clears it).
 [spare2]
 speaker=$hero
-text=By the time you reach the cave mouth the tribe is already a line of torches climbing into the hills, carrying their pots and their old ones. Some of Hollowmere won't like this. Mara will want to see the crown.
-approve=cleric:5,warrior:-5,ranger:-3
+text=Grakk barks orders down the tunnel. In the hall below, the tribe is already packing - pots, bedrolls, the old ones lifted onto backs. By nightfall they will be a line of torches over the mountain. Some of Hollowmere won't like this. Mara will want to see the crown.
+approve=cleric:5,ranger:-3
+option=(Leave them to it.)|end|!party:warrior
+option=(Bram has not put his sword away.)|bram|party:warrior
+
+# 1.5.0 (#87): Bram's ultimatum. Talk him down (CHA 12, or WIS 12: the crown is doing the talking), side with him (the
+# betrayal), send him home (leave=: left_warrior, amends at the Weary Goat) or let him go in alone (fell=: he dies).
+[bram]
+speaker=Bram
+text=You're letting them WALK? After Tobb's boy? After three farms? (He nods at the hall below.) They're packing pots down there, boss. Twenty steps. We finish it now - or I do it myself.
+option=Look at them, Bram. Old ones on backs. Killing them now saves no farm. It makes us the raiders.|bram_cha|stat:cha>=12
+option=Listen. Hear that hum? That's the crown in my pack. It wants blood - any blood. Not yours.|bram_wis|stat:wis>=12
+option=You're right. We finish this.|bram_attack
+option=I gave my word. If you can't live with that, go home.|bram_leave
+option=I gave my word. Do what you have to.|bram_alone
+
+[bram_cha]
+speaker=Bram
+text=(He stares down at the hall for a long time. Then the sword goes back, slowly.) ...Raiders. Sedge said the same about the bandits we didn't hang. I hated it then, too. Fine. But I'm the one telling Tobb.
+set=bram_goblins_ok
+approve=warrior:-2
 option=(Leave the cave.)|end
+
+[bram_wis]
+speaker=Bram
+text=(He goes still and listens. His knuckles are white on the hilt.) ...Gods. It's been humming since you picked it up, and I thought it was my own blood. Get that thing to Mara. Fast.
+set=bram_goblins_ok
+approve=warrior:-2
+option=(Leave the cave.)|end
+
+[bram_attack]
+speaker=Bram
+text=Now you're talking. Shields up - they won't make it easy.
+approve=warrior:5
+option=(Go down to the hall.)|bram_attack2
+
+[bram_attack2]
+speaker=$hero
+text=You follow Bram down into the hall.
+dialogue=goblin_betrayal
+
+[bram_leave]
+speaker=Bram
+text=Home. ...Yeah. I'll go home. I'll be at the Weary Goat when you remember what you came up here to do.
+approve=warrior:-20
+set=bram_left_goblins
+leave=warrior|Bram walks out of Greywood Cave without looking back. He'll be drinking at the Weary Goat in Hollowmere.
+option=(Let him go.)|end
+
+[bram_alone]
+speaker=Bram
+text=Then I will.
+next=bram_fell
+
+[bram_fell]
+speaker=$hero
+text=He is past you before you can grab his arm. From the hall comes a roar, a crash of pots, a goblin horn - then the tribe is running for the far tunnel, carrying what they can. When you get down there, the hall is empty but for Bram. He took four of them with him. He is not getting up.
+set=bram_fell_goblins
+clear=goblins_packing
+fell=warrior|Bram charged Grakk's tribe alone and died in the chief's hall. The goblins ran rather than fight; Grakk kept his word, even then. Hollowmere will have to be told.
+option=(Close his eyes.)|end
 
 [fight]
 speaker=Grakk, Goblin Chief

@@ -4,6 +4,8 @@ text=Sunscar greets you. Water, shade, and a bed are yours. What we do not have 
 option=I'll deal with the dragon.|quest|!q_dragon>=1
 option=Ashwing is dead.|done|q_dragon_done&!q_dragon>=2
 option=Ashwing is gone. It won't come back.|done_gone|ashwing_gone&!q_dragon_done&!q_dragon>=2
+option=Did anyone come asking about Ashwing?|nyx_fell|nyx_fell_ashwing
+option=Any news from the west?|news_court|converts_judged
 option=Goodbye.|end
 
 [quest]
@@ -31,3 +33,14 @@ gold=300
 give=katana:1
 xp=600
 option=Thank you.|end
+
+# 1.5.0 (#98): Sunscar - Nyx and the trial
+[nyx_fell]
+speaker=Matriarch Sefa
+text=A woman in a grey cloak, with a bow and no smile. She asked which way the dragon flew and filled her water skins and went. She did not come back through. (Sefa touches the well-stone.) We will remember her at the spring rains.
+option=Thank you.|end
+
+[news_court]
+speaker=Matriarch Sefa
+text=Brasswick's caravans boast of a great trial - cultists marched in chains to the Mayor's hall. Kesh's raiders laughed. They know whose roads get built by men in chains. Do not expect them to cheer you for it.
+option=Noted.|end

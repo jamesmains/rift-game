@@ -9,6 +9,8 @@
 # [bounty] a hand-written notice: id, board, kind (kill|fetch|deliver), target (creature / item / board id), need,
 #          where (dungeon or location id, shown as a hint and map pin), reward, xp, title, text, require (condition),
 #          repeat=1 to post it again after it has been paid
+#          1.5.0: kind=note is news with no job - title, text (two lines' worth), require; at most two are pinned at the
+#          top of a board, put up again each time it is read
 # Without this file, every board= in the maps gets the default settings.
 
 [board]
@@ -40,6 +42,95 @@ map=sunscar
 id=millbrook
 name=Millbrook Farm
 map=millbrook
+
+# 1.5.0 (#98): news pinned to the boards after the big choices (kind=note: nothing to take)
+[bounty]
+id=note_hm_spared
+board=hollowmere
+kind=note
+title=NOTICE FROM THE ELDER
+text=The goblins of Greywood have left for the mountains. Any goblin seen near the farms is to be reported to Elder Mara, not shot.
+require=goblin_chief_spared&!goblin_chief_dead&q_main>=2
+
+[bounty]
+id=note_hm_betrayed
+board=hollowmere
+kind=note
+title=GREYWOOD IS CLEAR
+text=The goblin tribe of Greywood is no more. A collection for the Tobb farm at the Weary Goat. (Someone has scrawled underneath: "they had surrendered".)
+require=goblins_betrayed&goblin_chief_dead
+
+[bounty]
+id=note_hm_bram
+board=hollowmere
+kind=note
+title=IN MEMORY
+text=Bram of Hollowmere, late of the Brasswick militia, who went into Greywood alone. A wake at the Weary Goat. Doss is paying.
+require=bram_fell_goblins
+
+[bounty]
+id=note_mb_snig
+board=millbrook
+kind=note
+title=GOBLIN PEDDLER
+text=Snig of Grakk's tribe trades at Millbrook Farm, honest goods, mostly. Ada says be civil. Tobb says nothing.
+require=goblins_allies
+
+[bounty]
+id=note_bw_trial
+board=brasswick
+kind=note
+title=BY ORDER OF THE MAYOR
+text=The followers of the late Hierophant Vell will answer to the Mayor's court. Seats in the public gallery: one copper.
+require=converts_judged
+
+[bounty]
+id=note_bw_wardens
+board=brasswick
+kind=note
+title=PROCLAMATION (DISPUTED)
+text=The so-called Sky Wardens of Ashfall are not recognised by this hall. The Mayor reminds citizens that a roof is not an office.
+require=converts_spared
+
+[bounty]
+id=note_fh_ashwing
+board=frosthold
+kind=note
+title=WARNING TO PILGRIMS
+text=A great dragon sleeps on the north face. Keep to the lower path, keep your goats penned, and do not climb to look at it.
+require=ashwing_gone
+
+[bounty]
+id=note_fh_nyx
+board=frosthold
+kind=note
+title=LOST ON THE NORTH FACE
+text=Nyx, hunter's daughter, went up after the dragon and did not come down. Her cloak hangs in the trapping hut. Leave the door unbarred.
+require=nyx_fell_ashwing
+
+[bounty]
+id=note_ss_ashwing_gone
+board=sunscar
+kind=note
+title=THE SKY IS CLEAR
+text=Ashwing has left the old mine. The Matriarch asks that the night watch keep on all the same, in case it remembers the way.
+require=ashwing_gone
+
+[bounty]
+id=note_mw_cult
+board=murkwater
+kind=note
+title=FROM THE SHRINE
+text=Pray for the Sky Wardens of Ashfall, who watch so that we can sleep. Keeper Aldra.
+require=converts_spared
+
+[bounty]
+id=note_mw_court
+board=murkwater
+kind=note
+title=FROM THE SHRINE
+text=Pray for the nine in the Mayor's court, and for those who sent them there. Keeper Aldra.
+require=converts_judged
 
 # 1.5.0 (#95): notices that warn about dangerous ordinary monsters and say what works on them
 [bounty]

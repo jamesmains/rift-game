@@ -131,6 +131,7 @@ npc=tessa
 x=43
 y=15
 hide=joined_scavenger
+show=!fell_scavenger
 
 [npc]
 id=scrap_vendor

@@ -1,4 +1,35 @@
 [start]
 speaker=Bard Lio
 text=A song for the road? "Oh the sky came down on Aldmoor town, and the stars fell in the sea..." I'm still working on the second verse. It's been forty years.
+option=Anything new in the song?|song_wardens|converts_spared&!game_won
+option=Anything new in the song?|song_court|converts_judged&!game_won
+option=Anything new in the song?|song_seal|ending_seal
+option=Anything new in the song?|song_watch|ending_watch
+option=Anything new in the song?|song_claim|ending_claim
 option=Take your time.|end
+
+# 1.5.0 (#98): the song follows the story
+[song_wardens]
+speaker=Bard Lio
+text=A verse about the Sky Wardens! "And the ones who prayed for the sky to fall, now they sit on the roof and watch it all..." The Mayor hates it. That's how I know it's good.
+option=Keep it.|end
+
+[song_court]
+speaker=Bard Lio
+text="Nine came down the Ashfall road, with their hands tied up and their heads bowed low..." It's for the trial. The Mayor paid for it. I'm not proud. I'm fed.
+option=Fair.|end
+
+[song_seal]
+speaker=Bard Lio
+text=The second verse! Finally! "And the sky went blue, and the stars went home, and the shards broke clean like a dry old bone." ...Forty years. It needed an ending.
+option=It has one now.|end
+
+[song_watch]
+speaker=Bard Lio
+text="Three stones sleep under Hollowmere's well, and a lamp burns over them, and that's all I'll tell." People keep asking for the next line. There isn't one. That's the point.
+option=Good.|end
+
+[song_claim]
+speaker=Bard Lio
+text=(He sees you and the lute goes quiet.) I - no new verses, no. Nothing about you, certainly. Nothing at all. Would you like a drink? On me. Please.
+option=...|end

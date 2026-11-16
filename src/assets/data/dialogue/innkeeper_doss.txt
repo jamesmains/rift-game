@@ -7,6 +7,10 @@ option=You look like you've something on your mind.|letter|q_main>=2&!q_letter>=
 option=About that letter...|letter_ask|q_letter>=1&!q_letter>=2
 option=Fenna says the kettle's on.|letter_done|q_letter>=2&!letter_burned&!doss_thanked
 option=Any rumours?|rumour
+option=(Bram's corner table is empty. A candle burns on it.)|bram_fell|bram_fell_goblins
+option=Bram looks like he hasn't slept.|bram_left|bram_left_goblins&left_warrior
+option=What are people saying about Greywood?|greywood_betrayed|goblins_betrayed&goblin_chief_dead
+option=What are people saying about Greywood?|greywood_spared|goblin_chief_spared&!goblin_chief_dead&q_main>=2
 option=Nothing, thanks.|end
 
 [room]
@@ -51,3 +55,24 @@ text=She said that? The kettle's... (He has to look at the ceiling for a while.)
 set=doss_thanked
 gold=80
 option=Go and see her, Doss.|end
+
+# 1.5.0 (#87, #98): the Goat remembers Bram and Greywood
+[bram_fell]
+speaker=Innkeeper Doss
+text=That's his corner. Nobody sits there now - I don't have to ask them not to. (He sets down a mug in front of the empty chair, out of habit.) He'd have hated the candle. I light it anyway.
+option=He would have.|end
+
+[bram_left]
+speaker=Innkeeper Doss
+text=Came back from Greywood with a face like a wet week and hasn't stopped drinking since. Says you "let the goblins walk". Says it to anyone, mostly the goat. If you've something to say to him, say it soon.
+option=I'll talk to him.|end
+
+[greywood_betrayed]
+speaker=Innkeeper Doss
+text=That the goblins are dead, and good riddance. And that they'd surrendered first. (He wipes the same spot on the bar for a while.) Folk drink to the first part. Nobody drinks to the second.
+option=...|end
+
+[greywood_spared]
+speaker=Innkeeper Doss
+text=Half the room says you're soft. The other half says nobody's lost a sow since. Tobb says nothing at all, which for Tobb is a kind of speech.
+option=Fair enough.|end

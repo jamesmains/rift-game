@@ -1,15 +1,15 @@
 [start]
 speaker=Nyx
 text=You're the one from Hollowmere going after the goblins. I've been tracking that band for a month. Their chief wears something that glows. I want to see it up close - through a bow sight, preferably.
-option=About the way we parted...|sorry|left_ranger
-option=Come along, then.|join|!left_ranger
+option=About the way we parted...|sorry|left_ranger&!fell_ranger
+option=Come along, then.|join|!left_ranger&!fell_ranger
 option=Who are you?|who
 option=Maybe later.|end
 
 [who]
 speaker=Nyx
 text=Nyx. I hunt what the farms can't. Wolves, mostly. Goblins when they pay. I don't miss and I don't talk much, which you'll come to appreciate.
-option=Come along.|join|!left_ranger
+option=Come along.|join|!left_ranger&!fell_ranger
 option=Later.|end
 
 [join]

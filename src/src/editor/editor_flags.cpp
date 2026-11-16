@@ -53,6 +53,7 @@ static void scriptFlags(const std::string& script, std::vector<std::pair<std::st
         if (k == "set" || k == "flag" || k == "inc") for (auto& f : (k == "set" ? setList(v) : std::vector<std::string>{v})) out.push_back({f, true});
         else if (k == "clear") for (auto& f : setList(v)) out.push_back({f, false});
         else if (k == "join") { std::string c = parseJoin(v).cls; if (!c.empty()) out.push_back({"joined_" + c, true}); }   // the NPCs the game has loaded
+        else if (k == "leave" || k == "fell") { std::string c = trim(split(v, '|')[0]); if (!c.empty()) { out.push_back({(k == "leave" ? "left_" : "fell_") + c, true}); out.push_back({"joined_" + c, false}); } }   // 1.5.0
         else if (k == "win") out.push_back({"game_won", true}); }
 }
 // "q_main>=2&!item:key" -> "q_main is at least 2 and the party does NOT have Key"
@@ -126,6 +127,7 @@ void Editor::buildFlagIndex() {
             else if (k == "flag" || k == "inc") add(v, true, where, k + "=" + v, u);
             else if (k == "clear") for (auto& n : setList(v)) add(n, true, where, "clear=" + v + "  (clears it)", u);
             else if (k == "join") { std::string c = joinClassOf(v); if (!c.empty()) add("joined_" + c, true, where, "join=" + v + "  (sets joined_<class>)", u); }
+            else if (k == "leave" || k == "fell") { std::string c = trim(split(v, '|')[0]); if (!c.empty()) { add((k == "leave" ? "left_" : "fell_") + c, true, where, k + "=" + c + "  (sets " + (k == "leave" ? "left_" : "fell_") + c + ")", u); add("joined_" + c, true, where, k + "=" + c + "  (clears it)", u); } }   // 1.5.0
             else if (k == "win") add("game_won", true, where, "win=  (the ending sets game_won)", u);
             else if (k == "option") { auto p = split(v, '|'); if (p.size() > 2) addCond(p[2], where, "option '" + trim(p[0]) + "' shows only if " + condEnglish(p[2]), u); }
         }

@@ -232,7 +232,18 @@ public:
     // 1.1.2 companions (standing.cpp): approval only moves through choices they witness, gifts and their own quests.
     // Strained (<= -15) fight worse, at -40 they leave and go home; Loyal (talked to at 30+, own quest done) fight better.
     static const char* approvalTier(int a); int approvalOf(const std::string& cls) const; bool companionLoyal(const std::string& cls) const;
-    void changeApproval(const std::string& cls, int d); void syncBonds(); void checkCompanionMoods(); void companionLeaves(size_t idx);
+    void changeApproval(const std::string& cls, int d); void syncBonds(); void checkCompanionMoods(); void companionLeaves(size_t idx, const std::string& why = "");
+    void companionFalls(size_t idx, const std::string& why);   // 1.5.0 (#87/#88): fell=CLASS - gone for good (fell_<class>)
+    int memberOfClass(const std::string& cls) const;
+    void dropMemberRefs(size_t idx);                            // after a companion leaves: fix level-up queue / banter indexes           // party index of the companion of that class (-1: not with you)
+    void fightGroup(const std::string& flag);
+    void postBoardNotes(const std::string& town);               // 1.5.0 (#98): bounties.txt kind=note (bounty.cpp)                   // 1.5.0 (#85): fight=FLAG - the map's enemy group with that flag= attacks now
+    // 1.5.0 (#89): contradictions.txt - flag combinations that must never all be true; a warning the first time they are
+    struct Contradiction { std::vector<std::string> terms; std::string note; };
+    std::vector<Contradiction> contradictions; std::set<std::string> contradictionsWarned;
+    void loadContradictions(); void checkContradictions(const std::string& changed);
+    static std::vector<Contradiction> parseContradictions(const std::string& text);
+    static std::string contradictionFlag(const std::string& term);
     // 1.4.0 (#81) taught abilities: teach=WHO:SPELL[|LOYAL_SPELL] (WHO = companion NPC id, class id, member name or hero).
     // Companions' lessons are kept in extra["taught_<class>"] and applied whenever they are in the party (syncBonds):
     // the LOYAL_SPELL replaces SPELL while the companion is Loyal, and goes back to SPELL if the loyalty breaks.
@@ -458,7 +469,7 @@ public:
 
     // helpers used by subsystems
     bool hasFlag(const std::string& f) const { auto it = flags.find(f); return it != flags.end() && it->second != 0; }
-    void setFlag(const std::string& f, int v = 1) { flags[f] = v; }
+    void setFlag(const std::string& f, int v = 1) { flags[f] = v; if (!contradictions.empty()) checkContradictions(f); }
     void log(const std::string& s);
     void notify(const std::string& s);
     void showMessage(const std::string& title, const std::string& text, std::function<void()> done = nullptr);
@@ -549,6 +560,7 @@ private:
     // 1.2.4 (#41) touch=1 maps: leash chase and ambushes that appear a few tiles away
     int leashOf(const EnemyGroup& e) const;
     bool groupShown(const EnemyGroup& e) const;
+    void refreshGroupsShown(Map& m);   // 1.5.0 (#84): EnemyGroup::hidden from show=/hide=
     bool groupStepToward(EnemyGroup& e, int tx, int ty, int reach, int limit);
     void touchChase();
     bool spawnAmbushers(const std::vector<std::string>& creatures, int levelBonus);

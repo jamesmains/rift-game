@@ -1,0 +1,29 @@
+# 1.5.0 (#89): story contradictions. data/contradictions.txt lists flag pairs that must never both be true.
+#  * the Editor's Check all is quiet on the game's own data
+#  * it reports the old Grakk bug: the chief's group without its hide=goblin_chief_spared (which, before 1.5.0, did not
+#    stop a hidden group from being bumped into) - so the spare and the fight could both happen
+#  * while playing, the first time both flags of a pair are true the game logs a warning (lastScriptError)
+# Run from a copy of assets: it edits goblin_cave.txt.
+newgame Mira warrior 1 7
+contracheck
+expect contradictions == none
+# ---- the game warns when a pair becomes true ----
+con flag goblin_chief_spared
+expect scripterror lacks contradiction
+con flag goblin_chief_dead
+expect scripterror contains story contradiction: goblin_chief_spared & goblin_chief_dead
+expect log contains Grakk can't be both spared and killed
+# once per pair
+con flag converts_spared
+con flag converts_judged
+expect scripterror contains converts_spared & converts_judged
+# ---- Check all finds the old Grakk route ----
+assetreplace data/maps/goblin_cave.txt show=!goblins_allies\nhide=goblin_chief_spared\nondefeat|ondefeat
+contracheck
+expect contradictions contains goblin_chief_spared and goblin_chief_dead can both end up true
+expect contradictions contains dialogue goblin_parley [spare] sets goblin_chief_spared
+expect contradictions contains map goblin_cave: enemy at 36,16 can still set goblin_chief_dead
+# ---- a dialogue that sets both at once ----
+assetreplace data/dialogue/pilgrim.txt set=q_pilgrim=2,pilgrim_truth|set=q_pilgrim=2,pilgrim_truth,pilgrim_lie
+expect contradictions contains dialogue pilgrim [
+expect contradictions contains sets both pilgrim_truth and pilgrim_lie

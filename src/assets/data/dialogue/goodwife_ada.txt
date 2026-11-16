@@ -2,6 +2,9 @@
 speaker=Goodwife Ada
 text=Sit, eat, you look thin. The road to Brasswick is east past the mill. Don't stray into the woods at night.
 option=Thank you.|heal|!ada_fed
+option=Seen any goblins on the mill road?|gob_spared|goblin_chief_spared&!goblin_chief_dead
+option=Seen any goblins on the mill road?|gob_betrayed|goblins_betrayed
+option=Seen any goblins on the mill road?|gob_killed|q_goblins_done&!goblin_chief_spared&!goblins_betrayed
 option=Thank you, Ada.|end|ada_fed
 
 [heal]
@@ -10,3 +13,19 @@ text=Here - take some bread for the road. No, don't argue. If you're hurt, Wren 
 give=bread:3
 set=ada_fed=1
 option=Goodbye.|end
+
+# 1.5.0 (#98): Millbrook and the goblins
+[gob_spared]
+speaker=Goodwife Ada
+text=Only the little peddler, and he wipes his feet. Grakk's lot went over the mountain, and not a hen's gone missing since. I put out a bowl of stew for the peddler. Don't tell Tobb.
+option=I won't.|end
+
+[gob_betrayed]
+speaker=Goodwife Ada
+text=Not since Greywood. (She stirs the pot and doesn't look up.) The carters say they'd given up when you went back in. I feed anyone who sits at my table. I'll feed you. I just won't talk about it.
+option=...|end
+
+[gob_killed]
+speaker=Goodwife Ada
+text=Not one, since you cleared that cave. The mill road's safe at dusk again. Eat - you've earned two bowls.
+option=Thank you, Ada.|end

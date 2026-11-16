@@ -133,6 +133,7 @@ struct EnemyGroup {
     int levelBonus = 0;
     std::string onDefeatScript;   // dialogue/script id run after victory
     std::string showFlag, hideFlag;
+    bool hidden = false;          // 1.5.0 (#84): show=/hide= says it isn't there now (Game::refreshGroupsShown keeps it up to date); enemyAt / occupied skip it
     int wanderTimer = 0; int homeX = 0, homeY = 0;
     std::string link;             // groups sharing a link id always fight together
     // 1.2.4 (#41) touch=1 maps: the group chases the party one step per party step while the party is within leash

@@ -5,6 +5,9 @@ option=Rent a bed. (35 gold)|room|gold:35
 option=Rent a bed.|poor|!gold:35
 option=I carry a letter from your brother Doss.|letter|item:doss_letter&!q_letter>=2
 option=I found something of your mother's.|ring|q_letter>=2&item:mothers_ring&!letter_ring&!letter_burned
+option=Any news from the road?|news_goblins_killed|q_goblins_done&!goblin_chief_spared&!goblins_betrayed
+option=Any news from the road?|news_goblins_spared|goblin_chief_spared&!goblin_chief_dead
+option=Any news from the road?|news_goblins_betrayed|goblins_betrayed
 option=Goodbye.|end
 
 [room]
@@ -72,3 +75,19 @@ set=letter_ring
 xp=150
 rep=brasswick:10,hollowmere:10
 option=Tell Doss yourself. The kettle's on.|end
+
+# 1.5.0 (#98): news from the road - the goblins of Greywood
+[news_goblins_killed]
+speaker=Innkeeper Fenna
+text=Only that Greywood's goblins are finished and Hollowmere's drinking to it. Doss will be pouring doubles. He always did celebrate with other people's ale.
+option=Sounds like him.|end
+
+[news_goblins_spared]
+speaker=Innkeeper Fenna
+text=That someone out Hollowmere way let a goblin chief walk off with his whole tribe. Half my room calls it soft. The carters say the mill road's never been quieter. I keep my opinions behind the bar.
+option=Wise.|end
+
+[news_goblins_betrayed]
+speaker=Innkeeper Fenna
+text=A carter came through with a story about Greywood - goblins who'd given up, cut down while they packed. (She looks at you a moment too long.) I didn't believe it. Tell me I was right not to.
+option=...|end

@@ -30,16 +30,31 @@ color=200,120,255
 text=$hero came home from the Scar and did not take off the shards. The harvests were good that year, and the next. The roads were safe; the raiders simply stopped coming.|People were grateful. Then careful. Then quiet. Forty years is a long time to hold a door shut, and the thing on the other side is very patient.
 
 # ---- Hollowmere and the goblins (story choice #1) ----
+# 1.5.0 (#85): spared, then betrayed
 [slide]
 group=hollowmere
-if=goblin_chief_spared&goblins_allies
+if=goblins_betrayed&goblin_chief_dead
+title=Hollowmere
+tile=104,24
+text=Greywood is quiet, and the farms are full. But the story travelled faster than $hero did: a chief who gave up his crown, a tribe cut down while it packed its pots. No goblin ever came to Hollowmere's fence again - not to raid, and not to trade. Farmer Tobb never asked how it ended. Mara never told him.
+
+[slide]
+group=hollowmere
+if=goblins_betrayed
+title=Hollowmere
+tile=104,24
+text=Grakk lived, barely, and took what was left of his tribe over the mountain. Every few winters a farm on the edge of Hollowmere loses a sow, and a goblin word scratched on the fence that means, near enough, "liar".
+
+[slide]
+group=hollowmere
+if=goblin_chief_spared&!goblin_chief_dead&goblins_allies
 title=Hollowmere
 tile=104,24
 text=Grakk kept his promise. The goblins never came back to raid - they came back to trade, with Snig at the head of every caravan, and in time even Farmer Tobb would buy his nails from them. He still won't say thank you.
 
 [slide]
 group=hollowmere
-if=goblin_chief_spared
+if=goblin_chief_spared&!goblin_chief_dead
 title=Hollowmere
 tile=104,24
 text=The goblins of Greywood never raided again. Somewhere over the mountains a tribe tells the story of the tall-folk who let them walk, and Hollowmere tells it too - though not always kindly.
@@ -85,6 +100,13 @@ if=converts_spared
 title=Ashfall
 tile=104,17
 text=The Sky Wardens kept their watch on the old chapel roof, two at a time, every night. Ashfall's scavengers grumbled, then traded with them, then married into them. The fallen city has more lights in its windows now than it has had in forty years.
+
+[slide]
+group=ashfall
+if=converts_judged&tessa_fell_road
+title=Ashfall
+tile=104,17
+text=Vell's followers went to Brasswick's court and came back, years later, to a market with a new mural on its wall: a girl with a crowbar and a drone, painted by people who had known her since she was small. Nobody in Ashfall ever sold $hero anything again.
 
 [slide]
 group=ashfall
@@ -165,6 +187,20 @@ text=Rimehollow is quiet. The pilgrims climb to Frosthold again, and the abbot h
 # ---- companions ----
 [slide]
 group=bram
+if=bram_fell_goblins
+title=Bram
+member=warrior
+text=Bram is buried on the hill above Greywood, facing the cave, with Captain Sedge's old militia badge on the stone. Doss keeps his corner of the Weary Goat empty, and Farmer Tobb leaves a turnip on the grave every harvest, which Bram would have found hilarious.
+
+[slide]
+group=bram
+if=left_warrior
+title=Bram
+member=warrior
+text=Bram never travelled with $hero again. He drank at the Weary Goat for a winter, then took a post with the Brasswick militia. He tells the story of Greywood differently from everyone else, and he never tells it sober.
+
+[slide]
+group=bram
 if=joined_warrior&q_bram_done&approval:warrior:60
 title=Bram
 member=warrior
@@ -183,6 +219,20 @@ if=joined_warrior
 title=Bram
 member=warrior
 text=Bram and $hero parted on the road home with a nod and not much more. He drinks less now. He says it has nothing to do with anything.
+
+[slide]
+group=elowen
+if=elowen_fell_scar
+title=Elowen
+member=mage
+text=Elowen stepped through the Rift after her mother as it closed, and Aldmoor never learned what she found on the other side. Arcanist Morrow keeps her desk exactly as she left it, footnotes and all.
+
+[slide]
+group=elowen
+if=left_mage
+title=Elowen
+member=mage
+text=Elowen wrote the history of the Rift alone, in the archive in Brasswick. $hero's name appears in it once, in a footnote, spelled correctly and without comment.
 
 [slide]
 group=elowen
@@ -207,6 +257,20 @@ text=Elowen went back to the Brasswick archive with three chests of notes and ha
 
 [slide]
 group=tessa
+if=tessa_fell_road
+title=Tessa
+member=scavenger
+text=Tessa died on the north road trying to cut Vell's followers loose. Her drone found its way back to the Ashfall market on its own and sat on her stall for a month, its lamp blinking, until Rusty took it in.
+
+[slide]
+group=tessa
+if=left_scavenger
+title=Tessa
+member=scavenger
+text=Tessa went back to the Ashfall market and never left it again. When travellers ask her about $hero she says she doesn't know the name, and goes on fixing whatever is on the bench.
+
+[slide]
+group=tessa
 if=joined_scavenger&q_tessa_done&approval:scavenger:60
 title=Tessa
 member=scavenger
@@ -228,6 +292,20 @@ text=Tessa went back to the Ashfall market with a pack full of things she "found
 
 [slide]
 group=nyx
+if=nyx_fell_ashwing
+title=Nyx
+member=ranger
+text=Nyx followed Ashwing into the high snow and never came down. The hunters of Frosthold hang a grey cloak in the trapping hut every first snow, and leave the door unbarred.
+
+[slide]
+group=nyx
+if=left_ranger
+title=Nyx
+member=ranger
+text=Nyx went back to the trails above Millbrook. She still watches the trees, and when $hero walks the road below she lets them hear her, once, so they know she's there and that she hasn't forgotten.
+
+[slide]
+group=nyx
 if=joined_ranger&q_nyx_done&approval:ranger:60
 title=Nyx
 member=ranger
@@ -239,6 +317,20 @@ if=joined_ranger
 title=Nyx
 member=ranger
 text=Nyx disappeared into the hills the day after the Scar, as quietly as she had arrived. Hunters near Millbrook say a ranger with a grey cloak still watches the trails.
+
+[slide]
+group=orin
+if=orin_left_goblins&left_cleric
+title=Orin
+member=cleric
+text=Orin returned to the shrine in Frosthold and never left it again. He prays for the goblins of Greywood every morning, by name where he knows them. He prays for $hero last.
+
+[slide]
+group=orin
+if=left_cleric
+title=Orin
+member=cleric
+text=Orin returned to the shrine in Frosthold and never travelled again. He still prays for $hero every morning - last, and briefly.
 
 [slide]
 group=orin

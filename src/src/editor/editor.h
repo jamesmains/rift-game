@@ -168,6 +168,7 @@ private:
 public:
     std::vector<Finding> report; int reportScroll = 0; bool reportErrOnly = false;
     void runCampaignCheck(); void drawReport(InputState& in, bool& close);
+    void contradictionCheck();   // 1.5.0 (#89): contradictions.txt pairs some route could set both of (editor_contradictions.cpp)
 private:
     void genUndo(GenericEditor& g, InputState& in);
     void genStep(GenericEditor& g, bool undo);   // one undo (true) or redo (false) step

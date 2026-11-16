@@ -8,7 +8,8 @@ next=choose
 [choose]
 speaker=$hero
 text=They will do whatever you ask of them. That is the problem.
-option=Break them. Let the Rift close for good, and everything it brought begin to fade.|seal
+option=Break them. Let the Rift close for good, and everything it brought begin to fade.|seal|!party:mage
+option=Break them. Let the Rift close for good, and everything it brought begin to fade.|elowen|party:mage
 option=Carry them home. Elder Mara will bury them where Hollowmere can watch them.|watch
 option=Keep them. Someone has to hold this power - better you than the next Vell.|claim
 option=(Ask the companions what they think.)|ask|party:mage
@@ -16,9 +17,41 @@ option=(Ask the companions what they think.)|ask|party:mage
 [ask]
 speaker=Elowen
 text=Break them and we lose more than the Rift - half the magic in Aldmoor drank from it. Keep them and you'll be standing here again in forty years, only on the other side. ...Carry them home. Watching is a job. It's not glamorous, but it's honest.
-option=Break them.|seal
+option=Break them.|elowen
 option=Carry them home.|watch
 option=Keep them.|claim
+
+# 1.5.0 (#88): Elowen's red line - breaking the shards ends the Rift's magic and her mother's door. Talk her round (INT 13
+# / CHA 13), let her walk out (leave=), or she steps through after her mother as the door closes (fell=).
+[elowen]
+speaker=Elowen
+text=Don't. $hero, don't. Half the magic in Aldmoor drinks from that door. My mother went through it. Break them and everything I am goes quiet, and she's gone for good. I won't stand here and watch you do it.
+option=You said it yourself: magic is physics nobody has written down. The Rift is the loudest source, not the only one.|elowen_ok|stat:int>=13
+option=She isn't in there, Elowen. The wisps told you that. Let her go with it.|elowen_ok|stat:cha>=13
+option=Then don't watch. Go.|elowen_leave
+option=I'm sorry. It has to end.|elowen_fell
+option=...Then I won't. (Choose again.)|choose
+
+[elowen_ok]
+speaker=Elowen
+text=(She closes her eyes.) ...Smaller spells. My own. (When she opens them they are wet, and steady.) Do it, then. Quickly - before I find a better argument.
+set=elowen_seal_ok
+option=(Break them.)|seal
+
+[elowen_leave]
+speaker=Elowen
+text=I'll be in the archive in Brasswick. Don't write.
+approve=mage:-20
+set=elowen_left_seal
+leave=mage|Elowen walks out of the Scar without looking back. She'll be at the Gilded Circle's archive in Brasswick.
+option=(Break them.)|seal
+
+[elowen_fell]
+speaker=$hero
+text=She doesn't argue. She walks past you into the light between the shards, and before you can catch her sleeve she is gone - through, after her mother, as the door begins to close.
+set=elowen_fell_scar
+fell=mage|Elowen stepped through the Rift after her mother as it closed. Nobody who goes through comes back.
+option=(Break them.)|seal
 
 [seal]
 speaker=$hero

@@ -7,6 +7,7 @@ dark=1
 light=3
 bg=0,0,0
 music=dungeon
+onenter=clear:goblins_packing
 
 [legend]
 # = wall_cave
@@ -124,6 +125,7 @@ x=36
 y=16
 aggro=6
 flag=goblin_chief_dead
+show=!goblins_allies
 hide=goblin_chief_spared
 ondefeat=set:q_goblins_done;notify:The goblin chief is dead. Return to Elder Mara.
 link=goblin_cave_boss
@@ -246,6 +248,38 @@ y=24
 items=potion_red:2,oil_fire:1,gem_rough:1
 gold=45
 flag=gc_barricade_stash
+
+# 1.5.0 (#85): after the spare, the tribe packs up in the hall until the party next enters the cave (onenter= clears
+# goblins_packing). Coming back down here - or talking to Grakk or a packer - offers the betrayal (goblin_betrayal).
+[trigger]
+x=28
+y=5
+w=3
+h=1
+script=dialogue:goblin_betrayal
+flag=goblin_hall_scene
+require=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
+
+[npc]
+id=grakk_packing
+npc=grakk
+x=36
+y=16
+show=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
+
+[npc]
+id=packer1
+npc=goblin_packer
+x=30
+y=15
+show=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
+
+[npc]
+id=packer2
+npc=goblin_packer
+x=31
+y=10
+show=goblins_packing&goblin_chief_spared&!goblins_betrayed&!goblins_allies
 
 # 1.5.0 (#95): the lone spider is the lesson - fire burns them
 [chest]

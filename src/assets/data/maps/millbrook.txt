@@ -120,6 +120,7 @@ npc=nyx
 x=24
 y=11
 hide=joined_ranger
+show=!fell_ranger
 
 [npc]
 id=farmer
@@ -169,10 +170,10 @@ npc=coachman
 x=11
 y=10
 
-# 1.0: a goblin peddler, if the tribe from Greywood was spared
+# 1.0: a goblin peddler, if the tribe from Greywood was spared (1.5.0 #84/#85: and Grakk really lived, and wasn't betrayed)
 [npc]
 id=snig
 npc=snig
 x=31
 y=10
-show=goblin_chief_spared&q_main>=3
+show=goblin_chief_spared&!goblin_chief_dead&!goblins_betrayed&q_main>=3

@@ -4,6 +4,8 @@ text=The shrine sells what pilgrims need. Potions, feathers for the fallen, char
 option=Show me.|shop
 option=Do you need anything?|wolves|!q_maud>=1
 option=The frost wolves are thinned out.|wolves_done|q_maud>=1&kills:frost_wolf:4&!q_maud>=2
+option=Did a ranger called Nyx come through?|nyx_fell|nyx_fell_ashwing
+option=Did a ranger called Nyx come through?|nyx_home|nyx_left_ashwing
 option=Goodbye.|end
 
 [shop]
@@ -30,3 +32,14 @@ xp=180
 set=q_maud=2
 rep=frosthold:10
 option=They're beautiful.|end
+
+# 1.5.0 (#98): Maud and Nyx
+[nyx_fell]
+speaker=Sister Maud
+text=Nyx? Hunter's daughter, from the hut past the wall. She went up the north face after that dragon. A trapper found her cloak. (She crosses herself.) Her father went the same way, after wolves. That family never could leave a thing alone.
+option=No. They couldn't.|end
+
+[nyx_home]
+speaker=Sister Maud
+text=She came to warn us about a dragon you let go. Stayed three nights, watched the sky the whole time, then went back south. She didn't say your name, but she said "they" in a way I didn't like.
+option=I see.|end

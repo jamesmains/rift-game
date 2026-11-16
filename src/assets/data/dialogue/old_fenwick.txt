@@ -3,6 +3,9 @@ speaker=Old Fenwick
 text=Three fishermen this month, dragged under the black water east of here. Something big. Something with more heads than it needs.
 option=I'll kill it.|quest|!q_hydra>=1
 option=The hydra is dead.|done|q_hydra_done&!q_hydra>=2
+option=Heard any good stories lately?|story_goblins_spared|goblin_chief_spared&!goblin_chief_dead
+option=Heard any good stories lately?|story_goblins_betrayed|goblins_betrayed
+option=Heard any good stories lately?|story_wardens|converts_spared&!goblin_chief_spared&!goblins_betrayed
 option=Goodbye.|end
 
 [quest]
@@ -19,3 +22,19 @@ gold=200
 give=amulet_wis:1
 xp=350
 option=Thank you.|end
+
+# 1.5.0 (#98): Fenwick tells the big choices as stories
+[story_goblins_spared]
+speaker=Old Fenwick
+text=Have I! A goblin king who gave up a crown of glass to some hero from Hollowmere, and walked his whole people over a mountain. In my version he's twelve feet tall and the crown talks. It's a good story. Yours, is it?
+option=Something like that.|end
+
+[story_goblins_betrayed]
+speaker=Old Fenwick
+text=One from Greywood I don't tell. Goblins who surrendered, and the hero who went back in anyway. (He spits into the swamp.) Some stories you keep so they don't happen twice.
+option=...|end
+
+[story_wardens]
+speaker=Old Fenwick
+text=Cultists turned sky-watchers up in Ashfall! Sitting on a chapel roof, staring up all night. Better them than me. My neck's not what it was.
+option=Ha.|end

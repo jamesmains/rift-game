@@ -116,6 +116,7 @@ npc=bram
 x=32
 y=7
 hide=joined_warrior
+show=!fell_warrior
 
 [npc]
 id=shopkeeper

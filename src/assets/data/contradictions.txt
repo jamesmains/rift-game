@@ -1,0 +1,38 @@
+# Story contradictions (1.5.0, #89): flag combinations that must never all be true at once.
+# One per line: flag & flag [| a note shown with the warning]. A campaign's own contradictions.txt is added to these.
+# The Editor's Check all reports any route in the content that could set both flags of a pair (a setter whose
+# conditions don't rule out the other outcome). While playing, the game logs a warning the moment a line becomes true.
+# Terms may also be !flag or flag>=N; such lines (and lines with three or more terms) are only checked while playing.
+
+# ---- story choice 1: the goblins of Greywood ----
+goblin_chief_spared & goblin_chief_dead | Grakk can't be both spared and killed
+goblin_chief_spared & goblins_betrayed | a betrayal clears goblin_chief_spared
+goblins_allies & goblin_chief_dead | Snig's tribe can't be allies of a dead chief
+goblins_allies & goblins_betrayed | Snig never comes after a betrayal
+
+# ---- story choice 2: Vell's followers ----
+converts_spared & converts_judged | the Sky Wardens or Brasswick's court, not both
+cult_talked & cult_scared | the robed figure in Ashfall is talked round or frightened off, not both
+
+# ---- story choice 3: the shards ----
+ending_seal & ending_watch
+ending_seal & ending_claim
+ending_watch & ending_claim
+
+# ---- other routes with one outcome ----
+caravan_bandits_gone & bandit_leader_dead | Harl's band left Thornhollow - nobody is left to kill
+ashwing_gone & dragon_dead | Ashwing flew off or was slain
+well_free & well_toll | Sunscar's well is free or tolled
+pilgrim_truth & pilgrim_lie
+hermit_friend & hermit_robbed
+
+# ---- companions (1.5.0 #87/#88): one who fell off screen never travels with you again ----
+fell_warrior & joined_warrior | Bram is dead
+fell_mage & joined_mage | Elowen is gone
+fell_scavenger & joined_scavenger | Tessa is dead
+fell_ranger & joined_ranger | Nyx is dead
+joined_warrior & left_warrior
+joined_mage & left_mage
+joined_scavenger & left_scavenger
+joined_cleric & left_cleric
+joined_ranger & left_ranger

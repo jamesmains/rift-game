@@ -28,12 +28,14 @@ const std::vector<std::string>& scriptActionKeys() {
         // 1.4.0 (#76/#77)
         "resetcrates", "lorefile",
         // 1.4.0
-        "teach"};
+        "teach",
+        // 1.5.0 (#85, #87/#88): fell=CLASS|text (leave= too, now through the companion leaving rules), fight=FLAG
+        "fell", "fight"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }
 bool isScriptBlockingAction(const std::string& key) {
-    static const char* b[] = {"dialogue", "shop", "combat", "teleport", "message", "cutscene", "craft", "board", "travel", "healer", "healsvc", "respec", "win", "finish", "obstacle", "encounter"};
+    static const char* b[] = {"dialogue", "shop", "combat", "teleport", "message", "cutscene", "craft", "board", "travel", "healer", "healsvc", "respec", "win", "finish", "obstacle", "encounter", "fight"};
     for (auto s : b) if (key == s) return true;
     return false;
 }
