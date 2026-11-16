@@ -198,6 +198,22 @@ int main(int argc, char** argv) {
                 // aim = "x,y" of the throw cursor ("none" when not aiming); aggro:I = how near group I lets the party come
                 if (startsWith(key, "group:")) { int i = atoi(key.substr(6).c_str()); got = "none"; num = false; if (g.map && i >= 0 && i < (int)g.map->enemies.size()) { auto& e = g.map->enemies[i]; got = fmt("%d,%d", e.x, e.y); if (e.defeated) got += ",gone"; if (e.distractSteps > 0) got += fmt(",d%d", e.distractSteps); if (e.returning) got += ",r"; if (e.hurt > 0) got += fmt(",h%d", e.hurt); } return true; }
                 if (startsWith(key, "trap:")) { auto q = split(key.substr(5), ','); got = "none"; num = false; if (g.map && q.size() > 1) if (Trap* t = g.map->trapAt(atoi(q[0].c_str()), atoi(q[1].c_str()), false)) got = t->sprung ? "sprung" : "armed"; return true; }
+                // 1.5.0 (#97): bossshrine = walking steps from the boss group on this map farthest from a save shrine to its nearest
+                // shrine (doors and obstacles count as passable; -1 = no shrine reachable, none = no boss); lastautosave = play
+                // second of the last autosave
+                auto shrineDist = [&](const EnemyGroup& e) -> int { Map& m = *g.map;
+                    std::vector<int> d((size_t)m.w * m.h, -1); std::vector<int> q; d[(size_t)e.y * m.w + e.x] = 0; q.push_back(e.y * m.w + e.x);
+                    for (size_t h = 0; h < q.size(); h++) { int cx = q[h] % m.w, cy = q[h] / m.w; if (m.saveAt(cx, cy)) return d[q[h]];
+                        static const int DX[4] = {1, -1, 0, 0}, DY[4] = {0, 0, 1, -1};
+                        for (int k = 0; k < 4; k++) { int nx = cx + DX[k], ny = cy + DY[k]; if (!m.inBounds(nx, ny) || d[(size_t)ny * m.w + nx] >= 0) continue;
+                            if (!m.walkable(nx, ny) && !m.doorAt(nx, ny) && !m.obstacleAt(nx, ny) && !m.saveAt(nx, ny)) continue;
+                            d[(size_t)ny * m.w + nx] = d[q[h]] + 1; q.push_back(ny * m.w + nx); } }
+                    return -1; };
+                if (key == "bossshrine") { got = "none"; num = false; if (g.map) { int worst = -2;
+                    for (auto& e : g.map->enemies) { if (e.defeated || !g.groupHasBoss(e)) continue; int best = shrineDist(e); worst = (best < 0 || worst == -1) ? -1 : std::max(worst, best); }
+                    if (worst > -2) { got = std::to_string(worst); num = true; } } return true; }
+                if (startsWith(key, "groupshrine:")) { int i = atoi(key.substr(12).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(shrineDist(g.map->enemies[i])) : "-1"; return true; }
+                if (key == "lastautosave") { got = std::to_string(g.lastAutosave); return true; }
                 if (key == "aim") { got = g.throwItem.empty() ? "none" : fmt("%d,%d", g.throwX, g.throwY); num = false; return true; }
                 if (startsWith(key, "aggro:")) { int i = atoi(key.substr(6).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(g.groupAggro(g.map->enemies[i])) : "-1"; return true; }
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }

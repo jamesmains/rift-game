@@ -275,8 +275,8 @@ title=Warning, scratched in goblin hand
 text=BIG MOTHER. NO GO. Twelve goblins went in, no goblins came out. Her poison eats you from inside and blades just stick in her. Fire is the only thing she fears. - by order of Grakk
 
 [savepoint]
-x=27
-y=19
+x=29
+y=21
 
 [enemy]
 group=giant_spider,spider,spider
