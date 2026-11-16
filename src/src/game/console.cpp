@@ -73,6 +73,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }
     else if (c == "achieve") { unlockAchievement(arg(1)); out("ok"); }
     else if (c == "reset_achievements") { unlocked.clear(); saveAchievementState(); out("achievements reset"); }
+    else if (c == "reset_fieldnotes") { fieldNotes.clear(); saveFieldNotes(); out("field notes cleared"); }   // 1.5.0 (#96)
     else if (c == "reset_files") { foundFiles.clear(); writeFile(saveDir + "/files.ini", "[found]\n"); out("desktop files locked again"); }   // 1.4.0 (#77)
     else if (c == "bounty") { popMode(); openBoard(arg(1, lastTownMap.empty() ? "hollowmere" : lastTownMap)); }
     else if (c == "craft") { popMode(); openCraft(arg(1, "all")); }

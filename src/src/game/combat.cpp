@@ -646,6 +646,7 @@ void Game::windupStart(int ui, int ti) {
     SpellDef s = *sp; if (s.area == 0 && s.shape.empty()) s.area = 1;
     CombatState::Windup w; w.unit = ui; w.spell = sp->id; w.tiles = spellTiles(ui, s, t.x, t.y);
     cb.windups.push_back(w); u.lastWindup = cb.round; u.ch.ap = 0;
+    if (!u.ch.creatureId.empty()) noteCreature(u.ch.creatureId, 0, "windup:" + sp->id);   // 1.5.0 (#96)
     cb.bannerText = u.ch.name + ": " + sp->name + "!"; cb.banner = 1.4f;
     addFloat(u.x, u.y - 1, sp->name + "!", C::Red, 2);
     std::string m = u.ch.name + " gathers power for " + sp->name + " - it lands on the marked tiles at the start of its next turn. Get clear!";
@@ -798,7 +799,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
     cb.actionThisRound = true;
     if (attacker) { dmg = applyCombos(t, dmg, dmgType, attacker); if (!t.ch.alive) return; }   // 1.4.0 (#60): SHATTER, THAW, FLARE, STEAM
     // 1.4.0 (#72) ward=creature: a boss shielded by its servants takes half damage while one of them stands
-    if (!t.ch.ward.empty()) { for (auto& o : cb.units) if (o.ch.alive && &o != &t && o.ch.creatureId == t.ch.ward) { dmg = std::max(1, dmg / 2); addFloat(t.x, t.y - 1, "warded", C::Purple); break; } }
+    if (!t.ch.ward.empty()) { for (auto& o : cb.units) if (o.ch.alive && &o != &t && o.ch.creatureId == t.ch.ward) { dmg = std::max(1, dmg / 2); addFloat(t.x, t.y - 1, "warded", C::Purple); if (!t.ch.creatureId.empty()) noteCreature(t.ch.creatureId, 0, "ward:" + t.ch.ward); break; } }
     int res = t.ch.resist(dmgType, *gd);
     dmg = dmg * (100 - res) / 100;
     if (dmg <= 0 && res < 100) dmg = res >= 100 ? 0 : 1;
@@ -811,6 +812,7 @@ void Game::applyDamage(Combatant& t, int dmg, int dmgType, const std::string& so
         int eff = res; if ((t.ch.undead || t.ch.mechanical) && dmgType == DT_POISON) eff = 100; if (t.ch.mechanical && dmgType == DT_SHOCK) eff = std::min(eff, -50);
         std::string key = "rk_" + t.ch.creatureId; int known = atoi(extra[key].c_str());
         if (!(known & (1 << dmgType))) { extra[key] = std::to_string(known | (1 << dmgType)); }
+        noteCreature(t.ch.creatureId, 1 << dmgType);   // 1.5.0 (#96): and in the Field Notes, which outlive the save
         if (eff <= -25) addFloat(t.x, t.y - 1, "WEAK!", C::Yellow); else if (eff >= 100) addFloat(t.x, t.y - 1, "immune", C::Gray); else if (eff >= 40) addFloat(t.x, t.y - 1, "resists", C::Gray);
     }
     t.ch.hp -= dmg;
@@ -951,6 +953,7 @@ void Game::combatCast(int ci, const std::string& spellId, int tx, int ty) {
         if (c.ch.mp < cost) { if (c.partyIndex >= 0) log("Not enough MP."); return; }
         c.ch.ap -= sp->ap; c.ch.mp -= cost; cb.actionThisRound = true;
         cb.log.push_back(c.ch.name + " casts " + sp->name + "!"); gAudio.play(spellSound(*sp)); if (c.partyIndex >= 0) stats.spellsCast++;
+        if (!c.friendly() && !c.ch.creatureId.empty()) noteCreature(c.ch.creatureId, 0, "spell:" + sp0->id);   // 1.5.0 (#96)
         if (sp->chainJumps <= 0) { CombatAnim an; an.kind = sp->shape == "line" ? 0 : 1; an.x0 = c.x; an.y0 = c.y; an.x1 = tx; an.y1 = ty; an.color = sp->utility == "light" ? C::Cream : dmgColor(sp->dmgType); an.dur = 0.35f; an.tile = sp->tile; cb.anims.push_back(an); }
     }
     Combatant& c = cb.units[ci];
@@ -1982,8 +1985,8 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
         if (!t.friendly()) {
             int lo = t.ch.mDmgMin, hi = t.ch.mDmgMax;
             lines.push_back({fmt("Hits %d-%d %s, range %d", lo, hi, dmgTypeName(t.ch.mDmgType), t.ch.attackRange(*gd)), C::LtGray});
-            int known = 0; { auto it = extra.find("rk_" + t.ch.creatureId); if (it != extra.end()) known = atoi(it->second.c_str()); }
-            auto bit = bestiary.find(t.ch.creatureId); bool all = bit != bestiary.end() && bit->second >= 3;
+            int known = knownResBits(t.ch.creatureId);   // 1.5.0 (#96): this save's hits, the Field Notes, or 3 slain
+            bool all = known == (1 << DT_COUNT) - 1;
             std::string weak, strong;
             for (int d = 0; d < DT_COUNT; d++) {
                 if (!all && !(known & (1 << d))) continue;
@@ -1994,6 +1997,16 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
             if (!strong.empty()) lines.push_back({"Resists: " + strong, C::Gray});
             if (weak.empty() && strong.empty()) lines.push_back({all ? "No notable resistances" : "Resistances: hit it to find out", C::DkGray});
             if (t.ch.darkvision && map->dark) lines.push_back({"Sees in the dark", C::Purple});
+            {   // 1.5.0 (#96): what the Field Notes say it does (spells seen, wind-ups, wards)
+                auto fn = fieldNotes.find(t.ch.creatureId); std::string casts, seen;
+                if (fn != fieldNotes.end()) for (auto& tg : fn->second.tags) {
+                    if (startsWith(tg, "spell:")) { const SpellDef* sp = gd->spell(tg.substr(6)); casts += (casts.empty() ? "" : ", ") + (sp ? sp->name : tg.substr(6)); }
+                    else if (startsWith(tg, "windup:")) { const SpellDef* sp = gd->spell(tg.substr(7)); seen += (seen.empty() ? "" : "; ") + std::string("winds up ") + (sp ? sp->name : tg.substr(7)); }
+                    else if (startsWith(tg, "ward:")) { const CreatureDef* w = gd->creature(tg.substr(5)); seen += (seen.empty() ? "" : "; ") + std::string("warded by ") + (w ? w->name : tg.substr(5)); }
+                }
+                if (!casts.empty()) lines.push_back({"Casts: " + casts, C::Cyan});
+                if (!seen.empty()) lines.push_back({"Notes: " + seen, C::Cyan});
+            }
         }
         if (!t.ch.effects.empty()) { std::string ef; for (auto& e : t.ch.effects) ef += (ef.empty() ? "" : ", ") + e.id + fmt(" %d", e.turns); lines.push_back({ef, C::Cyan}); }
     } else if (tu >= 0) lines.push_back({"Something moves in the dark...", C::Purple});

@@ -55,6 +55,7 @@ void Game::loadSystems() {
 void Game::onKill(const Character& victim, const Combatant* killer) {
     if (victim.isPlayerSide || victim.creatureId.empty()) return;
     stats.kills++; bestiary[victim.creatureId]++;
+    if (bestiary[victim.creatureId] >= 3) noteCreature(victim.creatureId, (1 << DT_COUNT) - 1, "studied");   // 1.5.0 (#96): three slain = all of it known, for good
     bountyEvent("kill", victim.creatureId, 1);
     (void)killer;
 }
@@ -111,12 +112,93 @@ void Game::loadAchievementState() {
     unlocked.clear(); std::string t;
     if (readFile(saveDir + "/achievements.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "unlocked") for (auto& kv : sec.kv) if (kv.second != "0") unlocked.insert(kv.first);
     loadFoundFiles();
+    loadFieldNotes();   // 1.5.0 (#96)
 }
 // 1.4.0 (#77): desktop files a game has unlocked (data/lore files whose first line is #locked). Global like the
 // achievements: once found, the file stays in My Computer for every save slot (files.ini in the save folder).
 void Game::loadFoundFiles() {
     foundFiles.clear(); std::string t;
     if (readFile(saveDir + "/files.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "found") for (auto& kv : sec.kv) if (kv.second != "0") foundFiles.insert(kv.first);
+}
+// 1.5.0 (#96): Field Notes - fieldnotes.ini in the save folder, one [note] per creature: id, res (DT_* bits it was hit
+// with), tags (comma list). Global like files.ini: what a lost fight taught stays after the reload.
+void Game::loadFieldNotes() {
+    fieldNotes.clear(); std::string t;
+    if (readFile(saveDir + "/fieldnotes.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "note" && !sec.get("id").empty()) {
+        FieldNote& n = fieldNotes[sec.get("id")]; n.res |= sec.geti("res", 0);
+        for (auto& tg : split(sec.get("tags"), ',')) if (!trim(tg).empty()) n.tags.insert(trim(tg));
+    }
+}
+void Game::saveFieldNotes() const {
+    std::string s = "# Triffall field notes: what the party has found out about each creature (global, not per save slot)\n";
+    for (auto& kv : fieldNotes) {
+        s += "[note]\nid=" + kv.first + "\nres=" + std::to_string(kv.second.res) + "\n";
+        std::string tg; for (auto& t : kv.second.tags) tg += (tg.empty() ? "" : ",") + t;
+        if (!tg.empty()) s += "tags=" + tg + "\n";
+    }
+    writeFile(saveDir + "/fieldnotes.ini", s);
+}
+bool Game::noteCreature(const std::string& creature, int resBits, const std::string& tag) {
+    if (creature.empty() || !gd->creature(creature)) return false;
+    FieldNote& n = fieldNotes[creature]; bool fresh = false;
+    if ((n.res | resBits) != n.res) { n.res |= resBits; fresh = true; }
+    if (!tag.empty() && !n.tags.count(tag)) { n.tags.insert(tag); fresh = true; }
+    if (fresh) saveFieldNotes();
+    return fresh;
+}
+int Game::knownResBits(const std::string& creature) const {
+    int known = 0;
+    auto it = extra.find("rk_" + creature); if (it != extra.end()) known |= atoi(it->second.c_str());
+    auto fn = fieldNotes.find(creature); if (fn != fieldNotes.end()) known |= fn->second.res;
+    auto bit = bestiary.find(creature); if (bit != bestiary.end() && bit->second >= 3) known = (1 << DT_COUNT) - 1;
+    return known;
+}
+// how a creature takes a damage type: its res= plus the rules every undead / machine shares (poison does nothing,
+// machines short out on shock). The combat tooltip, the bestiary and the Field Notes all read it this way.
+int creatureResistance(const CreatureDef& cd, int d) {
+    int r = cd.res[d];
+    if ((cd.undead || cd.mechanical) && d == DT_POISON) r = 100;
+    if (cd.mechanical && d == DT_SHOCK) r = std::min(r, -50);
+    return r;
+}
+std::string Game::fieldNotesText() const {
+    std::string s = "FIELD NOTES\n===========\n\n";
+    s += "What our party has found out about the creatures of Aldmoor, the hard way.\n";
+    s += "This file lives on this computer, not in a save: a lost fight still\nteaches something, and every save slot reads the same notes.\n\n";
+    std::vector<std::pair<std::string, std::string>> rows;   // name, id
+    for (auto& kv : fieldNotes) if (const CreatureDef* cd = gd->creature(kv.first)) rows.push_back({cd->name, kv.first});
+    std::sort(rows.begin(), rows.end());
+    if (rows.empty()) s += "(Nothing yet. Hit a monster with a weapon or a spell and see how it\ntakes it: what you learn is written down here.)\n";
+    for (auto& r : rows) {
+        const CreatureDef* cd = gd->creature(r.second); const FieldNote& n = fieldNotes.at(r.second);
+        s += r.first + (cd->boss ? "  (boss)" : "") + "\n";
+        std::string weak, normal, resists, immune;
+        auto add = [](std::string& to, const std::string& w) { to += (to.empty() ? "" : ", ") + w; };
+        for (int d = 0; d < DT_COUNT; d++) if (n.res & (1 << d)) { int v = creatureResistance(*cd, d); if (v < 0) add(weak, dmgTypeName(d)); else if (v >= 100) add(immune, dmgTypeName(d)); else if (v >= 30) add(resists, dmgTypeName(d)); else add(normal, dmgTypeName(d)); }
+        if (!weak.empty()) s += "  Weak to: " + weak + "\n";
+        if (!immune.empty()) s += "  Immune to: " + immune + "\n";
+        if (!resists.empty()) s += "  Resists: " + resists + "\n";
+        if (!normal.empty()) s += "  Takes normal damage from: " + normal + "\n";
+        int untried = 0; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) untried++;
+        if (untried) { std::string u; for (int d = 0; d < DT_COUNT; d++) if (!(n.res & (1 << d))) add(u, dmgTypeName(d)); s += "  Not tried yet: " + u + "\n"; }
+        std::string casts, other;
+        for (auto& t : n.tags) {
+            if (startsWith(t, "spell:")) { const SpellDef* sp = gd->spell(t.substr(6)); add(casts, sp ? sp->name : t.substr(6)); }
+            else if (startsWith(t, "windup:")) { const SpellDef* sp = gd->spell(t.substr(7)); add(other, "winds up " + (sp ? sp->name : t.substr(7)) + " (get out of the marked tiles)"); }
+            else if (startsWith(t, "ward:")) { const CreatureDef* w = gd->creature(t.substr(5)); add(other, "takes half damage while a " + (w ? w->name : t.substr(5)) + " stands"); }
+            else if (t == "darkvision") add(other, "sees in the dark (bring light or be seen first)");
+        }
+        if (!casts.empty()) s += "  Casts: " + casts + "\n";
+        if (!other.empty()) s += "  Seen: " + other + "\n";
+        s += "\n";
+    }
+    return s;
+}
+// the bestiary's list: every creature this save has met, plus every creature in the Field Notes (met in a lost fight)
+std::vector<std::string> Game::bestiaryIds() const {
+    std::set<std::string> s; for (auto& b : bestiary) s.insert(b.first);
+    for (auto& f : fieldNotes) if (gd->creature(f.first)) s.insert(f.first);
+    return std::vector<std::string>(s.begin(), s.end());
 }
 void Game::unlockLoreFile(const std::string& name) {
     if (name.empty() || foundFiles.count(name)) return;
@@ -228,7 +310,7 @@ void Game::updateJournal(InputState& in, float dt) {
     int n = 0;
     if (jTab == 0) { for (auto& q : quests) if (!questStatus(q).empty()) n++; }
     else if (jTab == 1) n = (int)bounties.size();
-    else if (jTab == 2) n = (int)bestiary.size();
+    else if (jTab == 2) n = (int)bestiaryIds().size();   // 1.5.0 (#96): with the Field Notes' creatures
     else if (jTab == 4) n = (int)notes.size();
     else if (jTab == 5) n = (int)achievements.size();
     else if (jTab == 6) { int lines = 0; for (auto& t : tacticsText()) lines += std::max(1, (int)ctx.font->wrap(t.first, SCREEN_W - 48).size()); n = std::max(1, lines - (SCREEN_H - 90) / 12); }
@@ -305,18 +387,19 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
         }
     } else if (jTab == 2) {
         // bestiary: list on the left, detail on the right
-        std::vector<std::string> ids; for (auto& b : bestiary) ids.push_back(b.first);
+        std::vector<std::string> ids = bestiaryIds();   // 1.5.0 (#96): creatures met in this save, plus the ones in the Field Notes
         int y = y0; int lw = 220;
         if (ids.empty()) UI::text(ctx, x0, y0, "Nothing catalogued yet. Fight something.", C::Gray);
         for (size_t i = 0; i < ids.size(); i++) {
             if ((int)i < jScroll) continue; if (y > SCREEN_H - 50) break;
             const CreatureDef* cd = gd->creature(ids[i]); listRow(ctx, in, x0, y, lw, 20, (int)i == jSel);
             if (cd) { if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, x0 + 4, y + 2, 1, cd->color); else ctx.ts->draw(cv, cd->tile, x0 + 4, y + 2, 1); }
-            UI::text(ctx, x0 + 22, y + 4, cd ? cd->name : ids[i], bestiary[ids[i]] > 0 ? C::White : C::Gray); textRight(ctx, x0 + lw - 6, y + 4, fmt("x%d", bestiary[ids[i]]), C::Gray);
+            int bk = bestiary.count(ids[i]) ? bestiary[ids[i]] : 0;
+            UI::text(ctx, x0 + 22, y + 4, cd ? cd->name : ids[i], bk > 0 ? C::White : C::Gray); textRight(ctx, x0 + lw - 6, y + 4, bestiary.count(ids[i]) ? fmt("x%d", bk) : std::string("notes"), C::Gray);
             y += 21;
         }
         if (jSel >= 0 && jSel < (int)ids.size()) {
-            const CreatureDef* cd = gd->creature(ids[jSel]); int kills = bestiary[ids[jSel]];
+            const CreatureDef* cd = gd->creature(ids[jSel]); int kills = bestiary.count(ids[jSel]) ? bestiary[ids[jSel]] : 0;
             int dx = x0 + lw + 16, dy = y0;
             if (cd) {
                 panel(ctx, dx - 6, dy - 6, w - lw - 16, SCREEN_H - 100, C::Panel, C::DkGray);
@@ -341,7 +424,22 @@ void Game::drawJournal(Canvas& cv, InputState& in) {
                 cy += 5;
                 UI::text(ctx, dx, cy, "Resistances:", kills >= 3 ? C::Gold : C::DkGray); cy += 14;
                 if (kills >= 3) { std::vector<std::string> rs; for (int i = 0; i < DT_COUNT; i++) if (cd->res[i] != 0) rs.push_back(fmt("%s %+d%%", dmgTypeName(i), cd->res[i])); bool poisonListed = cd->res[DT_POISON] >= 100; if ((cd->undead || cd->mechanical) && !poisonListed) rs.push_back("immune to poison"); if (cd->mechanical) rs.push_back("weak to shock"); if (rs.empty()) rs.push_back("none"); flow(rs, C::White); }
-                else { UI::text(ctx, dx, cy, fmt("(revealed after 3 kills - %d more)", 3 - kills), C::DkGray); cy += 13; }
+                else {
+                    // 1.5.0 (#96): what the Field Notes (and this save's hits) already say, before the third kill
+                    int known = knownResBits(ids[jSel]); std::vector<std::string> rs;
+                    for (int i = 0; i < DT_COUNT; i++) if (known & (1 << i)) { int r = creatureResistance(*cd, i); rs.push_back(std::string(dmgTypeName(i)) + (r < 0 ? ": WEAK" : r >= 100 ? ": immune" : r >= 30 ? ": resists" : ": normal")); }
+                    if (!rs.empty()) flow(rs, C::White);
+                    UI::text(ctx, dx, cy, rs.empty() ? fmt("(hit one to find out, or slay %d more)", 3 - kills) : fmt("(from your field notes - all of it after %d more kills)", 3 - kills), C::DkGray); cy += 13;
+                }
+                {   // 1.5.0 (#96): things it was seen doing
+                    auto fn = fieldNotes.find(ids[jSel]);
+                    if (fn != fieldNotes.end()) { std::vector<std::string> seen; for (auto& tg : fn->second.tags) {
+                        if (startsWith(tg, "spell:")) { const SpellDef* sp = gd->spell(tg.substr(6)); seen.push_back("casts " + (sp ? sp->name : tg.substr(6))); }
+                        else if (startsWith(tg, "windup:")) { const SpellDef* sp = gd->spell(tg.substr(7)); seen.push_back("winds up " + (sp ? sp->name : tg.substr(7))); }
+                        else if (startsWith(tg, "ward:")) { const CreatureDef* wd = gd->creature(tg.substr(5)); seen.push_back("warded by " + (wd ? wd->name : tg.substr(5))); }
+                        else if (tg == "darkvision") seen.push_back("sees in the dark"); }
+                      if (!seen.empty()) { seen.insert(seen.begin(), "Seen:"); flow(seen, C::Cyan); } }
+                }
                 cy += 5;
                 UI::text(ctx, dx, cy, "Loot:", kills >= 5 ? C::Gold : C::DkGray); cy += 14;
                 if (kills >= 5) { std::vector<std::string> ls = {"gold " + cd->lootGold}; for (auto& l : cd->loot) if (auto* d = gd->item(l.first)) ls.push_back(fmt("%s %d%%", d->name.c_str(), l.second)); flow(ls, C::White); }

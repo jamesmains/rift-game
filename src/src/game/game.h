@@ -159,6 +159,7 @@ std::vector<CampaignInfo> listCampaigns(const std::string& assetDir);   // base 
 CampaignInfo readCampaignInfo(const std::string& file, const std::string& id, const std::string& dir);
 SaveSlotInfo readSaveSlotInfo(const std::string& path);
 bool writeSaveFile(const std::string& path, const std::string& text);   // atomic, keeps the previous file as path.bak
+int creatureResistance(const CreatureDef& cd, int dmgType);   // 1.5.0 (#96): res= plus the undead / machine rules (journal.cpp)
 
 struct GameSettings {
     bool fullscreen = true;
@@ -515,6 +516,17 @@ public:
     // 1.4.0 (#77): desktop files (data/lore) that a game unlocks (first line #locked); kept in files.ini, like achievements, for every save slot
     std::set<std::string> foundFiles;
     void loadFoundFiles(); void unlockLoreFile(const std::string& name);
+    // 1.5.0 (#96) Field Notes: what the party has found out about each kind of creature - the damage types it was hit
+    // with (bit per DT_*) and things it was seen doing (tags: spell:ID, windup:ID, ward:CREATURE, darkvision, studied).
+    // Kept in fieldnotes.ini in the save folder for every slot (like files.ini), so a lost fight and a reload still teach.
+    struct FieldNote { int res = 0; std::set<std::string> tags; };
+    std::map<std::string, FieldNote> fieldNotes;
+    void loadFieldNotes(); void saveFieldNotes() const;
+    bool noteCreature(const std::string& creature, int resBits, const std::string& tag = "");   // true = something new (saved at once)
+    int knownResBits(const std::string& creature) const;   // this save's rk_ bits | field notes | every type once 3 are slain
+    std::string fieldNotesText() const;                     // the desktop's Field Notes.txt
+    std::vector<std::string> bestiaryIds() const;           // the Journal's bestiary list: met in this save + in the Field Notes
+    void applyLearnMigrations();                            // 1.5.0 (#86): migrations.txt [learn] recipe=id|condition
     bool gatherReady(const GatherNode& g) const { auto it = extra.find("gather_" + mapId + "_" + std::to_string(g.x) + "_" + std::to_string(g.y)); return it == extra.end() || day - atoi(it->second.c_str()) >= g.respawn; }
     bool interactable(int x, int y) { return map->crateAt(x, y) || map->npcAt(x, y) || map->chestAt(x, y) || map->doorAt(x, y) || map->signAt(x, y) || map->enemyAt(x, y) || map->obstacleAt(x, y) || map->leverAt(x, y) || map->gatherAt(x, y); }
     void respawnParty();

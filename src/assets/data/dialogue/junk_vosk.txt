@@ -36,6 +36,7 @@ option=...|end
 speaker=Junk-Dealer Vosk
 text=Everyone wants the good blueprints. Nobody wants to earn them. Build me a calibrated servo - boards, an ingot, scrap, and Tinkering 3 so you don't strip the gears. Then we'll talk.
 set=q_tinker=1
+recipe=calibrated_servo
 quest=The Tinker's Trial
 option=Deal.|end
 

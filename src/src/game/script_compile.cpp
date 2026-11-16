@@ -28,7 +28,9 @@ const std::vector<std::string>& scriptActionKeys() {
         // 1.4.0 (#76/#77)
         "resetcrates", "lorefile",
         // 1.4.0
-        "teach"};
+        "teach",
+        // 1.5.0 (#86)
+        "recipe"};
     return k;
 }
 bool isScriptAction(const std::string& key) { auto& k = scriptActionKeys(); return std::find(k.begin(), k.end(), key) != k.end(); }

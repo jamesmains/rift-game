@@ -33,6 +33,7 @@ option=Good to know.|start
 speaker=Smith Gorran
 text=Better metal needs better hands. Prove yours: fold steel into a tempered blade blank - you need Smithing 3 for that, so work the forge until you're there. Bring it to me and I'll show you what I know of mithril.
 set=q_smith=1
+recipe=tempered_blank
 quest=The Smith's Trial
 option=I'll be back with it.|end
 
@@ -51,6 +52,7 @@ option=Thank you, master.|end
 speaker=Smith Gorran
 text=After mithril? Riftsteel, they say - mithril folded around a sliver of the sky. I never had the hands for it. Make me a masterwork hilt from mithril and a good gem, and if it's as good as I think it'll be, my last lesson is yours.
 set=q_smith=3
+recipe=master_hilt
 quest=The Master's Hilt
 option=I'll make it.|end
 

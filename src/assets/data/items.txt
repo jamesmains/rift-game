@@ -2003,7 +2003,7 @@ name=Copper Still Coil
 type=key
 tile=57,9
 value=0
-desc=A coil of copper pipe, lovingly polished. It smells strongly of whatever Rusty makes.
+desc=A coil of copper pipe, lovingly polished. It smells strongly of home-made spirits. Somebody in Ashfall will be missing it.
 
 [item]
 id=firewater
@@ -2094,7 +2094,7 @@ name=Mithril Ore
 type=material
 tile=57,12
 value=50
-desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Rimehollow and Ashwing's Mine. Smelting it takes Smithing 4 and Gorran's know-how.
+desc=Pale, light, cold to the touch even in a forge's glow. Veins run deep in Rimehollow and Ashwing's Mine. Smelting it takes Smithing 4 and a master smith's know-how.
 
 [item]
 id=mithril_ingot
@@ -2175,7 +2175,7 @@ category=Formulas
 name=Gorran's Notes: Mithril
 type=consumable
 tile=26,14
-effect=learn:smelt_mithril,mithril_sword,mithril_spear,mithril_helm,mithril_shield,mithril_mail,master_hilt
+effect=learn:smelt_mithril,mithril_sword,mithril_spear,mithril_helm,mithril_shield,mithril_mail
 value=500
 desc=Read it (Use) to learn to smelt mithril and forge mithril swords, spears, helms, shields and mail (Smithing 4).
 

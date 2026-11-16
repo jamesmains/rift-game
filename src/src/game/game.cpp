@@ -693,7 +693,7 @@ void Game::onStep() {
             }
             // 1.4.0 (#80): a group that hadn't noticed the party (stealth, or a touch map's group that wasn't chasing) is surprised
             nextSurprise = (stealthSteps > 0 || (map->touchCombat && !e.chasing)) ? 1 : 0;
-            if (!nextSurprise && map->dark && !evalCond("lit") && !lit(e.x, e.y)) for (auto& cid : e.creatures) if (const CreatureDef* cd = gd->creature(cid)) if (cd->darkvision) nextSurprise = -1;   // (#79) no light: they see you first
+            if (!nextSurprise && map->dark && !evalCond("lit") && !lit(e.x, e.y)) for (auto& cid : e.creatures) if (const CreatureDef* cd = gd->creature(cid)) if (cd->darkvision) { nextSurprise = -1; noteCreature(cid, 0, "darkvision"); }   // (#79) no light: they see you first (1.5.0: noted)
             startCombat(e.creatures, e.x, e.y, e.levelBonus, {(int)i}, e.onDefeatScript);
             return;
         }
@@ -1134,6 +1134,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "amends") { auto p = split(v, ':'); if (p.size() >= 2) { approval[trim(p[0])] += atoi(p[1].c_str()); syncBonds(); } }
     // craftxp=STATION:N: practice at a station (forge, alchemy, workbench, field) - master crafters' trials
     else if (k == "craftxp") { auto p = split(v, ':'); if (p.size() >= 2) addCraftXP(trim(p[0]), atoi(p[1].c_str())); }
+    else if (k == "recipe") { learnRecipes(v, true); }   // 1.5.0 (#86): recipe=id,id - a master teaches a recipe (known=0 ones)
     else if (k == "note") { auto p = split(v, '|'); addNote(p.size() > 1 ? p[0] : "Note", p.size() > 1 ? p[1] : p[0]); notify("Added to journal."); }
     else if (k == "win") { if (mode == GMode::DIALOGUE) popMode(); std::vector<std::string> ls; for (auto& l : split(v, '|')) ls.push_back(endingText(l)); startCutscene(ls, [this]() { setFlag("game_won"); checkAchievements(true); startEnding(); }); }
     else if (k == "savepoint") { if (map) { SavePoint s; s.x = px; s.y = py; applyTypeLook(s); map->savepoints.push_back(s); } }
@@ -2046,6 +2047,7 @@ bool Game::deserialize(const std::string& text) {
     for (size_t i = 0; i < party.members.size(); i++) if (party.members[i].statPoints > 0 || party.members[i].rankPoints > 0) levelUpQueue.push_back((int)i);
     lightSteps = stealthSteps = detectSteps = 0;
     syncBonds();
+    applyLearnMigrations();   // 1.5.0 (#86)
     rng.reseed(fixedSeed ? fixedSeed : (uint64_t)time(nullptr));
     enterMap(mid, sx, sy, false);
     fadeIn = 0.8f;

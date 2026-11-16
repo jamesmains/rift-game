@@ -19,6 +19,7 @@ craft=alchemy
 speaker=Arcanist Morrow
 text=Rarer brews need steadier hands. Distil me an essence - arcane dust, moonleaf, a little ectoplasm, three times through the still. You'll need Alchemy 3. If it's clear, my herbal is yours.
 set=q_herbal=1
+recipe=distilled_essence
 quest=The Alchemist's Trial
 option=I'll bring it.|end
 

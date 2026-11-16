@@ -183,6 +183,12 @@ int main(int argc, char** argv) {
                 if (startsWith(key, "lorefile:")) { got = g.foundFiles.count(key.substr(9)) ? "1" : "0"; return true; }
                 if (key == "inputtext") { got = g.inputBuf; num = false; return true; }
                 if (key == "deskfiles") { got.clear(); for (auto& f : app.desktop.loreFiles()) got += (got.empty() ? "" : ",") + f; num = false; return true; }   // My Computer's list
+                // 1.5.0: recipe:ID = 1 if the crafting lists show it (#86); fieldnote:ID = "res bits;tags" from fieldnotes.ini,
+                // fieldknown:ID = the resistance bits the tooltip shows, deskfieldnotes = the desktop's Field Notes.txt (#96)
+                if (startsWith(key, "recipe:")) { got = "0"; for (auto& r : g.recipes) if (r.id == key.substr(7) && g.recipeVisible(r)) got = "1"; return true; }
+                if (startsWith(key, "fieldnote:")) { auto it = g.fieldNotes.find(key.substr(10)); got = "none"; if (it != g.fieldNotes.end()) { got = std::to_string(it->second.res) + ";"; for (auto& t : it->second.tags) got += t + ","; } num = false; return true; }
+                if (startsWith(key, "fieldknown:")) { got = std::to_string(g.knownResBits(key.substr(11))); return true; }
+                if (key == "deskfieldnotes") { got = g.fieldNotesText(); num = false; return true; }
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
                 // 1.4.0: spells:<member> = the spells member n knows (comma list); answers = the talk box's answers as shown
                 // (only those whose conditions hold, with their [CHA 12] tags), joined by " | "

@@ -32,6 +32,7 @@ bool Desktop::init(Tileset* ts, Font* font, GameData* gd, Game* g, GameSettings*
         {"Minesweeper", 0, 14, "minesweeper"},
         {"Solitaire", 1, 4, "solitaire"},
         {"Achievements", 4, 4, "achievements"},
+        {"Field Notes.txt", 3, 3, "fieldnotes"},   // 1.5.0 (#96): what the party learned about monsters, for every save slot
     };
     // demo build: the full game's store page (1.3.0: only once demo.txt's store= names one - no icon that opens nothing)
     if (game && game->demoMode && !game->storeUrl.empty()) iconDefs.push_back({"Wishlist Triffall", 0, 7, "wishlist"});
@@ -266,6 +267,7 @@ void Desktop::openWindow(const std::string& type) {
     else if (type == "minesweeper") { w.title = "Minesweeper"; w.w = 168; w.h = 220; }
     else if (type == "solitaire") { w.title = "Solitaire"; w.w = 286; w.h = 340; }
     else if (type == "achievements") { w.title = "Achievements"; w.w = 420; w.h = 330; }
+    else if (type == "fieldnotes") { w.title = "Field Notes.txt - Notepad"; w.w = 460; w.h = 340; }   // 1.5.0 (#96)
     else { w.title = type; w.w = 300; w.h = 150; }
     w.x = (UI::SCREEN_W - w.w) / 2 + n * 12; w.y = (UI::SCREEN_H - TASKBAR_H - w.h) / 2 + n * 12;
     windows.push_back(w);
@@ -320,7 +322,7 @@ void Desktop::runAction(const std::string& a) {
     else if (a == "discord") { if (req) req->openURL = discordUrl(); openWindow("discord"); }
     else if (a == "readme") openWindow("readme");
     else if (a == "about") openWindow("about");
-    else if (a == "mycomputer" || a == "minesweeper" || a == "solitaire" || a == "achievements") openWindow(a);
+    else if (a == "mycomputer" || a == "minesweeper" || a == "solitaire" || a == "achievements" || a == "fieldnotes") openWindow(a);
     else if (a == "worldmap") { if (!game->running) showDialog("World Map", "The map shows the world of a running game. Start or load a game first."); else { game->openWorldMap(); launchGame = true; } }
     else if (a == "editor") { launchEditor = true; windows.clear(); }
     else if (a == "resume") { if (game->running) launchGame = true; }
@@ -564,6 +566,7 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
         if (actP(in, A_CONFIRM) && !in.gamepadActive) w.status = "go";
     }
     if (w.type == "yesno" || w.type == "msg") { if (actP(in, A_CONFIRM) && !in.gamepadActive) w.status = "yes"; }
+    if (w.type == "fieldnotes") { if (in.wheel) w.page = std::max(0, w.page - in.wheel * 2); if (actP(in, A_UP)) w.page = std::max(0, w.page - 1); if (actP(in, A_DOWN)) w.page++; if (actP(in, A_PAGEDOWN)) w.page += 15; if (actP(in, A_PAGEUP)) w.page = std::max(0, w.page - 15); }   // 1.5.0: clamped when drawn
     if (w.type == "readme") { if (in.wheel) w.page = clampi(w.page - in.wheel * 2, 0, 200); if (actP(in, A_UP)) w.page = std::max(0, w.page - 1); if (actP(in, A_DOWN)) w.page = std::min(200, w.page + 1); if (actP(in, A_PAGEDOWN)) w.page = std::min(200, w.page + 15); if (actP(in, A_PAGEUP)) w.page = std::max(0, w.page - 15); }
 }
 
@@ -853,6 +856,13 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         drawIcon(cv, 1, 6, x + 6, y, 1);
         f.drawWrapped(cv, *ctx.ts, x + 48, y, w.w - 70, std::string("Opening the Triffall Discord in your browser:\n\n") + discordUrl(), DKSHADOW);
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "OK", true, true, active)) w.wantClose = true;
+    } else if (w.type == "fieldnotes") {   // 1.5.0 (#96): Field Notes.txt, written from the game's fieldnotes.ini
+        bevelBox(cv, w.x + 4, w.y + 26, w.w - 8, w.h - 30, true); cv.fillRect(w.x + 6, w.y + 28, w.w - 12, w.h - 34, HILITE);
+        std::vector<std::string> lines; for (auto& raw : split(game ? game->fieldNotesText() : std::string(), '\n')) { if (raw.empty()) { lines.push_back(""); continue; } for (auto& wl : f.wrap(raw, w.w - 24)) lines.push_back(wl); }
+        int n = (int)lines.size(), maxShow = (w.h - 56) / 13;
+        w.page = clampi(w.page, 0, std::max(0, n - maxShow));
+        for (int i = 0; i < maxShow && w.page + i < n; i++) f.draw(cv, *ctx.ts, w.x + 10, w.y + 30 + i * 13, lines[w.page + i], DKSHADOW);
+        { std::string hint = fmt("%d / %d  -  wheel or arrows to scroll", std::min(n, w.page + maxShow), n); cv.fillRect(w.x + 6, w.y + w.h - 20, w.w - 12, 14, FACE); f.draw(cv, *ctx.ts, w.x + w.w - 10 - f.width(hint), w.y + w.h - 18, hint, SHADOW); }
     } else if (w.type == "mycomputer") { drawMyComputer(cv, w, in, active);
     } else if (w.type == "minesweeper") { drawMinesweeper(cv, w, in, active);
     } else if (w.type == "solitaire") { drawSolitaire(cv, w, in, active);
