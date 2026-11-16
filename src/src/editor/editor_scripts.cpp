@@ -221,6 +221,7 @@ void Editor::drawScripts(InputState& in) {
         "revealmap map   win line|line",
         "",
         "1.4.0: resetcrates   lorefile name",
+        "1.5.0: recipe id,id (teach recipes)",
         "",
         "New in 1.1.10 (dialogue too):",
         "script id[,args]  time minutes",
