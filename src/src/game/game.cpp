@@ -529,6 +529,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     const int fullW = SCREEN_W, fullH = SCREEN_H;
     computeLayout();
     hudHitsPrev = hudHits;
+    if (Theme::native()) nativeHudInput(in);   // 1.8.3 (#176-#178): the native window's menu bar, Alt keys, tool windows
     if (mode == GMode::MENU && in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_MEMBER && h->arg >= 0 && h->arg < (int)party.members.size()) { menuMember = h->arg; menuSubFocus = false; menuPrompt.clear(); in.eatMouse(); }
     int svX = 0, svY = 0;
     const bool sv = subViewOrigin(mode, svX, svY);
@@ -1805,7 +1806,8 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     if (mode == GMode::COMBAT) { drawHint(cv, -(VIEW_Y + VIEW_H - 8)); }   // in a fight: at the bottom of the world view
     else if (fullScreenUI) { int hh = drawHint(cv, -(SCREEN_H - (mode == GMode::CRAFT ? 92 : 58))); if (hh) ny = SCREEN_H - 58 - hh - 18 * std::min<int>(3, (int)notifications.size()); }   // over menus: near the bottom (1.1.7: above the crafting screen's quantity line and button), notifications above it
     else ny += drawHint(cv, ny);
-    for (size_t i = 0; i < notifications.size() && i < 3; i++) {
+    if (Theme::native() && !sv) drawNativeNotes(cv);   // 1.8.3 (#176): tray balloons above the clock (hud_native.cpp)
+    else for (size_t i = 0; i < notifications.size() && i < 3; i++) {
         float a = std::min(1.0f, notifTime[i]);
         Color8 c = C::Cream; c.a = (uint8_t)(255 * a);
         int w = ctx.font->width(notifications[i]) + 20;
