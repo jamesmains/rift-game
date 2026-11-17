@@ -174,3 +174,11 @@ what can be made). Command: `craftsel RECIPE` (select a recipe on the open craft
 - 1.8.1 (#164-#166): console `sky [0|1]` (this visit); expects `blackbg` (under=1 cells of the current map whose bg is
   still pure black), `darkhides:X,Y` (1 = objects on that tile aren't drawn). Test `dark_sky_1_8_1`; `night_look_1_8_0`
   now sets `con sky 1` in Greywood Cave to check the open-sky shadow tint.
+
+1.8.3 (UI themes): `theme frame|native|onebit` switches the look (an unknown name = frame); `hudclick KIND ARG` clicks
+the HUD hot spot of that kind wherever the active theme drew it (kinds: action belt combat unit pause member craft ptab
+slot pick lead; `hudclick pause -1` = the fight's Menu); `deskaction continue` / `deskaction deleteadventure` press the
+launcher's Continue / Delete. Expects `theme`, `settingsini:KEY` (a value in the out folder's settings.ini) and mode
+`SETTINGS` (Pause > Settings). `tools\run-tests.ps1 -Theme native` runs every script with `theme native` first; tests
+that check pixels or desktop icon positions set `theme frame` themselves. New: `theme_switch_1_8_3`,
+`pause_settings_ingame_1_8_3`.

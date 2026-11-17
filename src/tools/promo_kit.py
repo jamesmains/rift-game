@@ -266,7 +266,7 @@ def cover():
     c.paste(taskbar(W), (0, H - 28))
     return up(c, k)
 
-COVER_FOCUS = (690, 232)              # the target box and the fight under it in 01_combat
+COVER_FOCUS = (420, 190)              # the aimed-at goblin, its hit chance and the party around it in 01_combat (1.8.3 layout)
 
 def banner():
     """itch.io banner 960x300: the boot screen's logo and BIOS lines, the fight fading in from the right."""

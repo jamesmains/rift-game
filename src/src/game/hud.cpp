@@ -387,7 +387,7 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             if (m.recolor) ctx.ts->drawRecolor(cv, m.tile, 12, y0 + 28, 3, m.color); else ctx.ts->draw(cv, m.tile, 12, y0 + 28, 3);
             int infoW = o.foe && tw >= 300 ? tw - 150 : tw - 70;
             Theme::text(p, 58, y0 + 26, Theme::fit(p, m.name, infoW - 6), o.foe ? Theme::foe() : Theme::good());
-            hpLabel(58, y0 + 42, "HP"); int bw = std::max(30, infoW - 74); Theme::bar(cv, 72, y0 + 43, bw, 4, m.hp, m.maxHP(*gd), Theme::hp()); Theme::small(p, 78 + bw, y0 + 42, fmt("%d/%d", m.hp, m.maxHP(*gd)), t.text);
+            hpLabel(58, y0 + 42, "HP"); int bw = std::max(30, infoW - 104); Theme::bar(cv, 72, y0 + 43, bw, 4, m.hp, m.maxHP(*gd), Theme::hp()); Theme::small(p, 78 + bw, y0 + 42, fmt("%d/%d", m.hp, m.maxHP(*gd)), t.text);
             Theme::text(p, 58, y0 + 54, fmt("AP %d  Move %d", m.ap, m.maxMove(*gd)), t.dim);
             if (o.foe && tw >= 300) {
                 Color8 wf2 = t.well; int hx = tw - 138; Theme::well(cv, hx, y0 + 24, 128, 46, &wf2);
