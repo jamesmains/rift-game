@@ -477,14 +477,29 @@ void Game::updateCameraInput(InputState& in, float dt) {
     bool combat = mode == GMode::COMBAT;
     float speed = 420.0f * dt;
     int dx = 0, dy = 0;
-    if (in.mouseInWindow && !in.gamepadActive && settings && settings->edgeScroll && combat && !mouseOverUI(in) && inView(in)) {
-        int mx = in.mouseX - VIEW_X, my = in.mouseY - VIEW_Y;
-        if (mx < 10) dx = -1; else if (mx >= VIEW_W - 10) dx = 1;
-        if (my < 10) dy = -1; else if (my >= viewH - 10) dy = 1;
+    // 1.8.4 (#191): the pointer pushed against the edge of the screen pans too. Before, only the 10 px inside the world
+    // view's own edge did: the frame / window / menu bar round the view (and the bars beside a letterboxed picture, where
+    // the pointer counted as outside the window) sit between it and the screen's edge, so resting the pointer on the
+    // edge did nothing and only jiggling it back over the view's border moved the camera.
+    if (in.cursorOnWindow && !in.gamepadActive && settings && settings->edgeScroll && combat) {
+        const int sx = in.mouseX, sy = in.mouseY;
+        bool screenEdge = sx <= 1 || sy <= 1 || sx >= SCREEN_W - 2 || sy >= SCREEN_H - 2;
+        if (screenEdge || (in.mouseInWindow && inView(in) && !mouseOverUI(in))) {
+            int mx = sx - VIEW_X, my = sy - VIEW_Y;
+            if (mx < 10 || sx <= 1) dx = -1; else if (mx >= VIEW_W - 10 || sx >= SCREEN_W - 2) dx = 1;
+            if (my < 10 || sy <= 1) dy = -1; else if (my >= viewH - 10 || sy >= SCREEN_H - 2) dy = 1;
+        }
     }
     if (in.mouseDown[2] && (in.mouseDX || in.mouseDY)) { camTX -= in.mouseDX; camTY -= in.mouseDY; camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY; }
-    if (in.stick2X != 0 || in.stick2Y != 0) { camTX += (int)(in.stick2X * speed); camTY += (int)(in.stick2Y * speed); camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY; }
-    if (dx || dy) { camTX += (int)(dx * speed); camTY += (int)(dy * speed); camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY; }
+    // 1.8.4 (#191): the pan keeps its fractions between frames (at a high frame rate a frame's step rounded down to 0 px)
+    static float panRemX = 0, panRemY = 0;
+    float pdx = 0, pdy = 0;
+    if (in.stick2X != 0 || in.stick2Y != 0) { pdx += in.stick2X * speed; pdy += in.stick2Y * speed; }
+    if (dx || dy) { pdx += dx * speed; pdy += dy * speed; }
+    if (pdx != 0 || pdy != 0) {
+        panRemX += pdx; panRemY += pdy; int ix = (int)panRemX, iy = (int)panRemY; panRemX -= ix; panRemY -= iy;
+        camTX += ix; camTY += iy; camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY;
+    } else panRemX = panRemY = 0;
     if (actP(in, A_CENTER, combat)) { camFree = false; if (combat && cb.selectedUnit >= 0) camCenterOn(cb.units[cb.selectedUnit].x, cb.units[cb.selectedUnit].y); else camCenterOn(px, py); }
     // smooth follow toward target
     float k = std::min(1.0f, dt * 10.0f);
@@ -1367,8 +1382,12 @@ void Game::updatePause(InputState& in, float dt) {
     bool overEntry = h && h->kind == HH_PAUSE && h->arg >= 0 && h->arg < n;
     if (overEntry && (in.mouseDX || in.mouseDY)) pauseSel = h->arg;
     if (actP(in, A_CANCEL)) { popMode(); return; }
-    if (actP(in, A_CONFIRM) || in.mousePressed[0]) {
-        if (in.mousePressed[0]) {
+    // 1.8.4 (#193): the keys the menu shows next to its entries (Party & Items, World Map, Journal) pick them
+    bool hotkey = false;
+    { const int keyOf[3][2] = {{1, A_MENU}, {3, A_WORLDMAP}, {4, A_JOURNAL}};
+      for (auto& k : keyOf) if (actP(in, k[1])) for (int i = 0; i < n; i++) if (entries[i].id == k[0]) { pauseSel = i; hotkey = true; } }
+    if (hotkey || actP(in, A_CONFIRM) || in.mousePressed[0]) {
+        if (in.mousePressed[0] && !hotkey) {
             if (!overEntry) { if (!Theme::frame() && !mouseOverUI(in)) popMode(); return; }   // a click off a drop-down menu closes it
             pauseSel = h->arg; in.eatMouse();
         }

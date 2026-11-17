@@ -1524,6 +1524,9 @@ void Game::updateCombat(InputState& in, float dt) {
         const HudHit* hh = in.mousePressed[0] ? hudHitAt(in.mouseX, in.mouseY) : nullptr;
         bool menuClick = hh && hh->kind == HH_PAUSE;
         if (menuClick || (actP(in, A_CANCEL, true) && !(myInput && cb.mode != 0))) { in.eatMouse(); openPause(); return; }
+        // 1.8.4 (#193): the Journal key opens the Journal in a fight too, at any moment, like the pause menu's entry (keys
+        // only: the pad's Back button is the action menu here)
+        for (int k : {(int)gKeys.key1[A_JOURNAL], (int)gKeys.key2[A_JOURNAL]}) if (k && in.pressed[k]) { in.pressed[k] = false; jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; }
     }
     if (cb.bufT > 0) cb.bufT -= dt;
     if (inputLocked && cb.playerTurn && !autoCombat && cb.selectedUnit >= 0) {

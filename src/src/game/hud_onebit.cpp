@@ -168,7 +168,7 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
     };
     auto beltWin = [&](const Rect& r) {
         uiRect(r.x, r.y, r.w + 4, r.h + 4); hudHit(r.x, r.y, r.w, r.h, HH_TOOL, 0);
-        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Belt");
+        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Favorites");   // 1.8.4 (#192): was "Belt"
         int member = combat && cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() && cb.units[cb.selectedUnit].partyIndex >= 0 ? cb.units[cb.selectedUnit].partyIndex : lead;
         int pointed = -1, first = -1;
         for (int i = 0; i < 8; i++) {
@@ -202,7 +202,7 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             Theme::small(p, r.x + 8, r.y + 76, range + " use an item in combat", t.dim);
         } else {
             if (!chosenName.empty()) Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, chosenName, r.w - 16), t.accent);
-            else Theme::text(p, r.x + 8, r.y + 58, "Nothing on the belt yet", t.dim);
+            else Theme::text(p, r.x + 8, r.y + 58, "No favorites yet", t.dim);
             Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, range + " use   " + keyLow(A_MENU) + " menu   " + keyLow(A_INTERACT) + " act", r.w - 16), t.dim);
         }
     };
@@ -302,8 +302,8 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
     auto prompt = [&]() {
         if (!map || party.members.empty() || mode != GMode::EXPLORE) return;
         std::string verb, what = nearText(*this, verb);
-        std::string k = bindName(A_INTERACT); if (k.empty()) return;
-        std::string s = what.empty() ? "look around" : verb + " " + what;
+        std::string k = bindName(A_INTERACT); if (k.empty() || what.empty()) return;   // 1.8.4 (#190): only when there is something to use
+        std::string s = verb + " " + what;
         int sx = VIEW_X + px * TILE - camX, sy = VIEW_Y + py * TILE - camY;
         int bw = std::min(260, Theme::textW(p, k) + 12 + Theme::textW(p, s) + 30), bh = 20;
         s = Theme::fit(p, s, bw - 30 - Theme::textW(p, k) - 12);

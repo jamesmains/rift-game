@@ -39,6 +39,23 @@ int  wrapped(Ctx& c, int x, int y, int w, const std::string& s, Color8 col = C::
 bool listRow(Ctx& c, const InputState& in, int x, int y, int w, int h, bool selected);
 void selCursor(Ctx& c, int x, int y, int h);   // pulsing marker to the left of the focused row (clear focus for keyboard/controller users)
 bool button(Ctx& c, const InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled = true, bool selected = false);
+// 1.8.4 (#189): a row of tabs in the theme's own look (native: property-sheet tabs on a white base line from lineX0 to
+// lineX1; frame: brass / slate bevels; one-bit: the chosen tab inverted). Each tab is {x, w, label}.
+struct TabSpec { int x, w; std::string label; };
+void tabRow(Ctx& c, const std::vector<TabSpec>& tabs, int y, int h, int sel, int lineX0 = -1, int lineX1 = -1);
+// 1.8.4 (#194): the notice board's colours. Frame keeps the cork board and paper notices; native and one-bit draw it
+// as their own panel with white (native) or black (one-bit) cards.
+struct BoardLook {
+    bool cork = true;                              // frame: the cork board, pins on the notices
+    Color8 head, sub, note, ink, body, soft, good, bad, warn, reward, card, cardSel, cardShut, edge, edgeSel;
+    Color8 selText;                                // native: every line of the chosen card in this (on its navy fill)
+};
+BoardLook boardLook();
+void boardPanel(Ctx& c, int x, int y, int w, int h);                          // the board's background
+void boardCard(Ctx& c, int x, int y, int w, int h, bool sel, bool open);      // one notice
+Color8 boardInk(const BoardLook& L, bool sel, Color8 c);                      // a card's text colour (the chosen native card: white)
+// a filter chip (the item category bar): chosen = pressed in (native), inverted (one-bit), brass (frame)
+void chip(Ctx& c, int x, int y, int w, int h, const std::string& label, bool on);
 void icon(Ctx& c, Tile t, int x, int y, int scale = 1, Color8 tint = C::White);
 int keyHint(Ctx& c, int x, int y, const std::string& key, const std::string& label);
 // The key (or controller button) bound to an action, drawn as a keyHint chip; returns its width (0 = unbound).

@@ -40,6 +40,7 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
     if (keyNav && (in.pressed[K_TAB] || actP(in, A_PAGEDOWN))) { page = (page + 1) % 3; focus = page; in.eatKeys(); }
     else if (keyNav && actP(in, A_PAGEUP)) { page = (page + 2) % 3; focus = page; in.eatKeys(); }
 
+    struct DropList { bool open = false; int x = 0, y = 0, w = 0, lh = 15, sel = 0; std::vector<std::string> opts; } dropList;   // an open combo's list, drawn last
     int idx = 0;   // controls in drawing order
     struct St { bool hover, focused, click, activate; };
     auto ctl = [&](Rect rc, int kind) -> St {
@@ -114,20 +115,27 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
             text(p, x + 5, y + 2, opts[std::clamp(v, 0, (int)opts.size() - 1)], st.focused ? t.selText : t.text);
             Color8 f = t.face; int bx = x + w - 18; bevel(cv, bx, y, 16, 16, t.hi, t.lo, &f); bevel(cv, bx + 1, y + 1, 14, 14, t.hi2, t.lo2);
             for (int i = 0; i < 4; i++) cv.fillRect(bx + 4 + i, y + 6 + i, 8 - 2 * i, 1, t.lo);
-            if (st.click) openCombo = myIdx;
+            // 1.8.4 (#187): the click that opens the list must not also close it (it used to reach the "click elsewhere" test below)
+            if (st.click && openCombo != myIdx) { openCombo = myIdx; in.mousePressed[0] = false; }
             if (st.activate || (st.focused && leftRight)) v = (v + (leftRight < 0 ? (int)opts.size() - 1 : 1)) % (int)opts.size();
             if (openCombo == myIdx) {
-                // the list drops below the field; a click picks, a click elsewhere closes it
-                int lh = 15, ly = y + 18; Color8 white2{255, 255, 255, 255};
-                cv.fillRect(x, ly, w, (int)opts.size() * lh + 2, white2); cv.rect(x, ly, w, (int)opts.size() * lh + 2, t.lo);
+                // the list drops below the field; a click picks, a click elsewhere (the field too) closes it. It is drawn
+                // after everything else (dropList), so the rows under it can't cover it.
+                int lh = 15, ly = y + 18; Rect field{x, y - 2, w, 20};
+                bool pressed = in.mousePressed[0];
                 for (int i = 0; i < (int)opts.size(); i++) {
-                    Rect orc{x + 1, ly + 1 + i * lh, w - 2, lh}; bool ho = orc.contains(in.mouseX, in.mouseY);
-                    if (ho || i == v) cv.fillRect(orc.x, orc.y, orc.w, orc.h, ho ? t.rowSel : RGB(216, 216, 232));
-                    text(p, x + 5, orc.y + 1, opts[i], ho ? t.selText : t.text);
-                    if (ho && in.mousePressed[0]) { v = i; openCombo = -1; in.mousePressed[0] = false; }
+                    Rect orc{x + 1, ly + 1 + i * lh, w - 2, lh};
+                    if (pressed && orc.contains(in.mouseX, in.mouseY)) { v = i; openCombo = -1; in.mousePressed[0] = false; pressed = false; }
                 }
-                if (in.mousePressed[0]) { openCombo = -1; in.mousePressed[0] = false; }
+                if (pressed) { openCombo = -1; in.mousePressed[0] = false; (void)field; }
+                if (openCombo == myIdx && active) {   // keys walk the open list, Enter closes it
+                    int n = (int)opts.size();
+                    if (actP(in, A_UP)) v = (v + n - 1) % n; else if (actP(in, A_DOWN)) v = (v + 1) % n;
+                    else if (actP(in, A_CONFIRM)) { openCombo = -1; in.eatKeys(); }
+                }
+                if (openCombo == myIdx) { dropList.open = true; dropList.x = x; dropList.y = ly; dropList.w = w; dropList.lh = lh; dropList.opts = opts; dropList.sel = v; }
             }
+            if (actP(in, A_CANCEL) && openCombo == myIdx) { openCombo = -1; in.pressed[K_ESCAPE] = false; }
             return v != before;
         }
         int hoverOpt = choiceHit(p, x, y, opts, in.mouseX, in.mouseY);
@@ -163,13 +171,15 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
     if (page == 0) {
         // Display 5 rows, Sound 4, Play 4: the row height fits what there is room for
         int gt = nat ? 22 : one ? 22 : 30, gap = 6;
-        if ((bottom - top - 4 - 3 * (gt + 8 + gap)) / 13 < 18) { gt = nat || one ? 20 : 24; gap = 2; }   // a short window (640x480): tighter groups
-        int rh = std::clamp((bottom - top - 4 - 3 * (gt + 8 + gap)) / 13, 15, 24);
+        // 1.8.4 (#188): the Theme row's buttons (and their focus ring) get room of their own above the check boxes
+        const int themeExtra = 8;
+        if ((bottom - top - 4 - themeExtra - 3 * (gt + 8 + gap)) / 13 < 18) { gt = nat || one ? 20 : 24; gap = 2; }   // a short window (640x480): tighter groups
+        int rh = std::clamp((bottom - top - 4 - themeExtra - 3 * (gt + 8 + gap)) / 13, 15, 24);
         int y = top;
-        int h1 = gt + 5 * rh + 8, h2 = gt + 4 * rh + 8, h3 = gt + 4 * rh + 8;
+        int h1 = gt + 5 * rh + 8 + themeExtra, h2 = gt + 4 * rh + 8, h3 = gt + 4 * rh + 8;
         int cy = group(y, h1, "Display");
         int c1 = gx + 14, c2 = gx + gw / 2 + 6;
-        { text(p, c1, cy + 3, "Theme", nat ? t.text : t.dim); int th0 = s.theme; if (choiceRow(c1 + 64, cy, {THEME_NAMES[0], THEME_NAMES[1], THEME_NAMES[2]}, s.theme, true) && s.theme != th0) {} cy += rh + 2; }
+        { text(p, c1, cy + 3, "Theme", nat ? t.text : t.dim); int th0 = s.theme; if (choiceRow(c1 + 64, cy, {THEME_NAMES[0], THEME_NAMES[1], THEME_NAMES[2]}, s.theme, true) && s.theme != th0) {} cy += rh + themeExtra; }
         if (checkRow(c1, cy + 2, "Fullscreen (F11)", s.fullscreen)) reqFull();
         if (checkRow(c2, cy + 2, "Classic 4:3 screen", s.classic43)) reqScale();
         cy += rh;
@@ -330,6 +340,16 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
         int bx = rx - total + 8;
         for (size_t i = 0; i < right.size(); i++) { doButton(right[i], bx, ws[i]); bx += ws[i] + 8; }
         if (inGame && !nat && !one) text(p, r.x + 10, by + bh + 6, "Tab: next page   Up/Down: row   Esc: back to the game", t.dim);
+    }
+    // the open drop-down list, over everything drawn above
+    if (dropList.open) {
+        NoMap nm2; Color8 white2{255, 255, 255, 255}; int n = (int)dropList.opts.size(), x = dropList.x, ly = dropList.y, w = dropList.w, lh = dropList.lh;
+        cv.fillRect(x, ly, w, n * lh + 2, white2); cv.rect(x, ly, w, n * lh + 2, t.lo);
+        for (int i = 0; i < n; i++) {
+            Rect orc{x + 1, ly + 1 + i * lh, w - 2, lh}; bool ho = orc.contains(in.mouseX, in.mouseY);
+            if (ho || i == dropList.sel) cv.fillRect(orc.x, orc.y, orc.w, orc.h, ho ? t.rowSel : RGB(216, 216, 232));
+            text(p, x + 5, orc.y + 1, dropList.opts[i], ho ? t.selText : t.text);
+        }
     }
     // own navigation moves the focus through what was drawn (the Controls table is control 0 there)
     lastCount = idx;

@@ -350,7 +350,9 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
     std::string title = craftStation == "forge" ? "Forge" : craftStation == "alchemy" ? "Alchemy bench" : craftStation == "workbench" ? "Workbench" : craftStation == "all" ? "Crafting" : "Field crafting";
     panelTitle(ctx, 10, 6, SCREEN_W - 20, SCREEN_H - 12, title + fmt("   (%d gold)", party.gold));
     { std::string st = craftStation == "any" ? "field" : craftStation; int lv = craftSkill(craftStation), xp = craftXP(st); std::string s = fmt("%s skill %d", skillName.c_str(), lv) + (lv < 6 ? fmt("  (%d/%d)", xp, kSkillXP[lv]) : "  (master)"); textRight(ctx, SCREEN_W - 22, 32, s, C::Cyan); }
-    for (int i = 0; i < 4; i++) { if (!tabAvailable(craftStation, i)) continue; int tx = 20 + i * 96; bool sel = craftTab == i; cv.fillRect(tx, 30, 92, 18, sel ? RGB(120, 90, 30) : RGB(40, 40, 54)); cv.rect(tx, 30, 92, 18, sel ? C::Gold : C::DkGray); textCenter(ctx, tx + 46, 33, kCraftTabs[i], sel ? C::Yellow : C::LtGray); }
+    { std::vector<TabSpec> ts; int selIdx = -1;   // 1.8.4 (#189): the theme's tabs
+      for (int i = 0; i < 4; i++) { if (!tabAvailable(craftStation, i)) continue; if (craftTab == i) selIdx = (int)ts.size(); ts.push_back({20 + i * 96, 92, kCraftTabs[i]}); }
+      tabRow(ctx, ts, 30, 18, selIdx, 16, SCREEN_W - 16); }
     int x = 350, y = 56;
     auto matLines = [&](int& cy, const std::vector<std::pair<std::string, int>>& mats, int gold) {
         UI::text(ctx, x, cy, "Needs:", C::Gold); cy += 14;

@@ -121,6 +121,7 @@ int main(int argc, char** argv) {
         in.mouseDX = prevMX < 0 ? 0 : cmx - prevMX; in.mouseDY = prevMY < 0 ? 0 : cmy - prevMY; prevMX = cmx; prevMY = cmy;
         in.mouseX = cmx; in.mouseY = cmy;
         in.mouseInWindow = mx >= 0 && my >= 0 && mx < cw && my < chh && raw.cursorOnScreen;
+        in.cursorOnWindow = raw.cursorOnScreen != 0;
         for (int b = 0; b < 3; b++) { in.mouseDown[b] = raw.mouseDown[b] != 0; in.mousePressed[b] = raw.mousePressed[b] != 0; in.mouseReleased[b] = raw.mouseReleased[b] != 0; }
         in.wheel = raw.wheel;
         { std::string d = rl_dropped_files(); in.dropped.clear(); size_t a = 0; while (a < d.size()) { size_t b = d.find(10, a); if (b == std::string::npos) b = d.size(); if (b > a) in.dropped.push_back(d.substr(a, b - a)); a = b + 1; } }

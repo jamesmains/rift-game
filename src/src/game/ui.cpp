@@ -51,6 +51,7 @@ bool listRow(Ctx& c, const InputState& in, int x, int y, int w, int h, bool sele
     return hover;
 }
 void selCursor(Ctx& c, int x, int y, int h) {
+    if (Theme::native()) return;   // 1.8.4 (#194): the desktop look marks a choice by the navy row / pressed button alone
     Theme::NoMap nm;
     bool bright = ((int)(c.time * 3)) % 2 == 0 && !Theme::reduceFlashing;
     const UiTheme& t = Theme::th();
@@ -65,6 +66,89 @@ bool button(Ctx& c, const InputState& in, int x, int y, int w, int h, const std:
     Theme::button(pen(c), x, y, w, h, label, !enabled ? Theme::BS_DISABLED : selected ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover);
     if (selected && enabled) selCursor(c, x, y, h);
     return hover && in.mousePressed[0];
+}
+
+void tabRow(Ctx& c, const std::vector<TabSpec>& tabs, int y, int h, int sel, int lineX0, int lineX1) {
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Canvas& cv = *c.cv; Theme::Pen p = pen(c);
+    if (tabs.empty()) return;
+    auto label = [&](const TabSpec& s, int ty, int th, Color8 col) { std::string l = Theme::fit(p, s.label, s.w - 6); Theme::text(p, s.x + (s.w - Theme::textW(p, l)) / 2, ty + (th - 12) / 2, l, col); };
+    if (Theme::native()) {
+        if (lineX0 < 0) lineX0 = tabs.front().x; if (lineX1 < 0) lineX1 = tabs.back().x + tabs.back().w;
+        cv.fillRect(lineX0, y + h, lineX1 - lineX0, 1, t.hi);   // the sheet's top edge; the open tab joins it
+        for (int pass = 0; pass < 2; pass++) for (int i = 0; i < (int)tabs.size(); i++) {
+            const TabSpec& s = tabs[i]; bool on = i == sel; if (on != (pass == 1)) continue;   // the open tab last, over its neighbours
+            int tx = on ? s.x - 2 : s.x, tw = on ? s.w + 4 : s.w, ty = on ? y : y + 2, th = on ? h + 1 : h - 2;
+            cv.fillRect(tx, ty, tw, th, t.face);
+            cv.fillRect(tx + 1, ty, tw - 2, 1, t.hi); cv.fillRect(tx, ty + 1, 1, th - 1, t.hi);
+            cv.fillRect(tx + tw - 1, ty + 1, 1, th - 1, t.lo); cv.fillRect(tx + tw - 2, ty + 1, 1, th - 1, t.lo2);
+            label(s, ty, on ? h : h - 2, t.text);
+        }
+        return;
+    }
+    for (int i = 0; i < (int)tabs.size(); i++) {
+        const TabSpec& s = tabs[i]; bool on = i == sel;
+        if (Theme::onebit()) {
+            if (on) { cv.fillRect(s.x, y, s.w, h, t.text); label(s, y, h, t.back); }
+            else { cv.fillRect(s.x, y, s.w, h, t.back); cv.rect(s.x, y, s.w, h, t.dim); label(s, y, h, t.text); }
+            continue;
+        }
+        Color8 face = on ? t.selFill : t.face;
+        Theme::bevel(cv, s.x, y, s.w, h, on ? t.selHi : t.hi, on ? t.selLo : t.lo, &face);
+        label(s, y, h, on ? t.selText : t.text);
+    }
+}
+BoardLook boardLook() {
+    BoardLook L; const UiTheme& t = Theme::th();
+    if (Theme::native()) {
+        L.cork = false; L.head = t.text; L.sub = RGB(64, 64, 64); L.note = RGB(64, 64, 64); L.ink = t.text; L.body = RGB(32, 32, 32); L.soft = RGB(64, 64, 64);
+        L.good = RGB(0, 110, 0); L.bad = RGB(176, 0, 0); L.warn = RGB(160, 64, 0); L.reward = RGB(0, 0, 128);
+        L.card = RGB(255, 255, 255); L.cardSel = RGB(0, 0, 128); L.cardShut = RGB(223, 223, 223); L.edge = t.lo2; L.edgeSel = t.lo; L.selText = RGB(255, 255, 255);
+        return L;
+    }
+    if (Theme::onebit()) {
+        L.cork = false; L.head = t.text; L.sub = t.dim; L.note = t.dim; L.ink = t.text; L.body = t.text; L.soft = t.dim;
+        L.good = Theme::good(); L.bad = Theme::foe(); L.warn = t.accent; L.reward = t.accent;
+        L.card = t.back; L.cardSel = t.back; L.cardShut = t.back; L.edge = t.dim; L.edgeSel = t.accent; L.selText = t.text;
+        return L;
+    }
+    L.head = C::Cream; L.sub = RGB(220, 200, 160); L.note = RGB(170, 150, 115); L.ink = RGB(40, 25, 10); L.body = RGB(60, 45, 25); L.soft = RGB(70, 50, 30);
+    L.good = RGB(20, 120, 40); L.bad = RGB(150, 40, 30); L.warn = RGB(120, 60, 20); L.reward = RGB(120, 80, 10);
+    L.card = RGB(225, 215, 180); L.cardSel = RGB(250, 240, 205); L.cardShut = RGB(195, 190, 170); L.edge = RGB(120, 100, 60); L.edgeSel = C::Gold; L.selText = L.ink;
+    return L;
+}
+void boardPanel(Ctx& c, int x, int y, int w, int h) {
+    if (!Theme::native() && !Theme::onebit()) { panel(c, x, y, w, h, RGB(70, 50, 30), RGB(160, 120, 60)); return; }
+    Theme::NoMap nm; Theme::panel(*c.cv, x, y, w, h);
+}
+void boardCard(Ctx& c, int x, int y, int w, int h, bool sel, bool open) {
+    BoardLook L = boardLook(); Canvas& cv = *c.cv;
+    if (L.cork) { cv.fillRect(x, y, w, h, sel ? L.cardSel : open ? L.card : L.cardShut); cv.rect(x, y, w, h, sel ? L.edgeSel : L.edge); return; }
+    Theme::NoMap nm;
+    if (Theme::native()) {
+        if (sel) { cv.fillRect(x, y, w, h, L.cardSel); cv.rect(x, y, w, h, L.edgeSel); }
+        else { Color8 f = open ? L.card : L.cardShut; Theme::well(cv, x, y, w, h, &f); }
+        return;
+    }
+    cv.fillRect(x, y, w, h, L.card);
+    if (sel) Theme::glow(cv, x, y, w, h); else cv.rect(x, y, w, h, open ? L.edge : Theme::th().pipOff);
+}
+Color8 boardInk(const BoardLook& L, bool sel, Color8 col) { return sel && Theme::native() ? L.selText : col; }
+
+void chip(Ctx& c, int x, int y, int w, int h, const std::string& lab, bool on) {
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Canvas& cv = *c.cv; Theme::Pen p = pen(c);
+    if (Theme::native()) {
+        if (on) { Color8 f = RGB(223, 223, 223); Theme::bevel(cv, x, y, w, h, t.lo2, t.hi, &f); }
+        Theme::text(p, x + 5 + (on ? 1 : 0), y + (h - 12) / 2 + (on ? 1 : 0), lab, t.text);
+        return;
+    }
+    if (Theme::onebit()) {
+        if (on) { cv.fillRect(x, y, w, h, t.text); Theme::text(p, x + 5, y + (h - 12) / 2, lab, t.back); }
+        else { cv.rect(x, y, w, h, t.pipOff); Theme::text(p, x + 5, y + (h - 12) / 2, lab, t.dim); }
+        return;
+    }
+    Color8 f = on ? t.selFill : t.face;
+    cv.fillRect(x, y, w, h, f); cv.rect(x, y, w, h, on ? t.accent : t.hi2);
+    Theme::text(p, x + 5, y + (h - 12) / 2, lab, on ? t.selText : t.dim);
 }
 
 void icon(Ctx& c, Tile t, int x, int y, int scale, Color8 tint) { c.ts->draw(*c.cv, t, x, y, scale, tint); }

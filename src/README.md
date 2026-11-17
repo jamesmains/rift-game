@@ -29,6 +29,22 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.4 theme fixes
+
+* Clicking a party member while exploring makes them the party leader (the Party screen opens from its own button).
+* The Belt is now called Favorites, and it shows in fights in every theme (the acting character's slots; click one or
+  press 1-8).
+* Keys that the menus show now work there: J, M and Tab pick their entries in the pause menu, J opens the Journal in a
+  fight and from the notice board, and the Party screen's tabs answer to their keys (J on the Quests tab opens the
+  Journal).
+* Edge scrolling in fights works with the pointer resting on the edge of the screen; it no longer needs the mouse to
+  keep moving.
+* Desktop-native: proper property-sheet tabs on every menu with tabs (Party, Shop, Journal, Crafting, notice board),
+  no leftover arrow markers, a grey notice board with white notices, and the drop-down lists in Settings open on the
+  first click and draw over the rows below. One-Bit Desktop: a black notice board with paper-edged notices.
+* The pause menu and the Orders list line every label up on the left; the Theme row in Settings has room to breathe;
+  close boxes on small windows keep their X centred. The "look around" prompt only shows when there is something to use.
+
 ## 1.8.3 three looks: Settings > Theme
 
 * **Settings > General > Display > Theme** picks how the desktop and the game look; it changes at once, on the desktop
@@ -36,7 +52,7 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
   * *Adventurer's Frame* (the default): the world sits in a carved slate frame. A column at the right holds the place
     (name, day and time, weather, gold), the party with health and mana, and Orders (Party, Items, Spells, Journal,
     World map, Craft, Talk / Use, Menu - click them or press their keys). Along the bottom are the Chronicle (the
-    message log, which keeps what was said) and the Belt (hotbar slots 1-8). In a fight the column shows the round and
+    message log, which keeps what was said) and the Favorites (hotbar slots 1-8). In a fight the column shows the round and
     the turn order, the acting character with AP and movement as pips, and an Actions list (Attack, Aimed shot, Spell,
     Item, Defend, Overwatch, More actions, Flee, End turn, Menu); the bottom shows the target card (hit and crit
     chances, damage, what you know of its resistances, the ground it stands on) and the log. Nothing floats over the

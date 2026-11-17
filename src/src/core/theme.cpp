@@ -450,7 +450,9 @@ static void nativeTitleBar(const Pen& p, int x, int y, int w, int h, const std::
     if (boxes) {
         int bw = 16, bh = h - 4, bx = x + w - bw - 2, by = y + 2;
         Color8 face = t.face; bevel(cv, bx, by, bw, bh, t.hi, t.lo, &face); bevel(cv, bx + 1, by + 1, bw - 2, bh - 2, t.hi2, t.lo2);
-        for (int i = 0; i < 6; i++) { cv.put(bx + 5 + i, by + 3 + i, t.lo); cv.put(bx + 6 + i, by + 3 + i, t.lo); cv.put(bx + 10 - i, by + 3 + i, t.lo); cv.put(bx + 11 - i, by + 3 + i, t.lo); }
+        // 1.8.4 (#188): the X sized to the box and centred in it (a tool window's 10-px box used to have it on its bottom edge)
+        int g = std::clamp(bh - 6, 3, 6), gx = bx + (bw - g - 1) / 2, gy = by + (bh - g) / 2;
+        for (int i = 0; i < g; i++) { cv.put(gx + i, gy + i, t.lo); cv.put(gx + 1 + i, gy + i, t.lo); cv.put(gx + g - i - 1, gy + i, t.lo); cv.put(gx + g - i, gy + i, t.lo); }
     }
 }
 static void onebitTitleBar(const Pen& p, int x, int y, int w, int h, const std::string& tt, int stripes, bool closeBox) {

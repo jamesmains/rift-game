@@ -131,7 +131,7 @@ static void beltSlot(Game& g, Canvas& cv, int member, int slot, int x, int y, in
     if (kind == "spell") { if (auto* s = g.gd->spell(id)) { g.ctx.ts->draw(cv, s->tile, x, y, scale); ok = m.mp >= s->cost && (combat || g.spellUsableOutside(*s)); if (name) *name = s->name; } }
     else if (auto* d = g.gd->item(id)) { drawItemTile(*g.ctx.ts, cv, *d, x, y, scale); n = g.party.countItem(id); ok = n > 0; if (name) *name = d->name; }
     if (!ok) { Theme::NoMap nm; cv.fillRect(x, y, 12 * scale, 12 * scale, RGB(0, 0, 0, 150)); }
-    if (n > 1) { Theme::NoMap nm; std::string c = "x" + std::to_string(std::min(n, 99)); g.ctx.font->drawSmall(cv, x + 12 * scale + 9 - g.ctx.font->widthSmall(c), y + 12 * scale + 3, c, Theme::th().text); }
+    if (n > 1) { Theme::NoMap nm; std::string c = "x" + std::to_string(std::min(n, 99)); g.ctx.font->drawSmall(cv, x + 12 * scale + (scale == 1 ? 6 : 9) - g.ctx.font->widthSmall(c), y + 12 * scale + (scale == 1 ? 0 : 3), c, Theme::th().text); }
 }
 
 static std::string bindName(int a) { return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : ""; }
@@ -142,7 +142,12 @@ bool Game::hudClick(InputState& in) {
     switch (h->kind) {
         case HH_ACTION: injectAction = h->arg; in.eatMouse(); return true;
         case HH_CRAFT: in.eatMouse(); openCraft("any"); return true;
-        case HH_MEMBER: if (h->arg >= 0 && h->arg < (int)party.members.size()) { menuTab = 0; menuMember = h->arg; menuSel = 0; menuSubFocus = false; pushMode(GMode::MENU); } in.eatMouse(); return true;
+        case HH_MEMBER:   // 1.8.4 (#186): clicking a member while roaming makes them the party leader (the Party screen has its own button)
+            if (h->arg >= 0 && h->arg < (int)party.members.size()) {
+                if (!party.members[h->arg].alive) log(party.members[h->arg].name + " can't lead the party while fallen.");
+                else if (leader != h->arg) { leader = h->arg; notify(party.members[leader].name + " takes the lead."); gAudio.play("ui_click"); }
+            }
+            in.eatMouse(); return true;
         case HH_BELT: in.eatMouse(); useFavorite(activeLeader(), h->arg); return true;
         case HH_TOOL: in.eatMouse(); return true;
         default: in.eatMouse(); return true;
@@ -251,6 +256,7 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             bool sel = (settingsOpen ? e.id == 5 : i == pauseSel);
             bool hover = in.mouseX >= colX + 10 && in.mouseX < colX + colW - 10 && in.mouseY >= by && in.mouseY < by + bh;
             std::string k = e.id >= 0 && e.id < 8 && pauseKey[e.id] >= 0 ? bindName(pauseKey[e.id]) : "";
+            if (k.empty()) k = " ";   // 1.8.4 (#185): a blank key keeps the label at the left like the entries that have one
             Theme::button(p, colX + 10, by, colW - 20, bh, e.label, !e.enabled ? Theme::BS_DISABLED : sel ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover && !settingsOpen, k);
             if (!settingsOpen) hudHit(colX + 10, by, colW - 20, bh, HH_PAUSE, i);
         }
@@ -347,6 +353,7 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             int bx = colX + 10 + (twoCol ? (i % 2) * (bw + 4) : 0), by = oy + 28 + (twoCol ? i / 2 : i) * opitch;
             if (by + bh > H - 4) break;
             const O& o = orders[i]; std::string key = o.key >= 0 ? bindName(o.key) : "";
+            if (key.empty()) key = " ";   // 1.8.4 (#185): every label starts at the same place
             bool hover = in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY >= by && in.mouseY < by + bh;
             Theme::button(p, bx, by, bw, bh, o.label, Theme::BS_NORMAL, hover, key);
             hudHit(bx, by, bw, bh, o.kind, o.arg);
@@ -374,9 +381,28 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
         int ly = y0 + 29;
         for (auto& l : all) { Theme::text(p, x + 14, ly, Theme::fit(p, l.first, w - 30), l.second); ly += 14; }
     };
+    // 1.8.4 (#192): the favorites (was "Belt"): 4 x 2 slots; in a fight the acting member's, in a smaller panel
+    auto favorites = [&](int bx, int bw, bool small) {
+        Theme::panel(cv, bx, y0, bw, botH);
+        Theme::title(p, bx + 10, y0 + 7, "Favorites");
+        int member = lead;
+        if (combat && cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() && cb.units[cb.selectedUnit].partyIndex >= 0) member = cb.units[cb.selectedUnit].partyIndex;
+        int sw = small ? 28 : 46, sh = small ? 28 : (big ? 40 : 32), pitchX = small ? 30 : 52, pitchY = small ? (big ? 34 : 31) : (big ? 46 : 36);
+        for (int i = 0; i < 8; i++) {
+            int cx = bx + 10 + (i % 4) * pitchX, cy = y0 + 26 + (i / 4) * pitchY;
+            Color8 wf = t.well; Theme::well(cv, cx, cy, sw, sh, &wf);
+            bool hover = in.mouseX >= cx && in.mouseX < cx + sw && in.mouseY >= cy && in.mouseY < cy + sh;
+            if (hover) cv.rect(cx, cy, sw, sh, t.accent);
+            std::string k = bindName(A_FAV1 + i); Theme::small(p, cx + 3, cy + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, small ? 1 : 2), t.dim);
+            if (small) beltSlot(*this, cv, member, i, cx + 9, cy + 7, 1, combat);
+            else beltSlot(*this, cv, member, i, cx + 11, cy + (big ? 8 : 4), 2, combat);
+            hudHit(cx, cy, sw, sh, HH_BELT, i);
+        }
+    };
     if (combat) {
         // the target card: what the combat cursor is on
-        int tw = std::min(370, (colX - 2) / 2 + 10);
+        const int favW = 138;
+        int tw = std::min(370, (colX - 2 - favW - 2) / 2 + 10);
         Theme::panel(cv, 0, y0, tw, botH);
         Theme::title(p, 10, y0 + 7, "Target");
         TargetOdds o = targetOdds();
@@ -406,22 +432,12 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
         }
         std::vector<std::pair<std::string, Color8>> extra;
         if (cb.playerTurn && cb.mode == 0) extra.push_back({"Right-drag or edges: pan.  " + bindName(A_CENTER) + ": center", t.dim});
-        chronicle(tw + 2, colX - 2 - tw - 2, extra);
+        int cw = colX - 2 - tw - 2 - favW - 2;
+        chronicle(tw + 2, cw, extra);
+        favorites(tw + 2 + cw + 2, favW, true);
     } else {
         int beltW = 226, cw = colX - 2 - beltW - 2;
         chronicle(0, cw, {});
-        int bx = cw + 2;
-        Theme::panel(cv, bx, y0, beltW, botH);
-        Theme::title(p, bx + 10, y0 + 7, "Belt");
-        int sw = 46, sh = big ? 40 : 32, pitchY = big ? 46 : 36;
-        for (int i = 0; i < 8; i++) {
-            int cx = bx + 10 + (i % 4) * 52, cy = y0 + 26 + (i / 4) * pitchY;
-            Color8 wf = t.well; Theme::well(cv, cx, cy, sw, sh, &wf);
-            bool hover = in.mouseX >= cx && in.mouseX < cx + sw && in.mouseY >= cy && in.mouseY < cy + sh;
-            if (hover) cv.rect(cx, cy, sw, sh, t.accent);
-            std::string k = bindName(A_FAV1 + i); Theme::small(p, cx + 3, cy + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, 2), t.dim);
-            beltSlot(*this, cv, lead, i, cx + 11, cy + (big ? 8 : 4), 2, false);
-            hudHit(cx, cy, sw, sh, HH_BELT, i);
-        }
+        favorites(cw + 2, beltW, false);
     }
 }

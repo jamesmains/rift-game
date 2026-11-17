@@ -430,6 +430,10 @@ int main(int argc, char** argv) {
             else if (startsWith(key, "edshown:")) got = std::to_string(app.editor.genShown(atoi(key.substr(8).c_str())));
             else if (startsWith(key, "asset:")) got = fileExists(app.assetDir + "/" + key.substr(6)) ? "1" : "0";
 #endif
+            else if (key == "camx") got = std::to_string(g.camTX);   // 1.8.4: the camera's target (edge panning) and the party leader
+            else if (key == "camy") got = std::to_string(g.camTY);
+            else if (key == "leader") got = std::to_string(g.leader);
+            else if (key == "jtab") got = std::to_string(g.jTab);
             else if (startsWith(key, "rep:")) { auto it = g.reputation.find(key.substr(4)); got = std::to_string(it == g.reputation.end() ? 0 : it->second); }
             else if (startsWith(key, "queststatus:")) { got = ""; for (auto& q : g.quests) if (q.id == key.substr(12)) got = g.questStatus(q); }
             else if (startsWith(key, "price:")) { const ItemDef* d = g.gd->item(key.substr(6)); got = d ? std::to_string(g.itemBuyPrice(*d)) : "-1"; }

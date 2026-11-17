@@ -59,8 +59,10 @@ static bool catBarInput(const Ctx& ctx, const InputState& in, const std::vector<
     return ch;
 }
 static void catBarDraw(Ctx& ctx, Canvas& cv, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int y, int maxW, const std::string& cat, int sort) {
-    for (auto& c : catChips(ctx, cats, total, x, maxW - 116)) { bool sel = c.cat == cat; cv.fillRect(c.x, y, c.w, 13, sel ? RGB(120, 90, 30) : RGB(40, 40, 54)); cv.rect(c.x, y, c.w, 13, sel ? C::Gold : C::DkGray); UI::text(ctx, c.x + 5, y + 1, c.label, sel ? C::Yellow : C::LtGray); }
-    std::string sl = std::string("sort: ") + SORT_NAMES[clampi(sort, 0, 3)]; cv.fillRect(x + maxW - 112, y, 92, 13, RGB(40, 40, 54)); cv.rect(x + maxW - 112, y, 92, 13, C::DkGray); UI::text(ctx, x + maxW - 108, y + 1, sl, C::LtGray);
+    for (auto& c : catChips(ctx, cats, total, x, maxW - 116)) UI::chip(ctx, c.x, y, c.w, 13, c.label, c.cat == cat);   // 1.8.4 (#189)
+    std::string sl = std::string("sort: ") + SORT_NAMES[clampi(sort, 0, 3)];
+    if (Theme::native()) { Theme::NoMap nm; Theme::Pen p{&cv, ctx.font, ctx.ts}; Color8 f = Theme::th().face; Theme::bevel(cv, x + maxW - 112, y, 92, 13, Theme::th().hi, Theme::th().lo, &f); Theme::text(p, x + maxW - 108, y, sl, Theme::th().text); }
+    else { cv.fillRect(x + maxW - 112, y, 92, 13, RGB(40, 40, 54)); cv.rect(x + maxW - 112, y, 92, 13, C::DkGray); UI::text(ctx, x + maxW - 108, y + 1, sl, C::LtGray); }
 }
 
 
@@ -152,6 +154,15 @@ void Game::updateMenu(InputState& in, float dt) {
     if (actP(in, A_CANCEL) || (actP(in, A_MENU) && !menuSubFocus)) { if (menuSubFocus && !menuPrompt.empty()) { menuPrompt.clear(); /* one step back: item picker -> slot (or action) list */ } else if (menuSubFocus) menuSubFocus = false; else popMode(); return; }
     if (actP(in, A_PAGEUP) || (actP(in, A_LEFT) && !menuSubFocus && menuTab != 0 && menuTab != 2)) { menuTab = (menuTab + NTABS - 1) % NTABS; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); }
     if (actP(in, A_PAGEDOWN) || (actP(in, A_RIGHT) && !menuSubFocus && menuTab != 0 && menuTab != 2)) { menuTab = (menuTab + 1) % NTABS; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); }
+    // 1.8.4 (#193): the keys shown on the tabs pick them (Spells B, Items Q, Quests J); J on the Quests tab opens the
+    // Journal over this screen. Q on the Party tab still talks to the chosen companion (below).
+    if (menuPrompt.empty() && !menuSubFocus) {
+        int want = -1;
+        if (actP(in, A_JOURNAL)) { if (menuTab == 3) { jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; } want = 3; }
+        else if (actP(in, A_SPELLS) && menuTab != 2) want = 2;
+        else if (actP(in, A_ITEMS) && menuTab != 1 && !(menuTab == 0 && menuMember > 0)) want = 1;
+        if (want >= 0) { menuTab = want; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; gAudio.play("ui_move"); return; }
+    }
     // tab clicks
     for (int i = 0; i < NTABS && !themed; i++) { int tx = 20 + i * 110; if (in.mousePressed[0] && in.mouseX >= tx && in.mouseX < tx + 100 && in.mouseY >= 14 && in.mouseY < 34) { menuTab = i; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); } }
     int nMembers = (int)party.members.size();
@@ -279,11 +290,7 @@ void Game::updateMenu(InputState& in, float dt) {
 void Game::drawMenu(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
     panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16);
-    for (int i = 0; i < NTABS; i++) {
-        int tx = 20 + i * 110; bool sel = menuTab == i;
-        cv.fillRect(tx, 14, 100, 20, sel ? RGB(120, 90, 30) : RGB(40, 40, 54)); cv.rect(tx, 14, 100, 20, sel ? C::Gold : C::DkGray);
-        textCenter(ctx, tx + 50, 18, TABS[i], sel ? C::Yellow : C::LtGray);
-    }
+    { std::vector<TabSpec> ts; for (int i = 0; i < NTABS; i++) ts.push_back({20 + i * 110, 100, TABS[i]}); tabRow(ctx, ts, 14, 20, menuTab, 12, SCREEN_W - 12); }   // 1.8.4 (#189)
     textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
     int nMembers = (int)party.members.size();
     if (menuTab == 0 || menuTab == 2) {
@@ -533,7 +540,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
     panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16);
     const char* tabs[2] = {"Buy", "Sell"};
-    for (int i = 0; i < 2; i++) { int tx = 20 + i * 110; bool sel = shopTab == i; cv.fillRect(tx, 14, 100, 20, sel ? RGB(120, 90, 30) : RGB(40, 40, 54)); cv.rect(tx, 14, 100, 20, sel ? C::Gold : C::DkGray); textCenter(ctx, tx + 50, 18, tabs[i], sel ? C::Yellow : C::LtGray); }
+    { std::vector<TabSpec> ts; for (int i = 0; i < 2; i++) ts.push_back({20 + i * 110, 100, tabs[i]}); tabRow(ctx, ts, 14, 20, shopTab, 12, SCREEN_W - 12); }   // 1.8.4 (#189)
     textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
     if (!shopFaction.empty()) { int r = reputation.count(shopFaction) ? reputation.at(shopFaction) : 0; textRight(ctx, SCREEN_W - 110, 18, factionName(shopFaction) + ": " + repTier(r), r >= 10 ? C::Cyan : r <= -10 ? C::Red : C::LtGray); }
     auto stock = shopItems(shopId);

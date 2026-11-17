@@ -239,27 +239,33 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
 
     // ---- the toolbar ----
     const int TY = 43, TH = 26;
-    if (!combat) {
+    // the favorites (1.8.4 #192: in a fight too, the acting member's): 8 toolbar buttons; returns the separator's x
+    auto favorites = [&](int member, bool fight, bool clickable) -> int {
         for (int i = 0; i < 8; i++) {
-            int sx = 8 + i * 30; bool hover = live && over(in, sx, TY, 28, TH);
+            int sx = 8 + i * 30; bool hover = clickable && over(in, sx, TY, 28, TH);
             raised(cv, sx, TY, 28, TH);
             if (hover) { for (int xx = sx + 3; xx < sx + 25; xx += 2) { cv.put(xx, TY + 2, SH); cv.put(xx, TY + TH - 3, SH); } }
             std::string k = bindName(A_FAV1 + i); Theme::small(p, sx + 3, TY + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, 2), SH);
-            if (lead >= 0 && lead < n) {
-                const std::string& f = party.members[lead].favs[i];
+            if (member >= 0 && member < n) {
+                const std::string& f = party.members[member].favs[i];
                 if (!f.empty()) {
+                    const Character& m = fight ? [&]() -> const Character& { for (auto& u : cb.units) if (u.partyIndex == member) return u.ch; return party.members[member]; }() : party.members[member];
                     std::string kind = f.substr(0, f.find(':')), id = f.substr(f.find(':') + 1);
                     bool ok = true; int cnt = -1;
-                    if (kind == "spell") { if (auto* s = gd->spell(id)) { ctx.ts->draw(cv, s->tile, sx + 8, TY + 6, 1); ok = party.members[lead].mp >= s->cost && spellUsableOutside(*s); } }
+                    if (kind == "spell") { if (auto* s = gd->spell(id)) { ctx.ts->draw(cv, s->tile, sx + 8, TY + 6, 1); ok = m.mp >= s->cost && (fight || spellUsableOutside(*s)); } }
                     else if (auto* d = gd->item(id)) { drawItemTile(*ctx.ts, cv, *d, sx + 8, TY + 6, 1); cnt = party.countItem(id); ok = cnt > 0; }
                     if (!ok) Theme::dither(cv, sx + 8, TY + 6, 12, 12, FACE);
                     if (cnt > 1) Theme::smallRight(p, sx + 26, TY + 17, "x" + std::to_string(std::min(cnt, 99)), DK);
                 }
             }
-            if (live) hudHit(sx, TY, 28, TH, HH_BELT, i);
+            if (clickable) hudHit(sx, TY, 28, TH, HH_BELT, i);
         }
         int sepX = 8 + 8 * 30 + 4;
         cv.fillRect(sepX, TY + 1, 1, 24, SH); cv.fillRect(sepX + 1, TY + 1, 1, 24, HI);
+        return sepX;
+    };
+    if (!combat) {
+        int sepX = favorites(lead, false, live);
         std::string gold = fmt("%d gold", party.gold);
         int goldW = Theme::textW(p, gold);
         Theme::textRight(p, W - 10, TY + 7, gold, DK);
@@ -287,10 +293,16 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
         int pad = 20; bool hints = true;
         auto widthOf = [&](const A& a, int pd, bool kh) { int w = Theme::textW(p, a.label) + pd; if (kh && boundLetter(a.label, a.act, true) < 0) { std::string k = gKeys.label(a.act); if (k.size() <= 3) w += Theme::smallW(p, k) + 6; } return w; };
         auto total = [&](int pd, bool kh) { int s = 0; for (auto& a : acts) s += widthOf(a, pd, kh) + 3; return s; };
-        if (8 + total(pad, hints) > W - 8 - infoW) hints = false;
-        if (8 + total(pad, hints) > W - 8 - infoW) pad = 12;
-        if (8 + total(pad, hints) > W - 8 - infoW) info.clear();   // it is in the status bar's first pane too
-        int x = 8;
+        // 1.8.4 (#192): the acting member's favorites first when the buttons still fit after them (a narrow window keeps
+        // the buttons only; the 1-8 keys work either way)
+        const int favEnd = 8 + 8 * 30 + 12;
+        bool favs = favEnd + total(12, false) <= W - 8;
+        int x0 = favs ? favEnd : 8;
+        if (x0 + total(pad, hints) > W - 8 - infoW) hints = false;
+        if (x0 + total(pad, hints) > W - 8 - infoW) pad = 12;
+        if (x0 + total(pad, hints) > W - 8 - infoW) info.clear();   // it is in the status bar's first pane too
+        if (favs) { int member = au >= 0 && cb.units[au].partyIndex >= 0 ? cb.units[au].partyIndex : lead; favorites(member, true, myTurn); }
+        int x = x0;
         for (auto& a : acts) {
             int w = widthOf(a, pad, hints);
             bool on = myTurn && ((a.cmd == 1 && cb.aimed) || (a.cmd == 2 && (cb.mode == 4 || cb.mode == 1)) || (a.cmd == 3 && (cb.mode == 5 || cb.mode == 2)) || (a.cmd == 8 && cb.mode == 3));

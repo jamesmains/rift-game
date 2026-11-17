@@ -182,3 +182,4 @@ launcher's Continue / Delete. Expects `theme`, `settingsini:KEY` (a value in the
 `SETTINGS` (Pause > Settings). `tools\run-tests.ps1 -Theme native` runs every script with `theme native` first; tests
 that check pixels or desktop icon positions set `theme frame` themselves. New: `theme_switch_1_8_3`,
 `pause_settings_ingame_1_8_3`.
+1.8.4: `hud_fixes_1_8_4` (J in the pause menu / a fight, a member click makes the leader, edge panning with a still pointer and at the screen edge). New expects `camx`, `camy` (camera target), `leader`, `jtab`.

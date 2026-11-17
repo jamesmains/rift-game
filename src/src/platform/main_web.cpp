@@ -142,6 +142,7 @@ static void webFrame() {
     in.mouseDX = gPrevMX < 0 ? 0 : cmx - gPrevMX; in.mouseDY = gPrevMY < 0 ? 0 : cmy - gPrevMY; gPrevMX = cmx; gPrevMY = cmy;
     in.mouseX = cmx; in.mouseY = cmy;
     in.mouseInWindow = mx >= 0 && my >= 0 && mx < cw && my < chh && web_pointer_inside();
+    in.cursorOnWindow = web_pointer_inside();   // 1.8.4 (#191)
     for (int b = 0; b < 3; b++) { in.mouseDown[b] = raw.mouseDown[b] != 0; in.mousePressed[b] = raw.mousePressed[b] != 0; in.mouseReleased[b] = raw.mouseReleased[b] != 0; }
     in.wheel = raw.wheel;
     in.clipboard.clear();   // a browser only hands over the clipboard on a paste event

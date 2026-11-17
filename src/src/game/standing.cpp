@@ -12,6 +12,7 @@
 #include "../core/audio.h"
 #include "tiles.h"
 #include <algorithm>
+#include <optional>
 
 using namespace UI;
 
@@ -217,19 +218,23 @@ void Game::updateStanding(InputState& in) {
 
 void Game::drawStanding(Canvas& cv, InputState& in) {
     const FactionDef* f = faction(boardTown); int r = repOf(boardTown);
-    Color8 ink = RGB(40, 25, 10), soft = RGB(70, 50, 30);
+    // 1.8.4 (#194): in the theme's look (frame: dark board, paper notices; native / one-bit: their panel and cards)
+    const BoardLook L = boardLook();
+    std::optional<Theme::NoMap> exact; if (!L.cork) exact.emplace();
+    Color8 ink = L.ink, soft = L.soft;
     std::string name = factionName(boardTown);
     // the header sits on the dark board; the rows below are paper notices
-    Color8 hd = RGB(220, 200, 160), good = RGB(130, 220, 130), bad = RGB(240, 130, 110);
-    ctx.font->bold = true; UI::text(ctx, 34, 56, name + ": " + repTier(r) + fmt(" (%+d)", r), C::Cream); ctx.font->bold = false;
-    cv.fillRect(SCREEN_W - 236, 58, 200, 8, RGB(120, 100, 70)); cv.fillRect(SCREEN_W - 236, 58, clampi((r + 100), 0, 200), 8, r >= 0 ? RGB(60, 120, 170) : RGB(170, 60, 50));
+    Color8 hd = L.cork ? RGB(220, 200, 160) : L.sub, good = L.cork ? RGB(130, 220, 130) : L.good, bad = L.cork ? RGB(240, 130, 110) : L.bad;
+    ctx.font->bold = true; UI::text(ctx, 34, 56, name + ": " + repTier(r) + fmt(" (%+d)", r), L.head); ctx.font->bold = false;
+    if (L.cork) { cv.fillRect(SCREEN_W - 236, 58, 200, 8, RGB(120, 100, 70)); cv.fillRect(SCREEN_W - 236, 58, clampi((r + 100), 0, 200), 8, r >= 0 ? RGB(60, 120, 170) : RGB(170, 60, 50)); }
+    else Theme::bar(cv, SCREEN_W - 236, 58, 200, 6, clampi(r + 100, 0, 200), 200, r >= 0 ? Theme::th().mp : Theme::foe());
     int buy = clampi(-r / 4, -15, 25);
     std::vector<std::pair<std::string, Color8>> lines = {
         {buy < 0 ? fmt("Shops give you %d%% off.", -buy) : buy > 0 ? fmt("Shops charge you %d%% more.", buy) : "Shops charge the usual prices.", buy <= 0 ? good : bad},
         {r <= -50 ? "Hated: the shops here won't trade with you at all." : r <= -10 ? "Disliked: nobody here will hire you - the board posts no work." : r >= 30 ? "Friendly: some shops show you stock they keep for friends." : "The board posts work every morning.", r <= -10 ? bad : hd},
         {r >= 30 ? "Odd jobs no longer raise your standing here: civic projects and your choices do." : "Odd jobs raise your standing up to Friendly (30); past that it takes civic projects.", hd}};
     int y = 74; for (auto& l : lines) { UI::text(ctx, 34, y, l.first, l.second); y += 13; }
-    if (f && !f->text.empty()) { wrapped(ctx, 34, y + 2, SCREEN_W - 68, f->text, RGB(170, 150, 115)); }
+    if (f && !f->text.empty()) { wrapped(ctx, 34, y + 2, SCREEN_W - 68, f->text, L.note); }
     auto rows = standingRows(*this);
     if (rows.empty()) textCenter(ctx, SCREEN_W / 2, 170, "This town asks nothing of you, and offers nothing in return.", hd);
     for (size_t i = 0; i < rows.size() && i < 6; i++) {
@@ -248,11 +253,15 @@ void Game::drawStanding(Canvas& cv, InputState& in) {
             title = std::string("FAVOUR (") + repTier(w.rep) + fmt(" %d): ", w.rep) + (w.title.empty() ? "A gift" : w.title); body = itemsText(*this, w.items);
             status = got ? "Claimed" : r >= w.rep ? "Enter to claim it" : fmt("Locked - needs %d standing", w.rep); stc = got ? RGB(110, 100, 80) : r >= w.rep ? RGB(20, 120, 40) : RGB(150, 40, 30); open = !got;
         }
-        Color8 paper = open ? RGB(225, 215, 180) : RGB(195, 190, 170);
-        cv.fillRect(30, yy, SCREEN_W - 60, 42, sel ? RGB(250, 240, 205) : paper); cv.rect(30, yy, SCREEN_W - 60, 42, sel ? C::Gold : RGB(120, 100, 60));
-        ctx.font->bold = true; UI::text(ctx, 40, yy + 3, title, ink); ctx.font->bold = false;
-        UI::text(ctx, 40, yy + 15, body.size() > 96 ? body.substr(0, 93) + "..." : body, RGB(60, 45, 25));
-        UI::text(ctx, 40, yy + 27, status, stc); if (!right.empty()) textRight(ctx, SCREEN_W - 40, yy + 27, right, RGB(120, 80, 10));
+        boardCard(ctx, 30, yy, SCREEN_W - 60, 42, sel, open);
+        auto inkOf = [&](Color8 c) { return boardInk(L, sel, c); };
+        if (!L.cork) {   // the status colours were picked for paper: the theme's own
+            auto same = [](Color8 a, Color8 b) { return a.r == b.r && a.g == b.g && a.b == b.b; };
+            if (same(stc, RGB(20, 120, 40))) stc = L.good; else if (same(stc, RGB(150, 40, 30))) stc = L.bad; else if (same(stc, RGB(120, 60, 20))) stc = L.warn; else stc = L.soft;
+        }
+        ctx.font->bold = true; UI::text(ctx, 40, yy + 3, title, inkOf(ink)); ctx.font->bold = false;
+        UI::text(ctx, 40, yy + 15, body.size() > 96 ? body.substr(0, 93) + "..." : body, inkOf(L.body));
+        UI::text(ctx, 40, yy + 27, status, inkOf(stc)); if (!right.empty()) textRight(ctx, SCREEN_W - 40, yy + 27, right, inkOf(L.reward));
     }
     keyHint(ctx, 30, SCREEN_H - 40, "Enter", "pay / deliver / claim"); keyHint(ctx, 230, SCREEN_H - 40, "Tab", "notices"); keyHint(ctx, 340, SCREEN_H - 40, "Esc", "leave");
     (void)in;

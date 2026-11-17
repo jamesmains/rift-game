@@ -323,7 +323,7 @@ void Game::updateJournal(InputState& in, float dt) {
 void Game::drawJournal(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 160); uiRect(0, 0, SCREEN_W, SCREEN_H);
     panel(ctx, 6, 6, SCREEN_W - 12, SCREEN_H - 12);
-    for (int i = 0; i < JN; i++) button(ctx, in, 14 + i * JTAB_W, 12, JTAB_W - 4, 20, JTABS[i], true, jTab == i);
+    { std::vector<TabSpec> ts; for (int i = 0; i < JN; i++) ts.push_back({14 + i * JTAB_W, JTAB_W - 4, JTABS[i]}); tabRow(ctx, ts, 12, 20, jTab, 10, SCREEN_W - 10); }   // 1.8.4 (#189): tabs, not a row of buttons
     int y0 = 44, x0 = 16, w = SCREEN_W - 32;
     if (jTab == 0) {
         // Rows are measured first so the list can scroll to keep the selected (opened) quest fully on screen; every

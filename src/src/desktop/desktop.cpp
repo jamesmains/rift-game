@@ -708,7 +708,7 @@ void Desktop::drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool ac
     if (active) hot(cx, cy, 16, 14);
     bool closeHover = active && !startOpen && !contextOpen && in.mouseX >= cx && in.mouseX < cx + 16 && in.mouseY >= cy && in.mouseY < cy + 14;
     bevelBox(cv, cx, cy, 16, 14, closeHover && in.mouseDown[0]);
-    if (closeHover) cv.rect(cx + 1, cy + 1, 14, 12, RGB(0, 0, 128));
+    // 1.8.4 (#188): no navy hover outline round the X any more (it crowded the glyph); pressing it sinks the button
     cv.line(cx + 4, cy + 3, cx + 10, cy + 9, DKSHADOW); cv.line(cx + 5, cy + 3, cx + 11, cy + 9, DKSHADOW);
     cv.line(cx + 10, cy + 3, cx + 4, cy + 9, DKSHADOW); cv.line(cx + 11, cy + 3, cx + 5, cy + 9, DKSHADOW);
 }

@@ -6,6 +6,7 @@
 #include "../core/audio.h"
 #include "tiles.h"
 #include <algorithm>
+#include <optional>
 #include <filesystem>
 
 using namespace UI;
@@ -177,6 +178,7 @@ static void boardRows(const Game& g, std::vector<std::pair<int, bool>>& rows) { 
 void Game::updateBounty(InputState& in, float dt) {
     (void)dt;
     if (actP(in, A_CANCEL)) { popMode(); return; }
+    if (actP(in, A_JOURNAL)) { jTab = 1; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; }   // 1.8.4 (#193): the hint's "J journal" (its Bounties page; Esc comes back here)
     // two pages: today's notices and the town's standing (favours, civic projects, amends)
     if (actP(in, A_PAGEUP) || actP(in, A_PAGEDOWN) || actP(in, A_MENU)) { boardPage = 1 - boardPage; gAudio.play("ui_move"); return; }
     if (in.mousePressed[0] && in.mouseY >= 24 && in.mouseY < 38) { if (in.mouseX >= 30 && in.mouseX < 100) { boardPage = 0; return; } if (in.mouseX >= 104 && in.mouseX < 180) { boardPage = 1; return; } }
@@ -224,33 +226,37 @@ void Game::updateBounty(InputState& in, float dt) {
 void Game::drawBounty(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
     std::string tn = boardTown; for (auto& l : locations) if (l.mapId == boardTown || l.id == boardTown) tn = l.name; if (const BoardDef* bd = board(boardTown)) if (!bd->name.empty()) tn = bd->name;
-    panel(ctx, 20, 20, SCREEN_W - 40, SCREEN_H - 40, RGB(70, 50, 30), RGB(160, 120, 60));
-    ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 28, "NOTICE BOARD - " + tn, C::Cream); ctx.font->bold = false;
-    for (int t = 0; t < 2; t++) { int tx = t == 0 ? 30 : 104, tw = t == 0 ? 70 : 76; bool on = boardPage == t; cv.fillRect(tx, 24, tw, 14, on ? RGB(160, 120, 60) : RGB(90, 65, 40)); cv.rect(tx, 24, tw, 14, on ? C::Gold : RGB(120, 90, 50)); textCenter(ctx, tx + tw / 2, 26, t == 0 ? "Notices" : "Standing", on ? C::Cream : RGB(200, 180, 140)); }
+    // 1.8.4 (#194): the board in the theme's look (frame: the cork board; native / one-bit: their own panel and cards)
+    const BoardLook L = boardLook();
+    std::optional<Theme::NoMap> exact; if (!L.cork) exact.emplace();   // the theme colours below are meant as they are
+    boardPanel(ctx, 20, 20, SCREEN_W - 40, SCREEN_H - 40);
+    ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 28, "NOTICE BOARD - " + tn, L.head); ctx.font->bold = false;
+    if (L.cork) for (int t = 0; t < 2; t++) { int tx = t == 0 ? 30 : 104, tw = t == 0 ? 70 : 76; bool on = boardPage == t; cv.fillRect(tx, 24, tw, 14, on ? RGB(160, 120, 60) : RGB(90, 65, 40)); cv.rect(tx, 24, tw, 14, on ? C::Gold : RGB(120, 90, 50)); textCenter(ctx, tx + tw / 2, 26, t == 0 ? "Notices" : "Standing", on ? C::Cream : RGB(200, 180, 140)); }
+    else tabRow(ctx, {{30, 70, "Notices"}, {104, 76, "Standing"}}, 23, 16, boardPage);
     if (boardPage == 1) { drawStanding(cv, in); return; }
     int taken = 0; for (auto& b : bounties) if (!b.done) taken++;
-    textCenter(ctx, SCREEN_W / 2, 40, fmt("Day %d. You carry %d/%d bounties. New notices go up each morning.", day, taken, MAX_TAKEN), RGB(220, 200, 160));
+    textCenter(ctx, SCREEN_W / 2, 41, fmt("Day %d. You carry %d/%d bounties. New notices go up each morning.", day, taken, MAX_TAKEN), L.sub);
     std::vector<std::pair<int, bool>> rows; boardRows(*this, rows);
-    if (repOf(boardTown) <= -10) textCenter(ctx, SCREEN_W / 2, rows.empty() ? 80 : SCREEN_H - 56, "Nobody here will hire you while they dislike you. (Tab: Standing - make amends.)", RGB(230, 150, 120));
-    if (rows.empty()) textCenter(ctx, SCREEN_W / 2, 100, "Nothing posted today. Check back tomorrow.", C::Gray);
+    if (repOf(boardTown) <= -10) textCenter(ctx, SCREEN_W / 2, rows.empty() ? 80 : SCREEN_H - 56, "Nobody here will hire you while they dislike you. (Tab: Standing - make amends.)", L.cork ? RGB(230, 150, 120) : L.bad);
+    if (rows.empty()) textCenter(ctx, SCREEN_W / 2, 100, "Nothing posted today. Check back tomorrow.", L.cork ? C::Gray : L.soft);
     for (size_t i = 0; i < rows.size() && i < 6; i++) {
         const Bounty& b = rows[i].second ? bountyOffers[rows[i].first] : bounties[rows[i].first];
         int y = 56 + (int)i * 58; bool sel = (int)i == bountySel;
-        Color8 paper = rows[i].second ? RGB(225, 215, 180) : RGB(205, 225, 190);
-        cv.fillRect(30, y, SCREEN_W - 60, 54, sel ? RGB(250, 240, 205) : paper); cv.rect(30, y, SCREEN_W - 60, 54, sel ? C::Gold : RGB(120, 100, 60));
-        cv.fillRect(SCREEN_W / 2 - 3, y - 3, 6, 6, RGB(180, 40, 40)); // pin
+        if (L.cork) { Color8 paper = rows[i].second ? RGB(225, 215, 180) : RGB(205, 225, 190); cv.fillRect(30, y, SCREEN_W - 60, 54, sel ? RGB(250, 240, 205) : paper); cv.rect(30, y, SCREEN_W - 60, 54, sel ? C::Gold : RGB(120, 100, 60)); cv.fillRect(SCREEN_W / 2 - 3, y - 3, 6, 6, RGB(180, 40, 40)); }   // pin
+        else boardCard(ctx, 30, y, SCREEN_W - 60, 54, sel, true);
+        auto ink = [&](Color8 c) { return boardInk(L, sel, c); };
         std::string title = b.kind == "kill" ? fmt("WANTED: %d %s", b.need, b.targetName.c_str()) : b.kind == "fetch" ? fmt("NEEDED: %d %s", b.need, b.targetName.c_str()) : "COURIER: carry a letter to " + b.whereName;
         if (!b.title.empty()) title = b.title;
-        ctx.font->bold = true; UI::text(ctx, 40, y + 5, title, RGB(40, 25, 10)); ctx.font->bold = false;
+        ctx.font->bold = true; UI::text(ctx, 40, y + 5, title, ink(L.ink)); ctx.font->bold = false;
         std::string body = b.kind == "kill" ? "They have been seen around " + b.whereName + "." : b.kind == "fetch" ? (b.whereName.empty() ? "Any source will do." : "Scavengers report some in " + b.whereName + ".") : "Pin it to the notice board there, then come back for the pay.";
         if (!b.text.empty()) body = b.text;
-        if (b.kind != "note") UI::text(ctx, 40, y + 20, body, RGB(60, 45, 25));
+        if (b.kind != "note") UI::text(ctx, 40, y + 20, Theme::fit(Theme::Pen{&cv, ctx.font, ctx.ts}, body, SCREEN_W - 80), ink(L.body));   // 1.8.4: kept inside the card
         if (b.kind == "note") {   // 1.5.0 (#98): news, wrapped over two lines, nothing to take
-            auto ls = ctx.font->wrap(b.text, SCREEN_W - 80); for (size_t k = 0; k < ls.size() && k < 2; k++) UI::text(ctx, 40, y + 20 + (int)k * 14, ls[k], RGB(60, 45, 25));
+            auto ls = ctx.font->wrap(b.text, SCREEN_W - 80); for (size_t k = 0; k < ls.size() && k < 2; k++) UI::text(ctx, 40, y + 20 + (int)k * 14, ls[k], ink(L.body));
             continue; }
         std::string st = rows[i].second ? "OFFER - Enter to take it" : b.done ? "COMPLETE - Enter to collect" : b.kind == "kill" ? fmt("taken - progress %d/%d", b.have, b.need) : b.kind == "fetch" ? fmt("taken - you carry %d/%d", party.countItem(b.target), b.need) : "taken - in progress";
-        UI::text(ctx, 40, y + 36, st, b.done ? RGB(20, 120, 40) : rows[i].second ? RGB(120, 60, 20) : RGB(40, 90, 60));
-        textRight(ctx, SCREEN_W - 40, y + 36, fmt("Reward: %d gold, %d XP", b.reward, b.xp), RGB(120, 80, 10));
+        UI::text(ctx, 40, y + 36, st, ink(b.done ? L.good : rows[i].second ? L.warn : (L.cork ? RGB(40, 90, 60) : L.good)));
+        textRight(ctx, SCREEN_W - 40, y + 36, fmt("Reward: %d gold, %d XP", b.reward, b.xp), ink(L.reward));
     }
     keyHint(ctx, 30, SCREEN_H - 40, "Enter", "take / collect"); keyHint(ctx, 170, SCREEN_H - 40, gKeys.label(A_INTERACT), "drop taken"); keyHint(ctx, 310, SCREEN_H - 40, "Esc", "leave"); keyHint(ctx, 400, SCREEN_H - 40, gKeys.label(A_JOURNAL), "journal"); keyHint(ctx, 500, SCREEN_H - 40, "Tab", "standing");
     (void)in;

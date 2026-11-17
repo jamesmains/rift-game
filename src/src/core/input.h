@@ -50,6 +50,7 @@ struct InputState {
     bool mouseReleased[3] = {};
     int wheel = 0;
     bool mouseInWindow = true;
+    bool cursorOnWindow = true;   // 1.8.4 (#191): the pointer is over the window at all (mouseInWindow is false over the letterbox bars)
     std::string typed;            // text characters typed this frame
     bool gamepadActive = false;   // true if the last input came from a gamepad
     float stickX = 0, stickY = 0; // left stick

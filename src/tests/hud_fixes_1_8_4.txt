@@ -1,0 +1,88 @@
+# 1.8.4 (#185-#194): HUD fixes. J opens the Journal from the map, from the pause menu (whose entries show their keys)
+# and in a fight; clicking a party member on the map makes them the leader (#186); the mouse resting on the edge of the
+# world view pans a fight's camera without moving (#191); the favorites (was "Belt") are clickable in a fight (#192).
+# Clicks go through HUD hot spots, so it runs the same in every theme.
+frames 5
+installed
+newgame Arin warrior
+frames 120
+expect mode == EXPLORE
+# J on the map
+key J
+frames 3
+expect mode == JOURNAL
+key ESC
+frames 3
+expect mode == EXPLORE
+# the pause menu's J / Tab
+key ESC
+frames 3
+expect mode == PAUSE
+key J
+frames 3
+expect mode == JOURNAL
+expect jtab == 0
+key ESC
+frames 3
+key ESC
+frames 3
+expect mode == PAUSE
+key TAB
+frames 3
+expect mode == MENU
+key ESC
+frames 3
+expect mode == EXPLORE
+# #186: a click on a member's card leads the party (no Party screen)
+con join mage
+frames 5
+expect leader == 0
+hudclick member 1
+frames 3
+expect mode == EXPLORE
+expect leader == 1
+shot leader_frame.png
+hudclick member 0
+frames 3
+expect leader == 0
+# a fight on the overworld (bigger than the view, so the camera can pan): J opens the Journal, Esc goes back
+con clearmap overworld
+teleport overworld 60 40
+frames 120
+combat goblin
+frames 90
+expect mode == COMBAT
+shot combat_favorites_frame.png
+key J
+frames 3
+expect mode == JOURNAL
+shot journal_tabs_frame.png
+key ESC
+frames 3
+expect mode == COMBAT
+# #191: the pointer resting on the left edge of the world view pans without moving, and so does the pointer pushed
+# against the screen's edge (outside the view's frame)
+mousein 1
+warp 300 150
+frames 10
+expect camx > 1100
+warp 7 150
+frames 60
+expect camx < 900
+warp 300 150
+frames 10
+key C
+frames 30
+expect camx > 1100
+warp 0 150
+frames 60
+expect camx < 900
+shot edge_pan_frame.png
+warp 300 150
+frames 10
+key C
+frames 30
+warp 639 150
+frames 60
+expect camx > 1300
+warp 320 240
