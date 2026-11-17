@@ -1480,8 +1480,10 @@ Decides what lies outside the light looks like. Open to the sky (ticked,
 sky=1): towns, camps, marshes, the overworld. At night, and on a dark map,
 whatever the light doesn't reach keeps a dim grey-blue night tint, so you can
 still make out the shape of the place. Enclosed (unticked, sky=0): caves,
-mines, crypts, ship holds. Whatever the light doesn't reach is pitch black,
-including places you have already walked through.
+mines, crypts, ship holds. Whatever the party hasn't seen yet is pitch black;
+once a place has been seen, it keeps a darker night tint when the light moves
+on, so you can find your way back through it. On a lit (not dark) map, sky=0
+makes everything outside the lantern circle black at night.
 
 Either way, nothing standing outside the light is drawn: people, monsters,
 chests, signs, save points and items on the ground only show where the light
@@ -5545,9 +5547,9 @@ the map header.
 see: map.sky, map.dark
 
 Ticked (sky=1): what the party's light doesn't reach in this generated dungeon
-keeps a dim night tint instead of going pitch black, as map.sky does for a map.
-Generated dungeons are dark, so they are enclosed (pitch black) unless this is
-ticked. Baking the dungeon copies it into the map header.
+keeps a dim night tint, as map.sky does for a map. Generated dungeons are dark,
+so they are enclosed unless this is ticked: pitch black until the party has
+seen a place, a darker night tint after that. Baking the dungeon copies it into the map header.
 
 Format: 1 or empty. Default: empty (enclosed).
 

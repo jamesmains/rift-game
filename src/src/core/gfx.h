@@ -87,7 +87,11 @@ public:
     void blitRecolor(const Image8& img, int sx, int sy, int sw, int sh, int dx, int dy, int scale, Color8 color);
     // Dim / darken the whole canvas (for modal overlays)
     void dim(int x, int y, int rw, int rh, uint8_t alpha);
+    void fillRaw(int x, int y, int rw, int rh, Color8 c);   // fillRect without the UI colour map (1.8.3)
 };
+// 1.8.3 (#170): while set (Theme::beginUiMap), fillRect / rect / Font::draw pass their colour through it (kind 0 fill,
+// 1 text): older fixed-colour screens take the active UI theme's colours. Never set for the world or the Editor.
+extern Color8 (*gCanvasMap)(Color8 c, int kind, int x, int y);
 
 // How a sheet's picture is cut into tiles (sheets/<name>.txt [sheet] section). Every sheet is converted when it loads
 // to the base layout (12x12 cells at a 13 px pitch from 1,1; see-through pixels black), so drawing is the same for all.
@@ -175,6 +179,14 @@ public:
     // Word-wrap into lines no wider than maxW
     std::vector<std::string> wrap(const std::string& s, int maxW, int scale = 1) const;
     int drawWrapped(Canvas& cv, const Tileset& ts, int x, int y, int maxW, const std::string& s, Color8 color, int scale = 1, int lineGap = 1) const;
+    // 1.8.3 (#170): the small-label face, Spleen 5x8 (8 px line, 5 px cells, proportional like the 6x12), and the
+    // tileset's Classic glyphs (rows 44-49) for titles whatever `style` is (bold digits fall back to regular).
+    int widthSmall(const std::string& s, int scale = 1) const;
+    int drawSmall(Canvas& cv, int x, int y, const std::string& s, Color8 color, int scale = 1) const;
+    int widthClassic(const std::string& s, bool boldFace, int scale = 1) const;
+    int drawClassic(Canvas& cv, const Tileset& ts, int x, int y, const std::string& s, Color8 color, bool boldFace, int scale = 1) const;
+    struct SmallGlyph { int x0 = 0, x1 = 0; bool valid = false; };
+    SmallGlyph smallG[128];
 };
 
 bool savePNG(const Canvas& cv, const std::string& path);

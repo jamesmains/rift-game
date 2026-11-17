@@ -5,15 +5,23 @@
 [start]
 speaker=$hero
 text=Grakk's hall is all noise and torchlight: pots, bedrolls, spears bundled with string, the old ones being lifted onto backs. Grakk sees you and goes very still. "Tall-folk. Grakk gave you the crown. Grakk is going. Is there more?"
-option=No. Go.|end
+option=No. Go.|go
 option=(Attack them anyway.)|confirm|goblin_chief_spared&!goblins_allies
 
 [confirm]
 speaker=$hero
 text=They surrendered to you, and they are leaving. If you draw now, every goblin in this hall fights for its life - and everyone who hears of it will know you broke your word. There is no taking it back.
-option=(Put your weapon away.)|end
+option=(Put your weapon away.)|go
 option=(Attack them anyway.)|attack|!party:cleric
 option=(Attack them anyway.)|orin|party:cleric
+
+# 1.8.3 (#169): letting them go ends the packing at once - Grakk and the packers leave the cave (goblins_packing
+# cleared hides them and the hall trigger), instead of standing there until the party next enters Greywood Cave.
+[go]
+speaker=Grakk, Goblin Chief
+text=(Grakk lets out a long breath and barks at his people. The last bundles go onto backs, and the tribe files out through the far tunnel in a line of torches, the old ones first. Grakk goes last. He does not look back.)
+clear=goblins_packing
+option=(Watch them go.)|end
 
 # Orin's red line: killing people who surrendered
 [orin]
@@ -28,7 +36,7 @@ option=Then go, Orin.|orin_leave
 speaker=Orin
 text=(He lets out a breath he seems to have held since the parley.) Thank you. Mercy is a hard road. It is still a road.
 approve=cleric:3
-option=(Leave them to their packing.)|end
+option=(Leave them to their packing.)|go
 
 [orin_cha]
 speaker=Orin

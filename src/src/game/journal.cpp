@@ -119,12 +119,12 @@ void Game::firstSightBanter() {
 }
 void Game::drawBanter(Canvas& cv) {
     if (banterT <= 0 || banterMember < 0 || banterMember >= (int)party.members.size() || mode != GMode::EXPLORE) return;
-    int viewH = SCREEN_H - 72;
+    int viewH = VIEW_H;   // 1.8.3: drawn on the world canvas
     // speech bubble above the companion's trail position
     int tx = px, ty = py; if (banterMember - 1 < (int)trail.size()) { tx = trail[banterMember - 1].first; ty = trail[banterMember - 1].second; }
     auto lines = ctx.font->wrap(banterText, 200); int w = 0; for (auto& l : lines) w = std::max(w, ctx.font->width(l)); w += 12;
     int h = (int)lines.size() * 12 + 8;
-    int bx = clampi(tx * TILE - camX + TILE / 2 - w / 2, 4, SCREEN_W - w - 4), by = clampi(ty * TILE - camY - h - 10, 4, viewH - h - 4);
+    int bx = clampi(tx * TILE - camX + TILE / 2 - w / 2, 4, VIEW_W - w - 4), by = clampi(ty * TILE - camY - h - 10, 4, viewH - h - 4);
     cv.fillRect(bx, by, w, h, RGB(250, 245, 230, 235)); cv.rect(bx, by, w, h, RGB(60, 40, 20));
     int px2 = clampi(tx * TILE - camX + TILE / 2, bx + 6, bx + w - 6); cv.line(px2 - 3, by + h, px2, by + h + 5, RGB(60, 40, 20)); cv.line(px2 + 3, by + h, px2, by + h + 5, RGB(60, 40, 20));
     for (size_t i = 0; i < lines.size(); i++) ctx.font->draw(cv, *ctx.ts, bx + 6, by + 4 + (int)i * 12, lines[i], RGB(30, 20, 10));
@@ -240,8 +240,10 @@ void Game::checkAchievements(bool force) {
           if (cur * 2 >= n && !extra.count(key)) { extra[key] = "50"; gPlatform->indicateAchievementProgress(a.id, cur, n); } }
     }
 }
-void Game::drawAchievementPopups(Canvas& cv, float dt) {
-    int y = SCREEN_H - 72 - 36;
+void Game::drawAchievementPopups(Canvas& cv, float dt, bool inGame) {
+    // 1.8.3 (#171 #180): in the game the frame's Chronicle and the one-bit News carry them (the log line is written when unlocked)
+    if (inGame && !Theme::native()) { for (auto& p : achPopups) p.second -= dt; achPopups.erase(std::remove_if(achPopups.begin(), achPopups.end(), [](const std::pair<std::string, float>& p) { return p.second <= 0; }), achPopups.end()); return; }
+    int y = inGame ? VIEW_Y + VIEW_H - 50 : SCREEN_H - 72 - 36;
     for (size_t i = 0; i < achPopups.size(); i++) {
         auto& p = achPopups[i]; p.second -= dt;
         const AchievementDef* a = nullptr; for (auto& d : achievements) if (d.id == p.first) a = &d;

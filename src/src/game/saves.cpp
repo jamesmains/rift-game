@@ -78,7 +78,7 @@ void Game::autosave() {
     if (!running || gameOver || loadingSave || inCombat() || party.members.empty()) return;
     if (lastAutosave >= 0 && playtimeSec - lastAutosave < 60) return;
     lastAutosave = playtimeSec;
-    if (writeSaveFile(slotPath(AUTOSAVE_SLOT), serialize())) notify("Autosaved.");
+    if (writeSaveFile(slotPath(AUTOSAVE_SLOT), serialize())) { notify("Autosaved."); autosavedAt = map ? map->name : ""; }
 }
 
 std::string Game::crashState() const {

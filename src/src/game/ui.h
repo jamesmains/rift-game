@@ -22,6 +22,10 @@ namespace UI {
 constexpr int BASE_W = 640, BASE_H = 480;
 inline int SCREEN_W = BASE_W, SCREEN_H = BASE_H;
 constexpr int TILE = 24; // 12px tiles drawn at 2x in the world view
+// 1.8.3 (#171 #176 #180): where the world is drawn on the screen this frame. Each UI theme frames it its own way
+// (Game::computeLayout); the world is drawn into a canvas of this size (world coordinates start at 0,0 there) and put
+// at VIEW_X, VIEW_Y. Mouse positions over the world are screen minus VIEW_X / VIEW_Y.
+inline int VIEW_X = 0, VIEW_Y = 0, VIEW_W = BASE_W, VIEW_H = BASE_H - 72;
 
 void panel(Ctx& c, int x, int y, int w, int h, Color8 fill = C::Panel, Color8 border = C::Gold);
 void panelTitle(Ctx& c, int x, int y, int w, int h, const std::string& title);

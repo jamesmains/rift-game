@@ -11,14 +11,13 @@ using namespace UI;
 static const char* ACTIONS[] = {"Attack", "Aimed", "Spell", "Item", "Defend", "Overwatch", "End Turn", "Flee"};
 static const int NACTIONS = 8;
 static const int ACTION_KEYS[NACTIONS] = {A_ATTACKMODE, A_ATTACKMODE, A_SPELLS, A_ITEMS, A_DEFEND, A_OVERWATCH, A_ENDTURN, A_FLEE};
-#define HOTBAR_Y (UI::SCREEN_H - 72 - 30)   // 1.2.2: the screen height can change (#39)
-static const int TURN_STRIP_Y = 40;   // the turn-order strip on the right; its TURN header sits just under the top bar (1.1.3: was 30, under the Menu button)
 // The action bar: each button carries the key that does the same thing, drawn like the key hints in shops and menus
 // (a controller's button glyph when a pad is in use). Aimed is the attack key pressed twice, so it shows that key twice.
 static int actionChipsW(Ctx& c, int i) { int k = keyChip(c, 0, 0, ACTION_KEYS[i], false); if (!k) return 0; return i == 1 ? k * 2 + 2 : k; }
-static int actionButtonW(Ctx& c, int i) { int k = actionChipsW(c, i); return (k ? k + 5 : 0) + c.font->width(ACTIONS[i]) + 10; }
 // the Menu button at the right end of the bar (1.1.3): opens the pause menu, like Esc
-static int combatMenuButtonW(Ctx& c) { int k = keyChip(c, 0, 0, A_CANCEL, false); return (k ? k + 5 : 0) + c.font->width("Menu") + 10; }
+// 1.8.3: the action / spell / item popups sit in the middle of the world view
+static int combatPopX(int w) { return UI::VIEW_X + UI::VIEW_W / 2 - w / 2; }
+static int combatPopY() { return UI::VIEW_Y + 30; }
 
 // distance from a unit (1x1 or 2x2) to a tile
 static int unitDist(const Combatant& u, int x, int y) {
@@ -1522,7 +1521,8 @@ void Game::updateCombat(InputState& in, float dt) {
     // unless it is backing out of a target pick / list / the action menu on your own turn
     {
         bool myInput = cb.playerTurn && !autoCombat && cb.selectedUnit >= 0 && !cb.ending;
-        bool menuClick = in.mousePressed[0] && in.mouseY <= 24 && in.mouseX >= SCREEN_W - combatMenuButtonW(ctx) - 4;
+        const HudHit* hh = in.mousePressed[0] ? hudHitAt(in.mouseX, in.mouseY) : nullptr;
+        bool menuClick = hh && hh->kind == HH_PAUSE;
         if (menuClick || (actP(in, A_CANCEL, true) && !(myInput && cb.mode != 0))) { in.eatMouse(); openPause(); return; }
     }
     if (cb.bufT > 0) cb.bufT -= dt;
@@ -1542,10 +1542,9 @@ void Game::updateCombat(InputState& in, float dt) {
     if (cb.ending) { cb.endTimer -= dt; if (cb.endTimer <= 0 && cb.anims.empty()) combatFinish(); return; }
     if (cb.selectedUnit < 0) { combatNextTurn(); return; }
     Combatant& u = cb.units[cb.selectedUnit];
-    // clicking a portrait in the turn-order strip pans the camera to that unit
-    if (in.mousePressed[0] && in.mouseX >= SCREEN_W - 30 && in.mouseY >= TURN_STRIP_Y && in.mouseY < TURN_STRIP_Y + 10 * 26) {
-        int slot = (in.mouseY - TURN_STRIP_Y) / 26, shown = 0;
-        for (int k = 0; k < (int)cb.order.size(); k++) { int idx = cb.order[(cb.turnPos + k) % cb.order.size()]; if (!cb.units[idx].ch.alive) continue; if (shown == slot) { camFree = true; camCenterOn(cb.units[idx].x, cb.units[idx].y); cb.selX = cb.units[idx].x; cb.selY = cb.units[idx].y; break; } shown++; }
+    // clicking a unit in the turn order (or a party row) pans the camera to that unit
+    if (in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_UNIT && h->arg >= 0 && h->arg < (int)cb.units.size()) {
+        camFree = true; camCenterOn(cb.units[h->arg].x, cb.units[h->arg].y); cb.selX = cb.units[h->arg].x; cb.selY = cb.units[h->arg].y; cb.cursorMouse = false;
         in.eatMouse(); return;
     }
     if (!cb.playerTurn || autoCombat) { if (cb.anims.empty()) combatAI(dt); return; }
@@ -1616,15 +1615,15 @@ void Game::updateCombat(InputState& in, float dt) {
         }
     }
     for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f, CB)) { useFav(f); return; }
-    if (in.mousePressed[0]) { int hs = hotbarSlotAt(in.mouseX, in.mouseY, HOTBAR_Y); if (hs >= 0) { in.eatMouse(); useFav(hs); return; } }
-    // top action bar clicks
-    if (in.mousePressed[0] && in.mouseY <= 24) {
-        int bx = 4; for (int i = 0; i < NACTIONS; i++) { int bw = actionButtonW(ctx, i); if (in.mouseX >= bx && in.mouseX < bx + bw) { in.eatMouse(); runCommand(i); return; } bx += bw + 3; }
-        in.eatMouse(); return;
+    // 1.8.3: the theme HUD's belt slots and action buttons
+    if (in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) {
+        if (h->kind == HH_BELT) { in.eatMouse(); useFav(h->arg); return; }
+        if (h->kind == HH_COMBAT) { in.eatMouse(); if (h->arg == 8) { cb.mode = cb.mode == 3 ? 0 : 3; cb.menuSel = 0; } else { if (cb.mode == 3) cb.menuSel = h->arg; runCommand(h->arg); } return; }
+        if (h->kind != HH_UNIT) { in.eatMouse(); return; }
     }
     // action menu (mode 3)
     if (cb.mode == 3) {
-        int mx = SCREEN_W / 2 - 70, my = 40;
+        int mx = Theme::frame() ? -1000 : combatPopX(140), my = combatPopY();   // frame: the column's Actions list (HUD hot spots)
         if (actP(in, A_UP, CB)) cb.menuSel = (cb.menuSel + NACTIONS - 1) % NACTIONS;
         if (actP(in, A_DOWN, CB)) cb.menuSel = (cb.menuSel + 1) % NACTIONS;
         for (int i = 0; i < NACTIONS; i++) if (in.mouseX >= mx && in.mouseX < mx + 140 && in.mouseY >= my + 24 + i * 20 && in.mouseY < my + 44 + i * 20 && (in.mouseDX || in.mouseDY)) cb.menuSel = i;
@@ -1638,7 +1637,7 @@ void Game::updateCombat(InputState& in, float dt) {
         std::vector<std::string> list;
         if (cb.mode == 4) { for (auto& id : u.ch.spells) if (auto* sp = gd->spell(id)) if (spellUsableInCombat(*sp)) list.push_back(id); } else for (auto& it : party.inventory) if (gd->item(it.id) && gd->item(it.id)->type == IT_CONSUMABLE && std::find(list.begin(), list.end(), it.id) == list.end()) list.push_back(it.id);
         int n = (int)list.size(); if (n == 0) { cb.mode = 0; log("Nothing usable in combat."); return; }
-        const int VIS = 10; int mx = SCREEN_W / 2 - 120, my = 40;
+        const int VIS = 10; int mx = combatPopX(240), my = combatPopY();
         if (actP(in, A_UP, CB)) cb.menuSel = (cb.menuSel + n - 1) % n;
         if (actP(in, A_DOWN, CB)) cb.menuSel = (cb.menuSel + 1) % n;
         cb.menuSel = clampi(cb.menuSel, 0, n - 1);
@@ -1657,14 +1656,15 @@ void Game::updateCombat(InputState& in, float dt) {
         return;
     }
     // ---- cursor / targeting (modes 0,1,2) ----
-    int viewH = SCREEN_H - 72;
-    bool overUI = mouseOverUI(in) || in.mouseY <= 24;
-    bool overMap = in.mouseY < viewH && !overUI;
-    if (overMap && (in.mouseDX || in.mouseDY || in.mousePressed[0])) { cb.selX = (in.mouseX + camX) / TILE; cb.selY = (in.mouseY + camY) / TILE; cb.cursorMouse = true; }
+    int viewH = VIEW_H;
+    bool overUI = mouseOverUI(in);
+    bool overMap = inView(in) && !overUI;   // 1.8.3: the world is drawn in the theme's view rect
+    const int wmx = in.mouseX - VIEW_X, wmy = in.mouseY - VIEW_Y;
+    if (overMap && (in.mouseDX || in.mouseDY || in.mousePressed[0])) { cb.selX = (wmx + camX) / TILE; cb.selY = (wmy + camY) / TILE; cb.cursorMouse = true; }
     // while the mouse has the cursor it stays on the tile under the pointer, even when the camera moves or a move or a
     // new turn puts the cursor back on the unit (those resets are for keyboard and pad players)
     if (in.gamepadActive) cb.cursorMouse = false;
-    else if (cb.cursorMouse && overMap && in.mouseInWindow) { cb.selX = (in.mouseX + camX) / TILE; cb.selY = (in.mouseY + camY) / TILE; }
+    else if (cb.cursorMouse && overMap && in.mouseInWindow) { cb.selX = (wmx + camX) / TILE; cb.selY = (wmy + camY) / TILE; }
     bool moved = false;
     if (actP(in, A_LEFT, CB)) { cb.selX--; moved = true; } if (actP(in, A_RIGHT, CB)) { cb.selX++; moved = true; }
     if (actP(in, A_UP, CB)) { cb.selY--; moved = true; } if (actP(in, A_DOWN, CB)) { cb.selY++; moved = true; }
@@ -1672,7 +1672,7 @@ void Game::updateCombat(InputState& in, float dt) {
     cb.selX = clampi(cb.selX, 0, map->w - 1); cb.selY = clampi(cb.selY, 0, map->h - 1);
     if (moved) { // keep the keyboard cursor on screen
         int sx = cb.selX * TILE - camTX, sy = cb.selY * TILE - camTY;
-        if (sx < TILE * 2 || sx > SCREEN_W - TILE * 3 || sy < TILE * 2 || sy > viewH - TILE * 3) { camFree = true; camCenterOn(cb.selX, cb.selY); }
+        if (sx < TILE * 2 || sx > VIEW_W - TILE * 3 || sy < TILE * 2 || sy > viewH - TILE * 3) { camFree = true; camCenterOn(cb.selX, cb.selY); }
     }
     // path preview
     cb.path.clear();
@@ -1681,7 +1681,7 @@ void Game::updateCombat(InputState& in, float dt) {
         bool reach = false; for (auto& r : cb.reachable) if (r.first == cb.selX && r.second == cb.selY) reach = true;
         if (reach) { std::vector<std::pair<int, int>> blocked; for (auto& o : cb.units) if (o.ch.alive && &o != &u) blocked.push_back({o.x, o.y}); for (auto& n : map->npcs) if (!n.hidden) blocked.push_back({n.x, n.y}); cb.path = findPath(*map, u.x, u.y, cb.selX, cb.selY, blocked, 40); }
     }
-    bool confirm = actP(in, A_CONFIRM, CB) || actP(in, A_INTERACT, CB) || (in.mousePressed[0] && in.mouseY < viewH && !overUI);
+    bool confirm = actP(in, A_CONFIRM, CB) || actP(in, A_INTERACT, CB) || (in.mousePressed[0] && overMap);
     if (!confirm) return;
     in.eatMouse();
     int distSel = chebyshev(u.x, u.y, cb.selX, cb.selY);
@@ -1754,9 +1754,9 @@ void Game::updateCombat(InputState& in, float dt) {
 }
 
 // ---------------- drawing ----------------
-void Game::drawCombat(Canvas& cv, InputState& in) {
-    int viewH = SCREEN_H - 72;
-    cv.setClip({0, 0, SCREEN_W, viewH});
+void Game::drawCombatWorld(Canvas& cv, InputState& in) {   // 1.8.3: on the world canvas; the HUD parts are each theme's (hud.cpp)
+    int viewH = VIEW_H;   // 1.8.3: cv is the world canvas (VIEW_W x VIEW_H)
+    cv.setClip({0, 0, VIEW_W, viewH});
     int cx = camX, cy = camY;
     bool myTurn = cb.playerTurn && !cb.ending && cb.selectedUnit >= 0;
     // 1.4.0 (#58 #61): ground effects - fire, ice, smoke
@@ -1883,8 +1883,8 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         if (!u.ch.alive || u.friendly()) continue;
         if (map->dark && !visible(u.x, u.y)) continue;
         int sx = u.x * TILE - cx + TILE / 2, sy = u.y * TILE - cy + TILE / 2;
-        if (sx >= 0 && sx < SCREEN_W && sy >= 0 && sy < viewH) continue;
-        int ex = clampi(sx, 6, SCREEN_W - 7), ey = clampi(sy, 30, viewH - 7);
+        if (sx >= 0 && sx < VIEW_W && sy >= 0 && sy < viewH) continue;
+        int ex = clampi(sx, 6, VIEW_W - 7), ey = clampi(sy, 6, viewH - 7);
         cv.fillRect(ex - 5, ey - 5, 11, 11, RGB(200, 30, 30)); cv.rect(ex - 5, ey - 5, 11, 11, C::White);
     }
     // cursor: bold corner brackets that pulse, a tinted tile, and a readout next to it
@@ -1907,14 +1907,31 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         for (int pass = 0; pass < 2; pass++) { int o = pass == 0 ? 1 : 0; Color8 col = pass == 0 ? dk : c;
             bracket(bx + o, by + o, 1, 1, col); bracket(bx + bs - 2 + o, by + o, -1, 1, col); bracket(bx + o, by + bs - 2 + o, 1, -1, col); bracket(bx + bs - 2 + o, by + bs - 2 + o, -1, -1, col); }
         auto label = [&](int lx, int ly, const std::string& t, Color8 col) { int w = ctx.font->width(t) + 6; cv.fillRect(lx - 3, ly + 1, w, 12, RGB(0, 0, 0, 190)); ctx.font->draw(cv, *ctx.ts, lx, ly, t, col); };
-        int lx = sx + sz + 6, ly = sy - 2; if (lx > SCREEN_W - 150) lx = sx - 150;
+        int lx = sx + sz + 6, ly = sy - 2; if (lx > VIEW_W - 150) lx = sx - 150;
         if (tu >= 0 && !cb.units[tu].friendly() && cb.mode == 0) {
             auto& t = cb.units[tu];
             int dist = unitDist(t, u.x, u.y); bool inRange = dist <= u.ch.attackRange(*gd) && combatLOS(u.x, u.y, t.x, t.y);
             int hc = hitChance(u, t, cb.aimed);
-            std::string st = inRange ? fmt("%d%% to hit, %d%% crit%s%s", hc, t.ch.hasEffect("tagged") ? 100 : critChance(u, t, cb.aimed), cb.aimed ? " (aimed)" : "", hitBreakdown(u, t, cb.aimed).c_str()) : fmt("out of range (%d/%d)", dist, u.ch.attackRange(*gd));
-            label(lx, ly, st, inRange ? hitColor(hc) : C::Gray);
-            label(lx, ly + 13, fmt("%s %d/%d", t.ch.name.c_str(), t.ch.hp, t.ch.maxHP(*gd)), C::White);
+            int crit = t.ch.hasEffect("tagged") ? 100 : critChance(u, t, cb.aimed);
+            // 1.8.3: each theme marks the target its own way; the full odds are on its target card
+            {
+                Theme::NoMap nm; const UiTheme& th = Theme::th(); int tsx = t.x * TILE - cx, tsy = t.y * TILE - cy, tsz = t.ch.size * TILE;
+                if (Theme::frame()) { cv.rect(tsx - 2, tsy - 2, tsz + 4, tsz + 4, th.accent); cv.rect(tsx - 3, tsy - 3, tsz + 6, tsz + 6, th.accent); }
+                else if (Theme::onebit()) { cv.rect(tsx - 2, tsy - 2, tsz + 4, tsz + 4, Theme::foe()); cv.rect(tsx - 4, tsy - 4, tsz + 8, tsz + 8, th.accent); }
+                else { cv.rect(tsx - 2, tsy - 2, tsz + 4, tsz + 4, C::Black); for (int k = 0; k < tsz + 4; k += 2) { cv.put(tsx - 2 + k, tsy - 2, C::White); cv.put(tsx - 2 + k, tsy + tsz + 1, C::White); } }
+            }
+            if (Theme::native()) {
+                std::vector<std::pair<std::string, Color8>> tl;
+                if (inRange) { tl.push_back({fmt("%d%% to hit", hc), RGB(0, 0, 0)}); tl.push_back({fmt("%d%% crit%s", crit, cb.aimed ? " (aimed)" : ""), RGB(0, 0, 0)}); }
+                else tl.push_back({fmt("out of range (%d/%d)", dist, u.ch.attackRange(*gd)), RGB(0, 0, 0)});
+                Theme::tooltip(Theme::Pen{&cv, ctx.font, ctx.ts}, lx, ly, tl, true);
+                ly += 6;
+            } else {
+                std::string st = inRange ? fmt("%d%%", hc) : fmt("out of range (%d/%d)", dist, u.ch.attackRange(*gd));
+                Color8 sc = !inRange ? C::Gray : Theme::frame() ? Theme::th().accent : Theme::onebit() ? Theme::th().accent : hitColor(hc);
+                if (Theme::onebit() && inRange) { int w = ctx.font->widthSmall(fmt("%d", hc), 2) + ctx.font->width(" %") + 8; cv.fillRect(lx - 3, ly - 1, w, 18, RGB(0, 0, 0, 200)); ctx.font->drawSmall(cv, lx, ly, fmt("%d", hc), sc, 2); ctx.font->draw(cv, *ctx.ts, lx + ctx.font->widthSmall(fmt("%d", hc), 2) + 2, ly + 4, "%", sc); }
+                else { int w = ctx.font->width(st) + 6; cv.fillRect(lx - 3, ly + 1, w, 12, RGB(0, 0, 0, 170)); ctx.font->drawShadow(cv, *ctx.ts, lx, ly, st, sc, C::Black); }
+            }
             // cover: a thick bar on the side of the target that faces you, and a word for it
             int cov = inRange ? coverAt(u, t) : 0;
             if (cov > 0) {
@@ -1936,76 +1953,34 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         } else if (!aoeWarn.empty()) label(lx, ly, aoeWarn, C::Orange);
         else if (!cb.path.empty()) label(lx, ly, fmt("%d move%s", (int)cb.path.size(), cb.path.size() == 1 ? "" : "s"), C::Cyan);
         else if (cb.mode == 0 && tu < 0 && map->walkable(cb.selX, cb.selY) && !reach && !(cb.selX == u.x && cb.selY == u.y)) label(lx, ly, "out of reach", C::Gray);
-        cv.resetClip();
-        drawTileInfo(cv, cb.selX, cb.selY);
-        cv.setClip({0, 0, SCREEN_W, viewH});
     }
     cv.resetClip();
-    // top bar
-    cv.fillRect(0, 0, SCREEN_W, 24, RGB(0, 0, 0, 170));
-    uiRect(0, 0, SCREEN_W, 24);
-    if (myTurn) {
-        auto& u = cb.units[cb.selectedUnit];
-        int bx = 4;
-        for (int i = 0; i < NACTIONS; i++) {
-            int bw = actionButtonW(ctx, i);
-            bool hl = (cb.mode == 3 && cb.menuSel == i) || (i == 0 && !cb.aimed && cb.mode == 0) || (i == 1 && cb.aimed && cb.mode == 0) || (i == 2 && (cb.mode == 4 || cb.mode == 1)) || (i == 3 && (cb.mode == 5 || cb.mode == 2));
-            bool hover = in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY <= 24;
-            cv.fillRect(bx, 3, bw, 18, hl ? RGB(150, 110, 30) : hover ? RGB(80, 80, 100) : RGB(50, 50, 66)); cv.rect(bx, 3, bw, 18, hl ? C::Yellow : C::Gold);
-            int cx = bx + 3, kw = keyChip(ctx, cx, 5, ACTION_KEYS[i]);
-            if (kw && i == 1) kw += 2 + keyChip(ctx, cx + kw + 2, 5, ACTION_KEYS[i]);
-            ctx.font->draw(cv, *ctx.ts, cx + (kw ? kw + 5 : 2), 6, ACTIONS[i], C::White);
-            bx += bw + 3;
-        }
-        int right = SCREEN_W - combatMenuButtonW(ctx) - 8;   // the Menu button sits at the far right
-        // whose turn, AP / move and the round, right-aligned in what is left of the bar (it is on the HUD below too)
-        std::string st = fmt("%s  AP %d  MV %d  R%d", u.ch.name.c_str(), u.ch.ap, u.ch.move, cb.round);
-        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("AP %d MV %d R%d", u.ch.ap, u.ch.move, cb.round);
-        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("Round %d", cb.round);
-        if (bx + 8 + ctx.font->width(st) > right - 6) st = fmt("R%d", cb.round);
-        if (bx + 8 + ctx.font->width(st) <= right - 6) textRight(ctx, right - 6, 6, st, C::Yellow);
-    } else if (cb.selectedUnit >= 0 && !cb.ending) ctx.font->draw(cv, *ctx.ts, 8, 6, cb.units[cb.selectedUnit].ch.name + "'s turn...", C::Red);
-    else if (cb.ending) ctx.font->draw(cv, *ctx.ts, 8, 6, cb.victory ? "Victory!" : cb.fled ? "Escaped!" : "Defeat...", cb.victory ? C::Yellow : C::Red);
-    {   // Menu button (pause: settings, load, exit), on every turn
-        int bw = combatMenuButtonW(ctx), bx = SCREEN_W - bw - 4;
-        bool hover = in.mouseX >= bx && in.mouseY <= 24;
-        cv.fillRect(bx, 3, bw, 18, hover ? RGB(80, 80, 100) : RGB(50, 50, 66)); cv.rect(bx, 3, bw, 18, C::Gold);
-        int kw = keyChip(ctx, bx + 3, 5, A_CANCEL);
-        ctx.font->draw(cv, *ctx.ts, bx + 3 + (kw ? kw + 5 : 2), 6, "Menu", C::White);
-    }
+    (void)in;
+}
+
+// 1.8.3: the popups of a fight (the goal, the round banner, the action / spell / item lists), centred in the world view
+// on the screen canvas; the action bar, turn order, target card and hotbar are drawn by the theme's HUD (hud.cpp).
+void Game::drawCombatPopups(Canvas& cv, InputState& in) {
+    bool myTurn = cb.playerTurn && !cb.ending && cb.selectedUnit >= 0;
     // 1.4.0 (#78): the fight's goal, top middle under the bar
     if (!cb.goal.kind.empty()) {
         std::string gt = "Goal: " + cb.goal.text;
         if (cb.goal.kind == "hold" && !cb.goal.done) gt += fmt(" (round %d of %d)", std::min(cb.round, cb.goal.rounds), cb.goal.rounds);
         if (cb.goal.kind == "close" && !cb.goal.done) { int n = 0; for (auto& r : cb.units) if (r.ch.alive && r.rift) n++; gt += fmt(" (%d open)", n); }
         if (cb.goal.done) gt += " - done!"; else if (cb.goal.failed) gt += " - FAILED";
-        int gw = ctx.font->width(gt) + 12, gx = SCREEN_W / 2 - gw / 2;
-        cv.fillRect(gx, 26, gw, 14, RGB(0, 0, 0, 190)); cv.rect(gx, 26, gw, 14, cb.goal.failed ? C::Red : cb.goal.done ? C::Green : C::Gold);
-        ctx.font->draw(cv, *ctx.ts, gx + 6, 27, gt, cb.goal.failed ? C::Red : cb.goal.done ? C::Green : C::Yellow);
+        int gw = ctx.font->width(gt) + 12, gx = VIEW_X + VIEW_W / 2 - gw / 2, gy = VIEW_Y + 4;
+        cv.fillRect(gx, gy, gw, 14, RGB(0, 0, 0, 190)); cv.rect(gx, gy, gw, 14, cb.goal.failed ? C::Red : cb.goal.done ? C::Green : C::Gold);
+        ctx.font->draw(cv, *ctx.ts, gx + 6, gy + 1, gt, cb.goal.failed ? C::Red : cb.goal.done ? C::Green : C::Yellow);
     }
     // round / turn banner under the top bar
     if (cb.banner > 0 && !cb.bannerText.empty()) {
-        float a = std::min(1.0f, cb.banner * 3); int bw = ctx.font->width(cb.bannerText, 2) + 24, bx = SCREEN_W / 2 - bw / 2;
-        cv.fillRect(bx, 30, bw, 28, RGB(0, 0, 0, (uint8_t)(170 * a))); cv.rect(bx, 30, bw, 28, Color8{200, 170, 80, (uint8_t)(255 * a)});
-        ctx.font->draw(cv, *ctx.ts, bx + 12, 32, cb.bannerText, Color8{255, 225, 140, (uint8_t)(255 * a)}, 2);
-    }
-    // turn order strip (right side) - click a portrait to look at that unit
-    int ox = SCREEN_W - 30, oy = TURN_STRIP_Y; int shown = 0;
-    uiRect(ox, oy, 30, 10 * 26);
-    { std::string hdr = "TURN"; ctx.font->drawShadow(cv, *ctx.ts, ox + 13 - ctx.font->width(hdr) / 2, oy - 13, hdr, C::Gold, RGB(0, 0, 0)); }
-    for (int k = 0; k < (int)cb.order.size() && shown < 10; k++) {
-        int idx = cb.order[(cb.turnPos + k) % cb.order.size()]; auto& u = cb.units[idx]; if (!u.ch.alive) continue;
-        bool hover = in.mouseX >= ox && in.mouseY >= oy + shown * 26 && in.mouseY < oy + shown * 26 + 26;
-        cv.fillRect(ox, oy + shown * 26, 26, 26, k == 0 ? RGB(120, 90, 30, 220) : hover ? RGB(60, 60, 80, 220) : RGB(0, 0, 0, 170)); cv.rect(ox, oy + shown * 26, 26, 26, u.friendly() ? friendColor() : foeColor());
-        if (u.ch.recolor) ctx.ts->drawRecolor(cv, u.ch.tile, ox + 7, oy + shown * 26 + 7, 1, u.ch.color); else ctx.ts->draw(cv, u.ch.tile, ox + 7, oy + shown * 26 + 7, 1);
-        { int hpw = 24 * u.ch.hp / std::max(1, u.ch.maxHP(*gd)); cv.fillRect(ox + 1, oy + shown * 26 + 23, 24, 2, RGB(0, 0, 0)); cv.fillRect(ox + 1, oy + shown * 26 + 23, hpw, 2, u.friendly() ? friendColor() : foeColor()); }
-        if (k == 0 || (shown == 1 && !hover)) { std::string tag = k == 0 ? "NOW" : "NEXT"; int tw = ctx.font->width(tag) + 6; cv.fillRect(ox - tw - 1, oy + shown * 26 + 7, tw, 12, RGB(0, 0, 0, 180)); ctx.font->draw(cv, *ctx.ts, ox - tw + 2, oy + shown * 26 + 7, tag, k == 0 ? C::Yellow : C::LtGray); }
-        if (hover) { std::string nm = fmt("%s %d/%d", u.ch.name.c_str(), u.ch.hp, u.ch.maxHP(*gd)); int tw = ctx.font->width(nm) + 8; cv.fillRect(ox - tw - 2, oy + shown * 26 + 6, tw, 14, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, ox - tw + 2, oy + shown * 26 + 7, nm, C::White); }
-        shown++;
+        float a = std::min(1.0f, cb.banner * 3); int bw = ctx.font->width(cb.bannerText, 2) + 24, bx = VIEW_X + VIEW_W / 2 - bw / 2, by = VIEW_Y + 22;
+        cv.fillRect(bx, by, bw, 28, RGB(0, 0, 0, (uint8_t)(170 * a))); cv.rect(bx, by, bw, 28, Color8{200, 170, 80, (uint8_t)(255 * a)});
+        ctx.font->draw(cv, *ctx.ts, bx + 12, by + 2, cb.bannerText, Color8{255, 225, 140, (uint8_t)(255 * a)}, 2);
     }
     // action menus
-    if (myTurn && cb.mode == 3) {
-        int mx = SCREEN_W / 2 - 70, my = 40;
+    if (myTurn && cb.mode == 3 && !Theme::frame()) {   // frame: the Actions list in the column is the menu
+        int mx = combatPopX(140), my = combatPopY();
         panelTitle(ctx, mx, my, 140, 30 + NACTIONS * 20, "Action"); uiRect(mx, my - 4, 140, 34 + NACTIONS * 20);
         for (int i = 0; i < NACTIONS; i++) { bool sel = cb.menuSel == i; if (sel) cv.fillRect(mx + 6, my + 24 + i * 20, 128, 18, RGB(90, 70, 20)); ctx.font->draw(cv, *ctx.ts, mx + 12, my + 27 + i * 20, ACTIONS[i], sel ? C::Yellow : C::White); int cw = actionChipsW(ctx, i); if (cw) { int kx = mx + 130 - cw, kw = keyChip(ctx, kx, my + 26 + i * 20, ACTION_KEYS[i]); if (i == 1) keyChip(ctx, kx + kw + 2, my + 26 + i * 20, ACTION_KEYS[i]); } }
     }
@@ -2013,7 +1988,7 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
         auto& u = cb.units[cb.selectedUnit];
         std::vector<std::string> list; if (cb.mode == 4) { for (auto& id : u.ch.spells) if (auto* sp = gd->spell(id)) if (spellUsableInCombat(*sp)) list.push_back(id); } else for (auto& it : party.inventory) if (gd->item(it.id) && gd->item(it.id)->type == IT_CONSUMABLE && std::find(list.begin(), list.end(), it.id) == list.end()) list.push_back(it.id);
         // a fixed-size window: ten rows that scroll with the selection, names cut to fit, three lines of description
-        const int VIS = 10, PW = 240; int n = (int)list.size(), mx = SCREEN_W / 2 - 120, my = 40, ph = 34 + VIS * 20 + 44;
+        const int VIS = 10, PW = 240; int n = (int)list.size(), mx = combatPopX(PW), my = combatPopY(), ph = 34 + VIS * 20 + 44;
         panelTitle(ctx, mx, my, PW, ph, cb.mode == 4 ? "Spells" : "Items"); uiRect(mx, my - 4, PW, ph + 4);
         auto fit = [&](std::string t, int w) { if (ctx.font->width(t) <= w) return t; while (!t.empty() && ctx.font->width(t + "..") > w) t.pop_back(); return t + ".."; };
         for (int r = 0; r < VIS && cb.menuScroll + r < n; r++) {
@@ -2038,8 +2013,6 @@ void Game::drawCombat(Canvas& cv, InputState& in) {
             if (!hint.empty()) ctx.font->drawShadow(cv, *ctx.ts, mx + 10, my + ph + 2, hint, C::Gray, C::Black);
         }
     }
-    if (myTurn && cb.units[cb.selectedUnit].partyIndex >= 0) drawHotbar(cv, in, cb.units[cb.selectedUnit].partyIndex, HOTBAR_Y);
-    if (myTurn && cb.mode == 0) { std::string hint = fmt("[%s] center camera   right-drag / edges: pan", gKeys.label(A_CENTER).c_str()); ctx.font->drawShadow(cv, *ctx.ts, SCREEN_W - 8 - ctx.font->width(hint), HOTBAR_Y - 16, hint, C::Gray, C::Black); }
 }
 
 // Info box for the tile under the combat cursor (top-left): what stands there, what the ground does, light and reach.
@@ -2049,11 +2022,11 @@ static std::string prettyKind(const std::string& n) {
     if (!s.empty()) s[0] = (char)toupper(s[0]);
     return s;
 }
-void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
-    if (!map || !map->inBounds(tx, ty) || cb.selectedUnit < 0) return;
+std::vector<std::pair<std::string, Color8>> Game::tileInfoLines(int tx, int ty) {
+    std::vector<std::pair<std::string, Color8>> lines;
+    if (!map || !map->inBounds(tx, ty) || cb.selectedUnit < 0) return lines;
     const Cell& c = map->at(tx, ty); const TileKind& k = allTileKinds()[c.kind];
     auto& me = cb.units[cb.selectedUnit];
-    std::vector<std::pair<std::string, Color8>> lines;
     int tu = combatUnitAt(tx, ty);
     bool seen = !map->dark || visible(tx, ty) || chebyshev(me.x, me.y, tx, ty) <= 1;
     if (tu >= 0 && (cb.units[tu].friendly() || seen)) {
@@ -2109,11 +2082,26 @@ void Game::drawTileInfo(Canvas& cv, int tx, int ty) {
         { bool danger = false; for (auto& w : cb.windups) for (auto& q : w.tiles) if (!danger && q.first == tx && q.second == ty) { const SpellDef* ws = gd->spell(w.spell); lines.push_back({std::string("DANGER: ") + (ws ? ws->name : "attack") + " lands here next turn", C::Red}); danger = true; } }
         if (map->dark) lines.push_back({!seen ? "Dark - can't see" : lit(tx, ty) ? "Lit" : "In shadow (-25% to hit)", lit(tx, ty) ? C::Cream : C::Purple});
     }
-    int w = 210; for (auto& l : lines) w = std::max(w, ctx.font->width(l.first) + 14);
-    int h = 8 + (int)lines.size() * 12, x = 4, y = 28;
-    cv.fillRect(x, y, w, h, RGB(10, 10, 18, 215)); cv.rect(x, y, w, h, C::DkGray);
-    for (size_t i = 0; i < lines.size(); i++) ctx.font->draw(cv, *ctx.ts, x + 7, y + 3 + (int)i * 12, lines[i].first, lines[i].second);
-    uiRect(x, y, w, h);
+    return lines;
+}
+
+// 1.8.3: the active unit's odds against what the combat cursor is on (the themes' target cards)
+Game::TargetOdds Game::targetOdds() {
+    TargetOdds o;
+    if (!map || cb.selectedUnit < 0 || cb.selectedUnit >= (int)cb.units.size()) return o;
+    auto& u = cb.units[cb.selectedUnit];
+    int tu = combatUnitAt(cb.selX, cb.selY); if (tu < 0) return o;
+    auto& t = cb.units[tu];
+    bool seen = !map->dark || visible(t.x, t.y) || chebyshev(u.x, u.y, t.x, t.y) <= 1;
+    if (!t.friendly() && !seen) return o;
+    o.unit = tu; o.foe = !t.friendly();
+    if (!o.foe) return o;
+    o.dist = unitDist(t, u.x, u.y); o.range = u.ch.attackRange(*gd);
+    o.inRange = o.dist <= o.range && combatLOS(u.x, u.y, t.x, t.y);
+    o.hit = hitChance(u, t, cb.aimed); o.crit = t.ch.hasEffect("tagged") ? 100 : critChance(u, t, cb.aimed);
+    o.cover = o.inRange ? coverAt(u, t) : 0;
+    o.flanked = o.inRange && o.cover == 0 && flanked(u, t); o.exposed = o.inRange && o.cover == 0 && !o.flanked && exposed(u, t);
+    return o;
 }
 
 // ---------------- 1.4.0 test hooks ----------------

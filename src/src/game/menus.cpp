@@ -130,12 +130,30 @@ void Game::updateMenu(InputState& in, float dt) {
         }
         return;
     }
+    // 1.8.3 (#173 #177 #181): the themed Party tab is clicked through HUD hot spots
+    const bool themed = themedParty();
+    if (themed && (in.mousePressed[0] || in.mouseDX || in.mouseDY)) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) {
+        bool click = in.mousePressed[0];
+        if (h->kind == HH_PICK && (in.mouseDX || in.mouseDY)) menuSel = h->arg;
+        if (click) {
+            in.eatMouse();
+            switch (h->kind) {
+                case HH_PTAB: menuTab = clampi(h->arg, 0, NTABS - 1); menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); return;
+                case HH_MEMBER: menuMember = clampi(h->arg, 0, (int)party.members.size() - 1); menuSubFocus = false; menuPrompt.clear(); return;
+                case HH_SLOT: if (menuSubFocus && menuSub == h->arg && menuPrompt.empty()) { menuPrompt = "equip"; menuSel = 0; menuScroll = 0; } else { menuSubFocus = true; menuSub = clampi(h->arg, 0, SL_COUNT - 1); menuPrompt.clear(); } return;
+                case HH_PICK: { auto cands = equipCandidates(menuSub); menuSel = h->arg; if (menuSel == 0) unequip(menuMember, menuSub); else if (menuSel - 1 < (int)cands.size()) equipItem(menuMember, cands[menuSel - 1]); menuPrompt.clear(); return; }
+                case HH_LEAD: if (party.members[menuMember].alive) { leader = menuMember; notify(party.members[leader].name + " takes the lead."); } return;
+                case HH_RANKUP: if (!levelUpQueue.empty()) pushMode(GMode::LEVELUP); return;
+                default: return;
+            }
+        }
+    }
     if (menuTab == 2 && !menuSubFocus && spellCol == 1 && actP(in, A_CANCEL)) { spellCol = 0; return; }   // back from the spell list to the member list
     if (actP(in, A_CANCEL) || (actP(in, A_MENU) && !menuSubFocus)) { if (menuSubFocus && !menuPrompt.empty()) { menuPrompt.clear(); /* one step back: item picker -> slot (or action) list */ } else if (menuSubFocus) menuSubFocus = false; else popMode(); return; }
     if (actP(in, A_PAGEUP) || (actP(in, A_LEFT) && !menuSubFocus && menuTab != 0 && menuTab != 2)) { menuTab = (menuTab + NTABS - 1) % NTABS; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); }
     if (actP(in, A_PAGEDOWN) || (actP(in, A_RIGHT) && !menuSubFocus && menuTab != 0 && menuTab != 2)) { menuTab = (menuTab + 1) % NTABS; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); }
     // tab clicks
-    for (int i = 0; i < NTABS; i++) { int tx = 20 + i * 110; if (in.mousePressed[0] && in.mouseX >= tx && in.mouseX < tx + 100 && in.mouseY >= 14 && in.mouseY < 34) { menuTab = i; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); } }
+    for (int i = 0; i < NTABS && !themed; i++) { int tx = 20 + i * 110; if (in.mousePressed[0] && in.mouseX >= tx && in.mouseX < tx + 100 && in.mouseY >= 14 && in.mouseY < 34) { menuTab = i; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); } }
     int nMembers = (int)party.members.size();
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_L] || actP(in, A_INTERACT)) && party.members[menuMember].alive) { leader = menuMember; notify(party.members[leader].name + " takes the lead."); }
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_T] || actP(in, A_ITEMS)) && menuMember > 0 && menuMember < nMembers) { std::string cls = party.members[menuMember].classId; auto it = extra.find("dlg_" + cls); std::string did = it != extra.end() ? it->second : "";
@@ -148,15 +166,15 @@ void Game::updateMenu(InputState& in, float dt) {
             // the member list runs top to bottom: up/down picks a member, right (or confirm) steps into their equipment
             if (actP(in, A_UP)) menuMember = (menuMember + nMembers - 1) % nMembers;
             if (actP(in, A_DOWN)) menuMember = (menuMember + 1) % nMembers;
-            for (int i = 0; i < nMembers; i++) if (in.mousePressed[0] && in.mouseX >= 20 && in.mouseX < 150 && in.mouseY >= 50 + i * 40 && in.mouseY < 88 + i * 40) menuMember = i;
+            for (int i = 0; i < nMembers && !themed; i++) if (in.mousePressed[0] && in.mouseX >= 20 && in.mouseX < 150 && in.mouseY >= 50 + i * 40 && in.mouseY < 88 + i * 40) menuMember = i;
             if (actP(in, A_CONFIRM) || actP(in, A_RIGHT)) { menuSubFocus = true; menuSub = 0; }
-            if (in.mousePressed[0] && in.mouseX > 160 && in.mouseY > sheetEquipY && in.mouseY < sheetEquipY + SL_COUNT * 14) { menuSubFocus = true; menuSub = clampi((in.mouseY - sheetEquipY) / 14, 0, SL_COUNT - 1); menuPrompt.clear(); }
+            if (!themed && in.mousePressed[0] && in.mouseX > 160 && in.mouseY > sheetEquipY && in.mouseY < sheetEquipY + SL_COUNT * 14) { menuSubFocus = true; menuSub = clampi((in.mouseY - sheetEquipY) / 14, 0, SL_COUNT - 1); menuPrompt.clear(); }
         } else if (menuPrompt.empty()) {
             if (actP(in, A_UP)) menuSub = std::max(0, menuSub - 1);
             if (actP(in, A_DOWN)) menuSub = std::min(SL_COUNT - 1, menuSub + 1);
             if (actP(in, A_LEFT)) { menuSubFocus = false; }
-            if (in.mouseDY && in.mouseX > 160 && in.mouseY > sheetEquipY && in.mouseY < sheetEquipY + SL_COUNT * 14) menuSub = clampi((in.mouseY - sheetEquipY) / 14, 0, SL_COUNT - 1);
-            if (actP(in, A_CONFIRM) || in.mousePressed[0]) { menuPrompt = "equip"; menuSel = 0; menuScroll = 0; }
+            if (!themed && in.mouseDY && in.mouseX > 160 && in.mouseY > sheetEquipY && in.mouseY < sheetEquipY + SL_COUNT * 14) menuSub = clampi((in.mouseY - sheetEquipY) / 14, 0, SL_COUNT - 1);
+            if (actP(in, A_CONFIRM) || (!themed && in.mousePressed[0])) { menuPrompt = "equip"; menuSel = 0; menuScroll = 0; }
             if (in.pressed[K_DELETE] || actP(in, A_ITEMS)) unequip(menuMember, menuSub);
         } else {
             // choose item for slot
@@ -166,8 +184,8 @@ void Game::updateMenu(InputState& in, float dt) {
             if (actP(in, A_UP)) menuSel = (menuSel + n - 1) % n;
             if (actP(in, A_DOWN)) menuSel = (menuSel + 1) % n;
             int lx = 330, ly = 80;
-            for (int i = 0; i < n && i < 14; i++) if (in.mouseX >= lx && in.mouseX < lx + 280 && in.mouseY >= ly + 24 + i * 16 && in.mouseY < ly + 40 + i * 16) { if (in.mouseDX || in.mouseDY) menuSel = i; }
-            if (actP(in, A_CONFIRM) || (in.mousePressed[0] && in.mouseX >= lx && in.mouseX < lx + 280 && in.mouseY >= ly + 24 && in.mouseY < ly + 24 + n * 16)) {
+            for (int i = 0; i < n && i < 14 && !themed; i++) if (in.mouseX >= lx && in.mouseX < lx + 280 && in.mouseY >= ly + 24 + i * 16 && in.mouseY < ly + 40 + i * 16) { if (in.mouseDX || in.mouseDY) menuSel = i; }
+            if (actP(in, A_CONFIRM) || (!themed && in.mousePressed[0] && in.mouseX >= lx && in.mouseX < lx + 280 && in.mouseY >= ly + 24 && in.mouseY < ly + 24 + n * 16)) {
                 if (menuSel == 0) unequip(menuMember, menuSub); else equipItem(menuMember, cands[menuSel - 1]);
                 menuPrompt.clear();
             }

@@ -34,7 +34,12 @@ void Canvas::setClip(Rect r) {
     clip = {x0, y0, std::max(0, x1 - x0), std::max(0, y1 - y0)};
 }
 
+Color8 (*gCanvasMap)(Color8 c, int kind, int x, int y) = nullptr;
 void Canvas::fillRect(int x, int y, int rw, int rh, Color8 c) {
+    if (gCanvasMap) c = gCanvasMap(c, 0, x, y);
+    fillRaw(x, y, rw, rh, c);
+}
+void Canvas::fillRaw(int x, int y, int rw, int rh, Color8 c) {
     int x0 = std::max(x, clip.x), y0 = std::max(y, clip.y);
     int x1 = std::min(x + rw, clip.x + clip.w), y1 = std::min(y + rh, clip.y + clip.h);
     if (x1 <= x0 || y1 <= y0) return;
@@ -98,7 +103,7 @@ void Canvas::blitRecolor(const Image8& img, int sx, int sy, int sw, int sh, int 
     }
 }
 
-void Canvas::dim(int x, int y, int rw, int rh, uint8_t alpha) { fillRect(x, y, rw, rh, Color8{0, 0, 0, alpha}); }
+void Canvas::dim(int x, int y, int rw, int rh, uint8_t alpha) { fillRaw(x, y, rw, rh, Color8{0, 0, 0, alpha}); }
 
 // ---------------- Tileset ----------------
 // 1.2.0: the sheet names of the active campaign (index = Tile::s)
@@ -337,6 +342,14 @@ void Font::build(const Tileset& ts) {
         if (x1 < 0) continue;
         clear[i].x0 = x0; clear[i].x1 = x1 + 1; clear[i].valid = true;
     }
+    for (int i = 0; i < 128; i++) {   // 1.8.3: Spleen 5x8
+        smallG[i] = SmallGlyph{};
+        if (i <= 32 || i > 126) continue;
+        int x0 = 5, x1 = -1;
+        for (int y = 0; y < 8; y++) for (int x = 0; x < 5; x++) if ((SPLEEN5X8[i - 32][y] >> (4 - x)) & 1) { x0 = std::min(x0, x); x1 = std::max(x1, x); }
+        if (x1 < 0) continue;
+        smallG[i].x0 = x0; smallG[i].x1 = x1 + 1; smallG[i].valid = true;
+    }
     for (int i = 0; i < 128; i++) { glyphs[i] = Glyph{}; boldGlyphs[i] = Glyph{}; }
     mapRow(ts, glyphs, 44, 78, "ABCDEFGHIJKLMNOPQRST12345");
     mapRow(ts, glyphs, 45, 78, "UVWXYZabcdefghijklmn67890");
@@ -373,6 +386,9 @@ int Font::width(const std::string& s, int scale) const {
 }
 
 int Font::draw(Canvas& cv, const Tileset& ts, int x, int y, const std::string& s, Color8 color, int scale) const {
+    Color8 (*map)(Color8, int, int, int) = gCanvasMap;
+    if (map) { color = map(color, 1, x, y); gCanvasMap = nullptr; }   // the glyph pixels themselves are not mapped again
+    struct Restore { Color8 (*m)(Color8, int, int, int); ~Restore() { if (m) gCanvasMap = m; } } restore{map};
     if (style == STYLE_CLEAR) {
         int cx = x;
         for (unsigned char ch : s) {
@@ -391,6 +407,48 @@ int Font::draw(Canvas& cv, const Tileset& ts, int x, int y, const std::string& s
     }
     const Glyph* gs = bold ? boldGlyphs : glyphs;
     int cx = x;
+    for (unsigned char ch : s) {
+        if (ch == ' ') { cx += 4 * scale; continue; }
+        if (ch >= 128 || !gs[ch].t.valid()) { cx += 5 * scale; continue; }
+        const Glyph& g = gs[ch];
+        int bx = 1 + g.t.c * Tileset::PITCH + g.x0, by = 1 + g.t.r * Tileset::PITCH;
+        cv.blitRecolor(ts.tilesTransparent, bx, by, g.x1 - g.x0, 12, cx, y, scale, color);
+        cx += (glyphW(g) + 1) * scale;
+    }
+    return cx - x;
+}
+
+// 1.8.3 (#170): Spleen 5x8 small labels and the Classic title glyphs
+int Font::widthSmall(const std::string& s, int scale) const {
+    int w = 0;
+    for (unsigned char ch : s) { if (ch == ' ') { w += 3 * scale; continue; } if (ch >= 128 || !smallG[ch].valid) { w += 4 * scale; continue; } w += (smallG[ch].x1 - smallG[ch].x0 + 1) * scale; }
+    return w > 0 ? w - scale : 0;
+}
+int Font::drawSmall(Canvas& cv, int x, int y, const std::string& s, Color8 color, int scale) const {
+    if (gCanvasMap) color = gCanvasMap(color, 1, x, y);
+    Color8 (*map)(Color8, int, int, int) = gCanvasMap; gCanvasMap = nullptr;
+    int cx = x;
+    for (unsigned char ch : s) {
+        if (ch == ' ') { cx += 3 * scale; continue; }
+        if (ch >= 128 || !smallG[ch].valid) { cx += 4 * scale; continue; }
+        const SmallGlyph& g = smallG[ch]; int gw = g.x1 - g.x0;
+        for (int py = 0; py < 8; py++) for (int px = 0; px < gw; px++) {
+            if (!((SPLEEN5X8[ch - 32][py] >> (4 - (g.x0 + px))) & 1)) continue;
+            if (scale == 1) cv.put(cx + px, y + py, color); else cv.fillRect(cx + px * scale, y + py * scale, scale, scale, color);
+        }
+        cx += (gw + 1) * scale;
+    }
+    gCanvasMap = map;
+    return cx - x;
+}
+int Font::widthClassic(const std::string& s, bool boldFace, int scale) const {
+    const Glyph* gs = boldFace ? boldGlyphs : glyphs; int w = 0;
+    for (unsigned char ch : s) { if (ch == ' ') { w += 4 * scale; continue; } if (ch >= 128 || !gs[ch].t.valid()) { w += 5 * scale; continue; } w += (glyphW(gs[ch]) + 1) * scale; }
+    return w > 0 ? w - scale : 0;
+}
+int Font::drawClassic(Canvas& cv, const Tileset& ts, int x, int y, const std::string& s, Color8 color, bool boldFace, int scale) const {
+    if (gCanvasMap) color = gCanvasMap(color, 1, x, y);
+    const Glyph* gs = boldFace ? boldGlyphs : glyphs; int cx = x;
     for (unsigned char ch : s) {
         if (ch == ' ') { cx += 4 * scale; continue; }
         if (ch >= 128 || !gs[ch].t.valid()) { cx += 5 * scale; continue; }

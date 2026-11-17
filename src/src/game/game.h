@@ -13,6 +13,7 @@
 #include "entity.h"
 #include "world.h"
 #include "ui.h"
+#include "../core/theme.h"
 #include "script.h"
 
 // The dev console (~) only exists in debug builds: CMake -DTRIFFALL_DEV_CONSOLE=ON (build.ps1 -Dev), a Debug configuration,
@@ -114,7 +115,7 @@ struct CombatState {
     std::vector<int> reachCover;  // 1.4.0 (#55): per reachable tile, the cover on each side (2 bits each, N E S W) against foes that see it
 };
 
-enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, GAMEOVER, LEVELUP, NAME, VICTORY, PAUSE, CUTSCENE, SAVELOAD, JOURNAL, WORLDMAP, CRAFT, CONSOLE, BOUNTY, ENDING };
+enum class GMode { EXPLORE, DIALOGUE, COMBAT, MENU, SHOP, MESSAGE, TRANSITION, GAMEOVER, LEVELUP, NAME, VICTORY, PAUSE, CUTSCENE, SAVELOAD, JOURNAL, WORLDMAP, CRAFT, CONSOLE, BOUNTY, ENDING, SETTINGS };   // SETTINGS: 1.8.3 (#170) the in-game Settings screen
 
 // ---- newer systems (journal.cpp, worldmap.cpp, craft.cpp, console.cpp, bounty.cpp) ----
 struct GameStats { int kills = 0, fightsWon = 0, fightsFled = 0, goldEarned = 0, goldSpent = 0, chests = 0, crits = 0, damageDealt = 0, damageTaken = 0, spellsCast = 0, crafted = 0, bounties = 0, travels = 0, knockouts = 0, questsDone = 0; };
@@ -192,6 +193,7 @@ struct GameSettings {
     int textSpeed = 1;              // dialogue text: 0 slow, 1 normal, 2 fast, 3 instant
     bool reduceFlashing = false;    // no lightning flashes, softer hit flashes
     bool nightClassic = false;      // 1.8.0 (#160): Settings > Display "Night colours": false = Stage (grey-blue palette + lantern circle), true = Darken (classic)
+    int theme = 0;                  // 1.8.3 (#170): Settings > Display "Theme": ThemeId (0 frame = Adventurer's Frame, 1 native, 2 onebit); settings.ini theme=frame|native|onebit, missing/unknown = frame
     int fontStyle = 1;              // always Font::STYLE_CLEAR since 1.1.1 (the font setting was removed)
     std::string discord;            // settings.ini discord=: where the desktop's Discord icon points (empty = the built-in invite)
     void save(const std::string& path) const;   // also writes the keybinds
@@ -314,7 +316,7 @@ public:
     void unlockAchievement(const std::string& id);
     void loadAchievementState(); void saveAchievementState() const;
     void updateJournal(InputState& in, float dt); void drawJournal(Canvas& cv, InputState& in);
-    void drawAchievementPopups(Canvas& cv, float dt);
+    void drawAchievementPopups(Canvas& cv, float dt, bool inGame = false);
     std::string questText(const QuestDef& q) const; std::string questPin(const QuestDef& q) const;
     // world map (worldmap.cpp)
     void loadLocations();
@@ -475,6 +477,7 @@ public:
     bool loadSaveFile(const std::string& path);   // falls back to the .bak copy when the file is damaged; loadError says why not
     std::string loadError;
     void autosave(); int lastAutosave = -1; bool loadingSave = false;
+    std::string autosavedAt;           // 1.8.3: where the last autosave was made this session (the frame HUD shows it)
     void migrateSave(std::vector<ConfigSection>& secs, int fromFormat);
     std::string crashState() const; void emergencySave();
     void refreshSlots();
@@ -489,7 +492,50 @@ public:
     // drawn into subCv and put in the middle of a larger screen; their update sees the mouse in those coordinates.
     static bool subViewMode(GMode m);
     void drawModeUI(Canvas& cv, InputState& in);   // the open screen, hotbar, hints and notifications (Game::draw)
+    bool subViewOrigin(GMode m, int& x, int& y) const;   // 1.8.3: a 640x480 screen's place in the theme's menu area (false: drawn as it is)
+    void drawMenuBackdrop(Canvas& cv, GMode m);          // 1.8.3: the theme's panel / dialog / window behind a menu screen
     Canvas subCv;
+    // ---- 1.8.3 (#170-#183) UI themes: layout, the world view, the HUD's clickable parts ----
+    void computeLayout();                 // UI::VIEW_* and the theme's HUD rects for this screen size
+    Canvas worldCv;                       // the world is drawn here (VIEW_W x VIEW_H), then put at VIEW_X, VIEW_Y
+    static bool inView(const InputState& in) { return in.mouseX >= UI::VIEW_X && in.mouseY >= UI::VIEW_Y && in.mouseX < UI::VIEW_X + UI::VIEW_W && in.mouseY < UI::VIEW_Y + UI::VIEW_H; }
+    Rect menuArea() const;                // where full-screen menus (party, shop, journal...) go in this theme
+    Rect popupArea() const;               // where dialogue, messages, victory, save/load go (the world view's part of the screen)
+    // HUD hot spots: drawn controls register here; update acts on last frame's (HH_ACTION: press that action's key,
+    // HH_MEMBER: open that member's sheet, HH_BELT: use hotbar slot, HH_COMBAT: a combat command, HH_UNIT: look at a
+    // unit, HH_PAUSE: a pause entry id, HH_CRAFT: field crafting, HH_CLOSE: close a tool window)
+    enum { HH_ACTION = 1, HH_MEMBER, HH_BELT, HH_COMBAT, HH_UNIT, HH_PAUSE, HH_CRAFT, HH_TOOL,
+           HH_PTAB, HH_SLOT, HH_PICK, HH_LEAD, HH_RANKUP };   // party screen: tab, equipment slot, equip-list row (0 = remove), lead, class +1
+    // 1.8.3 (#173 #177 #181): the Party tab drawn in the theme's own layout (frame: hud.cpp, native: hud_native.cpp,
+    // onebit: hud_onebit.cpp) when the screen has room; its clicks come through the HUD hot spots (updateMenu).
+    bool themedParty() const;
+    void drawThemedParty(Canvas& cv, InputState& in);
+    void drawFrameParty(Canvas& cv, InputState& in);
+    void drawNativeParty(Canvas& cv, InputState& in);
+    void drawOneBitParty(Canvas& cv, InputState& in);
+    std::vector<std::string> equipCandidates(int slot) const;   // pack items for a slot (the equip picker)
+    const ItemDef* partyPointedItem() const;                    // what the party screen points at (Compare panels)
+    struct HudHit { Rect r; int kind, arg; };
+    std::vector<HudHit> hudHits, hudHitsPrev;
+    void hudHit(int x, int y, int w, int h, int kind, int arg) { hudHits.push_back({{x, y, w, h}, kind, arg}); }
+    const HudHit* hudHitAt(int mx, int my) const { for (auto it = hudHitsPrev.rbegin(); it != hudHitsPrev.rend(); ++it) if (it->r.contains(mx, my)) return &*it; return nullptr; }
+    bool hudClick(InputState& in);        // a click on a HUD hot spot: does what it stands for (true = handled)
+    int injectAction = -1;                // a HUD button stands in for this action's key on the next update
+    int hudPick = -1;                     // pad / keyboard focus inside the HUD's lists (combat actions, pause menu)
+    // theme HUDs (hud.cpp)
+    void drawFrameHud(Canvas& cv, InputState& in);
+    void drawNativeHud(Canvas& cv, InputState& in);
+    void drawOneBitHud(Canvas& cv, InputState& in);
+    void drawCombatWorld(Canvas& cv, InputState& in);   // combat overlays on the battlefield (world canvas)
+    void drawCombatPopups(Canvas& cv, InputState& in);  // the action / spell / item lists, the goal, the round banner
+    std::vector<std::pair<std::string, Color8>> tileInfoLines(int tx, int ty);   // what the combat cursor is on (target cards)
+    Color8 logColor(const std::string& line) const;     // a message's meaning colour (joins, achievements, fights...)
+    std::string hudPlaceTime() const;
+    // in-game Settings (settings_ui.cpp)
+    void openSettings();
+    void drawSettingsScreen(Canvas& cv, InputState& in);
+    void updateSettingsScreen(InputState& in);
+    PlatformRequests* req = nullptr;      // set by App: Settings asks the platform for fullscreen / scale / vsync
     bool spellUsableOutside(const SpellDef& s) const;
     bool spellUsableInCombat(const SpellDef& s) const { return s.dmgMax > 0 || s.heal > 0 || !s.effect.empty() || s.utility == "light" || !s.summon.empty() || s.smoke > 0; }
     bool castUtility(int member, const std::string& spellId, int target);
@@ -610,7 +656,6 @@ private:
     void updateCamera();
     void drawWorld(Canvas& cv, bool combat);
     void drawHUD(Canvas& cv, InputState& in);
-    void drawLog(Canvas& cv);
     bool visible(int x, int y) const;
     void revealAround();
     void randomEncounter(bool force = false, bool now = false);
@@ -646,7 +691,6 @@ private:
     bool loadDialogues();
     // combat (combat.cpp)
     void updateCombat(InputState& in, float dt);
-    void drawCombat(Canvas& cv, InputState& in);
     void combatComputeReachable();
     void combatNextTurn();
     void combatBeginTurn();
@@ -686,7 +730,8 @@ private:                                         // nearby map groups that hear 
     bool combatAddGroup(int groupIndex, bool announce);
     int  darknessPenalty(const Combatant& a, const Combatant& d) const; // to-hit penalty for attacking into the dark
     std::vector<int> spellVictims(int caster, const SpellDef& sp, int tx, int ty) const; // who an area spell would hit (friend and foe)
-    void drawTileInfo(Canvas& cv, int tx, int ty);
+    struct TargetOdds { int unit = -1; bool foe = false, inRange = false, flanked = false, exposed = false; int hit = 0, crit = 0, dist = 0, range = 0, cover = 0; };
+    TargetOdds targetOdds();   // 1.8.3: the active unit against what the combat cursor is on
     void addFloat(int tx, int ty, const std::string& s, Color8 c, int scale = 1);
     void spawnLoot(Combatant& u);
     // ---- 1.4.0 combat (combat.cpp) ----
@@ -747,7 +792,6 @@ private:                                         // nearby map groups that hear 
     std::vector<PauseEntry> pauseEntries() const;
     void updateSaveLoad(InputState& in, float dt);
     void drawSaveLoad(Canvas& cv, InputState& in);
-    void drawHotbar(Canvas& cv, InputState& in, int member, int y);
     void updateCameraInput(InputState& in, float dt);
     void updateCutscene(InputState& in, float dt);
     void drawCutscene(Canvas& cv, InputState& in);
@@ -770,4 +814,3 @@ public:
 
 std::string flagDescribe(const std::string& f);
 const char* statHelp(int stat);   // one line: what a stat point does
-int hotbarSlotAt(int mx, int my, int y);

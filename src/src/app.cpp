@@ -1,4 +1,5 @@
 #include "app.h"
+#include "core/theme.h"
 #include "game/tiles.h"
 #include "core/crash.h"
 #include "core/updater.h"
@@ -17,6 +18,7 @@ bool App::init(const std::string& assets, const std::string& saves, AudioBackend
     settings.load(saves + "/settings.ini");
     game.saveDir = saves;
     game.init(&data, &settings, assets, &tileset, &font);
+    game.req = &req;   // 1.8.3: in-game Settings asks for fullscreen / scale / vsync changes
 #ifndef TRIFFALL_NO_EDITOR
     editor.init(&tileset, &font, &data, assets, &req); editor.exportDir = saves + "/exports"; editor.prefsPath = saves + "/editor.ini";
     editor.onSwitchCampaign = [this](const std::string& id) { if (game.running && game.campaignId != id) game.running = false; return game.switchCampaign(id); };
@@ -117,6 +119,9 @@ void App::frame(InputState& in, float dt) {
     if (!screenSet) setScreen(screenW, screenH);   // the platform sets the size before the first frame; headless stays 640x480
     gAudio.setVolumes(settings.masterVolume, settings.musicVolume, settings.sfxVolume, settings.ambientVolume);
     font.style = Font::STYLE_CLEAR;   // 1.1.1: the only text face; the classic glyphs are kept for the logo
+    // 1.8.3 (#170): the UI theme follows Settings at once (desktop and game); the Editor is never themed
+    Theme::set((ThemeId)settings.theme); Theme::colorblind = settings.colorblind; Theme::reduceFlashing = settings.reduceFlashing; Theme::time += dt; Theme::beginFrame();
+    UI::gColorblind = settings.colorblind;
     gAudio.update(dt);
     gUpdater.tick(dt);   // 1.7.0 (#140): looks for a newer release now and then (only a copy with update-source.txt)
     if (state == AppState::GAME && game.running && gUpdater.available() && updateToldFor != gUpdater.newVersion()) {
@@ -165,7 +170,7 @@ void App::frame(InputState& in, float dt) {
                 game.update(gin, dt, canvas);
                 game.draw(canvas, gin);
             }
-            game.drawAchievementPopups(canvas, dt);   // last, so no screen or menu can cover a popup
+            game.drawAchievementPopups(canvas, dt, true);   // last, so no screen or menu can cover a popup (1.8.3: frame / one-bit put them in the log)
             if (game.requestDesktop) { game.requestDesktop = false; game.running = false; game.playtest = false; state = AppState::DESKTOP; desktop.windows.clear(); desktop.refreshSlots(); if (!game.desktopAction.empty()) { std::string act = game.desktopAction; game.desktopAction.clear(); desktop.runAction(act); } if (game.gameOver) { desktop.showDialog("Triffall.exe", "Your party has fallen. Load a saved game to try again."); } }
             if (game.requestEditor) {   // 1.1.3: pause menu > Back to Editor (playtests only); the game keeps running for the next Play
                 game.requestEditor = false;

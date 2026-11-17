@@ -69,9 +69,9 @@ bool Game::updateThrowAim(InputState& in) {
     if (actP(in, A_CANCEL) || in.mousePressed[1]) { log("You keep the " + d->name + "."); throwItem.clear(); in.eatKeys(); in.eatMouse(); return true; }
     int nx = throwX, ny = throwY;
     if (actP(in, A_LEFT)) nx--; if (actP(in, A_RIGHT)) nx++; if (actP(in, A_UP)) ny--; if (actP(in, A_DOWN)) ny++;
-    if (in.mouseDX || in.mouseDY || in.mousePressed[0]) { int mx = (in.mouseX + camX) / TILE, my = (in.mouseY + camY) / TILE; if (in.mouseY < SCREEN_H - 72) { nx = mx; ny = my; } }
+    if (in.mouseDX || in.mouseDY || in.mousePressed[0]) { int mx = (in.mouseX - VIEW_X + camX) / TILE, my = (in.mouseY - VIEW_Y + camY) / TILE; if (inView(in)) { nx = mx; ny = my; } }
     if (map->inBounds(nx, ny) && chebyshev(px, py, nx, ny) <= range) { throwX = nx; throwY = ny; }
-    if (actP(in, A_CONFIRM) || actP(in, A_INTERACT) || (in.mousePressed[0] && in.mouseY < SCREEN_H - 72)) {
+    if (actP(in, A_CONFIRM) || actP(in, A_INTERACT) || (in.mousePressed[0] && inView(in))) {
         if (throwTargetOk(throwX, throwY)) throwLure(throwItem, throwX, throwY);
         else { log("It can't land there - pick a spot you can see, within reach."); gAudio.play("ui_error"); }
         in.eatKeys(); in.eatMouse();

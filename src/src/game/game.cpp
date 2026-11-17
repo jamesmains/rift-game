@@ -14,8 +14,8 @@ using namespace UI;
 // ---------------- settings ----------------
 void GameSettings::save(const std::string& path) const {
     std::string s = "[settings]\n";
-    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\nclassic43=%d\nnightclassic=%d\n\n",
-             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, (int)classic43, (int)nightClassic);
+    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\nclassic43=%d\nnightclassic=%d\ntheme=%s\n\n",
+             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, (int)classic43, (int)nightClassic, Theme::key((ThemeId)theme));
     if (!discord.empty()) s += "[links]\ndiscord=" + discord + "\n\n";
     s += gKeys.serialize();
     writeFile(path, s);
@@ -33,6 +33,7 @@ bool GameSettings::load(const std::string& path) {
         interactWhileMoving = sec.geti("interactmoving", interactWhileMoving);
         largeText = sec.geti("largetext", largeText) != 0; colorblind = sec.geti("colorblind", colorblind) != 0; textSpeed = clampi(sec.geti("textspeed", textSpeed), 0, 3); reduceFlashing = sec.geti("reduceflash", reduceFlashing) != 0;
         nightClassic = sec.geti("nightclassic", nightClassic) != 0;   // 1.8.0 (#160)
+        theme = (int)Theme::fromKey(sec.get("theme"));   // 1.8.3 (#170): no key (an older settings.ini) or an unknown one = Adventurer's Frame
         ambientVolume = clampi(sec.geti("ambient", ambientVolume), 0, 100); fontStyle = Font::STYLE_CLEAR;   // 1.1.1: the clear font is the only text face (no setting any more)
     }
     return true;
@@ -446,7 +447,7 @@ void Game::revealAround() {
         }
     } else {
         // 1.2.2: what the screen shows around the party (16 x 12 tiles each way on the classic 640x480 screen)
-        int rx = std::max(16, SCREEN_W / TILE / 2 + 3), ry = std::max(12, (SCREEN_H - 72) / TILE / 2 + 3);
+        int rx = std::max(16, VIEW_W / TILE / 2 + 3), ry = std::max(12, VIEW_H / TILE / 2 + 3);
         for (auto& e : eyes) for (int y = e.second - ry; y <= e.second + ry; y++) for (int x = e.first - rx; x <= e.first + rx; x++) if (map->inBounds(x, y)) map->at(x, y).explored = true;
     }
 }
@@ -454,13 +455,13 @@ void Game::revealAround() {
 // ---------------- camera ----------------
 void Game::camClamp() {
     if (!map) return;
-    int viewW = SCREEN_W, viewH = SCREEN_H - 72;
+    int viewW = VIEW_W, viewH = VIEW_H;
     int maxX = map->w * TILE - viewW, maxY = map->h * TILE - viewH;
     if (map->w * TILE <= viewW) camTX = -(viewW - map->w * TILE) / 2; else camTX = clampi(camTX, 0, maxX);
     if (map->h * TILE <= viewH) camTY = -(viewH - map->h * TILE) / 2; else camTY = clampi(camTY, 0, maxY);
 }
 void Game::camCenterOn(int tx, int ty, bool snap) {
-    int viewW = SCREEN_W, viewH = SCREEN_H - 72;
+    int viewW = VIEW_W, viewH = VIEW_H;
     camTX = tx * TILE + TILE / 2 - viewW / 2; camTY = ty * TILE + TILE / 2 - viewH / 2;
     camClamp();
     if (snap) { camFX = (float)camTX; camFY = (float)camTY; camX = camTX; camY = camTY; }
@@ -472,13 +473,14 @@ void Game::updateCamera() {
 // Player camera control: edge scrolling, right-drag panning, right stick. Used in combat (free camera) and explore.
 void Game::updateCameraInput(InputState& in, float dt) {
     if (!map) return;
-    int viewH = SCREEN_H - 72;
+    int viewH = VIEW_H;
     bool combat = mode == GMode::COMBAT;
     float speed = 420.0f * dt;
     int dx = 0, dy = 0;
-    if (in.mouseInWindow && !in.gamepadActive && settings && settings->edgeScroll && combat && !mouseOverUI(in) && in.mouseY < viewH) {
-        if (in.mouseX < 10) dx = -1; else if (in.mouseX >= SCREEN_W - 10) dx = 1;
-        if (in.mouseY < 10) dy = -1; else if (in.mouseY >= viewH - 10) dy = 1;
+    if (in.mouseInWindow && !in.gamepadActive && settings && settings->edgeScroll && combat && !mouseOverUI(in) && inView(in)) {
+        int mx = in.mouseX - VIEW_X, my = in.mouseY - VIEW_Y;
+        if (mx < 10) dx = -1; else if (mx >= VIEW_W - 10) dx = 1;
+        if (my < 10) dy = -1; else if (my >= viewH - 10) dy = 1;
     }
     if (in.mouseDown[2] && (in.mouseDX || in.mouseDY)) { camTX -= in.mouseDX; camTY -= in.mouseDY; camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY; }
     if (in.stick2X != 0 || in.stick2Y != 0) { camTX += (int)(in.stick2X * speed); camTY += (int)(in.stick2Y * speed); camFree = true; camClamp(); camFX = (float)camTX; camFY = (float)camTY; }
@@ -525,9 +527,17 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     // 1.2.2 (#39): a 640x480 screen drawn in the middle of a larger one sees the mouse and SCREEN_W/H as if the
     // screen were 640x480 (the same numbers as Game::draw uses for it)
     const int fullW = SCREEN_W, fullH = SCREEN_H;
-    const bool sv = subViewMode(mode) && (fullW != BASE_W || fullH != BASE_H);
-    const int svX = sv ? (fullW - BASE_W) / 2 : 0, svY = sv ? (fullH - BASE_H) / 2 : 0;
+    computeLayout();
+    hudHitsPrev = hudHits;
+    if (mode == GMode::MENU && in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_MEMBER && h->arg >= 0 && h->arg < (int)party.members.size()) { menuMember = h->arg; menuSubFocus = false; menuPrompt.clear(); in.eatMouse(); }
+    int svX = 0, svY = 0;
+    const bool sv = subViewOrigin(mode, svX, svY);
     if (sv) { SCREEN_W = BASE_W; SCREEN_H = BASE_H; in.mouseX -= svX; in.mouseY -= svY; }
+    if (injectAction >= 0) {   // a HUD button stands in for its action's key
+        int a = injectAction; injectAction = -1;
+        int k = gKeys.key1[a] ? gKeys.key1[a] : gKeys.key2[a] ? gKeys.key2[a] : gKeys.pad[a];
+        if (k) { in.pressed[k] = true; in.down[k] = true; }
+    }
     switch (mode) {
         case GMode::EXPLORE: updateExplore(in, dt); break;
         case GMode::DIALOGUE: updateDialogue(in, dt); break;
@@ -546,6 +556,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
         case GMode::CONSOLE: updateConsole(in, dt); break;
         case GMode::BOUNTY: updateBounty(in, dt); break;
         case GMode::ENDING: updateEnding(in, dt); break;
+        case GMode::SETTINGS: updateSettingsScreen(in); break;
         case GMode::VICTORY: if (actP(in, A_CONFIRM) || actP(in, A_CANCEL) || in.mousePressed[0]) { popMode(); checkLevelUps(); if (!levelUpQueue.empty()) pushMode(GMode::LEVELUP); } break;
         case GMode::GAMEOVER: if (actP(in, A_CONFIRM) || in.mousePressed[0]) { requestDesktop = true; } break;
         case GMode::TRANSITION: {
@@ -588,9 +599,8 @@ void Game::updateExplore(InputState& in, float dt) {
     if (actP(in, A_JOURNAL)) { jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; }
     if (actP(in, A_WORLDMAP)) { openWorldMap(); return; }
     for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f)) { useFavorite(activeLeader(), f); return; }
-    if (in.mousePressed[0]) { int hs = hotbarSlotAt(in.mouseX, in.mouseY, SCREEN_H - 72 - 30); if (hs >= 0) { in.eatMouse(); useFavorite(activeLeader(), hs); return; } }
-    // clicking a party portrait in the HUD opens that member's sheet
-    if (in.mousePressed[0] && in.mouseY >= SCREEN_H - 72) { int i = (in.mouseX - 6) / 150; if (i >= 0 && i < (int)party.members.size() && in.mouseX < 6 + i * 150 + 144) { menuTab = 0; menuMember = i; menuSel = 0; menuSubFocus = false; pushMode(GMode::MENU); return; } }
+    // 1.8.3: the theme HUD's buttons, party cards and belt slots (hud.cpp)
+    if (in.mousePressed[0] && hudClick(in)) return;
     updateNpcs(dt);
     int dx = 0, dy = 0;
     if (actD(in, A_LEFT)) dx = -1; else if (actD(in, A_RIGHT)) dx = 1; else if (actD(in, A_UP)) dy = -1; else if (actD(in, A_DOWN)) dy = 1;
@@ -618,8 +628,8 @@ void Game::updateExplore(InputState& in, float dt) {
         else interactAt(px, py);
     }
     // mouse: click adjacent tile to interact, click further to walk one step toward
-    if (in.mousePressed[0] && in.mouseY < SCREEN_H - 72 && !mouseOverUI(in)) {
-        int tx = (in.mouseX + camX) / TILE, ty = (in.mouseY + camY) / TILE;
+    if (in.mousePressed[0] && inView(in) && !mouseOverUI(in)) {
+        int tx = (in.mouseX - VIEW_X + camX) / TILE, ty = (in.mouseY - VIEW_Y + camY) / TILE;
         if (map->inBounds(tx, ty)) {
             if (chebyshev(tx, ty, px, py) <= 1 && (tx != px || ty != py)) {
                 if (interactable(tx, ty)) interactAt(tx, ty);
@@ -944,7 +954,7 @@ void Game::updateNpcs(float dt) {
             if (stepDistracted(e)) { e.wanderTimer = rng.range(250, 400); continue; }   // 1.5.0 (#99): off to a noise, or back from one
             int away = chebyshev(e.x, e.y, e.homeX, e.homeY);
             if (e.temp) {   // lost the party: walks off and is gone once out of sight (or off the screen)
-                auto seen = [&]() { const int T = UI::TILE; return visible(e.x, e.y) && e.x * T + T > camX && e.x * T < camX + UI::SCREEN_W && e.y * T + T > camY && e.y * T < camY + UI::SCREEN_H; };
+                auto seen = [&]() { const int T = UI::TILE; return visible(e.x, e.y) && e.x * T + T > camX && e.x * T < camX + UI::VIEW_W && e.y * T + T > camY && e.y * T < camY + UI::VIEW_H; };
                 if (!seen() || chebyshev(e.x, e.y, px, py) > leashOf(e) + 6) { e.defeated = true; continue; }
                 e.wanderTimer = rng.range(300, 500);
                 if (!groupStepToward(e, e.x + (e.x >= px ? 8 : -8), e.y + (e.y >= py ? 8 : -8), 0, -1)) e.wanderTimer = 1500;   // boxed in: it waits (gone once the party walks off)
@@ -1343,8 +1353,8 @@ std::vector<Game::PauseEntry> Game::pauseEntries() const {
     return e;
 }
 void Game::openPause() { pauseSel = 0; pushMode(GMode::PAUSE); }
-static int pauseH(int n) { return 30 + n * 26 + 24; }   // the buttons plus the "save at a shrine" line under them
-static int pauseTop(int n) { return (SCREEN_H - 72 - pauseH(n)) / 2; }   // centred between the top of the screen and the party bar
+// 1.8.3 (#174 #178 #182): each theme draws the pause menu in its own place (the frame's column, the window's Game menu,
+// the one-bit Start menu); they register their entries as HUD hot spots (HH_PAUSE, arg = entry index).
 void Game::updatePause(InputState& in, float dt) {
     (void)dt;
     auto entries = pauseEntries();
@@ -1352,11 +1362,15 @@ void Game::updatePause(InputState& in, float dt) {
     pauseSel = clampi(pauseSel, 0, n - 1);
     if (actP(in, A_UP)) pauseSel = (pauseSel + n - 1) % n;
     if (actP(in, A_DOWN)) pauseSel = (pauseSel + 1) % n;
-    int x = SCREEN_W / 2 - 90, y = pauseTop(n);
-    for (int i = 0; i < n; i++) if (in.mouseX >= x && in.mouseX < x + 180 && in.mouseY >= y + 30 + i * 26 && in.mouseY < y + 52 + i * 26 && (in.mouseDX || in.mouseDY)) pauseSel = i;
+    const HudHit* h = hudHitAt(in.mouseX, in.mouseY);
+    bool overEntry = h && h->kind == HH_PAUSE && h->arg >= 0 && h->arg < n;
+    if (overEntry && (in.mouseDX || in.mouseDY)) pauseSel = h->arg;
     if (actP(in, A_CANCEL)) { popMode(); return; }
     if (actP(in, A_CONFIRM) || in.mousePressed[0]) {
-        if (in.mousePressed[0]) { if (!(in.mouseX >= x && in.mouseX < x + 180 && in.mouseY >= y + 30 && in.mouseY < y + 30 + n * 26)) return; pauseSel = (in.mouseY - y - 30) / 26; }
+        if (in.mousePressed[0]) {
+            if (!overEntry) { if (!Theme::frame() && !mouseOverUI(in)) popMode(); return; }   // a click off a drop-down menu closes it
+            pauseSel = h->arg; in.eatMouse();
+        }
         const PauseEntry& e = entries[clampi(pauseSel, 0, n - 1)];
         if (!e.enabled) {
             if (e.id == 3 && !inCombat()) log("There is no map of this place.");
@@ -1369,21 +1383,15 @@ void Game::updatePause(InputState& in, float dt) {
             case 2: popMode(); openSaveLoad(false); break;
             case 3: popMode(); openWorldMap(false); break;
             case 4: popMode(); jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); break;
-            case 5: popMode(); requestSettings = true; break;
+            case 5: openSettings(); break;   // 1.8.3 (#170): the Settings screen opens over the paused game
             case 6: popMode(); requestDesktop = true; break;
             case 7: popMode(); requestEditor = true; break;
         }
     }
 }
 void Game::drawPause(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 110);
-    auto entries = pauseEntries();
-    const int n = (int)entries.size();
-    int x = SCREEN_W / 2 - 90, y = pauseTop(n);
-    panelTitle(ctx, x, y, 180, pauseH(n), inCombat() ? "Paused (combat)" : "Paused");
-    uiRect(x, y, 180, pauseH(n));
-    for (int i = 0; i < n; i++) button(ctx, in, x + 12, y + 30 + i * 26, 156, 22, entries[i].label, entries[i].enabled, pauseSel == i);
-    textCenter(ctx, SCREEN_W / 2, y + 30 + n * 26 + 6, "Save at any save shrine.", C::Gray);
+    (void)in;
+    if (Theme::frame()) cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 70);   // the menu itself is in the column (drawFrameHud)
 }
 
 // ---------------- in-game save / load ----------------
@@ -1538,14 +1546,14 @@ void Game::drawUnitSprite(Canvas& cv, const Character& ch, int sx, int sy, bool 
 
 void Game::drawWorld(Canvas& cv, bool combat) {
     if (!map) return;
-    int viewH = SCREEN_H - 72;
-    cv.setClip({0, 0, SCREEN_W, viewH});
-    cv.fillRect(0, 0, SCREEN_W, viewH, map->bg);
+    int viewH = VIEW_H;   // 1.8.3: cv is the world canvas (VIEW_W x VIEW_H)
+    cv.setClip({0, 0, VIEW_W, viewH});
+    cv.fillRect(0, 0, VIEW_W, viewH, map->bg);
     int shx = 0, shy = 0;
     if (shake > 0 && settings && settings->screenShake) { shx = rng.range(-3, 3); shy = rng.range(-3, 3); }
     int cx = camX - shx, cy = camY - shy;
     int x0 = std::max(0, cx / TILE), y0 = std::max(0, cy / TILE);
-    int x1 = std::min(map->w - 1, (cx + SCREEN_W) / TILE + 1), y1 = std::min(map->h - 1, (cy + viewH) / TILE + 1);
+    int x1 = std::min(map->w - 1, (cx + VIEW_W) / TILE + 1), y1 = std::min(map->h - 1, (cy + viewH) / TILE + 1);
     bool anim = (ctx.frame / 20) % 2 == 0;
     const auto& kinds = allTileKinds();
     // 1.0.15: three layers - ground, then the shifted trail pieces (moved down a few pixels as one layer, running into
@@ -1556,7 +1564,6 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     // 1.1.0: a resource node with its own picture (resources.txt sprite=) replaces its cell's picture while it is in view
     std::set<int> nodeCells; for (auto& gn : map->gathers) if (gn.sprite.valid() && map->inBounds(gn.x, gn.y) && visible(gn.x, gn.y)) nodeCells.insert(gn.y * map->w + gn.x);
     std::vector<Color8> viewBg((size_t)std::max(0, x1 - x0 + 1) * std::max(0, y1 - y0 + 1), C::Black);   // 1.8.0: each view tile's bg (sceneryLook)
-    const bool enclosedDark = map->dark && !map->skyOpen();
     // 1.8.1 (#165): nothing is drawn on a tile outside every light (dark maps: not seen and lit; outdoors from half-dark
     // on: outside the lantern circles) - no objects, NPCs or monsters standing in the dark
     auto hid = [&](int x, int y) { return darkHides(x, y, combat); };
@@ -1564,7 +1571,6 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         const Cell& c = map->at(x, y);
         if (map->dark && !c.explored) continue;
         bool vis = visible(x, y);
-        if (enclosedDark && !(vis && lit(x, y))) continue;   // 1.8.1 (#166) enclosed (sky=0): outside the light is pitch black
         int sx = x * TILE - cx, sy = y * TILE - cy;
         Color8 tint = c.tint;
         Color8 bg; Tile g; int mask = 0, corners = 0; map->look(x, y, g, bg, &mask, &corners);   // joined pieces (paths, shores, rivers...) pick their piece here
@@ -1672,7 +1678,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
             int vw = x1 - x0 + 1;
             for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
                 int k = nightDim[(size_t)(ty - y0) * vw + (tx - x0)]; if (k >= 256) continue;
-                int sx0 = std::max(0, tx * TILE - cx), sy0 = std::max(0, ty * TILE - cy), sx1 = std::min(SCREEN_W, tx * TILE - cx + TILE), sy1 = std::min(viewH, ty * TILE - cy + TILE);
+                int sx0 = std::max(0, tx * TILE - cx), sy0 = std::max(0, ty * TILE - cy), sx1 = std::min(VIEW_W, tx * TILE - cx + TILE), sy1 = std::min(viewH, ty * TILE - cy + TILE);
                 for (int yy = sy0; yy < sy1; yy++) for (int xx = sx0; xx < sx1; xx++) {
                     size_t i = (size_t)yy * cv.w + xx; Color8& q = cv.px[i]; const Color8& s0 = scenery[i];
                     if (q.r == s0.r && q.g == s0.g && q.b == s0.b) continue;
@@ -1697,57 +1703,11 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     cv.resetClip();
 }
 
+// 1.8.3 (#170-#183): the HUD is the theme's (hud.cpp): a frame round the world, a program window, or one-bit tool windows
 void Game::drawHUD(Canvas& cv, InputState& in) {
-    int y = SCREEN_H - 72;
-    uiRect(0, y, SCREEN_W, 72);
-    cv.fillRect(0, y, SCREEN_W, 72, RGB(18, 16, 24));
-    cv.hline(0, y, SCREEN_W, C::Gold); cv.hline(0, y + 1, SCREEN_W, RGB(120, 90, 30));
-    int n = (int)party.members.size();
-    int slotW = n > 0 ? std::min(150, (SCREEN_W - 6 - 136) / n) : 150;   // keep clear of the gold/place/clock column on the right
-    int pw = slotW - 6;
-    for (int i = 0; i < n; i++) {
-        const Character* mp = &party.members[i];
-        if (mode == GMode::COMBAT) for (auto& u : cb.units) if (u.partyIndex == i) mp = &u.ch;
-        const Character& m = *mp;
-        int x = 6 + i * slotW;
-        cv.fillRect(x, y + 6, pw, 60, m.alive ? RGB(30, 28, 40) : RGB(40, 20, 20));
-        cv.rect(x, y + 6, pw, 60, mode == GMode::COMBAT && cb.selectedUnit >= 0 && cb.units[cb.selectedUnit].partyIndex == i ? C::Yellow : C::DkGray);
-        cv.fillRect(x + 3, y + 9, 30, 30, RGB(50, 50, 70));
-        if (m.alive) drawUnitSprite(cv, m, x + 6, y + 12, false); else ctx.ts->draw(cv, TL::UI_SKULL, x + 9, y + 15, 2);
-        { std::string nm = m.name; while (nm.size() > 1 && ctx.font->width(nm) > pw - 42) nm.pop_back(); ctx.font->draw(cv, *ctx.ts, x + 38, y + 8, nm, C::White); }
-        ctx.font->draw(cv, *ctx.ts, x + 38, y + 20, fmt("Lv%d", m.level), C::Gray);
-        bar(ctx, x + 38, y + 34, pw - 44, 8, m.hp, m.maxHP(*gd), m.hp < m.maxHP(*gd) / 4 ? C::Red : RGB(60, 200, 60));
-        ctx.font->draw(cv, *ctx.ts, x + 38, y + 43, fmt("%d/%d", m.hp, m.maxHP(*gd)), C::LtGray);
-        if (m.maxMP(*gd) > 0) { int hw = ctx.font->width(fmt("%d/%d", m.hp, m.maxHP(*gd))) + 4; bar(ctx, x + 38 + hw, y + 44, pw - 44 - hw, 6, m.mp, m.maxMP(*gd), RGB(80, 120, 255)); }
-        if (mode == GMode::COMBAT) { ctx.font->draw(cv, *ctx.ts, x + 3, y + 42, fmt("AP%d", m.ap), C::Yellow); ctx.font->draw(cv, *ctx.ts, x + 3, y + 53, fmt("MV%d", m.move), C::Cyan); }
-        int ex = x + 38; for (auto& e : m.effects) { if (ex + 24 > x + pw) break; ctx.font->draw(cv, *ctx.ts, ex, y + 55, e.id.substr(0, 4), e.id == "poison" || e.id == "burn" || e.id == "freeze" || e.id == "weaken" || e.id == "stun" ? C::Red : C::Green); ex += 28; }
-    }
-    // right side: gold, location
-    int rx = SCREEN_W - 6;
-    textRight(ctx, rx, y + 8, fmt("%d gold", party.gold), C::Gold);
-    if (map) textRight(ctx, rx, y + 22, map->name, C::LtGray);
-    if (lightSteps <= 0 && stealthSteps <= 0 && detectSteps <= 0) textRight(ctx, rx, y + 36, clockText() + (outdoors() && weather != "clear" ? "  " + weather : ""), nightAmount() > 0.5f ? RGB(140, 150, 255) : C::Gray);
-    if (mode == GMode::EXPLORE) {
-        if (map && map->saveAt(px, py)) { textRight(ctx, rx, y + 52, "[" + gKeys.label(A_QUICKSAVE) + "] Save here", C::Cyan); }
-        else textRight(ctx, rx, y + 52, "[" + gKeys.label(A_MENU) + "] Menu  [" + gKeys.label(A_INTERACT) + "] Act", C::DkGray);
-        std::string eff; if (lightSteps > 0) eff += fmt("light %d  ", lightSteps); if (stealthSteps > 0) eff += fmt("stealth %d  ", stealthSteps); if (detectSteps > 0) eff += fmt("sense %d", detectSteps);
-        if (!eff.empty()) textRight(ctx, rx, y + 36, eff, C::Cyan);
-    }
-    (void)in;
-}
-
-static const int HB_SLOT = 28;
-#define HB_X (UI::SCREEN_W - 8 * HB_SLOT - 8)   // 1.2.2: the screen width can change (#39)
-void Game::drawLog(Canvas& cv) {
-    int shown = 0;
-    for (int i = (int)msgLog.size() - 1; i >= 0 && shown < 4; i--) {
-        if (msgTime[i] <= 0 && mode != GMode::COMBAT) continue;
-        Color8 c = C::White; if (msgTime[i] < 1) c.a = (uint8_t)std::max(0.0f, msgTime[i] * 255);
-        std::string line = msgLog[i];   // keep clear of the favorites hotbar on the right
-        if (ctx.font->width(line) > HB_X - 16) { while (line.size() > 3 && ctx.font->width(line + "...") > HB_X - 16) line.pop_back(); line += "..."; }
-        ctx.font->drawShadow(cv, *ctx.ts, 8, SCREEN_H - 72 - 16 - shown * 13, line, c, RGB(0, 0, 0, c.a));
-        shown++;
-    }
+    if (Theme::native()) drawNativeHud(cv, in);
+    else if (Theme::onebit()) drawOneBitHud(cv, in);
+    else drawFrameHud(cv, in);
 }
 
 void Game::draw(Canvas& cv, InputState& in) {
@@ -1756,21 +1716,39 @@ void Game::draw(Canvas& cv, InputState& in) {
     if (mode == GMode::CUTSCENE) { drawCutscene(cv, in); return; }
     if (mode == GMode::GAMEOVER) { drawGameOver(cv, in); return; }
     if (mode == GMode::ENDING) { drawEnding(cv, in); return; }
+    computeLayout();
+    hudHits.clear();
+    const bool combat = mode == GMode::COMBAT || std::find(modeStack.begin(), modeStack.end(), GMode::COMBAT) != modeStack.end();
+    // ---- the world, on its own canvas the size of the theme's view, then put in place ----
+    {
+        if (worldCv.w != VIEW_W || worldCv.h != VIEW_H) worldCv.init(VIEW_W, VIEW_H);
+        worldCv.resetClip();
+        InputState win = in; win.mouseX -= VIEW_X; win.mouseY -= VIEW_Y;
+        const size_t rects0 = uiRects.size();
+        ctx.cv = &worldCv;
+        drawWorld(worldCv, combat);
+        drawWeather(worldCv, frameDt);
+        if (combat && mode != GMode::TRANSITION) drawCombatWorld(worldCv, win);
+        drawBanter(worldCv);
+        drawThrowAim(worldCv);   // 1.5.0 (#99)
+        for (size_t i = rects0; i < uiRects.size(); i++) { uiRects[i].x += VIEW_X; uiRects[i].y += VIEW_Y; }
+        ctx.cv = &cv;
+        cv.resetClip();
+        cv.fillRaw(0, 0, cv.w, cv.h, Theme::th().back);
+        for (int y = 0; y < VIEW_H && y + VIEW_Y < cv.h; y++) std::copy_n(&worldCv.px[(size_t)y * worldCv.w], std::min(VIEW_W, cv.w - VIEW_X), &cv.px[(size_t)(y + VIEW_Y) * cv.w + VIEW_X]);
+    }
     if (mode == GMode::TRANSITION) {
-        drawWorld(cv, false); drawWeather(cv, frameDt); drawHUD(cv, in);
+        Theme::beginUiMap(); drawHUD(cv, in); Theme::endUiMap();
         float t = transition; uint8_t a = (uint8_t)(255 * (t < 1 ? t : (2 - t)));
-        cv.dim(0, 0, SCREEN_W, SCREEN_H, a);
-        if (!transText.empty()) textCenter(ctx, SCREEN_W / 2, SCREEN_H / 2, transText, C::White);
+        cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, a);
+        if (!transText.empty()) textCenter(ctx, VIEW_X + VIEW_W / 2, VIEW_Y + VIEW_H / 2, transText, C::White);
         return;
     }
-    drawWorld(cv, mode == GMode::COMBAT || (!modeStack.empty() && modeStack.back() == GMode::COMBAT));
-    drawWeather(cv, frameDt);
-    if (mode == GMode::COMBAT || (!modeStack.empty() && std::find(modeStack.begin(), modeStack.end(), GMode::COMBAT) != modeStack.end())) drawCombat(cv, in);
-    drawBanter(cv);
-    drawThrowAim(cv);   // 1.5.0 (#99)
+    Theme::beginUiMap();
     drawHUD(cv, in);
-    drawLog(cv);
+    if (combat) drawCombatPopups(cv, in);
     drawModeUI(cv, in);
+    Theme::endUiMap();
     if (fadeIn > 0) cv.dim(0, 0, SCREEN_W, SCREEN_H, (uint8_t)(std::min(1.0f, fadeIn / 0.6f) * 255));
     // mouse cursor (the platform hides the OS cursor)
     if (!in.gamepadActive && in.mouseInWindow) {
@@ -1786,12 +1764,12 @@ void Game::draw(Canvas& cv, InputState& in) {
 bool Game::subViewMode(GMode m) {
     return m == GMode::MENU || m == GMode::SHOP || m == GMode::CRAFT || m == GMode::JOURNAL || m == GMode::BOUNTY || m == GMode::LEVELUP || m == GMode::WORLDMAP;
 }
-static uint8_t subViewDim(GMode m) { return m == GMode::WORLDMAP ? 200 : m == GMode::JOURNAL ? 160 : m == GMode::LEVELUP ? 140 : 150; }   // each screen's own cv.dim
 
 void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     const int fullW = SCREEN_W, fullH = SCREEN_H;
-    const bool sv = subViewMode(mode) && (fullW != BASE_W || fullH != BASE_H);
-    const int svX = sv ? (fullW - BASE_W) / 2 : 0, svY = sv ? (fullH - BASE_H) / 2 : 0;
+    int svX = 0, svY = 0;
+    const bool sv = subViewOrigin(mode, svX, svY);
+    if ((subViewMode(mode) || mode == GMode::SETTINGS) && !themedParty()) drawMenuBackdrop(full, mode);
     const GMode drawnMode = mode; const size_t rects0 = uiRects.size();
     InputState subIn;
     if (sv) {
@@ -1805,7 +1783,7 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     InputState& in = sv ? subIn : fullIn;
     switch (mode) {
         case GMode::DIALOGUE: drawDialogue(cv, in); break;
-        case GMode::MENU: drawMenu(cv, in); break;
+        case GMode::MENU: if (themedParty()) drawThemedParty(cv, in); else drawMenu(cv, in); break;
         case GMode::SHOP: drawShop(cv, in); break;
         case GMode::MESSAGE: drawMessage(cv, in); break;
         case GMode::LEVELUP: drawLevelUp(cv, in); break;
@@ -1818,29 +1796,28 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
         case GMode::CRAFT: drawCraft(cv, in); break;
         case GMode::CONSOLE: drawConsole(cv, in); break;
         case GMode::BOUNTY: drawBounty(cv, in); break;
+        case GMode::SETTINGS: drawSettingsScreen(cv, in); break;
         default: break;
     }
-    if (mode == GMode::EXPLORE && !party.members.empty()) drawHotbar(cv, in, activeLeader(), SCREEN_H - 72 - 30);
     // notifications (top center, below the combat bar)
     bool fullScreenUI = mode == GMode::MENU || mode == GMode::SHOP || mode == GMode::CRAFT || mode == GMode::JOURNAL || mode == GMode::BOUNTY || mode == GMode::LEVELUP || mode == GMode::WORLDMAP;
-    int ny = (mode == GMode::COMBAT) ? 30 : fullScreenUI ? SCREEN_H - 120 : 8;
-    if (mode == GMode::COMBAT) { drawHint(cv, -(SCREEN_H - 72 - 34)); }   // in a fight: just above the hotbar and the log, clear of the action bar
+    int ny = (mode == GMode::COMBAT) ? VIEW_Y + 54 : fullScreenUI ? SCREEN_H - 120 : VIEW_Y + 8;
+    if (mode == GMode::COMBAT) { drawHint(cv, -(VIEW_Y + VIEW_H - 8)); }   // in a fight: at the bottom of the world view
     else if (fullScreenUI) { int hh = drawHint(cv, -(SCREEN_H - (mode == GMode::CRAFT ? 92 : 58))); if (hh) ny = SCREEN_H - 58 - hh - 18 * std::min<int>(3, (int)notifications.size()); }   // over menus: near the bottom (1.1.7: above the crafting screen's quantity line and button), notifications above it
     else ny += drawHint(cv, ny);
     for (size_t i = 0; i < notifications.size() && i < 3; i++) {
         float a = std::min(1.0f, notifTime[i]);
         Color8 c = C::Cream; c.a = (uint8_t)(255 * a);
         int w = ctx.font->width(notifications[i]) + 20;
-        cv.fillRect(SCREEN_W / 2 - w / 2, ny + (int)i * 18, w, 16, RGB(0, 0, 0, (uint8_t)(160 * a)));
-        ctx.font->draw(cv, *ctx.ts, SCREEN_W / 2 - w / 2 + 10, ny + 2 + (int)i * 18, notifications[i], c);
+        int ncx = sv || fullScreenUI ? SCREEN_W / 2 : VIEW_X + VIEW_W / 2;
+        cv.fillRect(ncx - w / 2, ny + (int)i * 18, w, 16, RGB(0, 0, 0, (uint8_t)(160 * a)));
+        ctx.font->draw(cv, *ctx.ts, ncx - w / 2 + 10, ny + 2 + (int)i * 18, notifications[i], c);
     }
     if (sv) {
         for (int y = 0; y < BASE_H; y++) std::copy_n(&subCv.px[(size_t)y * BASE_W], BASE_W, &full.px[(size_t)(y + svY) * full.w + svX]);
         SCREEN_W = fullW; SCREEN_H = fullH; ctx.cv = &full;
         for (size_t i = rects0; i < uiRects.size(); i++) { uiRects[i].x += svX; uiRects[i].y += svY; }
-        uint8_t a = subViewDim(drawnMode);
-        full.dim(0, 0, fullW, svY, a); full.dim(0, svY + BASE_H, fullW, fullH - svY - BASE_H, a);
-        full.dim(0, svY, svX, BASE_H, a); full.dim(svX + BASE_W, svY, fullW - svX - BASE_W, BASE_H, a);
+        (void)drawnMode;
     }
 }
 
@@ -2125,25 +2102,3 @@ bool Game::deserialize(const std::string& text) {
 }
 
 // ---------------- favorites hotbar ----------------
-void Game::drawHotbar(Canvas& cv, InputState& in, int member, int y) {
-    if (member < 0 || member >= (int)party.members.size()) return;
-    Character& m = party.members[member];
-    uiRect(HB_X - 2, y - 2, 8 * HB_SLOT + 4, 28);
-    for (int i = 0; i < 8; i++) {
-        int x = HB_X + i * HB_SLOT;
-        bool hover = in.mouseX >= x && in.mouseX < x + 26 && in.mouseY >= y && in.mouseY < y + 26;
-        cv.fillRect(x, y, 26, 26, hover ? RGB(70, 60, 30, 230) : RGB(20, 20, 30, 210)); cv.rect(x, y, 26, 26, hover ? C::Gold : C::DkGray);
-        const std::string& f = m.favs[i];
-        if (!f.empty()) {
-            std::string kind = f.substr(0, f.find(':')), id = f.substr(f.find(':') + 1);
-            bool ok = true; std::string tip;
-            if (kind == "spell") { if (auto* s = gd->spell(id)) { ctx.ts->draw(cv, s->tile, x + 1, y + 1, 2); ok = m.mp >= s->cost && (mode == GMode::COMBAT || spellUsableOutside(*s)); tip = s->name + fmt(" (%d MP)", s->cost); } }
-            else if (auto* d = gd->item(id)) { drawItemTile(*ctx.ts, cv, *d, x + 1, y + 1, 2); int n = party.countItem(id); ok = n > 0; if (n > 0) ctx.font->draw(cv, *ctx.ts, x + 16, y + 15, std::to_string(std::min(n, 99)), C::White); tip = d->name; }
-            if (!ok) cv.fillRect(x + 1, y + 1, 24, 24, RGB(0, 0, 0, 140));
-            if (hover && !tip.empty()) { int tw = ctx.font->width(tip) + 8; cv.fillRect(x, y - 17, tw, 16, RGB(0, 0, 0, 200)); ctx.font->draw(cv, *ctx.ts, x + 4, y - 15, tip, C::Cream); }
-        }
-        std::string k = gKeys.key1[A_FAV1 + i] ? keyName(gKeys.key1[A_FAV1 + i]) : "";
-        if (!k.empty()) { cv.fillRect(x, y, ctx.font->width(k) + 3, 9, RGB(0, 0, 0, 180)); ctx.font->draw(cv, *ctx.ts, x + 1, y - 2, k, C::Yellow); }
-    }
-}
-int hotbarSlotAt(int mx, int my, int y) { if (my < y || my >= y + 26) return -1; int i = (mx - HB_X) / HB_SLOT; if (i < 0 || i >= 8 || mx < HB_X || (mx - HB_X) % HB_SLOT >= 26) return -1; return i; }

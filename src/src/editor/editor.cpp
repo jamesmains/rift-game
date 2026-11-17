@@ -964,7 +964,7 @@ void Editor::fieldWidgets(GenericEditor& g, EdSection& s, std::pair<std::string,
     }
     if (s.name == "dungeon" && k == "sky") {   // 1.8.1 (#166)
         bool on = atoi(v.c_str()) != 0;
-        if (ui.checkbox(x, y + 2, on ? "open to the sky: outside the light keeps a dim night tint" : "enclosed: outside the light is pitch black", on)) { v = on ? "1" : ""; g.dirty = true; }
+        if (ui.checkbox(x, y + 2, on ? "open to the sky: outside the light keeps a dim night tint" : "enclosed: pitch black until seen", on)) { v = on ? "1" : ""; g.dirty = true; }
         return;
     }
     if (s.name == "dungeon" && k == "touch") {   // 1.2.3 (#40)
@@ -1404,7 +1404,7 @@ void Editor::drawMaps(InputState& in) {
     // shows what the map does; not set = dark maps enclosed, others open. Clicking writes sky=1 or sky=0.
     { std::string sv = trim(em.hget("sky")); bool dark = atoi(em.hget("dark").c_str()) != 0; bool on = sv.empty() ? !dark : atoi(sv.c_str()) != 0; int lw2 = font->width("sky");
       if (ui.checkbox(cx, hy + 2, "sky", on)) { em.hset("sky", on ? "1" : "0"); mapDirty = true; }
-      if (ui.hover(cx, hy, 16 + lw2, 16)) { ui.tip(std::string(on ? "Open to the sky: what the light doesn't reach keeps a dim night tint (towns, camps)." : "Enclosed: what the light doesn't reach is pitch black (caves, dungeons).") + (sv.empty() ? " Not set: the default for a " + std::string(dark ? "dark" : "lit") + " map." : "") + " Right-click: guide"); if (in.mousePressed[1]) openGuide("map.sky"); }
+      if (ui.hover(cx, hy, 16 + lw2, 16)) { ui.tip(std::string(on ? "Open to the sky: what the light doesn't reach keeps a dim night tint (towns, camps)." : "Enclosed: pitch black until the party has seen it, then a darker night tint (caves, dungeons).") + (sv.empty() ? " Not set: the default for a " + std::string(dark ? "dark" : "lit") + " map." : "") + " Right-click: guide"); if (in.mousePressed[1]) openGuide("map.sky"); }
       cx += 16 + lw2 + 6; }
     { int sw = 50; ui.label(cx, hy + 2, "size"); cx += 30; ui.intField(cx, hy, sw, resizeW, 4, 300); cx += sw + 2; ui.intField(cx, hy, sw, resizeH, 4, 300); cx += sw + 4; }
     if (ui.button(cx, hy, 50, 16, "Resize", resizeW != em.w || resizeH != em.h)) { mapPushUndo(); em.resize(resizeW, resizeH, brush); mapDirty = true; } cx += 56;

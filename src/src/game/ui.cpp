@@ -1,57 +1,60 @@
 #include "ui.h"
 #include "tiles.h"
+#include "../core/theme.h"
+#include <algorithm>
 
 namespace UI {
 
+// 1.8.3 (#170): every helper draws in the active UI theme (core/theme.h). The old navy/gold look is gone.
+static Theme::Pen pen(Ctx& c) { return Theme::Pen{c.cv, c.font, c.ts}; }
+
 void panel(Ctx& c, int x, int y, int w, int h, Color8 fill, Color8 border) {
     Canvas& cv = *c.cv;
+    auto same = [](Color8 a, Color8 b) { return a.r == b.r && a.g == b.g && a.b == b.b; };
+    if (same(fill, C::Panel) || same(fill, RGB(16, 16, 28))) { Theme::panel(cv, x, y, w, h); return; }
+    if (same(fill, RGB(30, 30, 44)) || same(fill, C::PanelHi)) { Theme::well(cv, x, y, w, h); return; }
+    // a panel with its own colours (the bounty board's cork, the world map's parchment): those colours, the theme's edge
+    Theme::NoMap nm;
     cv.fillRect(x, y, w, h, fill);
-    cv.rect(x, y, w, h, border);
+    Theme::bevel(cv, x, y, w, h, RGB((uint8_t)std::min(255, border.r + 30), (uint8_t)std::min(255, border.g + 30), (uint8_t)std::min(255, border.b + 30)), RGB(border.r / 3, border.g / 3, border.b / 3));
     cv.rect(x + 2, y + 2, w - 4, h - 4, RGB(border.r / 2, border.g / 2, border.b / 2));
-    // corner studs
-    Color8 st = border;
-    cv.fillRect(x + 1, y + 1, 3, 3, st); cv.fillRect(x + w - 4, y + 1, 3, 3, st);
-    cv.fillRect(x + 1, y + h - 4, 3, 3, st); cv.fillRect(x + w - 4, y + h - 4, 3, 3, st);
 }
 
 void panelTitle(Ctx& c, int x, int y, int w, int h, const std::string& title) {
-    panel(c, x, y, w, h);
-    Canvas& cv = *c.cv;
-    // 1.5.1 (#103): measure the title as it is drawn (bold is 1 px wider per letter), and shorten one that is wider
-    // than the panel, so the text always sits inside its box.
-    c.font->bold = true;
+    // 1.5.1 (#103): a title wider than the panel is shortened with ".." so it always sits inside its box
+    Theme::Pen p = pen(c);
     std::string t = title;
-    while (t.size() > 4 && c.font->width(t) + 12 > w - 24) t = t.substr(0, t.size() - 4) + "..";
-    int tw = c.font->width(t) + 12;
-    cv.fillRect(x + (w - tw) / 2, y - 2, tw, 16, C::Panel);
-    cv.rect(x + (w - tw) / 2, y - 2, tw, 16, C::Gold);
-    textCenter(c, x + w / 2, y, t, C::Gold);
-    c.font->bold = false;
+    while (t.size() > 4 && Theme::titleW(p, t) > w - 30) t = t.substr(0, t.size() - 4) + "..";
+    if (Theme::frame()) { Theme::panel(*c.cv, x, y, w, h); Theme::title(p, x + 10, y + 6, t); return; }
+    Theme::toolWindow(p, x, y, w, h, t);
 }
 
 void bar(Ctx& c, int x, int y, int w, int h, int value, int maxValue, Color8 fill, Color8 back) {
-    Canvas& cv = *c.cv;
-    cv.fillRect(x, y, w, h, back);
-    int fw = maxValue > 0 ? (w - 2) * std::max(0, std::min(value, maxValue)) / maxValue : 0;
-    cv.fillRect(x + 1, y + 1, fw, h - 2, fill);
-    cv.rect(x, y, w, h, C::Black);
+    (void)back;
+    auto same = [](Color8 a, Color8 b) { return a.r == b.r && a.g == b.g && a.b == b.b; };
+    // the old HUD's green HP / blue MP bars take the theme's meaning colours
+    if (same(fill, RGB(60, 200, 60)) || same(fill, RGB(60, 200, 90))) fill = Theme::hp();
+    else if (same(fill, RGB(80, 120, 255))) fill = Theme::mp();
+    Theme::bar(*c.cv, x, y, w, h, value, maxValue, fill);
 }
 
 void text(Ctx& c, int x, int y, const std::string& s, Color8 col, int scale) { c.font->draw(*c.cv, *c.ts, x, y, s, col, scale); }
 void textCenter(Ctx& c, int cx, int y, const std::string& s, Color8 col, int scale) { c.font->draw(*c.cv, *c.ts, cx - c.font->width(s, scale) / 2, y, s, col, scale); }
 void textRight(Ctx& c, int rx, int y, const std::string& s, Color8 col, int scale) { c.font->draw(*c.cv, *c.ts, rx - c.font->width(s, scale), y, s, col, scale); }
-void textShadow(Ctx& c, int x, int y, const std::string& s, Color8 col, int scale) { c.font->drawShadow(*c.cv, *c.ts, x, y, s, col, C::Black, scale); }
+void textShadow(Ctx& c, int x, int y, const std::string& s, Color8 col, int scale) { c.font->drawShadow(*c.cv, *c.ts, x, y, s, col, Theme::native() && Theme::uiMapOn() ? Theme::th().hi : C::Black, scale); }
 int wrapped(Ctx& c, int x, int y, int w, const std::string& s, Color8 col) { return c.font->drawWrapped(*c.cv, *c.ts, x, y, w, s, col); }
 
 bool listRow(Ctx& c, const InputState& in, int x, int y, int w, int h, bool selected) {
     bool hover = in.mouseX >= x && in.mouseY >= y && in.mouseX < x + w && in.mouseY < y + h;
-    if (selected) { c.cv->fillRect(x, y, w, h, RGB(90, 70, 20)); c.cv->rect(x, y, w, h, C::Gold); selCursor(c, x, y, h); }
-    else if (hover) c.cv->fillRect(x, y, w, h, C::PanelHi);
+    if (selected) { Theme::listRow(pen(c), x, y, w, h, Theme::RS_SELECTED); Theme::invert({x, y, w, h}); selCursor(c, x, y, h); }
+    else if (hover) Theme::listRow(pen(c), x, y, w, h, Theme::RS_HOVER);
     return hover;
 }
 void selCursor(Ctx& c, int x, int y, int h) {
-    bool bright = ((int)(c.time * 3)) % 2 == 0;
-    Color8 col = bright ? C::White : C::Gold;
+    Theme::NoMap nm;
+    bool bright = ((int)(c.time * 3)) % 2 == 0 && !Theme::reduceFlashing;
+    const UiTheme& t = Theme::th();
+    Color8 col = bright ? t.accentHi : t.accent;
     int cy = y + h / 2; int ax = x - 7;
     if (ax < 0) return;
     for (int i = 0; i < 4; i++) c.cv->vline(ax + i, cy - (3 - i), 2 * (3 - i) + 1, col);
@@ -59,15 +62,20 @@ void selCursor(Ctx& c, int x, int y, int h) {
 
 bool button(Ctx& c, const InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled, bool selected) {
     bool hover = enabled && in.mouseX >= x && in.mouseY >= y && in.mouseX < x + w && in.mouseY < y + h;
-    Color8 fill = !enabled ? RGB(40, 40, 46) : (selected || hover) ? RGB(100, 80, 30) : RGB(50, 50, 66);
-    c.cv->fillRect(x, y, w, h, fill);
-    c.cv->rect(x, y, w, h, enabled ? C::Gold : C::DkGray);
-    if (selected && enabled) { bool bright = ((int)(c.time * 3)) % 2 == 0; c.cv->rect(x - 1, y - 1, w + 2, h + 2, bright ? C::White : C::Gold); selCursor(c, x, y, h); }
-    textCenter(c, x + w / 2, y + (h - 12) / 2, label, enabled ? C::White : C::Gray);
+    Theme::button(pen(c), x, y, w, h, label, !enabled ? Theme::BS_DISABLED : selected ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover);
+    if (selected && enabled) selCursor(c, x, y, h);
     return hover && in.mousePressed[0];
 }
 
 void icon(Ctx& c, Tile t, int x, int y, int scale, Color8 tint) { c.ts->draw(*c.cv, t, x, y, scale, tint); }
+
+// 1.8.3 (#170): a key name in the theme's keycap look (14 px high, as the layouts expect)
+static void keyBox(Ctx& c, int x, int y, int kw, const std::string& key) {
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Canvas& cv = *c.cv;
+    if (Theme::native()) { Color8 f = t.face; Theme::bevel(cv, x, y, kw, 14, t.hi, t.lo, &f); c.font->draw(cv, *c.ts, x + 3, y + 1, key, t.text); return; }
+    if (Theme::onebit()) { cv.fillRect(x, y, kw, 14, t.back); cv.rect(x, y, kw, 14, t.text); c.font->draw(cv, *c.ts, x + 3, y + 1, key, t.text); return; }
+    Color8 f = t.face; Theme::bevel(cv, x, y, kw, 14, t.hi, t.lo, &f); c.font->draw(cv, *c.ts, x + 3, y + 1, key, t.text);
+}
 
 // Controller glyphs: when a gamepad is active, keyboard names are swapped for the bound pad button and drawn as a button glyph.
 static std::string padEquivalent(const std::string& key) {
@@ -100,7 +108,7 @@ int keyChip(Ctx& c, int x, int y, int action, bool draw) {
     }
     if (gPadGlyphs || !gKeys.key1[action]) return 0;   // on a controller, an action with no pad button shows no key
     std::string key = keyName(gKeys.key1[action]); int kw = c.font->width(key) + 6;
-    if (draw) { c.cv->fillRect(x, y, kw, 14, C::LtGray); c.cv->rect(x, y, kw, 14, C::White); c.font->draw(*c.cv, *c.ts, x + 3, y + 1, key, C::Black); }
+    if (draw) keyBox(c, x, y, kw, key);
     return kw;
 }
 int keyHint(Ctx& c, int x, int y, const std::string& keyIn, const std::string& label) {
@@ -110,17 +118,15 @@ int keyHint(Ctx& c, int x, int y, const std::string& keyIn, const std::string& l
     else if (gPadGlyphs && startsWith(key, "Pad ")) kw = drawPadGlyph(c, x, y, key);
     else {
         kw = c.font->width(key) + 6;
-        c.cv->fillRect(x, y, kw, 14, C::LtGray);
-        c.cv->rect(x, y, kw, 14, C::White);
-        c.font->draw(*c.cv, *c.ts, x + 3, y + 1, key, C::Black);
+        keyBox(c, x, y, kw, key);
     }
-    c.font->draw(*c.cv, *c.ts, x + kw + 4, y + 1, label, C::LtGray);
+    { Theme::NoMap nm; c.font->draw(*c.cv, *c.ts, x + kw + 4, y + 1, label, Theme::th().dim); }
     return x + kw + 4 + c.font->width(label) + 14;   // where the next hint can start
 }
 
 bool gColorblind = false;
-Color8 friendColor() { return gColorblind ? RGB(90, 170, 255) : RGB(60, 200, 90); }
-Color8 foeColor() { return gColorblind ? RGB(255, 150, 20) : RGB(220, 40, 40); }
+Color8 friendColor() { return gColorblind ? RGB(90, 170, 255) : Theme::th().id == ThemeId::Native ? RGB(60, 200, 90) : Theme::th().good; }
+Color8 foeColor() { return gColorblind ? RGB(255, 150, 20) : Theme::th().id == ThemeId::Native ? RGB(220, 40, 40) : Theme::th().foeC; }
 Color8 allyColor() { return gColorblind ? RGB(200, 200, 255) : RGB(80, 170, 255); }
 Color8 friendBack() { return gColorblind ? RGB(0, 25, 70, 190) : RGB(0, 50, 20, 190); }
 Color8 foeBack() { return gColorblind ? RGB(80, 40, 0, 190) : RGB(70, 0, 0, 190); }

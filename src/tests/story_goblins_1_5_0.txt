@@ -45,6 +45,17 @@ expect flag:goblin_chief_spared == 1
 expect flag:goblins_packing == 1
 expect npcshown:grakk_packing == 1
 expect queststatus:main contains led his tribe out
+# 1.8.3 (#169): walking into the hall offers the betrayal; "No. Go." sends Grakk and the packers away at once
+walk 35 15
+expect mode == DIALOGUE
+expect talk contains Grakk's hall is all noise
+choose No. Go.
+expect flag:goblins_packing == 0
+expect npcshown:grakk_packing == 0
+expect npcshown:packer1 == 0
+expect npcshown:packer2 == 0
+expect flag:goblins_betrayed == 0
+expect flag:goblin_chief_spared == 1
 # back into the cave later: the tribe is gone, and the hall is empty - the hidden chief's group is not there to bump
 con run teleport:goblin_cave,5,13
 frames 150

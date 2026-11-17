@@ -98,7 +98,7 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
     bool out = outdoors(), dark = map->dark, sky = map->skyOpen();
     float n = out ? nightAmount() : 0;
     if (!dark && n <= 0.01f) return dim;   // day, or an interior: the day look as drawn
-    const int vw = x1 - x0 + 1, vh = y1 - y0 + 1, viewH = SCREEN_H - 72;
+    const int vw = x1 - x0 + 1, vh = y1 - y0 + 1, viewH = VIEW_H;
     const auto& kinds = allTileKinds();
     std::vector<TileLook> look((size_t)vw * vh);
     static const float WARM[3] = {1.00f, 0.95f, 0.84f};
@@ -117,6 +117,8 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
     if (dark) {
         // 1.8.0 (#162): lit tiles (computeLight) keep the day colours, banded by the nearest light; the warm tint only in
         // the three rings round the party. Seen-but-unlit and remembered tiles (drawn darker already) take the ramp.
+        // 1.8.3 (#168): enclosed maps (sky=0) are pitch black only until a tile is first seen; after that it keeps the
+        // night tint (nightRamp, a little darker than an open map's shadeRamp) instead of going black again.
         static const float BAND[5] = {1.00f, 0.90f, 0.78f, 0.68f, 0.60f};
         static const float WARMD[3] = {0.45f, 0.30f, 0.15f};
         for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
@@ -124,14 +126,13 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
             if (!c.explored) continue;   // unexplored stays black
             size_t i = (size_t)ty * map->w + tx;
             bool seenLit = visible(tx, ty) && lit(tx, ty);
-            if (!seenLit && !sky) continue;   // 1.8.1 (#166) enclosed: drawWorld left it pitch black
             if (seenLit) {
                 float d = i < lightDist.size() ? lightDist[i] : 0;
                 int b = d <= 1.5f ? 0 : d <= 2.5f ? 1 : d <= 3.5f ? 2 : d <= 4.5f ? 3 : 4;
                 float pd = 1e9f; for (auto& p : lamps) pd = std::min(pd, std::sqrt((float)((tx - p.x) * (tx - p.x) + (ty - p.y) * (ty - p.y))));
                 float w = pd <= 1.5f ? WARMD[0] : pd <= 2.5f ? WARMD[1] : pd <= 3.5f ? WARMD[2] : 0.0f;
                 setMul(t, BAND[b], w);
-            } else { t.mode = 1; t.ramp = &shadeRamp(); waterOf(t, c, viewBg[(size_t)(ty - y0) * vw + (tx - x0)]); }
+            } else { t.mode = 1; t.ramp = sky ? &shadeRamp() : &nightRamp(); waterOf(t, c, viewBg[(size_t)(ty - y0) * vw + (tx - x0)]); }
         }
     } else {
         // 1.8.0 (#160 #161): the Stage ramp at night, blended in through dusk / dawn; around the party a lantern circle
@@ -155,7 +156,7 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
         const TileLook& t = look[(size_t)(ty - y0) * vw + (tx - x0)];
         if (t.mode == 0) continue;
         int sx0 = std::max(0, tx * TILE - cx), sy0 = std::max(0, ty * TILE - cy);
-        int sx1 = std::min(std::min(SCREEN_W, cv.w), tx * TILE - cx + TILE), sy1 = std::min(std::min(viewH, cv.h), ty * TILE - cy + TILE);
+        int sx1 = std::min(std::min(VIEW_W, cv.w), tx * TILE - cx + TILE), sy1 = std::min(std::min(viewH, cv.h), ty * TILE - cy + TILE);
         for (int y = sy0; y < sy1; y++) {
             Color8* row = &cv.px[(size_t)y * cv.w];
             for (int x = sx0; x < sx1; x++) {
@@ -175,8 +176,8 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
 
 void Game::drawWeather(Canvas& cv, float dt) {
     if (!map) return;
-    int viewH = SCREEN_H - 72;
-    cv.setClip({0, 0, SCREEN_W, viewH});
+    int viewH = VIEW_H;   // 1.8.3: cv is the world canvas
+    cv.setClip({0, 0, VIEW_W, viewH});
     bool out = outdoors();
     // ---- night tint (outdoor maps only) ----
     // 1.8.0 (#160): only with Settings > Display "Night colours: Darken (classic)"; the default Stage look is drawn by
@@ -188,12 +189,12 @@ void Game::drawWeather(Canvas& cv, float dt) {
         int lx = px * TILE + TILE / 2, ly = py * TILE + TILE / 2;       // world pixels
         float lr = (float)TILE * (4.0f + (lightSteps > 0 ? 4.0f : 0.0f));
         int ox = ((camX % B) + B) % B, oy = ((camY % B) + B) % B;
-        for (int by = -oy; by < viewH; by += B) for (int bx = -ox; bx < SCREEN_W; bx += B) {
+        for (int by = -oy; by < viewH; by += B) for (int bx = -ox; bx < VIEW_W; bx += B) {
             float dx = (float)(bx + camX + B / 2 - lx), dy = (float)(by + camY + B / 2 - ly); float d2 = dx * dx + dy * dy;
             float k = n;
             if (d2 < lr * lr) { float t = std::sqrt(d2) / lr; float band = std::floor(t * 5.0f) / 5.0f; k = n * (0.25f + 0.75f * band * band); }
             int fr = (int)(256 * (1.0f - 0.68f * k)), fg = (int)(256 * (1.0f - 0.62f * k)), fb = (int)(256 * (1.0f - 0.40f * k));
-            for (int y = std::max(0, by); y < std::min(viewH, by + B); y++) for (int x = std::max(0, bx); x < std::min(SCREEN_W, bx + B); x++) {
+            for (int y = std::max(0, by); y < std::min(viewH, by + B); y++) for (int x = std::max(0, bx); x < std::min(VIEW_W, bx + B); x++) {
                 Color8& p = cv.px[(size_t)y * cv.w + x];
                 p.r = (uint8_t)(p.r * fr >> 8); p.g = (uint8_t)(p.g * fg >> 8); p.b = (uint8_t)(p.b * fb >> 8);
             }
@@ -204,20 +205,20 @@ void Game::drawWeather(Canvas& cv, float dt) {
     bool rain = weather == "rain" || weather == "storm", snow = weather == "snow";
     if (rain || snow) {
         int want = weather == "storm" ? 160 : rain ? 90 : 70;
-        while ((int)precip.size() < want) precip.push_back({(float)rng.range(0, SCREEN_W), (float)rng.range(0, viewH)});
+        while ((int)precip.size() < want) precip.push_back({(float)rng.range(0, VIEW_W), (float)rng.range(0, viewH)});
         for (auto& p : precip) {
             if (rain) { p.first += dt * 90; p.second += dt * (weather == "storm" ? 520 : 380); cv.line((int)p.first, (int)p.second, (int)p.first + 1, (int)p.second + 6, RGB(170, 190, 230, 150)); }
             else { p.first += std::sin(p.second * 0.05f + ctx.time) * dt * 20; p.second += dt * 45; cv.put((int)p.first, (int)p.second, RGB(240, 240, 255, 200)); cv.put((int)p.first + 1, (int)p.second, RGB(240, 240, 255, 120)); }
-            if (p.second > viewH) { p.second = (float)-rng.range(0, 20); p.first = (float)rng.range(-10, SCREEN_W); }
-            if (p.first > SCREEN_W + 10) p.first -= SCREEN_W + 20;
+            if (p.second > viewH) { p.second = (float)-rng.range(0, 20); p.first = (float)rng.range(-10, VIEW_W); }
+            if (p.first > VIEW_W + 10) p.first -= VIEW_W + 20;
         }
-        if (rain) cv.fillRect(0, 0, SCREEN_W, viewH, RGB(40, 50, 80, weather == "storm" ? 60 : 35));
+        if (rain) cv.fillRect(0, 0, VIEW_W, viewH, RGB(40, 50, 80, weather == "storm" ? 60 : 35));
     }
     if (weather == "storm") {
         thunderT -= dt;
         if (thunderT <= 0) { thunderT = (float)rng.range(6, 16); stormFlash = 0.18f; gAudio.play("thunder"); if (settings && settings->screenShake) shake = std::max(shake, 0.15f); }
         if (stormFlash > 0 && settings && settings->reduceFlashing) stormFlash = 0;   // Settings > Access: no lightning flashes
-        if (stormFlash > 0) { stormFlash -= dt; cv.fillRect(0, 0, SCREEN_W, viewH, RGB(255, 255, 255, (uint8_t)(140 * std::min(1.0f, stormFlash / 0.18f)))); }
+        if (stormFlash > 0) { stormFlash -= dt; cv.fillRect(0, 0, VIEW_W, viewH, RGB(255, 255, 255, (uint8_t)(140 * std::min(1.0f, stormFlash / 0.18f)))); }
     }
     if (weather == "fog") {
         // Chunky drifting fog: 6px blocks locked to the world grid, density stepped into five levels with an
@@ -230,7 +231,7 @@ void Game::drawWeather(Canvas& cv, float dt) {
         int lx = px * TILE + TILE / 2, ly = py * TILE + TILE / 2; float fr = (float)TILE * 5.5f;
         int ox = ((camX % B) + B) % B, oy = ((camY % B) + B) % B;
         float drift = ctx.time * 0.35f;
-        for (int by = -oy; by < viewH; by += B) for (int bx = -ox; bx < SCREEN_W; bx += B) {
+        for (int by = -oy; by < viewH; by += B) for (int bx = -ox; bx < VIEW_W; bx += B) {
             int wx = bx + camX, wy = by + camY; int gx = (int)std::floor(wx / (float)B), gy = (int)std::floor(wy / (float)B);
             float dx = (float)(wx + B / 2 - lx), dy = (float)(wy + B / 2 - ly); float d = std::sqrt(dx * dx + dy * dy);
             float a = d < fr ? (d / fr) * (d / fr) * 0.55f : std::min(0.85f, 0.55f + (d - fr) / (TILE * 6.0f) * 0.3f);
