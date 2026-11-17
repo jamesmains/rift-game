@@ -162,8 +162,9 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
 
     if (page == 0) {
         // Display 5 rows, Sound 4, Play 4: the row height fits what there is room for
-        const int gt = nat ? 22 : one ? 22 : 30, gap = 6;
-        int rh = std::clamp((bottom - top - 4 - 3 * (gt + 8 + gap)) / 13, 18, 24);
+        int gt = nat ? 22 : one ? 22 : 30, gap = 6;
+        if ((bottom - top - 4 - 3 * (gt + 8 + gap)) / 13 < 18) { gt = nat || one ? 20 : 24; gap = 2; }   // a short window (640x480): tighter groups
+        int rh = std::clamp((bottom - top - 4 - 3 * (gt + 8 + gap)) / 13, 15, 24);
         int y = top;
         int h1 = gt + 5 * rh + 8, h2 = gt + 4 * rh + 8, h3 = gt + 4 * rh + 8;
         int cy = group(y, h1, "Display");

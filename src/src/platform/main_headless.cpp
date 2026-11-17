@@ -301,6 +301,9 @@ int main(int argc, char** argv) {
 #ifndef TRIFFALL_NO_EDITOR
                 if (key == "edcampaign") { got = app.editor.campaignId; num = false; return true; }
 #endif
+                // 1.8.3 (#184): the active UI theme, a settings.ini value, the open Settings screen's page
+                if (key == "theme") { got = Theme::key(Theme::id()); num = false; return true; }
+                if (startsWith(key, "settingsini:")) { got = "none"; num = false; std::string t; if (readFile(app.saveDir + "/settings.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "settings" && sec.has(key.substr(12))) got = sec.get(key.substr(12)); return true; }
                 if (key == "topwindow") { got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().title; num = false; return true; }
                 if (key == "deskslots") { app.desktop.refreshSlots(); got.clear(); for (int i = 0; i < 4; i++) got += app.desktop.slots[i].exists ? "1" : "0"; num = false; return true; }
                 if (startsWith(key, "campaignsave:")) { auto q = split(key.substr(13), ':'); std::error_code ec; got = q.size() == 2 && std::filesystem::exists(campaignSlotPath(app.saveDir, q[0], atoi(q[1].c_str()) - 1), ec) ? "1" : "0"; return true; }   // campaignsave:ID:N (N 1-3, 4 = autosave)
@@ -401,7 +404,7 @@ int main(int argc, char** argv) {
 #endif
                 return false;
             };
-            static const char* MODES[] = {"EXPLORE", "DIALOGUE", "COMBAT", "MENU", "SHOP", "MESSAGE", "TRANSITION", "GAMEOVER", "LEVELUP", "NAME", "VICTORY", "PAUSE", "CUTSCENE", "SAVELOAD", "JOURNAL", "WORLDMAP", "CRAFT", "CONSOLE", "BOUNTY", "ENDING"};
+            static const char* MODES[] = {"EXPLORE", "DIALOGUE", "COMBAT", "MENU", "SHOP", "MESSAGE", "TRANSITION", "GAMEOVER", "LEVELUP", "NAME", "VICTORY", "PAUSE", "CUTSCENE", "SAVELOAD", "JOURNAL", "WORLDMAP", "CRAFT", "CONSOLE", "BOUNTY", "ENDING", "SETTINGS"};
             if (edExpect()) {}
             else if (key == "gold") got = std::to_string(g.party.gold);
             else if (key == "x") got = std::to_string(g.px); else if (key == "y") got = std::to_string(g.py);
@@ -432,7 +435,7 @@ int main(int argc, char** argv) {
             else if (startsWith(key, "price:")) { const ItemDef* d = g.gd->item(key.substr(6)); got = d ? std::to_string(g.itemBuyPrice(*d)) : "-1"; }
             else if (startsWith(key, "quest:")) { got = "0"; for (auto& q : g.quests) if (q.id == key.substr(6)) got = std::to_string(g.questStageIndex(q)); }
             else { num = false;
-                if (key == "mode") got = (int)g.mode >= 0 && (int)g.mode < 20 ? MODES[(int)g.mode] : "?";
+                if (key == "mode") got = (int)g.mode >= 0 && (int)g.mode < 21 ? MODES[(int)g.mode] : "?";
                 else if (key == "map") got = g.mapId;
                 else if (key == "campaign") got = g.campaignId;
                 else if (key == "music") got = gAudio.currentMusic;

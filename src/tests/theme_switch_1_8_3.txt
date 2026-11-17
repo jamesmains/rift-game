@@ -1,0 +1,51 @@
+# 1.8.3 (#170 #184): Settings > General > Display > Theme. A fresh start is Adventurer's Frame (settings.ini theme=frame
+# once saved); picking another theme changes the look at once, on the desktop and in a running game, and is saved.
+# The script sets its own themes, so it is the same under run-tests.ps1 -Theme.
+frames 5
+installed
+theme frame
+frames 3
+expect theme == frame
+deskaction settings
+frames 5
+shot settings_frame.png
+# the Theme choice: Adventurer's Frame | Desktop-native | One-Bit Desktop (640x480, the frame layout)
+click 296 100
+frames 2
+expect theme == native
+expect window == settings
+shot settings_native.png
+# OK (native: OK | Cancel | Apply at the bottom right) saves settings.ini
+click 361 431
+frames 3
+expect settingsini:theme == native
+# a running game takes a theme change at once: one-bit from the in-game Settings (Pause > Settings, keys only)
+newgame Arin warrior
+frames 120
+expect theme == native
+shot game_native.png
+key ESC
+frames 3
+expect mode == PAUSE
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 3
+expect mode == SETTINGS
+# focus: the General / Controls / Access tabs, then the Theme choice; Right picks the next theme
+keys DOWN DOWN DOWN
+key RIGHT
+frames 3
+expect theme == onebit
+shot settings_ingame_onebit.png
+key ESC
+frames 3
+expect mode == PAUSE
+expect settingsini:theme == onebit
+key ESC
+frames 3
+expect mode == EXPLORE
+shot game_onebit.png
+# an unknown theme name falls back to Adventurer's Frame
+theme sparkly
+frames 2
+expect theme == frame

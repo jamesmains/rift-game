@@ -1,0 +1,44 @@
+# 1.8.3 (#170 #174 #178 #182 #184): Pause > Settings opens the Settings screen inside the game (it used to leave for
+# the desktop); Done / Esc return to the paused game, a fight included. Keys only, so it runs the same in every theme.
+frames 5
+installed
+newgame Arin warrior
+frames 120
+key ESC
+frames 3
+expect mode == PAUSE
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 3
+expect mode == SETTINGS
+expect running == 1
+expect state == 2
+shot settings_general.png
+# Tab: the Controls page, then Esc back to the pause menu (settings saved)
+key TAB
+frames 2
+shot settings_controls.png
+key ESC
+frames 3
+expect mode == PAUSE
+expect settingsini:theme != none
+key ESC
+frames 3
+expect mode == EXPLORE
+# in a fight: Esc pauses, Settings opens over the fight, Esc goes back to the paused fight
+combat goblin
+frames 60
+expect mode == COMBAT
+key ESC
+frames 3
+expect mode == PAUSE
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 3
+expect mode == SETTINGS
+key ESC
+frames 3
+expect mode == PAUSE
+key ESC
+frames 3
+expect mode == COMBAT
