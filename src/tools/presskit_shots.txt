@@ -102,6 +102,13 @@ clock 1000
 weather clear
 frames 400
 shot 08_ashfall.png
+# 1.8.2 (#167): night in Hollowmere, the party's lantern lit (the 1.8 night look)
+teleport hollowmere 30 22
+clock 2200
+weather clear
+con light
+frames 160
+shot 18_night.png
 teleport hollowmere 14 14
 clock 600
 weather clear

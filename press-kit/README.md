@@ -4,8 +4,8 @@ Pictures for Triffall's public pages (itch.io, Steam, social links, press). Ever
 own pixels and letters, scaled up by whole numbers (no blur, no painted or AI-made art): the TRIFFALL logo is the
 boot screen's lettering, the text is the game's own font, the window and taskbar are the game's retro desktop.
 
-**Tagline:** An old-school tactical RPG hiding inside a retro PC desktop.
-**Tags:** RPG, turn-based, tactical, open world, party-based, pixel art, retro, 90s nostalgia, fantasy, sci-fi, crafting, moddable
+**Tagline:** An old-school open-world fantasy game for players who love classic party RPGs.
+**Tags:** RPG, turn-based tactics, tactical, party-based, open world, old school, pixel art, retro, 90s nostalgia, fantasy, sci-fi, crafting, level editor, moddable, singleplayer
 
 Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the art, music and sounds: [RIGHTS.md](RIGHTS.md).
 
@@ -13,7 +13,7 @@ Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the 
 
 | File | Size | Use |
 |---|---|---|
-| `cover.png` | 630x500 | itch.io cover (the thumbnail on browse pages); also the project cover in Idea Jotter |
+| `cover.png` | 630x500 | itch.io cover (the thumbnail on browse pages): the aimed shot in a window on the desktop; also the project cover in Idea Jotter |
 | `art/itch/banner_960x300.png` | 960x300 | itch.io banner (header at the top of the page) |
 | `art/icons/icon_16.png` | 16x16 | icon |
 | `art/icons/icon_32.png` | 32x32 | icon |
@@ -25,14 +25,15 @@ Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the 
 | `art/icons/app.ico` | 16-256 | app / window icon and favicon (all six sizes in one file); the game's exe uses the same picture |
 | `art/social_card_1200x630.png` | 1200x630 | social card (link previews on Discord, Bluesky, X...) |
 | `art/avatar_512x512.png` | 512x512 | square avatar (profile pictures, small tiles) |
-| `art/background_1920x1080.png` | 1920x1080 | itch.io page background / press-kit wallpaper (the game's desktop) |
+| `art/background_1920x1080.png` | 1920x1080 | itch.io page background: the desktop's teal, darkened, with the game's monsters, heroes and gear as faint stamps. Tiles both ways with no seam (set it to repeat) |
+| `art/wallpaper_desktop_1920x1080.png` | 1920x1080 | press-kit wallpaper: the game's retro desktop at 2x |
 | `art/key_art_1920x1080.png` | 1920x1080 | key art with the tagline (press, trailers) |
 | `screenshots/native/01_combat.png` | 960x540 | screenshot: a fight (hit and crit chances, cover) |
 | `screenshots/native/04_overworld.png` | 960x540 | screenshot: the open world |
 | `screenshots/native/06_dialogue.png` | 960x540 | screenshot: talking to Elder Mara in Hollowmere |
 | `screenshots/native/11_launcher.png` | 960x540 | screenshot: the retro desktop and the Triffall launcher |
 | `screenshots/native/16_editor_maps.png` | 1280x720 | screenshot: the built-in Editor (it draws at 1280x720 on a 1920x1080 screen) |
-| `screenshots/16x9_1920x1080/*.png` | 1920x1080 | all 17 store screenshots, 2x (combat first) |
+| `screenshots/16x9_1920x1080/*.png` | 1920x1080 | all 18 store screenshots, 2x (combat first; `18_night.png` is Hollowmere at night by lantern light) |
 | `art/steam/header_capsule_920x430.png` | 920x430 | Steam header capsule |
 | `art/steam/small_capsule_462x174.png` | 462x174 | Steam small capsule |
 | `art/steam/main_capsule_1232x706.png` | 1232x706 | Steam main capsule |

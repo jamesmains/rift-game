@@ -24,7 +24,10 @@ requirements form), which the store needs. Minesweeper and Solitaire are kept as
 
 Not for Steam capsules (see above).
 
-**Triffall** - An old-school tactical RPG hiding inside a retro PC desktop.
+**Triffall** - An old-school open-world fantasy game for players who love classic party RPGs.
+
+Tags (1.8.2): RPG, turn-based tactics, tactical, party-based, open world, old school, pixel art, retro, 90s nostalgia,
+fantasy, sci-fi, crafting, level editor, moddable, singleplayer.
 
 ## Short description (Steam, 300 characters max - this is 267)
 

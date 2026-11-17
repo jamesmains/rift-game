@@ -25,8 +25,8 @@ SHOTS_NATIVE = os.path.join(KIT, "screenshots", "native")
 for d in list(DIRS.values()) + [SHOTS_HD, SHOTS_NATIVE]:
     os.makedirs(d, exist_ok=True)
 
-TAGLINE = "An old-school tactical RPG hiding inside a retro PC desktop."
-SHORT = "an old-school tactical RPG"
+TAGLINE = "An old-school open-world fantasy game for players who love classic party RPGs."   # 1.8.2 (#167)
+SHORT = "an old-school open-world party RPG"
 
 # ---------------------------------------------------------------- the game's colours
 TEAL = (0, 128, 128)           # the desktop
@@ -91,6 +91,30 @@ def text(img, x, y, s, color, scale=1, bold=False, shadow=None):
                         if 0 <= X < img.width and 0 <= Y < img.height: px[X, Y] = col
         cx += (gw + 1 + (1 if bold else 0)) * scale
     return cx - x
+
+def wrap(s, maxw, scale=1, bold=False):
+    """Splits s into as few lines as fit maxw, balanced (the longest line as short as it can be)."""
+    words = s.split()
+    for n in range(1, len(words) + 1):
+        best = None
+        # try every split into n lines (n is small): greedy on a shrinking width finds the most even one
+        for target in range(text_width(s, scale, bold) // n, maxw + 1, 2):
+            lines, cur = [], ""
+            for w in words:
+                t = (cur + " " + w).strip()
+                if text_width(t, scale, bold) <= target or not cur: cur = t
+                else: lines.append(cur); cur = w
+            lines.append(cur)
+            if len(lines) <= n and all(text_width(l, scale, bold) <= maxw for l in lines): best = lines; break
+        if best: return best
+    return [s]
+
+def text_lines(img, cx, y, lines, color, scale=1, bold=False, shadow=None, gap=2):
+    """Lines centred on cx; returns the y under the last one."""
+    for ln in lines:
+        text(img, cx - text_width(ln, scale, bold) // 2, y, ln, color, scale, bold, shadow)
+        y += (12 + gap) * scale
+    return y
 
 def logo(scale, color=AMBER, shadow=AMBER_SH, word="TRIFFALL"):
     """TRIFFALL in the classic bold letters, as Desktop::drawBoot draws it (shadow 3/4 of a letter pixel down-right)."""
@@ -237,9 +261,12 @@ def cover():
     sw = text_width(SHORT); text(c, (W - sw) // 2, 9 + lg.height + 3, SHORT, WHITE, shadow=(0, 64, 64))
     wy = 9 + lg.height + 20; wh = H - 28 - wy - 2
     cw, ch = client_size(W - 16, wh)
-    window(c, 8, wy, W - 16, wh, "Triffall", crop_at(COMBAT, cw, ch, *FIGHT))
+    # 1.8.2 (#167): the aimed shot (hit and crit chances over the goblin) says "tactical" at thumbnail size
+    window(c, 8, wy, W - 16, wh, "Triffall", crop_at(shot("01_combat.png"), cw, ch, *COVER_FOCUS))
     c.paste(taskbar(W), (0, H - 28))
     return up(c, k)
+
+COVER_FOCUS = (690, 232)              # the target box and the fight under it in 01_combat
 
 def banner():
     """itch.io banner 960x300: the boot screen's logo and BIOS lines, the fight fading in from the right."""
@@ -261,18 +288,57 @@ def social():
     c = Image.new("RGB", (W, H), TEAL)
     c.paste(desktop_icons(H - 28), (0, 0))
     lg = logo(4); lx = 96 + (W - 96 - lg.width) // 2; paste_rgba(c, lg, (lx, 10))
-    tw = text_width(TAGLINE, bold=True)
-    if tw > W - 100: raise SystemExit("tagline too wide for the social card")
-    text(c, 96 + (W - 96 - tw) // 2, 10 + lg.height + 6, TAGLINE, WHITE, bold=True, shadow=(0, 64, 64))
-    wy = 10 + lg.height + 26; wh = H - 28 - wy - 3
+    ty = text_lines(c, 96 + (W - 96) // 2, 10 + lg.height + 6, wrap(TAGLINE, W - 112, bold=True), WHITE, bold=True,
+                    shadow=(0, 64, 64), gap=1)
+    wy = ty + 6; wh = H - 28 - wy - 3
     cw, ch = client_size(W - 104, wh)
     window(c, 96, wy, W - 104, wh, "Triffall", crop_at(COMBAT, cw, ch, *FIGHT))
     c.paste(taskbar(W), (0, H - 28))
     return up(c, k)
 
-def background():
-    """1920x1080 wallpaper / itch page background: the game's own desktop at 2x (the page sits on it like a window)."""
+def desktop_wallpaper():
+    """1920x1080 press-kit wallpaper: the game's own desktop at 2x."""
     return up(DESK, 2) if DESK.size == (960, 540) else DESK.resize((1920, 1080), Image.NEAREST)
+
+BG_BASE, BG_INK = (0, 78, 80), (0, 98, 100)     # the desktop's teal, darkened (#167: "darkened a bit for the itch page")
+BG_CELL = 30                                    # pixel-canvas cell; 960x540 = 32x18 cells, both even
+
+def _game_sprites():
+    """Every creature, class and item picture the base game uses (sheet 0 col,row), in file order."""
+    out = []
+    d = os.path.join(SRC, "assets", "data")
+    for f, key in (("classes.txt", "sprite"), ("creatures.txt", "sprite"), ("items.txt", "tile")):
+        for m in re.finditer(r"^%s=(\d+),(\d+)\s*$" % key, open(os.path.join(d, f), encoding="utf-8").read(), re.M):
+            t = (int(m.group(1)), int(m.group(2)))
+            if t not in out: out.append(t)
+    return out
+
+def sprite_mask(col, row):
+    """The 12x12 picture as a set of lit pixels (anything not black)."""
+    bx, by = 1 + col * 13, 1 + row * 13
+    return [(x, y) for y in range(12) for x in range(12) if TILES.getpixel((bx + x, by + y)) != (0, 0, 0)]
+
+def background(w=960, h=540, k=2):
+    """1920x1080 itch.io page background, tileable both ways: the game's monsters, heroes and gear as faint 1-bit
+    stamps on dark teal, on every other cell of a 30-pixel grid (a checkerboard, so rows stagger). The picture is a
+    whole number of 60x60 repeats and no stamp crosses an edge, so copies placed side by side or stacked join with
+    no seam."""
+    import random
+    rnd = random.Random(167)
+    pool = [t for t in _game_sprites() if len(sprite_mask(*t)) >= 18]
+    c = Image.new("RGB", (w, h), BG_BASE); px = c.load()
+    cols, rows = w // BG_CELL, h // BG_CELL
+    assert cols * BG_CELL == w and rows * BG_CELL == h and cols % 2 == 0 and rows % 2 == 0
+    last = []
+    for r in range(rows):
+        for q in range(cols):
+            if (q + r) % 2: continue
+            t = rnd.choice(pool)
+            while t in last: t = rnd.choice(pool)
+            last = (last + [t])[-12:]
+            ox, oy = q * BG_CELL + (BG_CELL - 12) // 2, r * BG_CELL + (BG_CELL - 12) // 2
+            for x, y in sprite_mask(*t): px[ox + x, oy + y] = BG_INK
+    return up(c, k)
 
 def avatar():
     return icon(512)
@@ -346,6 +412,7 @@ if __name__ == "__main__":
     save(social(), os.path.join(ART, "social_card_1200x630.png"), optimize=True)
     save(avatar(), os.path.join(ART, "avatar_512x512.png"), optimize=True)
     save(background(), os.path.join(ART, "background_1920x1080.png"), optimize=True)
+    save(desktop_wallpaper(), os.path.join(ART, "wallpaper_desktop_1920x1080.png"), optimize=True)
     write_icons()
     ST = DIRS["steam"]
     save(capsule(920, 430, 0.24), os.path.join(ST, "header_capsule_920x430.png"), optimize=True)
@@ -362,8 +429,9 @@ if __name__ == "__main__":
     save(pb, os.path.join(ST, "page_background_1438x810.jpg"), quality=88)
     # key art: the fight, logo and tagline (not for Steam capsules)
     ka = capsule(1920, 1080, 0.20)
-    kp = Image.new("RGB", (480, 22), BLACK); tw = text_width(TAGLINE, bold=True)
-    text(kp, (480 - tw) // 2, 4, TAGLINE, WHITE, bold=True)
-    ka.paste(up(kp, 4), (0, 1080 - 88))
+    kl = wrap(TAGLINE, 460, bold=True); kh = 8 + 13 * len(kl) + 1
+    kp = Image.new("RGB", (480, kh), BLACK)
+    text_lines(kp, 240, 4, kl, WHITE, bold=True, gap=1)
+    ka.paste(up(kp, 4), (0, 1080 - kh * 4))
     save(ka, os.path.join(ART, "key_art_1920x1080.png"), optimize=True)
     write_screenshots()
