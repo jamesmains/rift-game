@@ -1,0 +1,43 @@
+# 1.7.3: website copies update from a GitHub release that has no latest.json (Idea Jotter's releases attach only the
+# zips): the game asks api.github.com for the newest release and takes triffall-v<version>-windows.zip with the SHA-256
+# GitHub keeps for it. The fetches are answered from fixtures (the API address's last part is "latest").
+installed
+frames 3
+#
+# a release whose zip is still uploading (only another zip so far): no update yet
+updatemirror fixtures/update_ghapi_pending
+updateinit fixtures/update_web
+expect updateenabled == 1
+expect update == none
+expect updateurl == https://api.github.com/repos/test/triffall-releases/releases/latest
+#
+# the full release: version from the tag, notes from its text, the Windows zip's size and SHA-256 (not the other zip's)
+updatemirror fixtures/update_ghapi
+updateinit fixtures/update_web
+expect update == 99.0.0
+expect updateurl == https://api.github.com/repos/test/triffall-releases/releases/latest
+expect updatenotes == A test release made by Idea Jotter. Second line, with a self-update.
+expect updatesize == 930
+frames 3
+expect updatebutton == 1
+deskaction update
+frames 2
+expect topwindow == Update Triffall
+shot update_github_dialog.png
+key ENTER
+updatewait
+frames 2
+expect updaterequest == 1
+expect updatestage == ready
+expect updateurl == https://github.com/test/triffall-releases/releases/download/v99.0.0/triffall-v99.0.0-windows.zip
+expect unpacked:Triffall.exe == web exe
+expect unpacked:assets/data/a.txt == a from the web xxxxx
+updatelaunch
+expect updatescript == 1
+#
+# latest.json still wins when a release has one (publish-release.ps1's releases)
+updatemirror fixtures/update_remote
+updateinit fixtures/update_web
+expect update == 99.0.0
+expect updatenotes == A test release.
+expect updateurl == https://github.com/test/triffall-releases/releases/latest/download/latest.json

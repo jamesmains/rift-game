@@ -5,7 +5,9 @@
 //  - an https address (the public releases repo's .../releases/latest/download/, put in every full-game hand-out zip by
 //    build.ps1): <address>latest.json names the version, the zip and its SHA-256. Checked at start, then every
 //    CHECK_EVERY_REMOTE seconds. On Yes the game downloads the zip to %TEMP%\triffall-update (WinHTTP, https only),
-//    refuses it if the SHA-256 differs, unzips it, and only then closes.
+//    refuses it if the SHA-256 differs, unzips it, and only then closes. 1.7.3: a GitHub release without latest.json
+//    (Idea Jotter makes them with only the zips) is read through api.github.com/repos/<repo>/releases/latest instead:
+//    tag v<version>, asset triffall-v<version>-windows.zip and the SHA-256 GitHub keeps for it (its "digest").
 // The install itself is done by a copy of this exe (%TEMP%\triffall-update\triffall-updater-<pid>.exe started with
 // --apply-update <plan>; no PowerShell, except that the owner's standard install still runs the project's install.ps1).
 // It waits for the game to close, moves the old files aside, copies the new version in, keeps the player's Editor edits
@@ -88,6 +90,8 @@ public:
 private:
     struct Found { std::string version, notes, zip, sha256; long long size = 0; bool ok = false; };
     Found readLatest(const std::string& source);
+    static std::string githubApiUrl(const std::string& source);
+    static Found parseGithubRelease(const std::string& apiJson);
     bool fetch(const std::string& url, const std::string& toFile, std::string& body, std::string& err, long long maxBody = 1 << 20);
     std::string zipUrl(const Found& f) const;
     std::string source, saveDir, exeDir, savesArg;

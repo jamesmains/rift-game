@@ -26,7 +26,7 @@ $token = $env:TRIFFALL_GITHUB_TOKEN
 if (-not $token) { $token = $env:GITHUB_TOKEN }
 $tokenFile = Join-Path $env:APPDATA "triffall-publish\github-token.txt"
 if (-not $token -and (Test-Path $tokenFile)) { $token = (Get-Content $tokenFile -Raw).Trim() }
-if (-not $token -and (Get-Command gh -ErrorAction SilentlyContinue)) { $t = (& gh auth token 2>$null); if ($LASTEXITCODE -eq 0 -and $t) { $token = "$t".Trim() } }if (-not $token) { Note "not signed in, so this release wasn't published to $Repo (see tools\publish-release.ps1 to set it up). Nothing else is affected."; exit 0 }
+if (-not $token -and (Get-Command gh -ErrorAction SilentlyContinue)) { $t = (& gh auth token 2>$null); if ($LASTEXITCODE -eq 0 -and $t) { $token = "$t".Trim() } }if (-not $token) { Write-Host "  GitHub releases: left to Idea Jotter's GitHub release step (no token here; see tools\publish-release.ps1)." -ForegroundColor DarkGray; exit 0 }
 $h = @{ Authorization = "Bearer $token"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28"; "User-Agent" = "triffall-publish" }
 $api = "https://api.github.com"
 

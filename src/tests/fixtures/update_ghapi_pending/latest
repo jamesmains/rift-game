@@ -1,0 +1,26 @@
+{
+  "url": "https://api.github.com/repos/test/triffall-releases/releases/1",
+  "id": 1,
+  "author": { "login": "test", "id": 1, "type": "User", "site_admin": false },
+  "tag_name": "v99.0.0",
+  "target_commitish": "0123456789abcdef",
+  "name": "v99.0.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "url": "https://api.github.com/repos/test/triffall-releases/releases/assets/10",
+      "id": 10,
+      "name": "99.0.0.zip",
+      "label": null,
+      "uploader": { "login": "test", "id": 1, "type": "User", "site_admin": false },
+      "content_type": "application/octet-stream",
+      "state": "uploaded",
+      "size": 999,
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "download_count": 0,
+      "browser_download_url": "https://github.com/test/triffall-releases/releases/download/v99.0.0/99.0.0.zip"
+    }
+  ],
+  "body": "- A **test** release made by Idea Jotter.\n- Second line, with a self-update."
+}

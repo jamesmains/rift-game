@@ -261,6 +261,8 @@ int main(int argc, char** argv) {
                 // 1.7.0: update = the version ready to install ("none"); updaterequest = 1 once Update was confirmed; updatebutton =
                 // 1 while the taskbar shows it; campaigns = every campaign id (launcher order); topwindow = the top desktop window's title
                 if (key == "update") { got = gUpdater.available() ? gUpdater.newVersion() : "none"; num = false; return true; }
+                if (key == "updatenotes") { got = gUpdater.notes(); if (got.empty()) got = "none"; num = false; return true; }   // 1.7.3
+                if (key == "updatesize") { got = std::to_string(gUpdater.newSize()); return true; }
                 if (key == "updaterequest") { got = app.req.startUpdate ? "1" : "0"; return true; }
                 if (key == "updatebutton") { got = app.desktop.updBtnW > 0 ? "1" : "0"; return true; }
                 // 1.7.1: updatestage (idle/downloading/unpacking/ready/failed), updateerror, updateurl (last address fetched),

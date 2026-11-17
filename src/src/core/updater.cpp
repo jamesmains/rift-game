@@ -301,9 +301,67 @@ std::string Updater::zipUrl(const Found& f) const {
     return base + f.zip;
 }
 
+// 1.7.3: the GitHub API's address for the newest release of the repo in a https://github.com/<owner>/<repo>/releases/
+// latest/download/ source ("" = not such a source)
+std::string Updater::githubApiUrl(const std::string& src) {
+    const std::string host = "https://github.com/", tail = "/releases/latest/download/";
+    if (!startsWith(lower(src), host) || src.size() <= host.size() + tail.size() || src.compare(src.size() - tail.size(), tail.size(), tail) != 0) return "";
+    std::string repo = src.substr(host.size(), src.size() - host.size() - tail.size());
+    if (std::count(repo.begin(), repo.end(), '/') != 1 || repo.front() == '/' || repo.back() == '/' || repo.find_first_of("?#%\\ ") != std::string::npos) return "";
+    return "https://api.github.com/repos/" + repo + "/releases/latest";
+}
+
+// 1.7.3: the newest GitHub release as the API describes it (Idea Jotter makes the releases and attaches only the zips, no
+// latest.json): version = its tag without the "v", notes = its text, and the zip triffall-v<version>-windows.zip with the
+// size and SHA-256 GitHub keeps for it ("digest"). No such zip yet (still uploading) or no digest = no update yet.
+Updater::Found Updater::parseGithubRelease(const std::string& j) {
+    Found f;
+    std::string tag = trimmed(jsonString(j, "tag_name"));
+    f.version = (!tag.empty() && (tag[0] == 'v' || tag[0] == 'V')) ? tag.substr(1) : tag;
+    if (f.version.empty() || f.version.find_first_not_of("0123456789.") != std::string::npos) { f.version.clear(); return f; }
+    // the text: Markdown from the release page, made plain enough for a message box
+    std::string n = trimmed(jsonString(j, "body")), plain;
+    for (size_t i = 0; i < n.size(); i++) {
+        char c = n[i];
+        if (c == '*' || c == '`' || c == '#' || c == '\r') continue;
+        if (c == '-' && (i == 0 || n[i - 1] == ' ') && i + 1 < n.size() && n[i + 1] == ' ') { while (!plain.empty() && plain.back() == ' ') plain.pop_back(); if (!plain.empty() && std::string(".!?:;").find(plain.back()) == std::string::npos) plain += ";"; continue; }
+        if (c == ' ' && !plain.empty() && plain.back() == ' ') continue;
+        plain += c;
+    }
+    plain = trimmed(plain);
+    while (!plain.empty() && plain[0] == ';') plain = trimmed(plain.substr(1));
+    if (plain.size() > 300) { plain = plain.substr(0, 297); size_t sp = plain.find_last_of(' '); if (sp > 200) plain.resize(sp); plain += "..."; }
+    f.notes = plain;
+    // the asset: from its "name" up to the next asset's "url" (the fields of one asset)
+    std::string want = "triffall-v" + f.version + "-windows.zip";
+    size_t assets = j.find("\"assets\"");
+    for (size_t at = assets == std::string::npos ? std::string::npos : j.find("\"name\"", assets); at != std::string::npos; at = j.find("\"name\"", at + 6)) {
+        if (jsonString(j.substr(at), "name") != want) continue;
+        size_t end = j.find("\"browser_download_url\"", at);
+        std::string a = j.substr(at, end == std::string::npos ? std::string::npos : end - at);
+        std::string state = jsonString(a, "state"), digest = trimmed(jsonString(a, "digest"));
+        if (!state.empty() && state != "uploaded") break;
+        if (lower(digest.substr(0, 7)) != "sha256:") break;
+        f.zip = want; f.sha256 = digest.substr(7); f.size = jsonNumber(a, "size");
+        f.ok = f.sha256.size() == 64 && f.sha256.find_first_not_of("0123456789abcdefABCDEF") == std::string::npos;
+        break;
+    }
+    return f;
+}
+
 Updater::Found Updater::readLatest(const std::string& src) {
     Found f; std::string j;
-    if (isUrl(src)) { std::string err; if (!fetch(src + "latest.json", "", j, err)) return f; }
+    if (isUrl(src)) {
+        std::string err;
+        if (!fetch(src + "latest.json", "", j, err)) {
+            // 1.7.3: no latest.json on the release (Idea Jotter's GitHub releases): ask GitHub's API about it instead
+            std::string api = githubApiUrl(src), body;
+            if (api.empty() || !fetch(api, "", body, err, 4 << 20)) return f;
+            f = parseGithubRelease(body);
+            if (f.version.empty() || compareVersions(f.version, TRIFFALL_VERSION) <= 0) return Found();
+            return f;
+        }
+    }
     else j = readAll(fs::u8path(src) / "latest.json");
     if (j.empty()) return f;
     f.version = trimmed(jsonString(j, "version")); f.notes = trimmed(jsonString(j, "notes"));
