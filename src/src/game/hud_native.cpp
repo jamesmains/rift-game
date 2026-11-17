@@ -38,10 +38,11 @@ enum {
 };
 const char* MENU_NAMES[8] = {"Game", "Party", "Items", "Spells", "Journal", "Map", "Craft", "Help"};
 
-std::string bindName(int a) { return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : ""; }
+std::string bindName(int a) { return UI::bindLabel(a); }   // 1.8.5 (#200): the pad button while a controller is in use
 int letterAt(const std::string& s, char c) { for (size_t i = 0; i < s.size(); i++) if (toupper((unsigned char)s[i]) == toupper((unsigned char)c)) return (int)i; return -1; }
 // the letter key bound to action a that works right now (outside fights the movement keys win), as an index into label
 int boundLetter(const std::string& label, int a, bool combat) {
+    if (gPadGlyphs) return -1;   // 1.8.5 (#200): on a controller the button's pad key shows at its right instead
     for (int k : {(int)gKeys.key1[a], (int)gKeys.key2[a]}) {
         if (k < K_A || k > K_Z) continue;
         if (!combat && gKeys.isDirectionKey(k)) continue;
@@ -71,7 +72,8 @@ std::string fitScaled(const Font& f, const std::string& s0, int w, int scale) {
 void ulButton(const Pen& p, int x, int y, int w, int h, const std::string& label, int ul, int state, bool hover, const std::string& keyRight = "") {
     Theme::button(*&p, x, y, w, h, label, state, hover, keyRight);
     int o = state == Theme::BS_SELECTED ? 1 : 0;
-    int lx = x + (w - Theme::textW(p, label)) / 2 + o, ty = y + (h - 12) / 2 + o;
+    int krw = keyRight.empty() ? 0 : Theme::textW(p, keyRight) + 8;   // 1.8.5: as Theme::button lays it out
+    int lx = x + (w - krw - Theme::textW(p, label)) / 2 + o, ty = y + (h - 12) / 2 + o;
     if (state == Theme::BS_DEFAULT) { lx = x + 1 + (w - 2 - Theme::textW(p, label)) / 2; ty = y + 1 + (h - 2 - 12) / 2; }
     underline(p, lx, ty, label, ul, state == Theme::BS_DISABLED ? SH : DK);
 }
@@ -275,11 +277,15 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
         int bw = std::min(74, room / 5 - 4);
         for (int i = 0; i < 5 && bw >= 36; i++) {
             const B& b = btns[i]; int bx = bx0 + i * (bw + 4);
-            int ul = boundLetter(b.label, b.act, false);
-            std::string kr; if (ul < 0) { kr = gKeys.label(b.act); if (kr.size() > 3 || bw - Theme::textW(p, b.label) < 2 * (Theme::smallW(p, kr) + 8)) kr.clear(); }
-            bool hover = live && over(in, bx, TY, bw, TH);
-            ulButton(p, bx, TY, bw, TH, b.label, ul, Theme::BS_NORMAL, hover, kr);
-            if (live) hudHit(bx, TY, bw, TH, b.kind, b.arg);
+            // 1.8.5 (#197): the first button says what Interact would do here ("Talk", "Open", "Read"...) and greys
+            // out when there is nothing in reach
+            std::string label = b.label; bool can = true;
+            if (b.act == A_INTERACT) { std::string v = interactVerb(); if (v.empty()) can = false; else label = v; }
+            int ul = can ? boundLetter(label, b.act, false) : -1;
+            std::string kr; if (ul < 0) { kr = UI::bindLabel(b.act); if (kr.size() > 3 || bw - Theme::textW(p, label) < 2 * (Theme::textW(p, kr) + 8)) kr.clear(); }
+            bool hover = live && can && over(in, bx, TY, bw, TH);
+            ulButton(p, bx, TY, bw, TH, label, ul, can ? Theme::BS_NORMAL : Theme::BS_DISABLED, hover, kr);
+            if (live && can) hudHit(bx, TY, bw, TH, b.kind, b.arg);
         }
     } else {
         struct A { const char* label; int cmd, act; };
@@ -291,7 +297,7 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
         int infoW = info.empty() ? 0 : Theme::textW(p, info) + 16;
         // widths: label + padding (+ a small key at the right when the label has no letter of its key); shrink to fit
         int pad = 20; bool hints = true;
-        auto widthOf = [&](const A& a, int pd, bool kh) { int w = Theme::textW(p, a.label) + pd; if (kh && boundLetter(a.label, a.act, true) < 0) { std::string k = gKeys.label(a.act); if (k.size() <= 3) w += Theme::smallW(p, k) + 6; } return w; };
+        auto widthOf = [&](const A& a, int pd, bool kh) { int w = Theme::textW(p, a.label) + pd; if (kh && boundLetter(a.label, a.act, true) < 0) { std::string k = UI::bindLabel(a.act); if (k.size() <= 3) w += Theme::textW(p, k) + 8; } return w; };
         auto total = [&](int pd, bool kh) { int s = 0; for (auto& a : acts) s += widthOf(a, pd, kh) + 3; return s; };
         // 1.8.4 (#192): the acting member's favorites first when the buttons still fit after them (a narrow window keeps
         // the buttons only; the 1-8 keys work either way)
@@ -307,9 +313,9 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
             int w = widthOf(a, pad, hints);
             bool on = myTurn && ((a.cmd == 1 && cb.aimed) || (a.cmd == 2 && (cb.mode == 4 || cb.mode == 1)) || (a.cmd == 3 && (cb.mode == 5 || cb.mode == 2)) || (a.cmd == 8 && cb.mode == 3));
             int ul = boundLetter(a.label, a.act, true);
-            std::string kr; if (hints && ul < 0) { kr = gKeys.label(a.act); if (kr.size() > 3) kr.clear(); }
+            std::string kr; if (hints && ul < 0) { kr = UI::bindLabel(a.act); if (kr.size() > 3) kr.clear(); }
             bool hover = myTurn && over(in, x, TY, w, TH);
-            int bxl = kr.empty() ? x : x - (Theme::smallW(p, kr) + 6) / 2;   // keep the label centred on the label's part
+            int bxl = kr.empty() ? x : x - (Theme::textW(p, kr) + 6) / 2;   // keep the label centred on the label's part
             (void)bxl;
             ulButton(p, x, TY, w, TH, a.label, ul, !myTurn ? Theme::BS_DISABLED : on ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover, kr);
             if (myTurn) hudHit(x, TY, w, TH, HH_COMBAT, a.cmd);
@@ -338,10 +344,10 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
                 else if (o.inRange) odds = fmt("%s: %d%% to hit, %d%% crit%s", nm2.c_str(), o.hit, o.crit, cb.aimed ? " (aimed)" : "");
                 else odds = fmt("%s: out of range (%d/%d)", nm2.c_str(), o.dist, o.range);
             }
-            panes = {{fmt("Round %d - ", std::max(1, cb.round)) + who, 220}, {odds, 380}, {"Right-drag pans, " + gKeys.label(A_CENTER) + " centers", 350}};
+            panes = {{fmt("Round %d - ", std::max(1, cb.round)) + who, 220}, {odds, 380}, {"Right-drag pans, " + UI::bindLabel(A_CENTER) + " centers", 350}};
         } else {
             std::string w = weather; if (!w.empty()) w[0] = (char)toupper((unsigned char)w[0]);
-            panes = {{map ? map->name : "", 200}, {clockText() + (outdoors() ? "  " + w : ""), 240}, {fmt("%d gold", party.gold), 160}, {gKeys.label(A_MENU) + " Menu   " + gKeys.label(A_INTERACT) + " Act", 350}};
+            panes = {{map ? map->name : "", 200}, {clockText() + (outdoors() ? "  " + w : ""), 240}, {fmt("%d gold", party.gold), 160}, {UI::bindLabel(A_MENU) + " Menu   " + UI::bindLabel(A_INTERACT) + " Act", 350}};
         }
         int sum = 0; for (auto& pn : panes) sum += pn.second;
         int sx = 4, avail = W - 10;
@@ -501,7 +507,7 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
             {4, "Journal", 0, A_JOURNAL}, {5, "Settings...", 1, -1}, {7, "Back to Editor", 0, -1}, {6, "Exit to Desktop", 1, -1}};
         const int rowH = 18, ne = (int)entries.size();
         int mw = 0;
-        for (auto& e : entries) for (auto& l : LOOK) if (l.id == e.id) { std::string k = l.key >= 0 ? gKeys.label(l.key) : ""; mw = std::max(mw, Theme::textW(p, l.label) + (k.empty() ? 0 : Theme::textW(p, k) + 24)); }
+        for (auto& e : entries) for (auto& l : LOOK) if (l.id == e.id) { std::string k = l.key >= 0 ? UI::bindLabel(l.key) : ""; mw = std::max(mw, Theme::textW(p, l.label) + (k.empty() ? 0 : Theme::textW(p, k) + 24)); }
         mw = std::max(180, mw + 46);
         int mh = 6 + ne * rowH + 8;   // + the separator before Exit
         int mx = 4, my = 39;
@@ -513,7 +519,7 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
             const PauseEntry& e = entries[i];
             if (e.id == 6) { cv.fillRect(mx + 3, ry + 3, mw - 6, 1, SH); cv.fillRect(mx + 3, ry + 4, mw - 6, 1, HI); ry += 8; }
             const char* label = e.label; int ul = -1; std::string key;
-            for (auto& l : LOOK) if (l.id == e.id) { label = l.label; ul = l.ul; if (l.key >= 0) key = gKeys.label(l.key); }
+            for (auto& l : LOOK) if (l.id == e.id) { label = l.label; ul = l.ul; if (l.key >= 0) key = UI::bindLabel(l.key); }
             bool sel = i == pauseSel;
             if (sel) cv.fillRect(mx + 3, ry, mw - 6, rowH, NAVY);
             Color8 c = sel ? WHITE : DK;
@@ -527,12 +533,39 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
     (void)t;
 }
 
+// 1.8.5 (#199): the Party Properties tabs and the sheet under them, on every Party tab (the Party tab's sheet stops
+// above its OK / Close buttons); returns where the content starts
+int nativeMenuTabs(Game& g, Canvas& cv, InputState& in, const Rect& c) {
+    (void)in; Theme::NoMap nm; Pen p{&cv, g.ctx.font, g.ctx.ts};
+    static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
+    const int dx = c.x, dy = c.y, dw = c.w, dh = c.h;
+    const bool picking = g.menuPrompt == "equip" || g.menuPrompt == "respec";
+    int tx = dx + 8; const int ty0 = dy + 26; int openX = tx, openW = 0;
+    for (int i = 0; i < 4; i++) {
+        int w = Theme::textW(p, TABN[i]) + 22; bool on = g.menuTab == i;
+        int y = ty0 - (on ? 2 : 0), h = 20 + (on ? 2 : 0);
+        cv.fillRect(tx, y, w, h, FACE); cv.fillRect(tx, y, w, 1, HI); cv.fillRect(tx, y, 1, h, HI); cv.fillRect(tx + w - 1, y, 1, h, DK); cv.fillRect(tx + w - 2, y + 1, 1, h - 1, SH);
+        ulText(p, tx + 11, y + 5, TABN[i], gPadGlyphs ? -1 : 0, DK);
+        if (!picking) g.hudHit(tx, y, w, h, Game::HH_PTAB, i);
+        if (on) { openX = tx; openW = w; }
+        tx += w;
+    }
+    if (gPadGlyphs) Theme::text(p, tx + 8, ty0 + 5, UI::bindLabel(A_PAGEUP) + " / " + UI::bindLabel(A_PAGEDOWN), SH);
+    // the sheet under them
+    int sx = dx + 8, sy = dy + 46, sw = dw - 16, sh = g.themedParty() ? dh - 90 : dh - 54;
+    cv.fillRect(sx, sy, sw, 1, HI); cv.fillRect(sx, sy, 1, sh, HI); cv.fillRect(sx, sy + sh - 1, sw, 1, DK); cv.fillRect(sx + sw - 1, sy, 1, sh, DK);
+    cv.fillRect(sx + 1, sy + sh - 2, sw - 2, 1, SH); cv.fillRect(sx + sw - 2, sy + 1, 1, sh - 2, SH);
+    if (openW) cv.fillRect(openX + 1, sy, openW - 3, 1, FACE);   // the open tab joins the sheet
+    Theme::textRight(p, dx + dw - 16, dy + 30, fmt("%d gold", g.party.gold), DK);
+    return dy + 48;
+}
+
 // ---------------- #177 the Party Properties dialog ----------------
 void Game::drawNativeParty(Canvas& cv, InputState& in) {
     Theme::NoMap nm; Pen p{&cv, ctx.font, ctx.ts};
     const int W = SCREEN_W, H = SCREEN_H;
-    const int dw = std::min(660, W - 8), dh = std::min(460, H - 28 - 4);
-    const int dx = (W - dw) / 2, dy = std::max(0, std::min(40, H - 28 - dh - 2));   // under the menu bar when there is room, never over the taskbar
+    const Rect host = menuChromeRect();   // 1.8.5 (#199): the same dialog as every other Party tab and menu
+    const int dw = host.w, dh = host.h, dx = host.x, dy = host.y;
     const bool tall = dh >= 456;
     cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115);   // the game window behind goes inactive, the world dims
     uiRect(0, 0, W, H - 28);
@@ -545,25 +578,7 @@ void Game::drawNativeParty(Canvas& cv, InputState& in) {
     hudHit(dx, dy, dw, dh, HH_TOOL, NT_NONE);
     hudHit(dx + dw - 21, dy + 5, 16, 14, HH_TOOL, NT_DLG_CLOSE);
 
-    // ---- the tabs and the property sheet ----
-    static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
-    {
-        int tx = dx + 8; const int ty0 = dy + 26;
-        for (int i = 0; i < 4; i++) {
-            int w = Theme::textW(p, TABN[i]) + 22; bool on = menuTab == i;
-            int y = ty0 - (on ? 2 : 0), h = 20 + (on ? 2 : 0);
-            cv.fillRect(tx, y, w, h, FACE); cv.fillRect(tx, y, w, 1, HI); cv.fillRect(tx, y, 1, h, HI); cv.fillRect(tx + w - 1, y, 1, h, DK); cv.fillRect(tx + w - 2, y + 1, 1, h - 1, SH);
-            ulText(p, tx + 11, y + 5, TABN[i], 0, DK);
-            if (!picking) hudHit(tx, y, w, h, HH_PTAB, i);
-            tx += w;
-        }
-        // the sheet under them
-        int sx = dx + 8, sy = dy + 46, sw = dw - 16, sh = dh - 90;
-        cv.fillRect(sx, sy, sw, 1, HI); cv.fillRect(sx, sy, 1, sh, HI); cv.fillRect(sx, sy + sh - 1, sw, 1, DK); cv.fillRect(sx + sw - 1, sy, 1, sh, DK);
-        cv.fillRect(sx + 1, sy + sh - 2, sw - 2, 1, SH); cv.fillRect(sx + sw - 2, sy + 1, 1, sh - 2, SH);
-        int sel0 = dx + 8; cv.fillRect(sel0 + 1, sy, Theme::textW(p, TABN[0]) + 22 - 3, 1, menuTab == 0 ? FACE : HI);   // the open tab joins the sheet
-        Theme::textRight(p, dx + dw - 16, dy + 30, fmt("%d gold", party.gold), DK);
-    }
+    nativeMenuTabs(*this, cv, in, host);   // the tabs and the property sheet
 
     // ---- the members: a large-icon list ----
     {
@@ -710,7 +725,7 @@ void Game::drawNativeParty(Canvas& cv, InputState& in) {
             Theme::YesMap ym; drawItemDetails(cv, *d, ix + 10, r.y + 34, iw - 20, r.y + r.h - 10, &m);
         } else Theme::text(p, ix + 10, r.y + 18, menuSel == 0 ? "Take it off." : "Nothing to show.", SH);
         int hy = r.y + r.h - 18;
-        Theme::small(p, r.x + 8, hy, fmt("%s pick   %s equip   Esc back", gKeys.label(A_UP).c_str(), gKeys.label(A_CONFIRM).c_str()), SH);
+        Theme::text(p, r.x + 8, hy - 2, fmt("%s pick   %s equip   %s back", UI::keyText("Up/Down").c_str(), UI::bindLabel(A_CONFIRM).c_str(), UI::keyText("Esc").c_str()), SH);
     }
 }
 

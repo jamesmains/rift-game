@@ -31,8 +31,9 @@ keys DOWN DOWN DOWN DOWN DOWN
 key ENTER
 frames 3
 expect mode == SETTINGS
-# focus: the General / Controls / Access tabs, then the Theme choice; Right picks the next theme
-keys DOWN DOWN DOWN
+# focus starts on the General tab; 1.8.5 (#200): Down goes to the nearest control below it (the Theme choice), and
+# Right picks the next theme
+keys DOWN
 key RIGHT
 frames 3
 expect theme == onebit

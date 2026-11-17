@@ -81,6 +81,23 @@ void Game::openWorldMap(bool travelMode, bool pick) {
     pushMode(GMode::WORLDMAP);
 }
 
+// 1.8.5 (#196): hosted in the theme's window the map moves up a little and its legend goes into the right column
+// (the window is shorter than the old full screen); update and draw share these
+static int wmTop(const Game& g) { return g.menuHostedNow ? 24 : 30; }
+static std::string wmLegend(const Game& g, bool local) {
+    std::string esc = UI::keyText("Esc"), ent = UI::keyText("Enter");
+    if (local) return "Quests: yellow  You: cyan  " + esc + ": close";
+    return g.wmPick ? "Quests: yellow  Bounties: cyan  " + ent + ": choose  " + esc + ": none" : "Quests: yellow  Bounties: cyan  Coach: travel (time, ambush)  " + esc + ": close";
+}
+static int wmLegendLines(const Game& g, bool local) { return g.menuHostedNow ? (int)g.ctx.font->wrap(wmLegend(g, local), 132).size() : 0; }
+static int wmListBottom(const Game& g, bool local) { int n = wmLegendLines(g, local); return UI::SCREEN_H - 90 - (n ? n * 12 + 6 : 0); }
+static void wmDrawLegend(Game& g, bool local, int x) {
+    if (!g.menuHostedNow) { UI::text(g.ctx, x, UI::SCREEN_H - 24, wmLegend(g, local), C::Cream); return; }
+    auto ls = g.ctx.font->wrap(wmLegend(g, local), 132); int y = UI::SCREEN_H - 86 - (int)ls.size() * 12;
+    for (size_t i = 0; i < ls.size(); i++) UI::text(g.ctx, 10 + 480 + 10, y + (int)i * 12, ls[i], C::Gray);
+}
+static void wmSelRow(Game& g, int x, int y, int w) { Theme::NoMap nm; Theme::listRow(Theme::Pen{g.ctx.cv, g.ctx.font, g.ctx.ts}, x, y, w, 14, Theme::RS_SELECTED); }
+
 void Game::updateWorldMap(InputState& in, float dt) {
     (void)dt;
     if (actP(in, A_CANCEL) || actP(in, A_WORLDMAP)) { popMode(); return; }
@@ -92,14 +109,14 @@ void Game::updateWorldMap(InputState& in, float dt) {
     if (actP(in, A_DOWN) || actP(in, A_RIGHT)) { ki = (ki + 1) % (int)known.size(); wmSel = known[ki]; }
     if (actP(in, A_UP) || actP(in, A_LEFT)) { ki = (ki + (int)known.size() - 1) % (int)known.size(); wmSel = known[ki]; }
     // mouse pick on the map
-    const int S = 3, MX = 10, MY = 30;
+    const int S = 3, MX = 10, MY = wmTop(*this);
     if (in.mouseDX || in.mouseDY || in.mousePressed[0]) {
         int best = -1, bd = 10 * 10;
         for (int k : known) { int sx = MX + locations[k].x * S, sy = MY + locations[k].y * S; int d = (in.mouseX - sx) * (in.mouseX - sx) + (in.mouseY - sy) * (in.mouseY - sy); if (d < bd) { bd = d; best = k; } }
         if (best >= 0 && (in.mousePressed[0] || in.mouseDX || in.mouseDY)) wmSel = best;
         // list on the right
         int lx = MX + 160 * S + 10, ly = MY + 8;
-        for (size_t i = 0; i < known.size(); i++) { int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > SCREEN_H - 90) continue; if (in.mouseX >= lx && in.mouseX < SCREEN_W - 8 && in.mouseY >= ry && in.mouseY < ry + 14) { if (in.mousePressed[0] || in.mouseDX || in.mouseDY) wmSel = known[i]; } }
+        for (size_t i = 0; i < known.size(); i++) { int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > wmListBottom(*this, false)) continue; if (in.mouseX >= lx && in.mouseX < SCREEN_W - 8 && in.mouseY >= ry && in.mouseY < ry + 14) { if (in.mousePressed[0] || in.mouseDX || in.mouseDY) wmSel = known[i]; } }
     }
     if (in.wheel) wmScroll = clampi(wmScroll - in.wheel, 0, std::max(0, (int)known.size() - 20));
     bool travelKey = actP(in, A_CONFIRM) || actP(in, A_INTERACT) || (in.mousePressed[0] && in.mouseX >= SCREEN_W - 150 && in.mouseY >= SCREEN_H - 50 && in.mouseY < SCREEN_H - 24) || (in.mousePressed[0] && in.mouseX < MX + 160 * S && in.mouseY > MY && in.mouseY < MY + 140 * S && in.mousePressed[0] && wmSel >= 0 && std::abs(in.mouseX - (MX + locations[wmSel].x * S)) < 6 && std::abs(in.mouseY - (MY + locations[wmSel].y * S)) < 6 && in.down[K_SHIFT]);
@@ -143,12 +160,12 @@ void Game::fastTravel(const WorldLocation& l) {
 
 void Game::drawWorldMap(Canvas& cv, InputState& in) {
     if (wmSource != "overworld" && !wmSource.empty()) { drawLocalMap(cv, in); return; }
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 200); uiRect(0, 0, SCREEN_W, SCREEN_H);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
     Map* ow = loadMap("overworld");
-    const int S = 3, MX = 10, MY = 30;
-    panel(ctx, 4, 4, SCREEN_W - 8, SCREEN_H - 8, RGB(60, 48, 30), RGB(180, 140, 70));
-    ctx.font->bold = true; UI::text(ctx, 12, 10, wmPick && !wmPickPrompt.empty() ? wmPickPrompt : "Map of Aldmoor", C::Cream); ctx.font->bold = false;
-    textRight(ctx, SCREEN_W - 12, 10, clockText() + "  " + weather, C::Cream);
+    const int S = 3, MX = 10, MY = wmTop(*this), TY = menuHostedNow ? 4 : 10;
+    if (!menuHostedNow) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 200); panel(ctx, 4, 4, SCREEN_W - 8, SCREEN_H - 8, RGB(60, 48, 30), RGB(180, 140, 70)); }
+    if (!menuHostedNow || Theme::frame()) { ctx.font->bold = true; UI::text(ctx, 12, TY, wmPick && !wmPickPrompt.empty() ? wmPickPrompt : "Map of Aldmoor", C::Cream); ctx.font->bold = false; }
+    textRight(ctx, SCREEN_W - 12, TY, clockText() + "  " + weather, C::Cream);
     // terrain
     cv.fillRect(MX - 2, MY - 2, ow->w * S + 4, ow->h * S + 4, RGB(210, 190, 140)); cv.rect(MX - 2, MY - 2, ow->w * S + 4, ow->h * S + 4, RGB(90, 70, 40));
     const auto& kinds = allTileKinds();
@@ -187,9 +204,9 @@ void Game::drawWorldMap(Canvas& cv, InputState& in) {
     std::vector<int> known; for (size_t i = 0; i < locations.size(); i++) if (locKnown(*this, locations[i], ow)) known.push_back((int)i);
     if (known.empty()) { auto ls = ctx.font->wrap("Nothing charted yet. Step outside and look around - the map fills in as you explore the overworld, and every place you visit is added here.", lw); for (size_t i = 0; i < ls.size(); i++) UI::text(ctx, lx, ly + (int)i * 13, ls[i], C::Gray); }
     for (size_t i = 0; i < known.size(); i++) {
-        int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > SCREEN_H - 90) continue;
+        int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > wmListBottom(*this, false)) continue;
         auto& l = locations[known[i]]; bool vis = visited.count(l.mapId) > 0; bool sel = known[i] == wmSel;
-        if (sel) cv.fillRect(lx - 2, ry - 1, lw, 14, RGB(120, 90, 40));
+        if (sel) wmSelRow(*this, lx - 2, ry - 1, lw);
         UI::text(ctx, lx, ry, vis ? l.name : "? (seen)", sel ? C::Yellow : vis ? C::White : C::Gray);
         if (pins.count(l.id)) UI::text(ctx, lx + lw - 14, ry, "!", C::Yellow); else if (bpins.count(l.id)) UI::text(ctx, lx + lw - 14, ry, "$", C::Cyan);
     }
@@ -207,15 +224,15 @@ void Game::drawWorldMap(Canvas& cv, InputState& in) {
         if (wmPick) button(ctx, in, SCREEN_W - 150, SCREEN_H - 50, 140, 24, can ? std::string("Choose") : !vis ? "Not visited yet" : "You are here", can, can);
         else if (wmTravel) { int fare = travelFare(l); button(ctx, in, SCREEN_W - 150, SCREEN_H - 50, 140, 24, can ? fmt("Travel - %d gold", fare) : !vis ? "Not visited yet" : "You are here", can && party.gold >= fare, can); }
     }
-    UI::text(ctx, MX, SCREEN_H - 24, wmPick ? "Quests: yellow  Bounties: cyan  Enter: choose  Esc: none" : "Quests: yellow  Bounties: cyan  Coach: travel (time, ambush)  Esc: close", C::Cream);
+    wmDrawLegend(*this, false, MX);
 }
 
 // ---------------- a world map made from any other map (worldmap=<map id> or current) ----------------
 // The map is scaled into the same frame as the overworld map; it fills in as its tiles are explored (or revealmap=).
 namespace { struct LocalFrame { float sc; int ox, oy; }; }
-static LocalFrame localFrame(const Map& m) {
+static LocalFrame localFrame(const Map& m, int top = 30) {
     const float AW = 480, AH = 420; float sc = std::min(AW / std::max(1, m.w), AH / std::max(1, m.h)); sc = std::min(sc, 12.0f);
-    return {sc, 10 + (int)((AW - m.w * sc) / 2), 30 + (int)((AH - m.h * sc) / 2)};
+    return {sc, 10 + (int)((AW - m.w * sc) / 2), top + (int)((AH - m.h * sc) / 2)};
 }
 static std::set<std::string> localPins(const Game& g) {
     std::set<std::string> pins;
@@ -230,25 +247,26 @@ void Game::updateLocalMap(InputState& in) {
     int ki = -1; for (size_t i = 0; i < known.size(); i++) if (known[i] == wmSel) ki = (int)i;
     if (actP(in, A_DOWN) || actP(in, A_RIGHT)) { ki = (ki + 1) % (int)known.size(); wmSel = known[ki]; }
     if (actP(in, A_UP) || actP(in, A_LEFT)) { ki = (ki + (int)known.size() - 1) % (int)known.size(); wmSel = known[ki]; }
-    LocalFrame f = localFrame(*m);
+    LocalFrame f = localFrame(*m, wmTop(*this));
     if (in.mouseDX || in.mouseDY || in.mousePressed[0]) {
         int best = -1, bd = 12 * 12;
         for (int k : known) { int sx = f.ox + (int)((places[k].x + 0.5f) * f.sc), sy = f.oy + (int)((places[k].y + 0.5f) * f.sc); int d = (in.mouseX - sx) * (in.mouseX - sx) + (in.mouseY - sy) * (in.mouseY - sy); if (d < bd) { bd = d; best = k; } }
         if (best >= 0) wmSel = best;
-        int lx = 10 + 480 + 10, ly = 30 + 8;
-        for (size_t i = 0; i < known.size(); i++) { int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > SCREEN_H - 90) continue; if (in.mouseX >= lx && in.mouseX < SCREEN_W - 8 && in.mouseY >= ry && in.mouseY < ry + 14) wmSel = known[i]; }
+        int lx = 10 + 480 + 10, ly = wmTop(*this) + 8;
+        for (size_t i = 0; i < known.size(); i++) { int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > wmListBottom(*this, true)) continue; if (in.mouseX >= lx && in.mouseX < SCREEN_W - 8 && in.mouseY >= ry && in.mouseY < ry + 14) wmSel = known[i]; }
     }
     if (in.wheel) wmScroll = clampi(wmScroll - in.wheel, 0, std::max(0, (int)known.size() - 20));
     if ((actP(in, A_CONFIRM) || actP(in, A_INTERACT)) && wmSel >= 0) log("This map shows the way - there is no coach to take you there.");
 }
 void Game::drawLocalMap(Canvas& cv, InputState& in) {
     (void)in;
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 200); uiRect(0, 0, SCREEN_W, SCREEN_H);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
     Map* m = loadMap(wmSource); if (!m) return;
-    panel(ctx, 4, 4, SCREEN_W - 8, SCREEN_H - 8, RGB(60, 48, 30), RGB(180, 140, 70));
-    ctx.font->bold = true; UI::text(ctx, 12, 10, "Map of " + (m->name.empty() ? mapDisplayName(wmSource) : m->name), C::Cream); ctx.font->bold = false;
-    textRight(ctx, SCREEN_W - 12, 10, clockText() + "  " + weather, C::Cream);
-    LocalFrame f = localFrame(*m);
+    const int TY = menuHostedNow ? 4 : 10, MY = wmTop(*this);
+    if (!menuHostedNow) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 200); panel(ctx, 4, 4, SCREEN_W - 8, SCREEN_H - 8, RGB(60, 48, 30), RGB(180, 140, 70)); }
+    if (!menuHostedNow || Theme::frame()) { ctx.font->bold = true; UI::text(ctx, 12, TY, "Map of " + (m->name.empty() ? mapDisplayName(wmSource) : m->name), C::Cream); ctx.font->bold = false; }
+    textRight(ctx, SCREEN_W - 12, TY, clockText() + "  " + weather, C::Cream);
+    LocalFrame f = localFrame(*m, MY);
     int fw = (int)(m->w * f.sc), fh = (int)(m->h * f.sc);
     cv.fillRect(f.ox - 2, f.oy - 2, fw + 4, fh + 4, RGB(210, 190, 140)); cv.rect(f.ox - 2, f.oy - 2, fw + 4, fh + 4, RGB(90, 70, 40));
     const auto& kinds = allTileKinds();
@@ -279,14 +297,14 @@ void Game::drawLocalMap(Canvas& cv, InputState& in) {
     // the party: on this map, or at the exit that leads to the map they are on
     { int hx = -1, hy = -1; if (mapId == wmSource) { hx = px; hy = py; } else for (auto& p : places) if (p.mapId == mapId) { hx = p.x; hy = p.y; }
       if (hx >= 0 && blink) { int sx = f.ox + (int)((hx + 0.5f) * f.sc), sy = f.oy + (int)((hy + 0.5f) * f.sc); cv.fillRect(sx - 2, sy - 2, 5, 5, C::Cyan); cv.rect(sx - 3, sy - 3, 7, 7, C::Black); } }
-    int lx = 10 + 480 + 10, ly = 30 + 8, lw = SCREEN_W - lx - 8;
-    UI::text(ctx, lx, 30 - 8, "Places", C::Cream);
+    int lx = 10 + 480 + 10, ly = MY + 8, lw = SCREEN_W - lx - 8;
+    UI::text(ctx, lx, MY - 8, "Places", C::Cream);
     std::vector<int> known; for (size_t i = 0; i < places.size(); i++) if (places[i].known) known.push_back((int)i);
     if (known.empty()) { auto ls = ctx.font->wrap("Nothing charted yet. The map fills in as you explore; doorways and passages you find are listed here.", lw); for (size_t i = 0; i < ls.size(); i++) UI::text(ctx, lx, ly + (int)i * 13, ls[i], C::Gray); }
     for (size_t i = 0; i < known.size(); i++) {
-        int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > SCREEN_H - 90) continue;
+        int ry = ly + (int)i * 14 - wmScroll * 14; if (ry < ly || ry > wmListBottom(*this, true)) continue;
         auto& p = places[known[i]]; bool sel = known[i] == wmSel;
-        if (sel) cv.fillRect(lx - 2, ry - 1, lw, 14, RGB(120, 90, 40));
+        if (sel) wmSelRow(*this, lx - 2, ry - 1, lw);
         UI::text(ctx, lx, ry, p.visited ? p.name : "? (unexplored)", sel ? C::Yellow : p.visited ? C::White : C::Gray);
         if (pins.count(p.mapId)) UI::text(ctx, lx + lw - 14, ry, "!", C::Yellow);
     }
@@ -296,5 +314,5 @@ void Game::drawLocalMap(Canvas& cv, InputState& in) {
         UI::text(ctx, lx, dy + 14, p.mapId == mapId ? "You are here" : p.visited ? "Visited" : "Not visited yet", C::LtGray);
         for (auto& q : quests) { std::string pin = questPin(q); if (pin.empty() || questClosed(q)) continue; bool match = pin == p.mapId; for (auto& l : locations) if (l.id == pin && l.mapId == p.mapId) match = true; if (match) { UI::text(ctx, lx, dy + 28, "! " + q.name, C::Yellow); break; } }
     }
-    UI::text(ctx, 10, SCREEN_H - 24, "Quests: yellow  You: cyan  Esc: close", C::Cream);
+    wmDrawLegend(*this, true, 10);
 }

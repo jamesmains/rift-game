@@ -224,13 +224,14 @@ void Game::updateBounty(InputState& in, float dt) {
 }
 
 void Game::drawBounty(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
+    if (!menuHostedNow) cv.dim(0, 0, SCREEN_W, SCREEN_H, 150);
     std::string tn = boardTown; for (auto& l : locations) if (l.mapId == boardTown || l.id == boardTown) tn = l.name; if (const BoardDef* bd = board(boardTown)) if (!bd->name.empty()) tn = bd->name;
     // 1.8.4 (#194): the board in the theme's look (frame: the cork board; native / one-bit: their own panel and cards)
     const BoardLook L = boardLook();
     std::optional<Theme::NoMap> exact; if (!L.cork) exact.emplace();   // the theme colours below are meant as they are
-    boardPanel(ctx, 20, 20, SCREEN_W - 40, SCREEN_H - 40);
-    ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 28, "NOTICE BOARD - " + tn, L.head); ctx.font->bold = false;
+    if (!menuHostedNow) boardPanel(ctx, 20, 20, SCREEN_W - 40, SCREEN_H - 40);   // 1.8.5: hosted, the theme's window is the board
+    if (!menuHostedNow || Theme::frame()) { ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 28, "NOTICE BOARD - " + tn, L.head); ctx.font->bold = false; }
     if (L.cork) for (int t = 0; t < 2; t++) { int tx = t == 0 ? 30 : 104, tw = t == 0 ? 70 : 76; bool on = boardPage == t; cv.fillRect(tx, 24, tw, 14, on ? RGB(160, 120, 60) : RGB(90, 65, 40)); cv.rect(tx, 24, tw, 14, on ? C::Gold : RGB(120, 90, 50)); textCenter(ctx, tx + tw / 2, 26, t == 0 ? "Notices" : "Standing", on ? C::Cream : RGB(200, 180, 140)); }
     else tabRow(ctx, {{30, 70, "Notices"}, {104, 76, "Standing"}}, 23, 16, boardPage);
     if (boardPage == 1) { drawStanding(cv, in); return; }

@@ -494,7 +494,21 @@ public:
     void drawModeUI(Canvas& cv, InputState& in);   // the open screen, hotbar, hints and notifications (Game::draw)
     bool subViewOrigin(GMode m, int& x, int& y) const;   // 1.8.3: a 640x480 screen's place in the theme's menu area (false: drawn as it is)
     bool modeArea(GMode m, Rect& r) const;               // 1.8.3: where a mode draws with its own SCREEN_W/H: a 640x480 menu, or a popup (dialogue, message, victory, save/load, name) in the theme's world area
-    void drawMenuBackdrop(Canvas& cv, GMode m);          // 1.8.3: the theme's panel / dialog / window behind a menu screen
+    void drawMenuBackdrop(Canvas& cv, GMode m, InputState& in);          // 1.8.3: the theme's panel / dialog / window behind a menu screen
+    // 1.8.5 (#196 #199): every full-screen RPG menu sits in the theme's own host: the frame's carved panel, the native
+    // dialog, the one-bit window, sized like the themed Party tab and with the same tab header on every Party tab.
+    // The old 640x480 layouts are drawn inside it (SCREEN_H may then be under 480: lists size themselves to it).
+    Rect menuChromeRect() const;                          // the host window / panel on the screen
+    bool menuHosted(GMode m) const;                        // the screen fits in the host (else the old full-screen look)
+    Rect menuHostedView(GMode m) const;                    // where the 640-wide layout goes inside the host
+    std::string menuHostTitle(GMode m) const;
+    int drawMenuTabs(Canvas& cv, InputState& in, const Rect& chrome);   // the Party screen's tabs; returns the content's top
+    void hostTitle(int x, int y, const std::string& s);   // a hosted frame screen's own title line (native / one-bit: in the title bar)
+    bool menuHostedNow = false;                            // set while a hosted screen updates / draws
+    int invRows() const { return std::max(6, std::min(20, (UI::SCREEN_H - 110) / 16)); }    // pack list rows that fit
+    int shopRows() const { return std::max(6, std::min(22, (UI::SCREEN_H - 100) / 16)); }   // shop list rows that fit
+    int craftRows() const { return std::max(6, std::min(17, (UI::SCREEN_H - 122) / 18)); }  // crafting list rows that fit
+    std::string interactVerb(std::string* what = nullptr); // 1.8.5 (#197): what Interact would do now ("Talk", "Open"...; empty = nothing in reach)
     Canvas subCv;
     // ---- 1.8.3 (#170-#183) UI themes: layout, the world view, the HUD's clickable parts ----
     void computeLayout();                 // UI::VIEW_* and the theme's HUD rects for this screen size
@@ -506,7 +520,7 @@ public:
     // HH_MEMBER: open that member's sheet, HH_BELT: use hotbar slot, HH_COMBAT: a combat command, HH_UNIT: look at a
     // unit, HH_PAUSE: a pause entry id, HH_CRAFT: field crafting, HH_CLOSE: close a tool window)
     enum { HH_ACTION = 1, HH_MEMBER, HH_BELT, HH_COMBAT, HH_UNIT, HH_PAUSE, HH_CRAFT, HH_TOOL,
-           HH_PTAB, HH_SLOT, HH_PICK, HH_LEAD, HH_RANKUP };   // party screen: tab, equipment slot, equip-list row (0 = remove), lead, class +1
+           HH_PTAB, HH_SLOT, HH_PICK, HH_LEAD, HH_RANKUP, HH_HOSTCLOSE };   // party screen: tab, equipment slot, equip-list row (0 = remove), lead, class +1
     // 1.8.3 (#173 #177 #181): the Party tab drawn in the theme's own layout (frame: hud.cpp, native: hud_native.cpp,
     // onebit: hud_onebit.cpp) when the screen has room; its clicks come through the HUD hot spots (updateMenu).
     bool themedParty() const;

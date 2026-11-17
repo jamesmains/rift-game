@@ -76,7 +76,7 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
             if (st.click || st.activate) { page = i; focus = i; }
             x += tws[i] + 6;
         }
-        textRight(p, r.x + r.w - 10, ty + 6, "tab: next page", t.dim);
+        textRight(p, r.x + r.w - 10, ty + 6, gPadGlyphs ? "lb / rb: page" : "tab: next page", t.dim);
     } else {
         tabs(p, tx, ty, tabW, tabH, tabNames, page, nat ? 2 : 6);
         for (int i = 0; i < 3; i++) {
@@ -339,7 +339,7 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
         int total = 0; for (int w : ws) total += w + 8;
         int bx = rx - total + 8;
         for (size_t i = 0; i < right.size(); i++) { doButton(right[i], bx, ws[i]); bx += ws[i] + 8; }
-        if (inGame && !nat && !one) text(p, r.x + 10, by + bh + 6, "Tab: next page   Up/Down: row   Esc: back to the game", t.dim);
+        if (inGame && !nat && !one) text(p, r.x + 10, by + bh + 6, gPadGlyphs ? UI::bindLabel(A_PAGEUP) + "/" + UI::bindLabel(A_PAGEDOWN) + ": page   D-pad: move   " + UI::bindLabel(A_CONFIRM) + ": change   " + UI::bindLabel(A_CANCEL) + ": back to the game" : std::string("Tab: next page   Up/Down: row   Esc: back to the game"), t.dim);
     }
     // the open drop-down list, over everything drawn above
     if (dropList.open) {
@@ -353,9 +353,24 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
     }
     // own navigation moves the focus through what was drawn (the Controls table is control 0 there)
     lastCount = idx;
-    if (keyNav) {
-        if (upP) focus = (focus + lastCount - 1) % std::max(1, lastCount);
-        if (downP) focus = (focus + 1) % std::max(1, lastCount);
+    // 1.8.5 (#200): by place, not drawing order: Up / Down go to the nearest control above / below (Down from the page
+    // tabs goes into the page, not along the tabs), Left / Right to the nearest on the same line for tabs, check
+    // boxes and buttons (choices and sliders keep Left / Right for their value); past the last control it wraps
+    if (keyNav && lastCount > 0 && focus >= 0 && focus < lastCount && (upP || downP || ((leftP || rightP) && (now[focus].kind == 0 || now[focus].kind == 1 || now[focus].kind == 5)))) {
+        const Rect cur = now[focus].r; const int fx = cur.x + cur.w / 2, fy = cur.y + cur.h / 2;
+        int best = -1; long bs = 0;
+        for (int i = 0; i < lastCount; i++) {
+            if (i == focus) continue;
+            const Rect& c = now[i].r; int cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+            long sc;
+            if (upP || downP) { int dy = downP ? cy - fy : fy - cy; if (dy <= 4) continue; sc = (long)dy * 6 + std::abs(c.x - cur.x); }   // the same column first
+            else { if (std::abs(cy - fy) > 6) continue; int dx = rightP ? cx - fx : fx - cx; if (dx <= 4) continue; sc = dx; }
+            if (best < 0 || sc < bs) { best = i; bs = sc; }
+        }
+        if (best < 0 && (upP || downP)) {   // wrap round: the top-most (Down) or bottom-most (Up) control
+            for (int i = 0; i < lastCount; i++) { const Rect& c = now[i].r; long sc = (long)(downP ? c.y : -(c.y + c.h)) * 4096 + c.x; if (best < 0 || sc < bs) { best = i; bs = sc; } }
+        }
+        if (best >= 0) { focus = best; if (now[best].kind == 5 && (leftP || rightP) && best < 3) { page = best; } }
     }
     if (focus >= lastCount) focus = std::max(0, lastCount - 1);
     ctls = now;

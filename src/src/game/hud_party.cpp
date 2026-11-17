@@ -6,7 +6,7 @@
 using namespace UI;
 using Theme::Pen;
 
-static std::string bindName(int a) { return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : ""; }
+static std::string bindName(int a) { return UI::bindLabel(a); }   // 1.8.5 (#200): the pad button while a controller is in use
 static std::string classLine(const Character& m, const GameData& gd) {
     const ClassDef* c = gd.cls(m.classId);
     std::string n = c ? c->name : m.classId; if (!n.empty()) n[0] = (char)toupper((unsigned char)n[0]);
@@ -53,17 +53,7 @@ void Game::drawFrameParty(Canvas& cv, InputState& in) {
     Theme::panel(cv, X, Y, Wd, Ht);
     const int mi = clampi(menuMember, 0, (int)party.members.size() - 1);
     Character& m = party.members[mi];
-    // tabs
-    static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
-    static const int TABK[] = {A_MENU, A_ITEMS, A_SPELLS, A_JOURNAL};
-    for (int i = 0; i < 4; i++) {
-        int tx = X + 12 + i * 112; bool on = menuTab == i;
-        bool hover = in.mouseX >= tx && in.mouseX < tx + 106 && in.mouseY >= Y + 8 && in.mouseY < Y + 32;
-        Theme::button(p, tx, Y + 8, 106, 24, TABN[i], on ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover, bindName(TABK[i]));
-        hudHit(tx, Y + 8, 106, 24, HH_PTAB, i);
-    }
-    Theme::textRight(p, X + Wd - 12, Y + 14, fmt("%d gold", party.gold), t.gold);
-    Theme::rule(cv, X + 10, Y + 36, Wd - 20);
+    drawMenuTabs(cv, in, a);   // 1.8.5 (#199): the same tabs on every Party tab (hud.cpp)
     // the paper doll
     int ox = X + 10, oy = Y + 46;
     Theme::title(p, ox + 12, oy + 4, m.name);
@@ -142,11 +132,12 @@ void Game::drawFrameParty(Canvas& cv, InputState& in) {
     else hints = {{"Up/Down", "member", 0}, {"Right", "equipment", 0}, {bindName(A_INTERACT), leader == mi ? "leading the party" : "lead the party", HH_LEAD}, {bindName(A_PAGEDOWN), "next tab", 0}, {"Esc", "back", 0}};
     int hx = X + 22;
     for (auto& h : hints) {
-        int kw = Theme::textW(p, h.k) + 12;
-        Theme::button(p, hx, Y + Ht - 40, kw, 20, h.k, Theme::BS_NORMAL);
+        std::string k = UI::keyText(h.k);   // 1.8.5 (#200): the pad's buttons while a controller is in use
+        int kw = Theme::textW(p, k) + 12;
+        Theme::button(p, hx, Y + Ht - 40, kw, 20, k, Theme::BS_NORMAL);
         Theme::text(p, hx + kw + 6, Y + Ht - 36, h.l, t.dim);
         if (h.kind) hudHit(hx, Y + Ht - 40, kw + 6 + Theme::textW(p, h.l), 20, h.kind, 0);
-        hx += std::max(138, kw + 18 + Theme::textW(p, h.l));
+        hx += std::max(118, kw + 18 + Theme::textW(p, h.l));
     }
     // the equip picker, over the attributes (the column's Compare panel shows the pointed-at item)
     if (menuPrompt == "equip") {

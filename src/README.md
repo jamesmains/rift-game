@@ -29,6 +29,20 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.5 every menu in its theme
+
+* Every menu now sits in the theme's own window: the Party screen's Items, Spells and Quests tabs, the shop,
+  crafting, the Journal, the notice board, the world map and level-ups. The Party screen keeps the same tabs and frame
+  on every tab. On a 480-high screen the menu window covers the taskbar or menu bar so the menu fits; in Adventurer's
+  Frame a menu too wide for the space beside the column opens in the middle of the dimmed screen.
+* The notice board in Adventurer's Frame is slate like the rest of that theme (the brown cork board is gone).
+* Favorites slots show their picture at twice the size, centred under the slot number, with the count inside the slot.
+* The Talk / Use button says what it would do ("Talk", "Open", "Read", "Pull"...) and greys out when nothing is in reach.
+* Key labels on buttons use the normal text size instead of the tiny one.
+* Controller: key labels and hints show the pad's buttons everywhere (HUD, Party screen, Settings, launcher); LB / RB
+  page the Party tabs both ways (LB used to jump to Spells and stay there); Settings moves the focus to the nearest
+  control in the direction pressed; actions with no pad button (Flee) show no keyboard key.
+
 ## 1.8.4 theme fixes
 
 * Clicking a party member while exploring makes them the party leader (the Party screen opens from its own button).

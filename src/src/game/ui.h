@@ -58,6 +58,10 @@ Color8 boardInk(const BoardLook& L, bool sel, Color8 c);                      //
 void chip(Ctx& c, int x, int y, int w, int h, const std::string& label, bool on);
 void icon(Ctx& c, Tile t, int x, int y, int scale = 1, Color8 tint = C::White);
 int keyHint(Ctx& c, int x, int y, const std::string& key, const std::string& label);
+// 1.8.5 (#200): key names as shown: while a controller is in use, the bound pad button ("A", "LB", "D-pad")
+std::string bindLabel(int action);                 // the key (or pad button) bound to an action
+std::string keyText(const std::string& keyboard);  // a keyboard name ("Enter", "Esc", "Up/Down", "PgDn") as shown now
+std::string padShort(const std::string& padName);  // "Pad A" -> "A", "DPad Up" -> "D-pad Up"
 // The key (or controller button) bound to an action, drawn as a keyHint chip; returns its width (0 = unbound).
 // draw=false only measures it.
 int keyChip(Ctx& c, int x, int y, int action, bool draw = true);

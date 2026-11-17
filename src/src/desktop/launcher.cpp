@@ -439,7 +439,7 @@ void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool a
             if (!right.empty()) f.draw(cv, *ctx.ts, rx + rw - 8 - f.width(right), ry + (rowH - 16) / 2, right, th.dim);
             if ((int)k == hoverRow && e.enabled && in.mousePressed[0] && !mouseUsed) { mouseUsed = true; gAudio.play("desktop_click"); if (act(e.id)) return; }
         }
-        ctx.font->drawSmall(cv, a.x + 16, a.y + a.h - 14, "enter: open   up/down: choose   esc: close", th.dim);
+        ctx.font->drawSmall(cv, a.x + 16, a.y + a.h - 14, gPadGlyphs ? "a: open   d-pad: choose   b: close" : "enter: open   up/down: choose   esc: close", th.dim);   // 1.8.5 (#200)
         return;
     }
 

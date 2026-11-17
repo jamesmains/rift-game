@@ -111,13 +111,15 @@ BoardLook boardLook() {
         L.card = t.back; L.cardSel = t.back; L.cardShut = t.back; L.edge = t.dim; L.edgeSel = t.accent; L.selText = t.text;
         return L;
     }
-    L.head = C::Cream; L.sub = RGB(220, 200, 160); L.note = RGB(170, 150, 115); L.ink = RGB(40, 25, 10); L.body = RGB(60, 45, 25); L.soft = RGB(70, 50, 30);
-    L.good = RGB(20, 120, 40); L.bad = RGB(150, 40, 30); L.warn = RGB(120, 60, 20); L.reward = RGB(120, 80, 10);
-    L.card = RGB(225, 215, 180); L.cardSel = RGB(250, 240, 205); L.cardShut = RGB(195, 190, 170); L.edge = RGB(120, 100, 60); L.edgeSel = C::Gold; L.selText = L.ink;
+    // 1.8.5 (#196): the frame's board is its own carved slate too (the brown cork board didn't belong to any theme):
+    // notices are dark wells, the chosen one brass-edged
+    L.cork = false; L.head = t.accent; L.sub = t.dim; L.note = t.dim; L.ink = t.text; L.body = t.dim; L.soft = t.faint;
+    L.good = Theme::good(); L.bad = Theme::foe(); L.warn = t.accent; L.reward = t.gold;
+    L.card = t.well; L.cardSel = t.rowSel; L.cardShut = t.panel; L.edge = t.hi2; L.edgeSel = t.accent; L.selText = t.text;
     return L;
 }
 void boardPanel(Ctx& c, int x, int y, int w, int h) {
-    if (!Theme::native() && !Theme::onebit()) { panel(c, x, y, w, h, RGB(70, 50, 30), RGB(160, 120, 60)); return; }
+    if (boardLook().cork) { panel(c, x, y, w, h, RGB(70, 50, 30), RGB(160, 120, 60)); return; }
     Theme::NoMap nm; Theme::panel(*c.cv, x, y, w, h);
 }
 void boardCard(Ctx& c, int x, int y, int w, int h, bool sel, bool open) {
@@ -129,7 +131,7 @@ void boardCard(Ctx& c, int x, int y, int w, int h, bool sel, bool open) {
         else { Color8 f = open ? L.card : L.cardShut; Theme::well(cv, x, y, w, h, &f); }
         return;
     }
-    cv.fillRect(x, y, w, h, L.card);
+    cv.fillRect(x, y, w, h, sel ? L.cardSel : open ? L.card : L.cardShut);
     if (sel) Theme::glow(cv, x, y, w, h); else cv.rect(x, y, w, h, open ? L.edge : Theme::th().pipOff);
 }
 Color8 boardInk(const BoardLook& L, bool sel, Color8 col) { return sel && Theme::native() ? L.selText : col; }
@@ -182,6 +184,23 @@ static int drawPadGlyph(Ctx& c, int x, int y, const std::string& name) {
     c.cv->rect(x, y + (shoulder ? 2 : 0), kw, shoulder ? 11 : 14, C::White);
     c.font->draw(*c.cv, *c.ts, x + 3, y + 1, txt, shoulder ? C::White : C::Black);
     return kw;
+}
+std::string padShort(const std::string& n) {
+    if (startsWith(n, "Pad ")) return n.substr(4);
+    if (startsWith(n, "DPad")) return "D-pad" + n.substr(4);
+    return n;
+}
+std::string bindLabel(int a) {
+    if (a < 0 || a >= A_COUNT) return "";
+    if (gPadGlyphs) return gKeys.pad[a] ? padShort(keyName(gKeys.pad[a])) : "";   // no pad button: no key shown
+    return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : "";
+}
+std::string keyText(const std::string& k) {
+    if (!gPadGlyphs) return k;
+    if (k == "PgDn" || k == "PageDown") return bindLabel(A_PAGEDOWN);
+    if (k == "PgUp" || k == "PageUp") return bindLabel(A_PAGEUP);
+    std::string p = padEquivalent(k);
+    return p == k ? k : padShort(p);
 }
 int keyChip(Ctx& c, int x, int y, int action, bool draw) {
     if (action < 0 || action >= A_COUNT) return 0;

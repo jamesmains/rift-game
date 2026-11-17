@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
             // 1.8.3 (#184): click the HUD hot spot of that kind (action belt combat unit pause member craft ptab slot pick lead)
             // and arg, wherever the active theme put it: tests stay the same in every theme
             if (cmd == "hudclick") {
-                static const std::map<std::string, int> kinds = {{"action", Game::HH_ACTION}, {"member", Game::HH_MEMBER}, {"belt", Game::HH_BELT}, {"combat", Game::HH_COMBAT}, {"unit", Game::HH_UNIT}, {"pause", Game::HH_PAUSE}, {"craft", Game::HH_CRAFT}, {"ptab", Game::HH_PTAB}, {"slot", Game::HH_SLOT}, {"pick", Game::HH_PICK}, {"lead", Game::HH_LEAD}};
+                static const std::map<std::string, int> kinds = {{"action", Game::HH_ACTION}, {"member", Game::HH_MEMBER}, {"belt", Game::HH_BELT}, {"combat", Game::HH_COMBAT}, {"unit", Game::HH_UNIT}, {"pause", Game::HH_PAUSE}, {"craft", Game::HH_CRAFT}, {"ptab", Game::HH_PTAB}, {"hostclose", Game::HH_HOSTCLOSE}, {"slot", Game::HH_SLOT}, {"pick", Game::HH_PICK}, {"lead", Game::HH_LEAD}};
                 auto it = kinds.find(p.size() > 1 ? p[1] : ""); int arg = p.size() > 2 ? atoi(p[2].c_str()) : 0;
                 const Game::HudHit* hit = nullptr; if (it != kinds.end()) for (auto& h : app.game.hudHits) if (h.kind == it->second && h.arg == arg) hit = &h;
                 if (!hit) { printf("BOT FAIL: hudclick %s %d - no such hot spot on screen\n", p.size() > 1 ? p[1].c_str() : "", arg); return true; }
@@ -264,6 +264,10 @@ int main(int argc, char** argv) {
             std::string key = p[1], op = p[2], want = p[3]; for (size_t i = 4; i < p.size(); i++) want += " " + p[i];
             Game& g = app.game; std::string got; bool num = true;
             auto edExpect = [&]() -> bool {   // 1.1.11 editor text checks (outside the else-if chain: MSVC limits its depth)
+                // 1.8.5 (#196 #197 #199): the open menu sits in the theme's host; the Party tab; what the Talk button says
+                if (key == "menuhosted") { got = g.menuHosted(g.mode) ? "1" : "0"; return true; }
+                if (key == "menutab") { got = std::to_string(g.menuTab); return true; }
+                if (key == "talkverb") { got = g.interactVerb(); if (got.empty()) got = "-"; num = false; return true; }
                 // 1.6.0 game expects
 
                 // 1.6.0 rules expects

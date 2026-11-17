@@ -156,15 +156,18 @@ void Game::updateMenu(InputState& in, float dt) {
     if (actP(in, A_PAGEDOWN) || (actP(in, A_RIGHT) && !menuSubFocus && menuTab != 0 && menuTab != 2)) { menuTab = (menuTab + 1) % NTABS; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); }
     // 1.8.4 (#193): the keys shown on the tabs pick them (Spells B, Items Q, Quests J); J on the Quests tab opens the
     // Journal over this screen. Q on the Party tab still talks to the chosen companion (below).
+    // 1.8.5 (#200): only the keyboard's: on a controller LB is also "previous tab" and LT "previous category", and
+    // taking them as Spells / Items left LB stuck on the Spells tab
+    auto keyP = [&](int a) { return (gKeys.key1[a] && in.pressed[gKeys.key1[a]]) || (gKeys.key2[a] && in.pressed[gKeys.key2[a]]); };
     if (menuPrompt.empty() && !menuSubFocus) {
         int want = -1;
         if (actP(in, A_JOURNAL)) { if (menuTab == 3) { jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; } want = 3; }
-        else if (actP(in, A_SPELLS) && menuTab != 2) want = 2;
-        else if (actP(in, A_ITEMS) && menuTab != 1 && !(menuTab == 0 && menuMember > 0)) want = 1;
+        else if (keyP(A_SPELLS) && menuTab != 2) want = 2;
+        else if (keyP(A_ITEMS) && menuTab != 1 && !(menuTab == 0 && menuMember > 0)) want = 1;
         if (want >= 0) { menuTab = want; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; gAudio.play("ui_move"); return; }
     }
     // tab clicks
-    for (int i = 0; i < NTABS && !themed; i++) { int tx = 20 + i * 110; if (in.mousePressed[0] && in.mouseX >= tx && in.mouseX < tx + 100 && in.mouseY >= 14 && in.mouseY < 34) { menuTab = i; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); } }
+    for (int i = 0; i < NTABS && !themed && !menuHostedNow; i++) { int tx = 20 + i * 110; if (in.mousePressed[0] && in.mouseX >= tx && in.mouseX < tx + 100 && in.mouseY >= 14 && in.mouseY < 34) { menuTab = i; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); } }
     int nMembers = (int)party.members.size();
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_L] || actP(in, A_INTERACT)) && party.members[menuMember].alive) { leader = menuMember; notify(party.members[leader].name + " takes the lead."); }
     if (menuTab == 0 && menuPrompt.empty() && !menuSubFocus && (in.pressed[K_T] || actP(in, A_ITEMS)) && menuMember > 0 && menuMember < nMembers) { std::string cls = party.members[menuMember].classId; auto it = extra.find("dlg_" + cls); std::string did = it != extra.end() ? it->second : "";
@@ -210,9 +213,10 @@ void Game::updateMenu(InputState& in, float dt) {
         if (!menuSubFocus) {
             if (n > 0) { if (actP(in, A_UP)) menuSel = (menuSel + n - 1) % n; if (actP(in, A_DOWN)) menuSel = (menuSel + 1) % n; }
             menuSel = clampi(menuSel, 0, std::max(0, n - 1));
-            if (in.wheel) menuScroll = clampi(menuScroll - in.wheel, 0, std::max(0, n - 20));
-            if (menuSel < menuScroll) menuScroll = menuSel; if (menuSel >= menuScroll + 20) menuScroll = menuSel - 19;
-            for (int i = 0; i < 20; i++) { int idx = menuScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 300 && in.mouseY >= 50 + i * 16 && in.mouseY < 66 + i * 16) { if (in.mouseDX || in.mouseDY) menuSel = idx; if (in.mousePressed[0]) { menuSel = idx; menuSubFocus = true; menuSub = 0; } } }
+            const int rowsN = invRows();
+            if (in.wheel) menuScroll = clampi(menuScroll - in.wheel, 0, std::max(0, n - rowsN));
+            if (menuSel < menuScroll) menuScroll = menuSel; if (menuSel >= menuScroll + rowsN) menuScroll = menuSel - rowsN + 1;
+            for (int i = 0; i < rowsN; i++) { int idx = menuScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 300 && in.mouseY >= 50 + i * 16 && in.mouseY < 66 + i * 16) { if (in.mouseDX || in.mouseDY) menuSel = idx; if (in.mousePressed[0]) { menuSel = idx; menuSubFocus = true; menuSub = 0; } } }
             for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f) && n > 0) { const ItemDef* d = gd->item(party.inventory[view[menuSel]].id); if (d && d->type == IT_CONSUMABLE) { party.members[menuMember].favs[f] = "item:" + d->id; log(fmt("%s set as favorite %d for %s.", d->name.c_str(), f + 1, party.members[menuMember].name.c_str())); } else log("Only consumables can be favorites."); }
             if (actP(in, A_CONFIRM) && n > 0) { menuSubFocus = true; menuSub = 0; }
         } else {
@@ -288,10 +292,13 @@ void Game::updateMenu(InputState& in, float dt) {
 }
 
 void Game::drawMenu(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
-    panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16);
-    { std::vector<TabSpec> ts; for (int i = 0; i < NTABS; i++) ts.push_back({20 + i * 110, 100, TABS[i]}); tabRow(ctx, ts, 14, 20, menuTab, 12, SCREEN_W - 12); }   // 1.8.4 (#189)
-    textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
+    if (!menuHostedNow) {   // 1.8.5 (#199): hosted, the theme's window and the Party tabs are drawn around this (hud.cpp)
+        cv.dim(0, 0, SCREEN_W, SCREEN_H, 150);
+        panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16);
+        { std::vector<TabSpec> ts; for (int i = 0; i < NTABS; i++) ts.push_back({20 + i * 110, 100, TABS[i]}); tabRow(ctx, ts, 14, 20, menuTab, 12, SCREEN_W - 12); }   // 1.8.4 (#189)
+        textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
+    }
     int nMembers = (int)party.members.size();
     if (menuTab == 0 || menuTab == 2) {
         for (int i = 0; i < nMembers; i++) {
@@ -327,16 +334,19 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             }
             if (menuSel > 0 && menuSel - 1 < (int)cands.size()) { const ItemDef* d = gd->item(cands[menuSel - 1]); drawItemDetails(cv, *d, lx + 10, ly + 28 + std::min(14, n) * 16, 260, ly + 26 + std::min(14, n) * 16 + detH, &party.members[menuMember]); }   // 1.1.5 (#26): 8 px above the panel bottom
         } else {
-            if (menuSubFocus) { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "slot"); keyHint(ctx, 290, SCREEN_H - 30, "Enter", "change"); keyHint(ctx, 380, SCREEN_H - 30, gKeys.label(A_ITEMS), "unequip"); keyHint(ctx, 490, SCREEN_H - 30, "Left", "back to party"); }
-            else { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "member"); keyHint(ctx, 300, SCREEN_H - 30, "Right", "equipment"); keyHint(ctx, 420, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, 540, SCREEN_H - 30, "Esc", "back"); }
-            if (party.members.size() > 1 && !menuSubFocus) { keyHint(ctx, 170, SCREEN_H - 44, gKeys.label(A_INTERACT), leader == menuMember ? "leading the party" : "make party leader"); if (menuMember > 0) keyHint(ctx, 390, SCREEN_H - 44, gKeys.label(A_ITEMS), "talk to " + party.members[menuMember].name); }
+            // 1.8.5 (#200): each hint starts where the last one ended (a controller's names are longer than the keys')
+            int hx = 170;
+            if (menuSubFocus) { hx = keyHint(ctx, hx, SCREEN_H - 30, "Up/Down", "slot"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Enter", "change"); hx = keyHint(ctx, hx, SCREEN_H - 30, gKeys.label(A_ITEMS), "unequip"); keyHint(ctx, hx, SCREEN_H - 30, "Left", "back"); }
+            else { hx = keyHint(ctx, hx, SCREEN_H - 30, "Up/Down", "member"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Right", "equipment"); hx = keyHint(ctx, hx, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); }
+            if (party.members.size() > 1 && !menuSubFocus) { hx = keyHint(ctx, 170, SCREEN_H - 44, gKeys.label(A_INTERACT), leader == menuMember ? "leading the party" : "make party leader"); if (menuMember > 0) keyHint(ctx, hx, SCREEN_H - 44, gKeys.label(A_ITEMS), "talk to " + party.members[menuMember].name); }
         }
     } else if (menuTab == 1) {
         { std::vector<std::string> ids; for (auto& st : party.inventory) ids.push_back(st.id); catBarDraw(ctx, cv, itemCats(ids), (int)ids.size(), 20, 36, 600, invCat, invSort); }
         auto view = invView();
         int n = (int)view.size();
         if (n == 0) UI::text(ctx, 24, 54, party.inventory.empty() ? "Your pack is empty." : "Nothing in this category.", C::Gray);
-        for (int i = 0; i < 20; i++) {
+        const int rowsN = invRows();
+        for (int i = 0; i < rowsN; i++) {
             int idx = menuScroll + i; if (idx >= n) break;
             auto& st = party.inventory[view[idx]]; const ItemDef* d = gd->item(st.id); if (!d) continue;
             bool sel = idx == menuSel;
@@ -346,7 +356,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             textRight(ctx, 296, 52 + i * 16, d->quest ? "quest" : fmt("%d g", itemSellPrice(*d)), d->quest ? C::Gold : C::DkGray);
             for (int f = 0; f < 8; f++) if (party.members[menuMember].favs[f] == "item:" + d->id) UI::text(ctx, 32, 52 + i * 16, std::to_string(f + 1), C::Cyan);
         }
-        if (n > 20) UI::text(ctx, 20, 50 + 20 * 16, fmt("(%d more - scroll)", n - 20 - menuScroll), C::Gray);
+        if (n > rowsN && n - rowsN - menuScroll > 0) UI::text(ctx, 20, 50 + rowsN * 16, fmt("(%d more - scroll)", n - rowsN - menuScroll), C::Gray);
         if (n > 0 && menuSel < n) {
             const ItemDef* d = gd->item(party.inventory[view[menuSel]].id);
             panel(ctx, 320, 60, 300, INV_ACT_Y - 66, RGB(30, 30, 44));   // 1.1.4: 26 px taller, room for the grouped details
@@ -367,9 +377,9 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
                 }
             }
         }
-        keyHint(ctx, 20, SCREEN_H - 30, "Enter", "actions"); keyHint(ctx, 130, SCREEN_H - 30, "1-8", "set favorite"); keyHint(ctx, 250, SCREEN_H - 30, "Esc", "back");
+        { int hx = keyHint(ctx, 20, SCREEN_H - 30, "Enter", "actions"); hx = keyHint(ctx, hx, SCREEN_H - 30, "1-8", "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back");
+          keyHint(ctx, std::max(hx, 330), SCREEN_H - 30, gPadGlyphs && gKeys.pad[A_INTERACT] ? keyName(gKeys.pad[A_INTERACT]) : "C", "field crafting"); }
         { int hx = keyHint(ctx, 20, SCREEN_H - 44, gKeys.label(A_CATPREV) + "/" + gKeys.label(A_CATNEXT), "category"); keyHint(ctx, hx, SCREEN_H - 44, gKeys.label(A_SORT), "sort"); }
-        keyHint(ctx, 330, SCREEN_H - 30, gPadGlyphs && gKeys.pad[A_INTERACT] ? keyName(gKeys.pad[A_INTERACT]) : "C", "field crafting");
     } else if (menuTab == 2) {
         auto& m = party.members[menuMember];
         UI::text(ctx, 170, 38, fmt("%s's spells  (MP %d/%d)", m.name.c_str(), m.mp, m.maxMP(*gd)), C::Gray);
@@ -388,8 +398,9 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             if (s) { panel(ctx, 460, 44, 160, 130, RGB(30, 30, 44)); std::string d = s->desc; if (s->dmgMax) d = fmt("%d-%d %s dmg. ", s->dmgMin, s->dmgMax, dmgTypeName(s->dmgType)) + d; if (s->heal) d = fmt("Heals %d. ", s->heal) + d; d += fmt(" Range %d, %d AP.", s->range, s->ap); if (s->area) d += fmt(" Area %d.", s->area); ctx.font->drawWrapped(cv, *ctx.ts, 468, 52, 146, d, C::LtGray); }
             if (menuSubFocus) { UI::text(ctx, 330, 282, "Cast on whom?", C::Gold); for (int i = 0; i < nMembers; i++) { bool sel = i == menuSub; listRow(ctx, in, 330, 300 + i * 18, 270, 18, sel); auto& t = party.members[i]; UI::text(ctx, 340, 303 + i * 18, fmt("%s  %d/%d", t.name.c_str(), t.hp, t.maxHP(*gd)), sel ? C::Yellow : (t.alive ? C::White : C::Red)); } }
         }
-        if (spellCol == 0) { keyHint(ctx, 170, SCREEN_H - 30, "Up/Down", "member"); keyHint(ctx, 300, SCREEN_H - 30, "Right", "spells"); keyHint(ctx, 400, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, 520, SCREEN_H - 30, "Esc", "back"); }
-        else { keyHint(ctx, 170, SCREEN_H - 30, "Enter", "cast"); keyHint(ctx, 250, SCREEN_H - 30, "1-8", "set favorite"); keyHint(ctx, 370, SCREEN_H - 30, "Left", "members"); keyHint(ctx, 470, SCREEN_H - 30, "Esc", "back"); }
+        { int hx = 170;
+          if (spellCol == 0) { hx = keyHint(ctx, hx, SCREEN_H - 30, "Up/Down", "member"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Right", "spells"); hx = keyHint(ctx, hx, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); }
+          else { hx = keyHint(ctx, hx, SCREEN_H - 30, "Enter", "cast"); hx = keyHint(ctx, hx, SCREEN_H - 30, "1-8", "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Left", "members"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); } }
     } else if (menuTab == 3) {
         // Each quest's text wraps to the width of the list, and the row grows to fit it. The list scrolls to keep the
         // selected quest on screen.
@@ -506,10 +517,11 @@ void Game::updateShop(InputState& in, float dt) {
     int before = shopSel;
     if (n > 0) { if (actP(in, A_UP)) shopSel = (shopSel + n - 1) % n; if (actP(in, A_DOWN)) shopSel = (shopSel + 1) % n; }
     shopSel = clampi(shopSel, 0, std::max(0, n - 1));
-    if (in.wheel) shopScroll = clampi(shopScroll - in.wheel, 0, std::max(0, n - 22));
-    if (shopSel < shopScroll) shopScroll = shopSel; if (shopSel >= shopScroll + 22) shopScroll = shopSel - 21;
+    const int rowsN = shopRows();
+    if (in.wheel) shopScroll = clampi(shopScroll - in.wheel, 0, std::max(0, n - rowsN));
+    if (shopSel < shopScroll) shopScroll = shopSel; if (shopSel >= shopScroll + rowsN) shopScroll = shopSel - rowsN + 1;
     bool clicked = false;
-    for (int i = 0; i < 22; i++) { int idx = shopScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 330 && in.mouseY >= 50 + i * 16 && in.mouseY < 66 + i * 16 && in.mousePressed[0]) { shopSel = idx; clicked = true; } }   // only a click selects: moving the mouse to the [-]/[+] buttons must not change the item
+    for (int i = 0; i < rowsN; i++) { int idx = shopScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 330 && in.mouseY >= 50 + i * 16 && in.mouseY < 66 + i * 16 && in.mousePressed[0]) { shopSel = idx; clicked = true; } }   // only a click selects: moving the mouse to the [-]/[+] buttons must not change the item
     if (shopSel != before) shopQty = -1;
     if (n == 0) return;
     int real = view[shopSel];
@@ -537,8 +549,8 @@ void Game::updateShop(InputState& in, float dt) {
 }
 
 void Game::drawShop(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
-    panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
+    if (!menuHostedNow) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); panel(ctx, 8, 8, SCREEN_W - 16, SCREEN_H - 16); }   // 1.8.5: hosted, the theme's window is round it
     const char* tabs[2] = {"Buy", "Sell"};
     { std::vector<TabSpec> ts; for (int i = 0; i < 2; i++) ts.push_back({20 + i * 110, 100, tabs[i]}); tabRow(ctx, ts, 14, 20, shopTab, 12, SCREEN_W - 12); }   // 1.8.4 (#189)
     textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
@@ -548,7 +560,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     auto view = shopView();
     int n = (int)view.size();
     const ItemDef* cur = nullptr; int curReal = -1;
-    for (int i = 0; i < 22; i++) {
+    for (int i = 0; i < shopRows(); i++) {
         int vi = shopScroll + i; if (vi >= n) break; int idx = view[vi];
         const ItemDef* d = gd->item(shopTab == 0 ? stock[idx].first : party.inventory[idx].id); if (!d) continue;
         bool sel = vi == shopSel; if (sel) { cur = d; curReal = idx; }
@@ -793,7 +805,7 @@ void Game::updateLevelUp(InputState& in, float dt) {
     if (luRow >= rows) luRow = rows - 1;
     if (actP(in, A_UP)) luRow = (luRow + rows - 1) % rows;
     if (actP(in, A_DOWN)) luRow = (luRow + 1) % rows;
-    int x = 20, y = 16;
+    int x = 20, y = menuHostedNow ? -6 : 16;   // 1.8.5: hosted, the title is in the window's title bar
     // mouse
     for (int i = 0; i < ncr; i++) { int ry = y + 74 + i * 18; if (in.mouseX >= x + 10 && in.mouseX < x + 290 && in.mouseY >= ry && in.mouseY < ry + 18) { if (in.mouseDX || in.mouseDY) luRow = i; if (in.mousePressed[0]) { luRow = i; luClass = i; } } }
     for (int s = 0; s < ST_COUNT; s++) { int ry = y + 74 + s * 34; if (in.mouseX >= x + 310 && in.mouseX < x + 590 && in.mouseY >= ry && in.mouseY < ry + 32) { if (in.mouseDX || in.mouseDY) luRow = ncr + s; if (in.mousePressed[0]) { luRow = ncr + s; if (in.mouseX >= x + 522 && in.mouseX < x + 546 && statAlloc[s] > 0) statAlloc[s]--; else if (in.mouseX >= x + 552 && in.mouseX < x + 576 && total < m.statPoints) statAlloc[s]++; } } }
@@ -818,9 +830,10 @@ void Game::updateLevelUp(InputState& in, float dt) {
 void Game::drawLevelUp(Canvas& cv, InputState& in) {
     if (levelUpQueue.empty()) return;
     Character& m = party.members[levelUpQueue[0]];
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 140); uiRect(0, 0, SCREEN_W, SCREEN_H);
-    int x = 20, y = 16, w = 600, h = 446;
-    panelTitle(ctx, x, y, w, h, "Level Up!");
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
+    int x = 20, y = menuHostedNow ? -6 : 16, w = 600, h = 446;
+    if (!menuHostedNow) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 140); panelTitle(ctx, x, y, w, h, "Level Up!"); }
+    else hostTitle(x + 300 - 4, y + 22, "Level Up!");   // frame: no title bar, so the title sits at the top right
     const auto& classes = gd->classOrder; int nc = (int)classes.size();
     bool needRank = m.rankPoints > 0; int ncr = needRank ? nc : 0;
     int total = 0; for (int s = 0; s < ST_COUNT; s++) total += statAlloc[s];

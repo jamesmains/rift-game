@@ -16,7 +16,7 @@ const char* statLine(int s);                          // hud_party.cpp
 std::vector<std::string> classOrder(const GameData& gd);
 
 namespace {
-std::string bindName(int a) { return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : ""; }
+std::string bindName(int a) { return UI::bindLabel(a); }   // 1.8.5 (#200): the pad button while a controller is in use
 std::string lower(std::string s) { for (auto& c : s) c = (char)tolower((unsigned char)c); return s; }
 std::string keyLow(int a) { return lower(bindName(a)); }
 std::string classLine(const Character& m, const GameData& gd) {
@@ -199,11 +199,11 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             }
             if (!chosenName.empty()) Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, chosenName, r.w - 16), t.accent);
             else Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, terr.empty() ? std::string("") : "Terrain: " + lower(terr), r.w - 16), t.dim);
-            Theme::small(p, r.x + 8, r.y + 76, range + " use an item in combat", t.dim);
+            Theme::small(p, r.x + 8, r.y + 76, gPadGlyphs ? keyLow(A_ITEMS) + " items   " + keyLow(A_SPELLS) + " spells" : range + " use an item in combat", t.dim);   // 1.8.5 (#200): the pad has no 1-8
         } else {
             if (!chosenName.empty()) Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, chosenName, r.w - 16), t.accent);
             else Theme::text(p, r.x + 8, r.y + 58, "No favorites yet", t.dim);
-            Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, range + " use   " + keyLow(A_MENU) + " menu   " + keyLow(A_INTERACT) + " act", r.w - 16), t.dim);
+            Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, (gPadGlyphs ? std::string() : range + " use   ") + keyLow(A_MENU) + " menu   " + keyLow(A_INTERACT) + " act", r.w - 16), t.dim);
         }
     };
 
@@ -246,7 +246,7 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             std::string label = a.label; if (a.cmd == 1 && cb.aimed) label += "  on";
             int ty = ry + (rh - 12) / 2;
             Theme::text(p, ux + 28, ty, label, !myTurn ? t.dim : on ? t.accent : t.text);
-            std::string k = keyLow(a.key); if (k.size() > 3) k = k.substr(0, 3);
+            std::string k = keyLow(a.key); if (k.size() > 5) k = k.substr(0, 5);
             if (!k.empty()) {
                 int kw = std::max(16, Theme::textW(p, k) + 8), ky = ry + (rh - 16) / 2;
                 if (rh < 16) ky = ry - 1;
@@ -418,12 +418,32 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
     if (paused) startMenu();
 }
 
+// 1.8.5 (#199): the Party window's tabs, the same on every Party tab; returns where the content starts
+int oneBitMenuTabs(Game& g, Canvas& cv, InputState& in, const Rect& c) {
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Pen p{&cv, g.ctx.font, g.ctx.ts};
+    static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
+    const bool picking = g.menuPrompt == "respec";
+    int x = c.x + 16, y = c.y + 32;
+    for (int i = 0; i < 4; i++) {
+        int w = Theme::titleW(p, TABN[i]) + 20; bool on = g.menuTab == i;
+        bool hov = in.mouseX >= x && in.mouseX < x + w && in.mouseY >= y && in.mouseY < y + 20;
+        if (on) { Color8 ink = t.back; cv.fillRect(x, y, w, 20, t.text); Theme::title(p, x + 10, y + 4, TABN[i], 1, &ink); }
+        else { cv.rect(x, y, w, 20, hov ? t.accent : t.dim); Theme::title(p, x + 10, y + 4, TABN[i]); }
+        if (!picking) g.hudHit(x, y, w, 20, Game::HH_PTAB, i);
+        x += w + 6;
+    }
+    std::string gold = fmt("%d gold", g.party.gold);
+    Theme::textRight(p, c.x + c.w - 16, y + 5, gold, t.accent);
+    Theme::textRight(p, c.x + c.w - 24 - Theme::textW(p, gold), y + 5, lower(UI::bindLabel(A_PAGEUP)) + " / " + lower(UI::bindLabel(A_PAGEDOWN)) + ": tabs", t.dim);
+    hdots(cv, c.x + 16, c.y + 60, c.w - 32, t.dim);
+    return c.y + 64;
+}
+
 // ---------------- the Party window (#181) ----------------
 void Game::drawOneBitParty(Canvas& cv, InputState& in) {
     Theme::NoMap nm; const UiTheme& t = Theme::th(); Pen p{&cv, ctx.font, ctx.ts};
-    Rect a = menuArea();
-    const int ww = a.w, wh = std::min(478, a.h - (a.h >= 490 ? 12 : 0));
-    const int wx = a.x, wy = a.y + (a.h >= 490 ? 12 : 0);
+    const Rect host = menuChromeRect();   // 1.8.5 (#199): the same window as every other Party tab and menu
+    const int ww = host.w, wh = host.h, wx = host.x, wy = host.y;
     cv.dim(0, 22, SCREEN_W, SCREEN_H - 22, 140);
     uiRect(wx, wy, ww + 4, wh + 4);
     Theme::windowChrome(p, wx, wy, ww, wh, "Party", true);
@@ -432,20 +452,7 @@ void Game::drawOneBitParty(Canvas& cv, InputState& in) {
     const int mi = clampi(menuMember, 0, nM - 1);
     Character& m = party.members[mi];
     const bool narrow = ww < 900;
-    // tabs
-    {
-        static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
-        int x = wx + 16, y = wy + 32;
-        for (int i = 0; i < 4; i++) {
-            int w = Theme::titleW(p, TABN[i]) + 20; bool on = menuTab == i;
-            if (on) { Color8 ink = t.back; cv.fillRect(x, y, w, 20, t.text); Theme::title(p, x + 10, y + 4, TABN[i], 1, &ink); }
-            else { cv.rect(x, y, w, 20, hover(x, y, w, 20) ? t.accent : t.dim); Theme::title(p, x + 10, y + 4, TABN[i]); }
-            hudHit(x, y, w, 20, HH_PTAB, i);
-            x += w + 6;
-        }
-        Theme::textRight(p, wx + ww - 16, y + 5, lower(bindName(A_PAGEDOWN)) + ": next", t.dim);
-        hdots(cv, wx + 16, wy + 60, ww - 32, t.dim);
-    }
+    oneBitMenuTabs(*this, cv, in, host);   // the tabs (shared with the other Party tabs)
     // member cards
     const int cardW = narrow ? 170 : 200;
     {
@@ -464,7 +471,7 @@ void Game::drawOneBitParty(Canvas& cv, InputState& in) {
             hudHit(wx + 16, y, cardW, ch, HH_MEMBER, i);
         }
         if (nM <= 4) {
-            Theme::text(p, wx + 16, wy + 312, lower(bindName(A_UP)) + "/" + lower(bindName(A_DOWN)) + ": member", t.dim);
+            Theme::text(p, wx + 16, wy + 312, (gPadGlyphs ? std::string("d-pad") : lower(bindName(A_UP)) + "/" + lower(bindName(A_DOWN))) + ": member", t.dim);
             Theme::text(p, wx + 16, wy + 326, lower(bindName(A_INTERACT)) + ": make leader", t.dim);
         }
     }
@@ -574,7 +581,6 @@ void Game::drawOneBitParty(Canvas& cv, InputState& in) {
             if (h.kind) hudHit(kx, ky, w + 6 + Theme::textW(p, h.l), 16, h.kind, 0);
             kx += w + Theme::textW(p, h.l) + 28;
         }
-        Theme::textRight(p, wx + ww - 16, ky + 2, fmt("%d gold", party.gold), t.gold);
     }
     // the equip picker: a tool window over the attributes
     if (menuPrompt == "equip") {

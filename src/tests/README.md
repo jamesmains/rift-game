@@ -183,3 +183,4 @@ launcher's Continue / Delete. Expects `theme`, `settingsini:KEY` (a value in the
 that check pixels or desktop icon positions set `theme frame` themselves. New: `theme_switch_1_8_3`,
 `pause_settings_ingame_1_8_3`.
 1.8.4: `hud_fixes_1_8_4` (J in the pause menu / a fight, a member click makes the leader, edge panning with a still pointer and at the screen edge). New expects `camx`, `camy` (camera target), `leader`, `jtab`.
+1.8.5: `menus_host_1_8_5` (at 853x480: every Party tab, shop, crafting, board, journal, world map and level-up in the theme's window; the Talk button's verb; LB / RB paging the Party tabs; level-up and Settings by controller). New expects `menuhosted`, `menutab`, `talkverb` (text, "-" = nothing in reach); `hudclick hostclose` (the hosted window's close box, native / one-bit).

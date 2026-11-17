@@ -1,0 +1,183 @@
+# 1.8.5 (#195-#200): every RPG menu sits in the theme's own window (the frame's carved panel, the native dialog, the
+# one-bit window) with the same tabs on every Party tab (#196 #199); the Talk / Use button says what Interact would do
+# and greys out when nothing is in reach (#197); a controller pages the Party tabs with LB / RB (LB used to jump to
+# Spells and stay there) and reaches the in-game Settings (#200). Clicks go through HUD hot spots, so it runs the same
+# in every theme (tools\run-tests.ps1 -Theme native|onebit).
+screen 853 480
+frames 5
+installed
+newgame Arin warrior
+frames 120
+expect mode == EXPLORE
+# #197: nothing in reach at the cottage's middle; next to the chest Interact opens it
+expect talkverb == -
+teleport hollowmere_home 2 2
+frames 120
+expect talkverb == Open
+teleport hollowmere_home 5 5
+frames 60
+expect talkverb == -
+con join mage
+give potion_red 2
+frames 5
+# #199: the Party screen's tabs are the same on every tab, and the other tabs sit in the theme's window
+key TAB
+frames 3
+expect mode == MENU
+expect menutab == 0
+hudclick ptab 1
+frames 3
+expect menutab == 1
+expect menuhosted == 1
+shot items_853.png
+hudclick ptab 2
+frames 3
+expect menutab == 2
+expect menuhosted == 1
+hudclick ptab 3
+frames 3
+expect menutab == 3
+expect menuhosted == 1
+hudclick ptab 0
+frames 3
+expect menutab == 0
+# #200: LB / RB page the tabs both ways on a controller
+pad 1
+key PADRB
+frames 3
+expect menutab == 1
+key PADRB
+frames 3
+expect menutab == 2
+key PADLB
+frames 3
+expect menutab == 1
+key PADLB
+frames 3
+expect menutab == 0
+key PADB
+frames 5
+expect mode == EXPLORE
+pad 0
+# #196: shop, crafting, notice board, journal, world map and level up in the theme's window
+con shop hollowmere_general
+frames 3
+expect mode == SHOP
+expect menuhosted == 1
+shot shop_853.png
+key ESC
+frames 3
+con craft forge
+frames 3
+expect mode == CRAFT
+expect menuhosted == 1
+key ESC
+frames 3
+con bounty hollowmere
+frames 3
+expect mode == BOUNTY
+expect menuhosted == 1
+shot board_853.png
+key ESC
+frames 3
+key J
+frames 3
+expect mode == JOURNAL
+expect menuhosted == 1
+key ESC
+frames 3
+key M
+frames 3
+expect mode == WORLDMAP
+expect menuhosted == 1
+shot worldmap_853.png
+key ESC
+frames 3
+expect mode == EXPLORE
+con xp 260
+frames 5
+expect mode == LEVELUP
+expect menuhosted == 1
+shot levelup_853.png
+# #200: the level-up screens by controller alone: pick the class (A), spend the points (Right), confirm (A)
+pad 1
+key PADA
+frames 3
+key PADRIGHT
+key PADRIGHT
+key PADRIGHT
+frames 3
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+frames 3
+key PADA
+frames 10
+key PADA
+frames 3
+key PADRIGHT
+key PADRIGHT
+key PADRIGHT
+frames 3
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+frames 3
+key PADA
+frames 10
+expect mode == EXPLORE
+pad 0
+# #200: the in-game Settings from the pause menu with a controller, and back
+pad 1
+key PADB
+frames 5
+expect mode == PAUSE
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADDOWN
+key PADA
+frames 5
+expect mode == SETTINGS
+key PADDOWN
+key PADDOWN
+frames 3
+shot settings_pad_853.png
+key PADB
+frames 5
+expect mode == PAUSE
+key PADB
+frames 5
+expect mode == EXPLORE
+pad 0
+# #195: the favorites in a fight (the acting member's, at 2x)
+key TAB
+frames 3
+hudclick ptab 1
+frames 3
+key 1
+key DOWN
+key 2
+frames 3
+key ESC
+frames 3
+expect mode == EXPLORE
+con clearmap overworld
+teleport overworld 60 40
+frames 120
+combat goblin
+frames 90
+expect mode == COMBAT
+shot combat_favorites_853.png
+partywipe
+frames 30
+# the old full-screen look where the theme's window can't hold a menu (640x480)
+screen 640 480
+frames 5

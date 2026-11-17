@@ -266,11 +266,13 @@ void button(const Pen& p, int x, int y, int w, int h, const std::string& label, 
         if (def) { cv.rect(x, y, w, h, t.lo); x++; y++; w -= 2; h -= 2; }
         if (sel) { bevel(cv, x, y, w, h, t.lo, t.hi); bevel(cv, x + 1, y + 1, w - 2, h - 2, t.lo2, t.hi2); }
         else { bevel(cv, x, y, w, h, t.hi, t.lo); bevel(cv, x + 1, y + 1, w - 2, h - 2, t.hi2, t.lo2); }
-        int o = sel ? 1 : 0; int lx = keyLeft.empty() ? x + (w - textW(p, label)) / 2 : x + 22;
-        if (!keyLeft.empty()) { small(p, x + 6 + o, y + (h - 8) / 2 + o, keyLeft, dis ? t.dim : t.text); }
+        // 1.8.5 (#198): key labels in the body face (the 5x8 face was too small to read); the label centres in what is left
+        int o = sel ? 1 : 0, krw = keyRight.empty() ? 0 : textW(p, keyRight) + 8;
+        int lx = keyLeft.empty() ? x + (w - krw - textW(p, label)) / 2 : x + textW(p, keyLeft) + 14;
+        if (!keyLeft.empty()) { text(p, x + 6 + o, y + (h - 12) / 2 + o, keyLeft, dis ? t.dim : H(0x404040)); }
         if (dis) { text(p, lx + 1, ty + 1, label, t.hi); text(p, lx, ty, label, t.dim); }
         else text(p, lx + o, ty + o, label, t.text);
-        if (!keyRight.empty()) smallRight(p, x + w - 6 + o, y + (h - 8) / 2 + o, keyRight, dis ? t.dim : t.text);
+        if (!keyRight.empty()) textRight(p, x + w - 6 + o, y + (h - 12) / 2 + o, keyRight, dis ? t.dim : H(0x404040));
         if (!sub.empty()) small(p, lx + o, y + h - 11 + o, sub, t.dim);
         if (hover && !dis && !sel) { for (int xx = x + 3; xx < x + w - 3; xx += 2) { cv.put(xx, y + 3, t.lo2); cv.put(xx, y + h - 4, t.lo2); } }
         return;
@@ -281,10 +283,11 @@ void button(const Pen& p, int x, int y, int w, int h, const std::string& label, 
         else cv.rect(x, y, w, h, dis ? t.pipOff : (hover ? t.accent : t.text));
         if (def) cv.rect(x + 2, y + 2, w - 4, h - 4, t.text);
         if (dis) tc = t.dim;
-        int lx = keyLeft.empty() ? x + (w - textW(p, label)) / 2 : x + 22;
+        int krw = keyRight.empty() ? 0 : textW(p, keyRight) + 8;
+        int lx = keyLeft.empty() ? x + (w - krw - textW(p, label)) / 2 : x + 8 + keycap(p, x + 4, y + (h - 14) / 2, keyLeft, false);
         if (!keyLeft.empty()) { keycap(p, x + 4, y + (h - 14) / 2, keyLeft); }
         text(p, lx, ty, label, tc);
-        if (!keyRight.empty()) smallRight(p, x + w - 6, y + (h - 8) / 2, keyRight, dis ? t.dim : t.text);
+        if (!keyRight.empty()) textRight(p, x + w - 6, y + (h - 12) / 2, keyRight, dis ? t.dim : t.dim);
         if (!sub.empty()) small(p, lx, y + h - 11, sub, t.dim);
         return;
     }
@@ -294,10 +297,10 @@ void button(const Pen& p, int x, int y, int w, int h, const std::string& label, 
     bevel(cv, x, y, w, h, brass ? t.selHi : t.hi, brass ? t.selLo : t.lo, &face);
     tc = dis ? t.faint : brass ? t.selText : t.text;
     int lx = x + 6;
-    if (!keyLeft.empty()) { int kw = std::max(11, smallW(p, keyLeft) + 4); cv.fillRect(x + 3, y + 3, kw, h - 6, brass ? t.accent : t.keyCell); small(p, x + 3 + (kw - smallW(p, keyLeft)) / 2, y + (h - 8) / 2, keyLeft, brass ? H(0x20160A) : t.accent); lx = x + kw + 7; }
+    if (!keyLeft.empty()) { int kw = std::max(14, textW(p, keyLeft) + 6); cv.fillRect(x + 3, y + 3, kw, h - 6, brass ? t.accent : t.keyCell); text(p, x + 3 + (kw - textW(p, keyLeft)) / 2, y + (h - 12) / 2, keyLeft, brass ? H(0x20160A) : t.accent); lx = x + kw + 7; }
     else if (keyRight.empty() && sub.empty()) lx = x + (w - textW(p, label)) / 2;
     text(p, lx, ty, label, tc);
-    if (!keyRight.empty()) smallRight(p, x + w - 6, y + (h - 8) / 2, keyRight, dis ? t.faint : t.accent);
+    if (!keyRight.empty() && keyRight != " ") textRight(p, x + w - 6, y + (h - 12) / 2, keyRight, dis ? t.faint : brass ? t.selText : t.accent);
     if (!sub.empty()) small(p, lx, y + h - 11, sub, dis ? H(0x5A5E70) : t.dim);
 }
 

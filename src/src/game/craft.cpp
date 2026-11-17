@@ -287,10 +287,11 @@ void Game::updateCraft(InputState& in, float dt) {
     int before = craftSel;
     if (n > 0) { if (actP(in, A_UP)) craftSel = (craftSel + n - 1) % n; if (actP(in, A_DOWN)) craftSel = (craftSel + 1) % n; }
     craftSel = clampi(craftSel, 0, std::max(0, n - 1));
-    if (in.wheel) craftScroll = clampi(craftScroll - in.wheel, 0, std::max(0, n - 17));
-    if (craftSel < craftScroll) craftScroll = craftSel; if (craftSel >= craftScroll + 17) craftScroll = craftSel - 16;
+    const int rowsN = craftRows();
+    if (in.wheel) craftScroll = clampi(craftScroll - in.wheel, 0, std::max(0, n - rowsN));
+    if (craftSel < craftScroll) craftScroll = craftSel; if (craftSel >= craftScroll + rowsN) craftScroll = craftSel - rowsN + 1;
     bool clicked = false;
-    for (int i = 0; i < 17; i++) { int idx = craftScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 330 && in.mouseY >= 56 + i * 18 && in.mouseY < 74 + i * 18) { if (in.mouseDX || in.mouseDY) craftSel = idx; if (in.mousePressed[0]) { craftSel = idx; clicked = true; } } }
+    for (int i = 0; i < rowsN; i++) { int idx = craftScroll + i; if (idx >= n) break; if (in.mouseX >= 20 && in.mouseX < 330 && in.mouseY >= 56 + i * 18 && in.mouseY < 74 + i * 18) { if (in.mouseDX || in.mouseDY) craftSel = idx; if (in.mousePressed[0]) { craftSel = idx; clicked = true; } } }
     if (craftSel != before) craftQty = 1;
     if (n == 0) return;
     bool craftBtn = in.mousePressed[0] && in.mouseX >= 350 && in.mouseX < 500 && in.mouseY >= SCREEN_H - 64 && in.mouseY < SCREEN_H - 40;
@@ -345,10 +346,12 @@ void Game::updateCraft(InputState& in, float dt) {
     }
 }
 void Game::drawCraft(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); uiRect(0, 0, SCREEN_W, SCREEN_H);
+    uiRect(0, 0, SCREEN_W, SCREEN_H);
+    if (!menuHostedNow) cv.dim(0, 0, SCREEN_W, SCREEN_H, 150);
     std::string skillName = craftStation == "forge" ? "Smithing" : craftStation == "alchemy" ? "Alchemy" : craftStation == "workbench" ? "Tinkering" : craftStation == "all" ? "Crafting" : "Field craft";
     std::string title = craftStation == "forge" ? "Forge" : craftStation == "alchemy" ? "Alchemy bench" : craftStation == "workbench" ? "Workbench" : craftStation == "all" ? "Crafting" : "Field crafting";
-    panelTitle(ctx, 10, 6, SCREEN_W - 20, SCREEN_H - 12, title + fmt("   (%d gold)", party.gold));
+    if (!menuHostedNow) panelTitle(ctx, 10, 6, SCREEN_W - 20, SCREEN_H - 12, title + fmt("   (%d gold)", party.gold));
+    else { hostTitle(20, 8, title); textRight(ctx, SCREEN_W - 22, 12, fmt("%d gold", party.gold), C::Gold); }   // 1.8.5: in the theme's window
     { std::string st = craftStation == "any" ? "field" : craftStation; int lv = craftSkill(craftStation), xp = craftXP(st); std::string s = fmt("%s skill %d", skillName.c_str(), lv) + (lv < 6 ? fmt("  (%d/%d)", xp, kSkillXP[lv]) : "  (master)"); textRight(ctx, SCREEN_W - 22, 32, s, C::Cyan); }
     { std::vector<TabSpec> ts; int selIdx = -1;   // 1.8.4 (#189): the theme's tabs
       for (int i = 0; i < 4; i++) { if (!tabAvailable(craftStation, i)) continue; if (craftTab == i) selIdx = (int)ts.size(); ts.push_back({20 + i * 96, 92, kCraftTabs[i]}); }
@@ -363,7 +366,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
         auto list = recipesFor(*this, craftStation); int n = (int)list.size();
         int hidden = 0; for (auto& r : recipes) if ((r.station == "any" || r.station == craftStation || craftStation == "all") && !recipeVisible(r)) hidden++;
         if (n == 0) UI::text(ctx, 20, 58, "No recipes known for this station.", C::Gray);
-        for (int i = 0; i < 17; i++) {
+        for (int i = 0; i < craftRows(); i++) {
             int idx = craftScroll + i; if (idx >= n) break; const Recipe& r = *list[idx];
             bool ok = canCraft(r); listRow(ctx, in, 20, 56 + i * 18, 310, 18, idx == craftSel);
             if (auto* d = gd->item(r.result)) drawItemTile(*ctx.ts, cv, *d, 24, 58 + i * 18, 1);
@@ -397,7 +400,7 @@ void Game::drawCraft(Canvas& cv, InputState& in) {
     } else {
         auto targets = craftTargets(craftTab); int n = (int)targets.size();
         if (n == 0) UI::text(ctx, 20, 58, craftTab == 3 ? "Nothing to salvage in your pack." : "Nothing here can be worked on at this station.", C::Gray);
-        for (int i = 0; i < 17; i++) {
+        for (int i = 0; i < craftRows(); i++) {
             int idx = craftScroll + i; if (idx >= n) break; auto& t = targets[idx]; const ItemDef* d = gd->item(t.id); if (!d) continue;
             listRow(ctx, in, 20, 56 + i * 18, 310, 18, idx == craftSel);
             drawItemTile(*ctx.ts, cv, *d, 24, 58 + i * 18, 1);

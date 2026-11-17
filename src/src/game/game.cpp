@@ -546,9 +546,16 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     hudHitsPrev = hudHits;
     if (Theme::native()) nativeHudInput(in);   // 1.8.3 (#176-#178): the native window's menu bar, Alt keys, tool windows
     if (mode == GMode::MENU && in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_MEMBER && h->arg >= 0 && h->arg < (int)party.members.size()) { menuMember = h->arg; menuSubFocus = false; menuPrompt.clear(); in.eatMouse(); }
+    // 1.8.5 (#196 #199): the menu host's tabs and close box (drawn on the whole screen, so taken before the screen's own update)
+    if (menuHosted(mode) && in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) {
+        if (h->kind == HH_HOSTCLOSE) { in.eatMouse(); if (mode == GMode::MENU) { menuPrompt.clear(); menuSubFocus = false; } popMode(); return; }
+        if (h->kind == HH_PTAB && mode == GMode::MENU) { in.eatMouse(); menuTab = clampi(h->arg, 0, 3); menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); gAudio.play("ui_move"); return; }
+    }
     Rect svR; const bool sv = modeArea(mode, svR);
     const int svX = svR.x, svY = svR.y;
+    const bool hostedNow = menuHosted(mode);   // 1.8.5: measured on the whole screen, before SCREEN_W/H change
     if (sv) { SCREEN_W = svR.w; SCREEN_H = svR.h; in.mouseX -= svX; in.mouseY -= svY; }
+    menuHostedNow = hostedNow;
     if (injectAction >= 0) {   // a HUD button stands in for its action's key
         int a = injectAction; injectAction = -1;
         int k = gKeys.key1[a] ? gKeys.key1[a] : gKeys.key2[a] ? gKeys.key2[a] : gKeys.pad[a];
@@ -582,6 +589,7 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
         } break;
     }
     if (sv) { SCREEN_W = fullW; SCREEN_H = fullH; in.mouseX += svX; in.mouseY += svY; }
+    menuHostedNow = false;
     if (mode == GMode::EXPLORE && !levelUpQueue.empty()) pushMode(GMode::LEVELUP);
     if (mode == GMode::EXPLORE && modeStack.empty() && demoMode && campaignId == "triffall" && !demoEnd.empty() && !extra.count("demo_end_shown") && evalCond(demoEnd)) startDemoEnd();
     if (mode == GMode::EXPLORE && !pendingOnEnter.empty()) { std::string s = pendingOnEnter; pendingOnEnter.clear(); runScript(s); }   // 1.1.10: map onenter= once the party stands on it
@@ -1789,7 +1797,8 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     const int fullW = SCREEN_W, fullH = SCREEN_H;
     Rect svR; const bool sv = modeArea(mode, svR);
     const int svX = svR.x, svY = svR.y, svW = svR.w, svH = svR.h;
-    if ((subViewMode(mode) || mode == GMode::SETTINGS) && !themedParty()) drawMenuBackdrop(full, mode);
+    if ((subViewMode(mode) || mode == GMode::SETTINGS) && !themedParty()) drawMenuBackdrop(full, mode, fullIn);
+    menuHostedNow = menuHosted(mode);   // 1.8.5 (#196): the screen skips its own dim and outer panel
     const GMode drawnMode = mode; const size_t rects0 = uiRects.size();
     InputState subIn;
     if (sv) {
@@ -1819,6 +1828,7 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
         case GMode::SETTINGS: drawSettingsScreen(cv, in); break;
         default: break;
     }
+    menuHostedNow = false;
     // notifications (top center, below the combat bar)
     bool fullScreenUI = mode == GMode::MENU || mode == GMode::SHOP || mode == GMode::CRAFT || mode == GMode::JOURNAL || mode == GMode::BOUNTY || mode == GMode::LEVELUP || mode == GMode::WORLDMAP;
     int ny = (mode == GMode::COMBAT) ? VIEW_Y + 54 : fullScreenUI ? SCREEN_H - 120 : VIEW_Y + 8;

@@ -26,9 +26,80 @@ void Game::computeLayout() {
 
 Rect Game::menuArea() const {
     const int W = SCREEN_W, H = SCREEN_H;
-    if (Theme::native()) { int w = std::min(W - 8, 660), h = std::min(H - 30, 512); return {(W - w) / 2, std::max(0, (H - 28 - h) / 2), w, h}; }
-    if (Theme::onebit()) { int w = std::min(W - 16, 912), h = H - 22 - 6; return {(W - w) / 2, 24, w, h}; }
-    return {0, 0, W - frameColW() - 2, H};
+    // 1.8.5 (#199): on a short screen (under 540 high) the native dialog and the one-bit window cover the taskbar / the
+    // menu bar, so every menu gets about the height it was laid out for
+    if (Theme::native()) { int w = std::min(W - 8, 660); if (H < 540) return {(W - w) / 2, 2, w, H - 4}; int h = std::min(H - 32, 512); return {(W - w) / 2, std::max(0, (H - 28 - h) / 2), w, h}; }
+    if (Theme::onebit()) { int w = std::min(W - 16, 912); if (H < 540) return {(W - w) / 2, 2, w, H - 4}; return {(W - w) / 2, 24, w, H - 28}; }
+    // frame: beside the column; when a menu would not fit there, a panel in the middle over the dimmed screen
+    int w = W - frameColW() - 2;
+    if (w < BASE_W + 12 && W >= BASE_W + 12) return {(W - (BASE_W + 12)) / 2, 0, BASE_W + 12, H};
+    return {0, 0, w, H};
+}
+// 1.8.5 (#196 #199): the host every full-screen menu sits in (the themed Party tab draws in the same rect)
+Rect Game::menuChromeRect() const {
+    Rect a = menuArea();
+    if (Theme::onebit()) { int top = a.h >= 490 ? 12 : 0; return {a.x, a.y + top, a.w, std::min(478, a.h - top)}; }
+    return a;
+}
+static Rect hostInside(const Rect& c) {
+    if (Theme::native()) return {c.x + 4, c.y + 23, c.w - 8, c.h - 27};
+    if (Theme::onebit()) return {c.x + 1, c.y + 22, c.w - 2, c.h - 23};
+    return {c.x + 4, c.y + 4, c.w - 8, c.h - 8};
+}
+// the Party screen's content (under its tabs): top and bottom
+static int menuTabsTop(const Rect& c) { return Theme::native() ? c.y + 48 : Theme::onebit() ? c.y + 64 : c.y + 42; }
+static int menuTabsBottom(const Rect& c) { return Theme::native() ? c.y + c.h - 10 : c.y + c.h - 6; }
+Rect Game::menuHostedView(GMode m) const {
+    Rect c = menuChromeRect(), in = hostInside(c);
+    int top = in.y, bottom = in.y + in.h;
+    if (m == GMode::MENU) { top = menuTabsTop(c) - 36; bottom = menuTabsBottom(c); }   // the old layouts start their content at y 36, under the tabs
+    int x = clampi(in.x + (in.w - BASE_W) / 2, 0, std::max(0, SCREEN_W - BASE_W));
+    return {x, top, BASE_W, std::min(BASE_H, bottom - top)};
+}
+bool Game::menuHosted(GMode m) const {
+    if (!subViewMode(m) || (m == GMode::MENU && themedParty())) return false;
+    Rect in = hostInside(menuChromeRect());
+    return SCREEN_W >= BASE_W && in.w >= BASE_W - 4 && menuHostedView(m).h >= 420;
+}
+std::string Game::menuHostTitle(GMode m) const {
+    switch (m) {
+        case GMode::MENU: return Theme::native() ? "Party Properties" : "Party";
+        case GMode::SHOP: return "Shop";
+        case GMode::CRAFT: return craftStation == "forge" ? "Forge" : craftStation == "alchemy" ? "Alchemy Bench" : craftStation == "workbench" ? "Workbench" : craftStation == "all" ? "Crafting" : "Field Crafting";
+        case GMode::JOURNAL: return "Journal";
+        case GMode::BOUNTY: { std::string tn = boardTown; for (auto& l : locations) if (l.mapId == boardTown || l.id == boardTown) tn = l.name; if (const BoardDef* bd = board(boardTown)) if (!bd->name.empty()) tn = bd->name; return "Notice Board - " + tn; }
+        case GMode::LEVELUP: return "Level Up!";
+        case GMode::WORLDMAP: return wmPick && !wmPickPrompt.empty() ? wmPickPrompt : wmTravel ? "Where to?" : "World Map";
+        case GMode::SETTINGS: return "Settings";
+        default: return "";
+    }
+}
+void Game::hostTitle(int x, int y, const std::string& s) {
+    if (!menuHostedNow || !Theme::frame()) return;
+    Theme::NoMap nm; Pen p{ctx.cv, ctx.font, ctx.ts}; Theme::title(p, x, y, s);
+}
+int nativeMenuTabs(Game& g, Canvas& cv, InputState& in, const Rect& c);   // hud_native.cpp
+int oneBitMenuTabs(Game& g, Canvas& cv, InputState& in, const Rect& c);   // hud_onebit.cpp
+// the Party screen's tabs (and gold), the same on every tab; returns where the content starts
+int Game::drawMenuTabs(Canvas& cv, InputState& in, const Rect& c) {
+    if (Theme::native()) return nativeMenuTabs(*this, cv, in, c);
+    if (Theme::onebit()) return oneBitMenuTabs(*this, cv, in, c);
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Pen p{&cv, ctx.font, ctx.ts};
+    const int X = c.x + 2, Y = c.y + 2, Wd = c.w - 4;
+    static const char* TABN[] = {"Party", "Items", "Spells", "Quests"};
+    static const int TABK[] = {A_MENU, A_ITEMS, A_SPELLS, A_JOURNAL};
+    const bool picking = menuPrompt == "respec";
+    for (int i = 0; i < 4; i++) {
+        int tx = X + 12 + i * 112; bool on = menuTab == i;
+        bool hover = in.mouseX >= tx && in.mouseX < tx + 106 && in.mouseY >= Y + 8 && in.mouseY < Y + 32;
+        Theme::button(p, tx, Y + 8, 106, 24, TABN[i], on ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover, gPadGlyphs ? std::string(" ") : UI::bindLabel(TABK[i]));   // a controller pages with LB / RB (shown at the right)
+        if (!picking) hudHit(tx, Y + 8, 106, 24, HH_PTAB, i);
+    }
+    std::string gold = fmt("%d gold", party.gold);
+    Theme::textRight(p, X + Wd - 12, Y + 14, gold, t.gold);
+    if (gPadGlyphs) Theme::textRight(p, X + Wd - 22 - Theme::textW(p, gold), Y + 14, UI::bindLabel(A_PAGEUP) + " / " + UI::bindLabel(A_PAGEDOWN) + " tabs", t.dim);
+    Theme::rule(cv, X + 10, Y + 36, Wd - 20);
+    return menuTabsTop(c);
 }
 Rect Game::popupArea() const {
     const int W = SCREEN_W, H = SCREEN_H;
@@ -36,33 +107,17 @@ Rect Game::popupArea() const {
     if (Theme::onebit()) return {0, 22, W, H - 22 - 112};
     return {0, 0, W - frameColW() - 2, H - frameBotH() - 2};
 }
-// the inside of the menu area (inside a native / one-bit window's chrome)
-static Rect menuInside(const Rect& a) {
-    if (Theme::native()) return {a.x + 4, a.y + 23, a.w - 8, a.h - 27};
-    if (Theme::onebit()) return {a.x + 1, a.y + 22, a.w - 2, a.h - 23};
-    return {a.x + 2, a.y + 2, a.w - 4, a.h - 4};
-}
-static const char* menuTitle(GMode m) {
-    switch (m) {
-        case GMode::MENU: return Theme::native() ? "Party Properties" : "Party";
-        case GMode::SHOP: return "Shop"; case GMode::CRAFT: return "Crafting"; case GMode::JOURNAL: return "Journal";
-        case GMode::BOUNTY: return "Notice Board"; case GMode::LEVELUP: return "Level Up"; case GMode::WORLDMAP: return "World Map";
-        case GMode::SETTINGS: return "Settings";
-        default: return "";
-    }
-}
-// a full-screen menu (laid out for 640x480) goes in the middle of the theme's menu area when it fits there
+// a full-screen menu (laid out for 640x480) goes in the theme's host when it fits there (1.8.5), else in the middle
 bool Game::subViewOrigin(GMode m, int& x, int& y) const {
     x = y = 0;
     if (!subViewMode(m) || (m == GMode::MENU && themedParty())) return false;
-    Rect in = menuInside(menuArea());
-    if (in.w >= BASE_W && in.h >= BASE_H) { x = in.x + (in.w - BASE_W) / 2; y = in.y + (in.h - BASE_H) / 2; }
-    else { x = (SCREEN_W - BASE_W) / 2; y = (SCREEN_H - BASE_H) / 2; }
+    if (menuHosted(m)) { Rect v = menuHostedView(m); x = v.x; y = v.y; return true; }
+    x = (SCREEN_W - BASE_W) / 2; y = (SCREEN_H - BASE_H) / 2;
     return !(x == 0 && y == 0 && SCREEN_W == BASE_W && SCREEN_H == BASE_H);
 }
 bool Game::modeArea(GMode m, Rect& r) const {
     int x = 0, y = 0;
-    if (subViewOrigin(m, x, y)) { r = {x, y, BASE_W, BASE_H}; return true; }
+    if (subViewOrigin(m, x, y)) { r = menuHosted(m) ? menuHostedView(m) : Rect{x, y, BASE_W, BASE_H}; return true; }
     if (m == GMode::DIALOGUE || m == GMode::MESSAGE || m == GMode::VICTORY || m == GMode::SAVELOAD || m == GMode::NAME) {
         // the popups sit over the world, inside the theme's frame (the column, the status bar and taskbar, the bottom windows stay)
         r = popupArea();
@@ -71,15 +126,32 @@ bool Game::modeArea(GMode m, Rect& r) const {
     r = {0, 0, SCREEN_W, SCREEN_H};
     return false;
 }
-void Game::drawMenuBackdrop(Canvas& cv, GMode m) {
-    Rect a = menuArea(), in = menuInside(a);
-    if (m != GMode::SETTINGS && (in.w < BASE_W || in.h < BASE_H)) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); return; }
+// 1.8.5 (#196 #199): the host behind a menu screen: the frame's carved panel, the native dialog (title + close box),
+// the one-bit window; the Party screen's tabs on every Party tab. Too little room: the old dimmed full-screen look.
+void Game::drawMenuBackdrop(Canvas& cv, GMode m, InputState& in) {
     Theme::NoMap nm; Pen p{&cv, ctx.font, ctx.ts};
-    if (Theme::native()) { if (m == GMode::SETTINGS) return;   // settings_ui.cpp draws its own dialog (and dims the world)
-        cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115); Theme::windowChrome(p, a.x, a.y, a.w, a.h, menuTitle(m), true); return; }
-    if (Theme::onebit()) { if (m == GMode::SETTINGS) return;   // its own window over the world the HUD dims (hud_onebit.cpp)
-        cv.dim(0, 22, SCREEN_W, SCREEN_H - 22, 140); Theme::windowChrome(p, a.x, a.y, a.w, a.h, menuTitle(m), true); return; }
-    Color8 deep{20, 22, 31, 255}; Theme::well(cv, a.x, a.y, a.w, a.h, &deep); Theme::panel(cv, a.x + 2, a.y + 2, a.w - 4, a.h - 4);
+    if (m == GMode::SETTINGS) {
+        if (Theme::native() || Theme::onebit()) return;   // settings_ui.cpp draws its own dialog / window
+        Rect a = menuArea();
+        Color8 deep{20, 22, 31, 255}; Theme::well(cv, a.x, a.y, a.w, a.h, &deep); Theme::panel(cv, a.x + 2, a.y + 2, a.w - 4, a.h - 4);
+        return;
+    }
+    if (!menuHosted(m)) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); return; }
+    Rect c = menuChromeRect();
+    if (Theme::native()) {
+        cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115);
+        Theme::windowChrome(p, c.x, c.y, c.w, c.h, menuHostTitle(m), true, true);
+        hudHit(c.x + c.w - 21, c.y + 5, 16, 14, HH_HOSTCLOSE, 0);
+    } else if (Theme::onebit()) {
+        cv.dim(0, 22, SCREEN_W, SCREEN_H - 22, 140);
+        Theme::windowChrome(p, c.x, c.y, c.w, c.h, menuHostTitle(m), true, true);
+        hudHit(c.x + 6, c.y + 3, 18, 16, HH_HOSTCLOSE, 0);
+    } else {
+        if (c.x > 0) cv.dim(0, 0, SCREEN_W, SCREEN_H, 140);   // over the column too: the rest of the screen dims
+        Color8 deep{20, 22, 31, 255}; Theme::well(cv, c.x, c.y, c.w, c.h, &deep); Theme::panel(cv, c.x + 2, c.y + 2, c.w - 4, c.h - 4);
+    }
+    uiRect(c.x, c.y, c.w, c.h);
+    if (m == GMode::MENU) drawMenuTabs(cv, in, c);
 }
 
 // ---------------- shared HUD helpers ----------------
@@ -117,8 +189,16 @@ static std::string nearText(Game& g, std::string& verb) {
         if (Door* d = g.map->doorAt(x, y)) { if (!d->open) { verb = "Open"; return "a door"; } }
         if (Lever* lv = g.map->leverAt(x, y)) { verb = "Pull"; return lv->name.empty() ? "a lever" : lv->name; }
         if (GatherNode* gn = g.map->gatherAt(x, y)) { verb = "Gather"; return gn->name.empty() ? "something to gather" : gn->name; }
+        if (Obstacle* o = g.map->obstacleAt(x, y)) { if (!o->cleared) { verb = "Use"; return o->name.empty() ? "something in the way" : o->name; } }
+        if (Crate* c = g.map->crateAt(x, y)) { verb = "Look"; return c->name.empty() ? "a crate" : c->name; }
     }
     return "";
+}
+// 1.8.5 (#197): what Interact would do now, for the Talk / Use buttons (empty: nothing in reach, the button greys out)
+std::string Game::interactVerb(std::string* what) {
+    std::string verb; std::string w = (mode == GMode::EXPLORE || mode == GMode::PAUSE) ? nearText(*this, verb) : std::string();
+    if (what) *what = w;
+    return verb;
 }
 
 // a belt slot's picture, count and whether it can be used now
@@ -131,10 +211,12 @@ static void beltSlot(Game& g, Canvas& cv, int member, int slot, int x, int y, in
     if (kind == "spell") { if (auto* s = g.gd->spell(id)) { g.ctx.ts->draw(cv, s->tile, x, y, scale); ok = m.mp >= s->cost && (combat || g.spellUsableOutside(*s)); if (name) *name = s->name; } }
     else if (auto* d = g.gd->item(id)) { drawItemTile(*g.ctx.ts, cv, *d, x, y, scale); n = g.party.countItem(id); ok = n > 0; if (name) *name = d->name; }
     if (!ok) { Theme::NoMap nm; cv.fillRect(x, y, 12 * scale, 12 * scale, RGB(0, 0, 0, 150)); }
-    if (n > 1) { Theme::NoMap nm; std::string c = "x" + std::to_string(std::min(n, 99)); g.ctx.font->drawSmall(cv, x + 12 * scale + (scale == 1 ? 6 : 9) - g.ctx.font->widthSmall(c), y + 12 * scale + (scale == 1 ? 0 : 3), c, Theme::th().text); }
+    if (n > 1) { Theme::NoMap nm; std::string c = "x" + std::to_string(std::min(n, 99)); int cx = x + 12 * scale + (scale == 1 ? 6 : 2) - g.ctx.font->widthSmall(c), cy = y + 12 * scale + (scale == 1 ? 0 : -6);
+        if (scale > 1) cv.fillRect(cx - 1, cy - 1, g.ctx.font->widthSmall(c) + 2, 10, RGB(0, 0, 0, 170));   // 1.8.5: inside the slot, readable over the picture
+        g.ctx.font->drawSmall(cv, cx, cy, c, Theme::th().text); }
 }
 
-static std::string bindName(int a) { return gKeys.key1[a] ? keyName(gKeys.key1[a]) : gKeys.key2[a] ? keyName(gKeys.key2[a]) : ""; }
+static std::string bindName(int a) { return UI::bindLabel(a); }   // 1.8.5 (#200): the pad button while a controller is in use
 
 // ---------------- clicks on the HUD (explore, pause) ----------------
 bool Game::hudClick(InputState& in) {
@@ -318,7 +400,8 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             bool enabled = a.cmd == 9 || mine;
             std::string label = a.label; if (a.cmd == 1 && cb.aimed) label += "  (on)";
             std::string key = bindName(a.key);
-            if (key.size() > 3) key = key.substr(0, 3);
+            if (key.size() > 5) key = key.substr(0, 5);   // 1.8.5: "Start", "Back" whole
+            if (key.empty()) key = " ";   // no key (Flee on a pad): an empty cell, so the label still lines up
             bool hover = enabled && in.mouseX >= colX + 10 && in.mouseX < colX + colW - 10 && in.mouseY >= by && in.mouseY < by + bh;
             Theme::button(p, colX + 10, by, colW - 20, bh, label, !enabled ? Theme::BS_DISABLED : on ? Theme::BS_SELECTED : Theme::BS_NORMAL, hover, "", key);
             if (a.cmd == 9) hudHit(colX + 10, by, colW - 20, bh, HH_PAUSE, -1);
@@ -355,7 +438,9 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             const O& o = orders[i]; std::string key = o.key >= 0 ? bindName(o.key) : "";
             if (key.empty()) key = " ";   // 1.8.4 (#185): every label starts at the same place
             bool hover = in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY >= by && in.mouseY < by + bh;
-            Theme::button(p, bx, by, bw, bh, o.label, Theme::BS_NORMAL, hover, key);
+            std::string label = o.label; int state = Theme::BS_NORMAL;
+            if (o.kind == HH_ACTION && o.arg == A_INTERACT) { std::string v = interactVerb(); label = v.empty() ? "Talk / Use" : v; if (v.empty()) { state = Theme::BS_DISABLED; hover = false; } }   // 1.8.5 (#197)
+            Theme::button(p, bx, by, bw, bh, label, state, hover, key);
             hudHit(bx, by, bw, bh, o.kind, o.arg);
             lastY = by + bh;
         }
@@ -387,15 +472,18 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
         Theme::title(p, bx + 10, y0 + 7, "Favorites");
         int member = lead;
         if (combat && cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() && cb.units[cb.selectedUnit].partyIndex >= 0) member = cb.units[cb.selectedUnit].partyIndex;
-        int sw = small ? 28 : 46, sh = small ? 28 : (big ? 40 : 32), pitchX = small ? 30 : 52, pitchY = small ? (big ? 34 : 31) : (big ? 46 : 36);
+        // 1.8.5 (#195): every slot shows its picture at 2x, centred under the slot's number (the fight's smaller slots
+        // used to draw it at 1x in a corner, under the number)
+        int sw = small ? 30 : 46, sh = small ? (big ? 34 : 33) : (big ? 40 : 32), pitchX = small ? 31 : 52, pitchY = small ? sh + 2 : (big ? 46 : 36);
         for (int i = 0; i < 8; i++) {
             int cx = bx + 10 + (i % 4) * pitchX, cy = y0 + 26 + (i / 4) * pitchY;
             Color8 wf = t.well; Theme::well(cv, cx, cy, sw, sh, &wf);
             bool hover = in.mouseX >= cx && in.mouseX < cx + sw && in.mouseY >= cy && in.mouseY < cy + sh;
             if (hover) cv.rect(cx, cy, sw, sh, t.accent);
-            std::string k = bindName(A_FAV1 + i); Theme::small(p, cx + 3, cy + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, small ? 1 : 2), t.dim);
-            if (small) beltSlot(*this, cv, member, i, cx + 9, cy + 7, 1, combat);
-            else beltSlot(*this, cv, member, i, cx + 11, cy + (big ? 8 : 4), 2, combat);
+            std::string k = bindName(A_FAV1 + i); if (gPadGlyphs || k.empty()) k = std::to_string(i + 1);
+            Theme::small(p, cx + 3, cy + 2, k.substr(0, small ? 1 : 2), t.dim);
+            if (small) beltSlot(*this, cv, member, i, cx + 3, cy + sh - 26, 2, combat);
+            else beltSlot(*this, cv, member, i, cx + (sw - 24) / 2 + 2, cy + (sh - 24) / 2 + (big ? 1 : 2), 2, combat);
             hudHit(cx, cy, sw, sh, HH_BELT, i);
         }
     };
