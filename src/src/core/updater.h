@@ -13,7 +13,9 @@
 // It waits for the game to close, moves the old files aside, copies the new version in, keeps the player's Editor edits
 // and own campaigns (assets-manifest.txt tells which asset files they changed), puts the old files back if anything
 // fails, writes saves\update-result.txt and starts the game again.
-// Never on: copies without update-source.txt, copies the itch app installed (it keeps .itch\ in the install folder and
+// 1.7.5 (#153): a full-game copy without update-source.txt uses the public repo built in at compile time
+// (TRIFFALL_RELEASES_REPO, from releases-repo.txt): the 1.7.3 release folder that went to itch had no update-source.txt.
+// Never on: demo / no-Editor copies without update-source.txt, copies the itch app installed (it keeps .itch\ in the install folder and
 // updates them itself), Steam builds and any build with TRIFFALL_SELF_UPDATE=OFF (TRIFFALL_NO_SELF_UPDATE).
 #pragma once
 #include <string>
@@ -33,6 +35,10 @@ public:
     bool enabled() const { return !source.empty(); }
     bool remote() const { return isUrl(source); }
     std::string offReason;                  // why this copy has no updater ("" = it has one, or no update-source.txt)
+    bool useBuiltIn = false;                // 1.7.5: the game sets it: no update-source.txt -> the built-in repo (tests: off)
+    std::string builtInRepo = builtInRepoDefault();   // "<owner>/<repo>" ("" = this build has none)
+    std::string sourceFrom;                 // "file" / "built-in" / "" (tests)
+    static std::string builtInRepoDefault();
     void tick(float dt);                    // every frame: a check now and then (and picks up a finished one)
     void checkNow(bool wait = false);       // start a check now (wait = until it's done; tests)
     bool available() const;                 // a newer complete release is ready to install

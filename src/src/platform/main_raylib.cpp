@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
     for (int i = 1; i + 1 < argc; i++)   // --saves <folder>: keep saves, settings and desktop layout there instead (fresh test runs)
         if (std::strcmp(argv[i], "--saves") == 0) saves = savesArg = argv[i + 1];
     std::error_code ec; std::filesystem::create_directories(saves, ec);
-    gUpdater.init(base, saves, savesArg);   // 1.7.0 (#140): only a copy with update-source.txt (install.ps1) looks for updates
+    gUpdater.useBuiltIn = true;             // 1.7.5 (#153): no update-source.txt -> the public repo built into the full game
+    gUpdater.init(base, saves, savesArg);   // 1.7.0 (#140): update-source.txt (install.ps1 / release zips) says where from
 
     if (!gPlatform->init()) return 0;          // Steam asked us to relaunch through the client
     rl_audio_init();

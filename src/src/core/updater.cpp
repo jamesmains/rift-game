@@ -379,9 +379,17 @@ Updater::Found Updater::readLatest(const std::string& src) {
     return f;
 }
 
+std::string Updater::builtInRepoDefault() {
+#ifdef TRIFFALL_RELEASES_REPO
+    return TRIFFALL_RELEASES_REPO;
+#else
+    return "";
+#endif
+}
+
 void Updater::init(const std::string& exeDir0, const std::string& saveDir0, const std::string& savesArg0) {
     exeDir = exeDir0; saveDir = saveDir0; savesArg = savesArg0;
-    source.clear(); offReason.clear(); { std::lock_guard<std::mutex> lk(mu); found = Found(); }
+    source.clear(); offReason.clear(); sourceFrom.clear(); { std::lock_guard<std::mutex> lk(mu); found = Found(); }
     finishDownload(true); stageV = IDLE; { std::lock_guard<std::mutex> lk(mu); dlVersion.clear(); unpackedDir.clear(); dlError.clear(); }
     // what the helper left after the last update
     fs::path res = fs::path(saveDir) / "update-result.txt";
@@ -396,6 +404,9 @@ void Updater::init(const std::string& exeDir0, const std::string& saveDir0, cons
     offReason = "store"; return;   // Steam (or a build made without the updater): the store updates the game
 #endif
     std::string src = trimmed(readAll(fs::path(exeDir) / "update-source.txt"));
+    sourceFrom = src.empty() ? "" : "file";
+    // 1.7.5 (#153): no file (or an empty one) -> the public releases repo this build knows
+    if (src.empty() && useBuiltIn && !builtInRepo.empty()) { src = "https://github.com/" + builtInRepo + "/releases/latest/download/"; sourceFrom = "built-in"; }
     if (src.empty()) return;
     std::error_code ec;
     // 1.7.1 (#149): the itch app installed this copy (it keeps .itch\receipt.json.gz in the install folder) and updates it

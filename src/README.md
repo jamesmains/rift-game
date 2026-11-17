@@ -29,6 +29,13 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.7.5 the Update button can't go missing
+
+* The full game knows where its updates come from by itself. Before, a downloaded copy needed a small settings file
+  next to the game to look for updates, and the 1.7.3 download on itch.io went out without it, so those copies
+  never offered an update. Download 1.7.5 once; from then on the Update button appears when a newer version is out.
+* Copies installed through the itch app still update through the itch app.
+
 ## 1.7.3 updates from GitHub releases
 
 * The Update button in downloaded copies now reads the game's GitHub releases page directly: the new version, its

@@ -1,0 +1,35 @@
+# 1.7.5 (#153): a full-game copy without update-source.txt (the 1.7.3 release folder that went to itch had none) still
+# checks the public releases repo built into the game. Fetches are answered from fixtures (nothing goes to the network).
+installed
+frames 3
+#
+# tests start with the built-in repo off: a bare copy has no updater
+updatemirror fixtures/update_ghapi
+updateinit fixtures/update_bare
+expect updateenabled == 0
+expect updatefrom == none
+#
+# as the game starts it: no file -> the built-in repo, read through GitHub's API (Idea Jotter's releases)
+updatebuiltin test/triffall-releases
+updateinit fixtures/update_bare
+expect updateenabled == 1
+expect updatefrom == built-in
+expect update == 99.0.0
+expect updateurl == https://api.github.com/repos/test/triffall-releases/releases/latest
+frames 3
+expect updatebutton == 1
+#
+# update-source.txt still wins when it's there
+updateinit fixtures/update_web
+expect updatefrom == file
+expect update == 99.0.0
+#
+# the itch app's copies stay off (#149), built-in repo or not
+updateinit fixtures/update_itch
+expect updateenabled == 0
+expect updateoff == itch
+#
+# a build without a built-in repo (demo, no-Editor): a bare copy stays off
+updatebuiltin -
+updateinit fixtures/update_bare
+expect updateenabled == 0

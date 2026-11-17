@@ -73,6 +73,8 @@ int main(int argc, char** argv) {
                 step(1); return true;
             }
             if (cmd == "updateinit") { gUpdater.dryRun = true; std::error_code uec; std::string dir = std::filesystem::exists(p[1], uec) || scriptDir.empty() ? p[1] : scriptDir + "/" + p[1]; printf("  updateinit %s\n", dir.c_str()); gUpdater.init(dir + "/", app.saveDir, ""); gUpdater.checkNow(true); step(2); return true; }
+            // 1.7.5 (#153): updatebuiltin REPO|- = start the updater like the game does (no update-source.txt -> that repo; - = off)
+            if (cmd == "updatebuiltin") { gUpdater.useBuiltIn = p[1] != "-"; if (p[1] != "-") gUpdater.builtInRepo = p[1]; step(1); return true; }
             if (cmd == "updateprogress") { gUpdater.testProgress(atoll(p[1].c_str()), atoll(p[2].c_str())); step(2); return true; }   // fake download progress (GOT TOTAL; -1 = idle)
             if (cmd == "httpget") { std::string err; bool ok = gUpdater.download(p[1], p[2], err); printf("  httpget ok=%d got=%lld %s\n", ok ? 1 : 0, gUpdater.gotBytes(), err.c_str()); step(1); return true; }   // the real WinHTTP fetch (manual checks)
             if (cmd == "updatewait") { gUpdater.finishDownload(true); step(1); return true; }   // the download started by Yes has finished
@@ -272,6 +274,7 @@ int main(int argc, char** argv) {
                 if (key == "updateerror") { got = gUpdater.downloadError(); if (got.empty()) got = "none"; num = false; return true; }
                 if (key == "updateurl") { got = gUpdater.lastUrl; num = false; return true; }
                 if (key == "updateoff") { got = gUpdater.offReason.empty() ? "none" : gUpdater.offReason; num = false; return true; }
+                if (key == "updatefrom") { got = gUpdater.sourceFrom.empty() ? "none" : gUpdater.sourceFrom; num = false; return true; }   // 1.7.5
                 if (key == "updateenabled") { got = gUpdater.enabled() ? "1" : "0"; return true; }
                 if (key == "updateapplied") { got = updateApplied; num = false; return true; }
                 if (key.rfind("applyfile:", 0) == 0) { std::ifstream f(std::filesystem::path(app.saveDir) / "apply" / "copy" / std::filesystem::u8path(key.substr(10))); std::string l; if (f && std::getline(f, l)) { if (!l.empty() && l.back() == '\r') l.pop_back(); got = l; } else got = "none"; num = false; return true; }

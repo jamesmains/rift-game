@@ -59,6 +59,18 @@ option(TRIFFALL_SELF_UPDATE "The game can update itself (Update button)" ON)
 if(TRIFFALL_STEAM OR EMSCRIPTEN OR NOT TRIFFALL_SELF_UPDATE)
   add_compile_definitions(TRIFFALL_NO_SELF_UPDATE=1)
 endif()
+# 1.7.5 (#153): the full game knows the public releases repo itself (../releases-repo.txt), so a copy whose
+# update-source.txt is missing (the 1.7.3 release folder that went to itch had none) still checks GitHub. Not in the demo
+# or the no-Editor build: they'd update into the full game.
+set(_relrepo_file "${CMAKE_SOURCE_DIR}/../releases-repo.txt")
+if(EXISTS "${_relrepo_file}" AND TRIFFALL_EDITOR AND NOT TRIFFALL_DEMO)
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_relrepo_file}")
+  file(STRINGS "${_relrepo_file}" _relrepo LIMIT_COUNT 1 REGEX "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+  string(STRIP "${_relrepo}" _relrepo)
+  if(_relrepo MATCHES "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+    add_compile_definitions(TRIFFALL_RELEASES_REPO="${_relrepo}")
+  endif()
+endif()
 
 # 1.3.0: the folder packed into index.data. build-web.ps1 passes a trimmed copy (tools/web_assets.py: only the music the
 # demo plays, smaller files, no local campaigns); by default the whole assets folder.
