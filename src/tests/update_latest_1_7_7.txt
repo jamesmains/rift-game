@@ -1,0 +1,16 @@
+# 1.7.7 (#156): Idea Jotter's GitHub releases attach latest.json (compact, "exe" renamed to the zipped folder's name).
+# The game reads it and downloads the Windows zip it names. update_github_1_7_3 covers the release without latest.json:
+# its mirror now fails a fetch that still holds an old message, like the real one did before the fix.
+installed
+frames 3
+updatemirror fixtures/update_ijrelease
+updateinit fixtures/update_web
+expect updateenabled == 1
+expect update == 99.0.0
+expect updatenotes == Made by Idea Jotter.
+expect updatesize == 930
+expect updateurl == https://github.com/test/triffall-releases/releases/latest/download/latest.json
+updatedownload
+expect updatestage == ready
+expect updateurl == https://github.com/test/triffall-releases/releases/download/v99.0.0/triffall-v99.0.0-windows.zip
+expect unpacked:Triffall.exe == web exe

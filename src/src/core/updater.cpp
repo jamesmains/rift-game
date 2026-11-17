@@ -237,6 +237,9 @@ bool Updater::unzip(const std::string& zipPath, const std::string& destDir, std:
 // ---- fetching (https only; WinHTTP follows GitHub's redirect to its file host by itself) ----
 bool Updater::fetch(const std::string& url, const std::string& toFile, std::string& body, std::string& err, long long maxBody) {
     { std::lock_guard<std::mutex> lk(mu); lastUrl = url; }
+    // 1.7.7 (#156): start clean. A fetch only succeeds with err empty, and readLatest reuses err: the "Not found" of a
+    // release without latest.json made the GitHub API fetch after it fail too, so no update was ever found that way.
+    err.clear();
     if (fetchHook) return fetchHook(url, toFile, body, err);
 #ifdef TRIFFALL_CAN_UPDATE
     std::string l = lower(url);
@@ -356,7 +359,8 @@ Updater::Found Updater::readLatest(const std::string& src) {
         if (!fetch(src + "latest.json", "", j, err)) {
             // 1.7.3: no latest.json on the release (Idea Jotter's GitHub releases): ask GitHub's API about it instead
             std::string api = githubApiUrl(src), body;
-            if (api.empty() || !fetch(api, "", body, err, 4 << 20)) return f;
+            std::string apiErr;
+            if (api.empty() || !fetch(api, "", body, apiErr, 4 << 20)) return f;
             f = parseGithubRelease(body);
             if (f.version.empty() || compareVersions(f.version, TRIFFALL_VERSION) <= 0) return Found();
             return f;

@@ -67,8 +67,9 @@ int main(int argc, char** argv) {
                     std::string name = url.substr(url.find_last_of('/') + 1);
                     std::filesystem::path f = std::filesystem::path(dir) / name; std::error_code e;
                     if (!std::filesystem::exists(f, e)) { err = "Not found on the update server."; return false; }
-                    if (!toFile.empty()) { std::filesystem::copy_file(f, std::filesystem::u8path(toFile), std::filesystem::copy_options::overwrite_existing, e); if (e) { err = e.message(); return false; } return true; }
-                    std::ifstream in(f, std::ios::binary); std::stringstream ss; ss << in.rdbuf(); body = ss.str(); return true;
+                    if (!toFile.empty()) { std::filesystem::copy_file(f, std::filesystem::u8path(toFile), std::filesystem::copy_options::overwrite_existing, e); if (e) { err = e.message(); return false; } return err.empty(); }
+                    // like the real fetch: a message already in err fails it (1.7.7, #156: fetch clears err first now)
+                    std::ifstream in(f, std::ios::binary); std::stringstream ss; ss << in.rdbuf(); body = ss.str(); return err.empty();
                 };
                 step(1); return true;
             }
