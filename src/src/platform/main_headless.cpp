@@ -2,6 +2,7 @@
 // Headless test driver: runs the app with a scripted sequence of inputs and writes screenshots.
 // Usage: triffall_headless script.txt [outdir]
 #include "../app.h"
+#include "../core/theme.h"
 #include "bot.h"
 #include "../core/updater.h"
 #include <cstdio>
@@ -35,6 +36,7 @@ int main(int argc, char** argv) {
     std::string updateApplied = "none";   // 1.7.1: what the last updateapply said
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
+            if (cmd == "theme") { app.settings.theme = (int)Theme::fromKey(p.size() > 1 ? p[1] : ""); Theme::set((ThemeId)app.settings.theme); return true; }   // 1.8.3 (#184): theme frame|native|onebit
             if (cmd == "nightclassic") { app.settings.nightClassic = p.size() > 1 && atoi(p[1].c_str()) != 0; return true; }   // 1.8.0 (#160): Settings > Display "Night colours"
             // 1.6.0 game commands
 
