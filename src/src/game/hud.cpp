@@ -64,7 +64,8 @@ void Game::drawMenuBackdrop(Canvas& cv, GMode m) {
     Rect a = menuArea(), in = menuInside(a);
     if (m != GMode::SETTINGS && (in.w < BASE_W || in.h < BASE_H)) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); return; }
     Theme::NoMap nm; Pen p{&cv, ctx.font, ctx.ts};
-    if (Theme::native()) { cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115); Theme::windowChrome(p, a.x, a.y, a.w, a.h, menuTitle(m), true); return; }
+    if (Theme::native()) { if (m == GMode::SETTINGS) return;   // settings_ui.cpp draws its own dialog (and dims the world)
+        cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115); Theme::windowChrome(p, a.x, a.y, a.w, a.h, menuTitle(m), true); return; }
     if (Theme::onebit()) { cv.dim(0, 22, SCREEN_W, SCREEN_H - 22, 140); Theme::windowChrome(p, a.x, a.y, a.w, a.h, menuTitle(m), true); return; }
     Color8 deep{20, 22, 31, 255}; Theme::well(cv, a.x, a.y, a.w, a.h, &deep); Theme::panel(cv, a.x + 2, a.y + 2, a.w - 4, a.h - 4);
 }

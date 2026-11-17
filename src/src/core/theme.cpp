@@ -90,7 +90,7 @@ Color8 mapFill(Color8 c) {
     const uint8_t a = c.a;
     if (same(c, C::Panel) || same(c, RGB(18, 16, 24)) || same(c, RGB(30, 28, 40)) || same(c, RGB(20, 20, 28)) || same(c, RGB(26, 26, 36))) return withA(t.panel, a);
     if (same(c, C::PanelHi) || same(c, RGB(50, 50, 66)) || same(c, RGB(60, 60, 80)) || same(c, RGB(40, 40, 54)) || same(c, RGB(50, 50, 70))) return withA(t.face, a);
-    if (same(c, RGB(90, 70, 20)) || same(c, RGB(100, 80, 30)) || same(c, RGB(120, 90, 30)) || same(c, RGB(150, 110, 30))) return withA(t.selFill, a);
+    if (same(c, RGB(90, 70, 20)) || same(c, RGB(100, 80, 30)) || same(c, RGB(120, 90, 30)) || same(c, RGB(150, 110, 30))) return withA(t.id == ThemeId::Native ? H(0xDCDCDC) : t.selFill, a);   // native: a pressed-in light face (the old yellow text on it maps to navy)
     if (same(c, C::Gold) || same(c, RGB(120, 90, 30))) return withA(t.accent, a);
     if (same(c, C::Yellow)) return withA(t.accentHi, a);
     if (t.id == ThemeId::Native) {

@@ -525,6 +525,8 @@ public:
     // theme HUDs (hud.cpp)
     void drawFrameHud(Canvas& cv, InputState& in);
     void drawNativeHud(Canvas& cv, InputState& in);
+    void nativeHudInput(InputState& in);   // 1.8.3 (#176-#178): native menu bar, Alt keys, tool windows (hud_native.cpp; update calls it first)
+    void drawNativeNotes(Canvas& cv);      // 1.8.3 (#176): notifications as tray balloons (drawModeUI calls it in the native theme)
     void drawOneBitHud(Canvas& cv, InputState& in);
     void drawCombatWorld(Canvas& cv, InputState& in);   // combat overlays on the battlefield (world canvas)
     void drawCombatPopups(Canvas& cv, InputState& in);  // the action / spell / item lists, the goal, the round banner
