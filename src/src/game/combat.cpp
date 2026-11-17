@@ -1623,7 +1623,7 @@ void Game::updateCombat(InputState& in, float dt) {
     }
     // action menu (mode 3)
     if (cb.mode == 3) {
-        int mx = Theme::frame() ? -1000 : combatPopX(140), my = combatPopY();   // frame: the column's Actions list (HUD hot spots)
+        int mx = Theme::frame() || Theme::onebit() ? -1000 : combatPopX(140), my = combatPopY();   // frame / onebit: the HUD's Actions list (HUD hot spots)
         if (actP(in, A_UP, CB)) cb.menuSel = (cb.menuSel + NACTIONS - 1) % NACTIONS;
         if (actP(in, A_DOWN, CB)) cb.menuSel = (cb.menuSel + 1) % NACTIONS;
         for (int i = 0; i < NACTIONS; i++) if (in.mouseX >= mx && in.mouseX < mx + 140 && in.mouseY >= my + 24 + i * 20 && in.mouseY < my + 44 + i * 20 && (in.mouseDX || in.mouseDY)) cb.menuSel = i;
@@ -1847,7 +1847,8 @@ void Game::drawCombatWorld(Canvas& cv, InputState& in) {   // 1.8.3: on the worl
         Color8 team = enemy ? foeColor() : u.ally ? allyColor() : friendColor();
         cv.fillRect(sx + 1, sy + 1, sz - 2, sz - 2, enemy ? foeBack() : u.ally ? RGB(0, 30, 70, 190) : friendBack());
         cv.rect(sx, sy, sz, sz, team);
-        if (active) { Color8 c = C::Yellow; cv.rect(sx - 1, sy - 1, sz + 2, sz + 2, c); if ((ctx.frame / 10) % 2) cv.rect(sx - 2, sy - 2, sz + 4, sz + 4, c); }
+        if (active && Theme::onebit()) Theme::glow(cv, sx - 1, sy - 1, sz + 2, sz + 2);   // 1.8.3 (#180): the one-bit amber glow, steady
+        else if (active) { Color8 c = C::Yellow; cv.rect(sx - 1, sy - 1, sz + 2, sz + 2, c); if ((ctx.frame / 10) % 2) cv.rect(sx - 2, sy - 2, sz + 4, sz + 4, c); }
         drawUnitSprite(cv, u.ch, sx, sy, false);
         if (u.hitFlash > 0 && ((int)(u.hitFlash * 30) % 2 == 0 || (settings && settings->reduceFlashing))) {   // struck: the sprite flashes
             Color8 fc = settings && settings->reduceFlashing ? RGB(255, 200, 200, 110) : C::White;
@@ -1979,7 +1980,7 @@ void Game::drawCombatPopups(Canvas& cv, InputState& in) {
         ctx.font->draw(cv, *ctx.ts, bx + 12, by + 2, cb.bannerText, Color8{255, 225, 140, (uint8_t)(255 * a)}, 2);
     }
     // action menus
-    if (myTurn && cb.mode == 3 && !Theme::frame()) {   // frame: the Actions list in the column is the menu
+    if (myTurn && cb.mode == 3 && !Theme::frame() && !Theme::onebit()) {   // frame / onebit: the HUD's Actions list is the menu
         int mx = combatPopX(140), my = combatPopY();
         panelTitle(ctx, mx, my, 140, 30 + NACTIONS * 20, "Action"); uiRect(mx, my - 4, 140, 34 + NACTIONS * 20);
         for (int i = 0; i < NACTIONS; i++) { bool sel = cb.menuSel == i; if (sel) cv.fillRect(mx + 6, my + 24 + i * 20, 128, 18, RGB(90, 70, 20)); ctx.font->draw(cv, *ctx.ts, mx + 12, my + 27 + i * 20, ACTIONS[i], sel ? C::Yellow : C::White); int cw = actionChipsW(ctx, i); if (cw) { int kx = mx + 130 - cw, kw = keyChip(ctx, kx, my + 26 + i * 20, ACTION_KEYS[i]); if (i == 1) keyChip(ctx, kx + kw + 2, my + 26 + i * 20, ACTION_KEYS[i]); } }

@@ -59,7 +59,7 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
 
     // ---- tabs ----
     int tx = r.x + 8, ty = r.y + 6;
-    if (inGame && !nat) { title(p, r.x + 10, r.y + 10, "Settings"); tx = r.x + 16 + titleW(p, "Settings") + 30; }
+    if (inGame && !nat && !one) { title(p, r.x + 10, r.y + 10, "Settings"); tx = r.x + 16 + titleW(p, "Settings") + 30; }
     std::vector<std::string> tabNames = {"General", "Controls", "Access"};
     int tabW = nat ? 70 : 106, tabH = nat ? 20 : 24;
     if (one) tabW = 0;
@@ -352,7 +352,7 @@ void Game::openSettings() {
 static Rect settingsRect() {
     const int W = UI::SCREEN_W, H = UI::SCREEN_H;
     if (Theme::native()) { int w = std::min(W - 8, 660), h = std::min(H - 30, 468); return {(W - w) / 2, std::max(2, (H - 28 - h) / 2), w, h}; }
-    if (Theme::onebit()) { int w = std::min(W - 16, 740), h = std::min(H - 30, 480); int x = W >= 900 ? W - w - 48 : (W - w) / 2; return {x, 30, w, h}; }
+    if (Theme::onebit()) { int w = std::min(W - 16, 740), h = std::min(H - 30, 480); int x = W >= 900 ? W - w - 24 : (W - w) / 2; return {x, std::min(36, H - h - 4), w, h}; }   // beside the Start menu (the HUD dims the world)
     int colW = W >= 853 ? 236 : 200;
     if (W - colW - 2 < 600) return {0, 0, W, H};
     return {2, 2, W - colW - 6, H - 4};
@@ -370,7 +370,7 @@ void Game::drawSettingsScreen(Canvas& cv, InputState& in) {
     uiRect(r.x, r.y, r.w, r.h);
     Rect inner = r;
     if (Theme::native()) { cv.dim(VIEW_X, VIEW_Y, VIEW_W, VIEW_H, 115); inner = Theme::windowChrome(p, r.x, r.y, r.w, r.h, "Settings", true); }
-    else if (Theme::onebit()) { cv.dim(0, 22, SCREEN_W, SCREEN_H - 22, 150); inner = Theme::windowChrome(p, r.x, r.y, r.w, r.h, "Settings", true); }
+    else if (Theme::onebit()) { inner =Theme::windowChrome(p, r.x, r.y, r.w, r.h, "Settings", true); }
     else { Color8 deep{20, 22, 31, 255}; Theme::well(cv, r.x - 2, r.y - 2, r.w + 4, r.h + 4, &deep); Theme::panel(cv, r.x, r.y, r.w, r.h); inner = {r.x + 4, r.y + 2, r.w - 8, r.h - 4}; }
     int res = sp.draw(p, in, inner, *settings, req, true);
     if (res == SettingsPanel::R_APPLY) { settings->save(saveDir + "/settings.ini"); notify("Settings saved."); }
