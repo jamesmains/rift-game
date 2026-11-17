@@ -46,7 +46,8 @@ shot hollowmere_night.png
 clock 1140
 frames 10
 expect darkhides:7,5 == 0
-# (#166) a dark map with no sky= is enclosed: the seen-but-unlit floor is pitch black (was the blue-grey shadow)
+# (#166) a dark map with no sky= is enclosed: pitch black where the party hasn't been; 1.8.3 (#168): a spot seen once
+# keeps a dark night tint when the light moves on (it went pitch black again in 1.8.1)
 clock 600
 give torch_item 3
 teleport goblin_cave 5 13
@@ -56,7 +57,8 @@ frames 330
 warp 900 300
 frames 2
 expect pxlum:100,200 > 40
-expect px:290,200 == 0,0,0
+expect pxblue:290,200 > 10
+expect px:600,300 == 0,0,0
 expect darkhides:30,30 == 1
 shot goblin_cave_enclosed.png
 # open to the sky: the blue-grey shadow again
@@ -66,7 +68,8 @@ expect pxblue:290,200 > 10
 shot goblin_cave_sky.png
 con sky 0
 frames 10
-expect px:290,200 == 0,0,0
+expect pxblue:290,200 > 10
+expect px:600,300 == 0,0,0
 # the bandit camp and the marsh are written sky=1
 teleport bandit_camp 26 27
 frames 60

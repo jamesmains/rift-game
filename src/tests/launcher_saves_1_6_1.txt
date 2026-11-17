@@ -25,7 +25,8 @@ expect window == launcher
 expect launchcampaign == tutorial
 expect deskslots == 0100
 shot launcher_tutorial.png
-click 480 360
+# Continue (1.8.3: the launcher's layout follows the theme)
+deskaction continue
 frames 10
 expect running == 1
 expect map == tut_watch

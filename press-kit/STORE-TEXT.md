@@ -97,7 +97,7 @@ Unzip and run Triffall.exe with the assets folder next to it. F11 or Alt+Enter t
 - Desktop icons: Cute Desktop Icons 32x32 by Mayke-Arth
 - Music: Pixel Fantasy 30 Tracks and Loops by AlkaKrab
 - Sound effects: Pixel Combat by Helton Yan (CC BY 4.0)
-- Clear font: Spleen by Frederic Cambus (BSD)
+- Fonts: Spleen 6x12 and 5x8 by Frederic Cambus (BSD)
 - Built with raylib
 
 ## Steam content survey: AI-generated content

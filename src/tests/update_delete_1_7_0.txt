@@ -42,8 +42,8 @@ frames 3
 launchcampaign doomed_isle
 expect launchcampaign == doomed_isle
 shot delete_button.png
-# Delete... (bottom right of the Play page), then Yes
-click 575 420
+# Delete... (the launcher's Begin list since 1.8.3), then Yes
+deskaction deleteadventure
 frames 3
 expect topwindow == Delete Adventure
 shot delete_confirm.png

@@ -45,8 +45,8 @@ expect log contains Not during a fight
 key ESC
 frames 3
 expect mode == COMBAT
-# --- the bar's Menu button does the same ---
-click 620 12
+# --- the Menu button in the fight's HUD does the same (1.8.3: wherever the theme puts it) ---
+hudclick pause -1
 frames 3
 expect mode == PAUSE
 key ESC

@@ -37,6 +37,18 @@ int main(int argc, char** argv) {
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
             if (cmd == "theme") { app.settings.theme = (int)Theme::fromKey(p.size() > 1 ? p[1] : ""); Theme::set((ThemeId)app.settings.theme); return true; }   // 1.8.3 (#184): theme frame|native|onebit
+            // 1.8.3 (#184): click the HUD hot spot of that kind (action belt combat unit pause member craft ptab slot pick lead)
+            // and arg, wherever the active theme put it: tests stay the same in every theme
+            if (cmd == "hudclick") {
+                static const std::map<std::string, int> kinds = {{"action", Game::HH_ACTION}, {"member", Game::HH_MEMBER}, {"belt", Game::HH_BELT}, {"combat", Game::HH_COMBAT}, {"unit", Game::HH_UNIT}, {"pause", Game::HH_PAUSE}, {"craft", Game::HH_CRAFT}, {"ptab", Game::HH_PTAB}, {"slot", Game::HH_SLOT}, {"pick", Game::HH_PICK}, {"lead", Game::HH_LEAD}};
+                auto it = kinds.find(p.size() > 1 ? p[1] : ""); int arg = p.size() > 2 ? atoi(p[2].c_str()) : 0;
+                const Game::HudHit* hit = nullptr; if (it != kinds.end()) for (auto& h : app.game.hudHits) if (h.kind == it->second && h.arg == arg) hit = &h;
+                if (!hit) { printf("BOT FAIL: hudclick %s %d - no such hot spot on screen\n", p.size() > 1 ? p[1].c_str() : "", arg); return true; }
+                int nx = hit->r.x + hit->r.w / 2, ny = hit->r.y + hit->r.h / 2;
+                in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; step(2);
+                in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(3);
+                return true;
+            }
             if (cmd == "nightclassic") { app.settings.nightClassic = p.size() > 1 && atoi(p[1].c_str()) != 0; return true; }   // 1.8.0 (#160): Settings > Display "Night colours"
             // 1.6.0 game commands
 
@@ -161,7 +173,7 @@ int main(int argc, char** argv) {
         else if (cmd == "rdrag") { int x0 = atoi(p[1].c_str()), y0 = atoi(p[2].c_str()), x1 = atoi(p[3].c_str()), y1 = atoi(p[4].c_str()); in.mouseX = x0; in.mouseY = y0; step(1); in.mousePressed[2] = true; in.mouseDown[2] = true; step(1); for (int i = 1; i <= 10; i++) { int nx = x0 + (x1 - x0) * i / 10, ny = y0 + (y1 - y0) * i / 10; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; in.mouseDown[2] = true; step(1); } in.mouseDown[2] = false; in.mouseReleased[2] = true; step(1); }
         else if (cmd == "drag") { int x0 = atoi(p[1].c_str()), y0 = atoi(p[2].c_str()), x1 = atoi(p[3].c_str()), y1 = atoi(p[4].c_str()); in.mouseX = x0; in.mouseY = y0; step(1); in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); for (int i = 1; i <= 10; i++) { int nx = x0 + (x1 - x0) * i / 10, ny = y0 + (y1 - y0) * i / 10; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; in.mouseDown[0] = true; step(1); } in.mouseDown[0] = false; in.mouseReleased[0] = true; step(1); }
         else if (cmd == "mouseunit") {   // mouseunit DX DY: move the pointer to the tile DX,DY from the acting combat unit
-            auto& G = app.game; if (G.cb.selectedUnit >= 0) { auto& u = G.cb.units[G.cb.selectedUnit]; int nx = (u.x + atoi(p[1].c_str())) * UI::TILE - G.camX + UI::TILE / 2, ny = (u.y + atoi(p[2].c_str())) * UI::TILE - G.camY + UI::TILE / 2; in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; } step(2); }
+            auto& G = app.game; if (G.cb.selectedUnit >= 0) { auto& u = G.cb.units[G.cb.selectedUnit]; int nx = UI::VIEW_X + (u.x + atoi(p[1].c_str())) * UI::TILE - G.camX + UI::TILE / 2, ny = UI::VIEW_Y + (u.y + atoi(p[2].c_str())) * UI::TILE - G.camY + UI::TILE / 2;  /* 1.8.3: + the world view's place on the screen */ in.mouseDX = nx - in.mouseX; in.mouseDY = ny - in.mouseY; in.mouseX = nx; in.mouseY = ny; } step(2); }
         else if (cmd == "mousein") { in.mouseInWindow = atoi(p[1].c_str()) != 0; step(1); }   // the pointer is over the window (a real mouse)
         else if (cmd == "wheel") { in.wheel = atoi(p[1].c_str()); step(1); }
         else if (cmd == "say") printf("%s\n", line.substr(4).c_str());
@@ -404,7 +416,7 @@ int main(int argc, char** argv) {
             else if (startsWith(key, "item:")) got = std::to_string(g.party.countItem(key.substr(5)));
             else if (startsWith(key, "cond:")) got = g.evalCond(key.substr(5)) ? "1" : "0";   // 1.1.7: any condition (lit, equipped:x, map:y...)
             else if (startsWith(key, "savefile:")) { std::error_code ec; got = std::filesystem::exists(app.saveDir + "/" + key.substr(9), ec) ? "1" : "0"; }
-            else if (key == "cursorundermouse") { const int T = UI::TILE; got = (g.cb.selX == (in.mouseX + g.camX) / T && g.cb.selY == (in.mouseY + g.camY) / T) ? "1" : "0"; }
+            else if (key == "cursorundermouse") { const int T = UI::TILE; got = (g.cb.selX == (in.mouseX - UI::VIEW_X + g.camX) / T && g.cb.selY == (in.mouseY - UI::VIEW_Y + g.camY) / T) ? "1" : "0"; }
             else if (key == "cursoronunit") { got = "0"; if (g.cb.selectedUnit >= 0) { auto& u = g.cb.units[g.cb.selectedUnit]; got = (g.cb.selX == u.x && g.cb.selY == u.y) ? "1" : "0"; } }
             else if (key == "cblog") { got.clear(); for (auto& l : g.cb.log) got += l + "\n"; num = false; }
             else if (key == "allies" || key == "summons") { int c = 0; for (auto& u : g.cb.units) if (u.ch.alive && (key == "allies" ? u.ally : u.summoned)) c++; got = std::to_string(c); }

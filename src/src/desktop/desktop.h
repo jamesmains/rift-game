@@ -9,6 +9,7 @@
 #include "../core/gfx.h"
 #include "../core/input.h"
 #include "../game/game.h"
+#include "../game/settings_ui.h"
 
 struct IconDef { std::string label; int ic, ir; std::string action; int dc = -1, dr = -1; };   // dc,dr: the default icon (ic,ir may be the player's pick)
 
@@ -118,6 +119,14 @@ public:
     void campaignDeleted(const std::string& id);   // forget it: the launcher's pick, the slots shown
     // 1.7.0 (#140): the taskbar's Update button (drawn last frame at updBtnX, updBtnW wide; 0 = not shown)
     int updBtnX = 0, updBtnW = 0;
+    // 1.8.3 (#170 #175 #179 #183): UI themes on the desktop
+    int appBtnX = 0, appBtnW = 0;          // one-bit menu bar: the running game's name (a click resumes it)
+    SettingsPanel setPanel;                 // the Settings window's pages (shared with the in-game Settings)
+    ThemeId lastTheme = ThemeId::Frame; bool iconsPlaced = false;
+    static std::array<int, 2> defaultIconSpot(int slot, ThemeId t);
+    void themeChanged(ThemeId from, ThemeId to);
+    void windowSize(DeskWindow& w) const;
+    void drawMenuBar(Canvas& cv, InputState& in);
     bool updateResultShown = false;
     void askUpdate();
 
@@ -144,7 +153,8 @@ private:
     void drawSolitaire(Canvas& cv, DeskWindow& w, InputState& in, bool active);
     void drawMyComputer(Canvas& cv, DeskWindow& w, InputState& in, bool active);
     void drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool active);          // launcher.cpp
-    void drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh);
+    void drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh, Rect clip = Rect{0, 0, 0, 0});
+    void drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool active, Rect area);   // 1.8.3: the first page, per theme
     bool launchButton(Canvas& cv, InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled, bool primary, bool active);
     void launchScrollText(Canvas& cv, InputState& in, DeskWindow& w, int x, int y, int bw, int bh, const std::vector<std::string>& lines, bool active);
 public:

@@ -4,6 +4,7 @@
 // 1.6.2 (#137): the Field Notes and Files pages were removed (little used); what you learn about monsters is in the
 // Journal's Bestiary, and the documents that hold terminal passwords are found in the world (signs, data disks). Retro window outside, the game's own night-and-rift look inside.
 #include "desktop.h"
+#include "../core/theme.h"
 #include "../core/audio.h"
 #include "../core/version.h"
 #include "../core/updater.h"
@@ -14,9 +15,14 @@
 #include <filesystem>
 
 namespace {
-const Color8 L_BG = RGB(16, 14, 28), L_PANEL = RGB(28, 24, 46), L_EDGE = RGB(92, 70, 146), L_TEXT = RGB(226, 220, 206),
-             L_DIM = RGB(140, 134, 162), L_AMBER = RGB(255, 205, 90), L_VIOLET = RGB(176, 120, 246), L_SEL = RGB(62, 42, 104),
-             L_HOVER = RGB(78, 56, 128), L_GOOD = RGB(120, 220, 140);
+// 1.8.3 (#175 #179 #183): the launcher's colours follow the UI theme (they were a fixed night-and-rift violet)
+Color8 L_BG, L_PANEL, L_EDGE, L_TEXT, L_DIM, L_AMBER, L_VIOLET, L_SEL, L_HOVER, L_GOOD, L_SELTEXT, L_LIST;
+void launcherColors() {
+    const UiTheme& t = Theme::th();
+    if (Theme::native()) { L_BG = t.face; L_PANEL = t.face; L_EDGE = RGB(128, 128, 128); L_TEXT = RGB(0, 0, 0); L_DIM = RGB(128, 128, 128); L_AMBER = RGB(0, 0, 128); L_VIOLET = RGB(0, 0, 128); L_SEL = RGB(0, 0, 128); L_HOVER = RGB(216, 216, 232); L_GOOD = RGB(0, 100, 0); L_SELTEXT = RGB(255, 255, 255); L_LIST = RGB(255, 255, 255); }
+    else if (Theme::onebit()) { L_BG = t.back; L_PANEL = t.back; L_EDGE = t.text; L_TEXT = t.text; L_DIM = t.dim; L_AMBER = t.accent; L_VIOLET = t.mp; L_SEL = RGB(36, 35, 42); L_HOVER = RGB(36, 35, 42); L_GOOD = t.good; L_SELTEXT = t.accent; L_LIST = t.back; }
+    else { L_BG = t.back; L_PANEL = t.panel; L_EDGE = t.hi; L_TEXT = t.text; L_DIM = t.dim; L_AMBER = t.accent; L_VIOLET = t.move; L_SEL = t.rowSel; L_HOVER = RGB(69, 75, 99); L_GOOD = t.good; L_SELTEXT = t.accent; L_LIST = t.well; }
+}
 const char* PAGE_NAMES[] = {"Play", "Saves", "How to Play", "Achievements", "About"};
 const char* PAGE_ACTIONS[] = {"launcher", "saves", "readme", "achievements", "about"};
 }
@@ -73,14 +79,9 @@ int Desktop::newestSlot() const {
 bool Desktop::launchButton(Canvas& cv, InputState& in, int x, int y, int w, int h, const std::string& label, bool enabled, bool primary, bool active) {
     bool hover = active && enabled && !mouseUsed && in.mouseX >= x && in.mouseY >= y && in.mouseX < x + w && in.mouseY < y + h;
     if (active && enabled) hot(x, y, w, h);
-    bool down = hover && in.mouseDown[0];
-    cv.fillRect(x, y, w, h, !enabled ? RGB(24, 22, 36) : down ? L_SEL : hover ? L_HOVER : primary ? RGB(54, 38, 92) : L_PANEL);
-    cv.rect(x, y, w, h, !enabled ? RGB(52, 48, 70) : primary || hover ? L_AMBER : L_EDGE);
-    if (hover && (in.gamepadActive || padNavWindows)) cv.rect(x + 2, y + 2, w - 4, h - 4, L_AMBER);
-    Font& f = *ctx.font; f.bold = primary;
-    int tw = f.width(label);
-    f.draw(cv, *ctx.ts, x + (w - tw) / 2 + (down ? 1 : 0), y + (h - 12) / 2 + (down ? 1 : 0), label, !enabled ? RGB(84, 80, 100) : primary ? L_AMBER : L_TEXT);
-    f.bold = false;
+    Theme::Pen p{&cv, ctx.font, ctx.ts};
+    Theme::button(p, x, y, w, h, label, !enabled ? Theme::BS_DISABLED : primary ? (Theme::native() ? Theme::BS_DEFAULT : Theme::BS_SELECTED) : Theme::BS_NORMAL, hover);
+    if (hover && (in.gamepadActive || padNavWindows)) { if (Theme::onebit()) Theme::glow(cv, x, y, w, h); else Theme::frameRect(cv, x + 2, y + 2, w - 4, h - 4, Theme::native() ? RGB(0, 0, 0) : Theme::th().accentHi); }
     bool clicked = hover && in.mousePressed[0];
     if (clicked) { mouseUsed = true; gAudio.play("desktop_click"); }
     return clicked;
@@ -89,7 +90,7 @@ bool Desktop::launchButton(Canvas& cv, InputState& in, int x, int y, int w, int 
 // a box of text lines with a scroll bar; the wheel scrolls it while the pointer is over it, PgUp/PgDn (updateWindow) too
 void Desktop::launchScrollText(Canvas& cv, InputState& in, DeskWindow& w, int x, int y, int bw, int bh, const std::vector<std::string>& lines, bool active) {
     Font& f = *ctx.font;
-    cv.fillRect(x, y, bw, bh, RGB(10, 9, 18)); cv.rect(x, y, bw, bh, L_EDGE);
+    cv.fillRect(x, y, bw, bh, L_LIST); cv.rect(x, y, bw, bh, L_EDGE);
     int maxShow = std::max(1, (bh - 10) / 13), n = (int)lines.size(), maxScroll = std::max(0, n - maxShow);
     if (active && in.wheel && in.mouseX >= x && in.mouseX < x + bw && in.mouseY >= y && in.mouseY < y + bh) w.scroll -= in.wheel * 3;
     w.scroll = clampi(w.scroll, 0, maxScroll);
@@ -100,13 +101,14 @@ void Desktop::launchScrollText(Canvas& cv, InputState& in, DeskWindow& w, int x,
     }
     if (maxScroll > 0) {
         int sx = x + bw - 8, sy = y + 3, sh = bh - 6, th = std::max(14, sh * maxShow / n), ty = sy + (sh - th) * w.scroll / maxScroll;
-        cv.fillRect(sx, sy, 5, sh, RGB(32, 28, 50)); cv.fillRect(sx, ty, 5, th, L_EDGE);
+        cv.fillRect(sx, sy, 5, sh, L_HOVER); cv.fillRect(sx, ty, 5, th, L_EDGE);
     }
 }
 
 // the banner: a night sky over Aldmoor with the Rift torn through it, the five heroes on the ridge, the logo
-void Desktop::drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh) {
-    cv.setClip({x, y, bw, bh});
+void Desktop::drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh, Rect clip) {
+    if (clip.w <= 0) clip = {x, y, bw, bh};
+    cv.setClip(clip);
     for (int r = 0; r < bh; r++) {
         float k = (float)r / bh;
         cv.hline(x, y + r, bw, RGB((uint8_t)(10 + 40 * k), (uint8_t)(8 + 12 * k), (uint8_t)(30 + 46 * k)));
@@ -137,45 +139,29 @@ void Desktop::drawLauncherBanner(Canvas& cv, int x, int y, int bw, int bh) {
             int px = hx + n * 26 - 10; ctx.ts->drawRecolor(cv, T(c->spriteCol, c->spriteRow), px, ridge(px + 12) - 22, 2, RGB(150, 118, 210)); n++; } }
     // the logo (the game's own letters) and the version
     { Font& f = *ctx.font; int keep = f.style; f.style = Font::STYLE_CLASSIC; f.bold = true;
-      f.draw(cv, *ctx.ts, x + 15, y + 15, "TRIFFALL", RGB(90, 50, 0), 3); f.draw(cv, *ctx.ts, x + 12, y + 12, "TRIFFALL", L_AMBER, 3);
+      f.draw(cv, *ctx.ts, x + 15, y + 15, "TRIFFALL", RGB(90, 50, 0), 3); f.draw(cv, *ctx.ts, x + 12, y + 12, "TRIFFALL", RGB(255, 205, 90), 3);   // the banner keeps its own colours in every theme
       f.bold = false; f.style = keep;
       f.draw(cv, *ctx.ts, x + 14, y + 52, "an old-school RPG", RGB(210, 196, 160));
-      f.draw(cv, *ctx.ts, x + bw - 8 - f.width(TRIFFALL_VERSION_LABEL), y + bh - 15, TRIFFALL_VERSION_LABEL, L_DIM); }
+      f.draw(cv, *ctx.ts, x + bw - 8 - f.width(TRIFFALL_VERSION_LABEL), y + bh - 15, TRIFFALL_VERSION_LABEL, RGB(140, 134, 162)); }
     cv.resetClip();
-    cv.rect(x, y, bw, bh, L_EDGE);
 }
 
 void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
     Font& f = *ctx.font;
-    cv.fillRect(w.x + 4, w.y + 24, w.w - 8, w.h - 28, L_BG);
-    int bx = w.x + 6, by = w.y + 26, bw = w.w - 12, bh = 84;
-    drawLauncherBanner(cv, bx, by, bw, bh);
-    // ---- the page list (left) ----
-    int nx = w.x + 6, ny = by + bh + 6, nw = 128, ch = w.y + w.h - 6 - ny;
-    static const int ICONS[][2] = {{2, 7}, {0, 3}, {1, 4}, {3, 8}, {3, 3}};
-    for (int p = 0; p < LP_COUNT; p++) {
-        int ry = ny + p * 26; bool sel = w.page == p;
-        bool hv = active && !mouseUsed && in.mouseX >= nx && in.mouseX < nx + nw && in.mouseY >= ry && in.mouseY < ry + 24;
-        if (active) hot(nx, ry, nw, 24);
-        cv.fillRect(nx, ry, nw, 24, sel ? L_SEL : hv ? L_HOVER : L_PANEL);
-        if (sel) cv.fillRect(nx, ry, 3, 24, L_AMBER);
-        if (hv && (in.gamepadActive || padNavWindows)) cv.rect(nx, ry, nw, 24, L_AMBER);
-        int ic = ICONS[p][0], ir = ICONS[p][1]; iconCell(PAGE_ACTIONS[p], ic, ir);
-        for (int yy = 0; yy < 16; yy++) for (int xx = 0; xx < 16; xx++) { Color8 c = icons.get(32 + ic * 32 + xx * 2, 32 + ir * 32 + yy * 2); if (c.a) cv.put(nx + 7 + xx, ry + 4 + yy, c); }
-        f.bold = sel; f.draw(cv, *ctx.ts, nx + 30, ry + 6, PAGE_NAMES[p], sel ? L_AMBER : L_TEXT); f.bold = false;
-        if (hv && in.mousePressed[0]) { if (w.page != p) { w.page = p; w.scroll = 0; w.pick = 0; gAudio.play("desktop_click"); } mouseUsed = true; }
-    }
-    { int ly = ny + LP_COUNT * 26 + 6;
-      cv.hline(nx + 4, ly - 4, nw - 8, L_EDGE);
-      if (launchButton(cv, in, nx, ly, nw, 22, "Settings", true, false, active)) { openWindow("settings"); return; }   // (a new window: w is stale after it)
-      ly += 26;
-#ifndef TRIFFALL_NO_EDITOR
-      if (launchButton(cv, in, nx, ly, nw, 22, "Editor", true, false, active)) { runAction("editor"); return; }
-      ly += 26;
-#endif
-      (void)ly; }
+    launcherColors();
+    Theme::NoMap nm; const UiTheme& th = Theme::th(); Theme::Pen pen{&cv, ctx.font, ctx.ts};
+    // the inside: below the 90s title bar (frame, native) or the one-bit striped bar
+    const bool one = Theme::onebit(), nat = Theme::native();
+    int ix = one ? w.x + 1 : w.x + 4, iy = one ? w.y + 22 : w.y + 24, iw = one ? w.w - 2 : w.w - 8, ih = one ? w.h - 23 : w.h - 28;
+    cv.fillRect(ix, iy, iw, ih, L_BG);
+    if (w.page == LP_PLAY) { drawLauncherHome(cv, w, in, active, {ix, iy, iw, ih}); return; }
+    // ---- another page: a Back button and the page's title, the page below ----
+    if (launchButton(cv, in, ix + 8, iy + 6, 70, 22, "< Back", true, false, active)) { w.page = LP_PLAY; w.scroll = 0; w.pick = 0; return; }
+    int ny = iy + 34, ch = iy + ih - 6 - ny;
+    int nx = ix + 2, nw = -6;   // (the old page list is gone: the page uses the whole width)
+    (void)th; (void)pen; (void)nat;
     // ---- the page (right) ----
-    int cx = nx + nw + 6, cy = ny, cw = w.x + w.w - 6 - cx;
+    int cx = ix + 8, cy = ny, cw = iw - 16; (void)nx; (void)nw;
     auto camps = listCampaigns(assetDir);
     int ci = 0; for (size_t i = 0; i < camps.size(); i++) if (camps[i].id == launchCampaign) ci = (int)i;
     const CampaignInfo* cur = camps.empty() ? nullptr : &camps[ci];
@@ -193,62 +179,7 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
         if (launchButton(cv, in, sx + sw - 22, sy, 22, 20, ">", camps.size() > 1, false, active) && !camps.empty()) pickCampaign(camps[(ci + 1) % camps.size()].id);
     };
 
-    if (w.page == LP_PLAY) {
-        // the adventures (campaigns) on this computer
-        int lw = 176, rowH = 30, maxRows = std::max(1, (ch - 22) / rowH);
-        heading(cx, cy + 2, "Adventures");
-        int first = clampi(w.scroll, 0, std::max(0, (int)camps.size() - maxRows)); w.scroll = first;
-        if (active && in.wheel && in.mouseX >= cx && in.mouseX < cx + lw && in.mouseY >= cy + 18) w.scroll = clampi(w.scroll - in.wheel, 0, std::max(0, (int)camps.size() - maxRows));
-        for (int i = 0; i < maxRows && first + i < (int)camps.size(); i++) {
-            const CampaignInfo& c = camps[first + i]; int ry = cy + 18 + i * rowH; bool sel = c.id == launchCampaign;
-            bool hv = active && !mouseUsed && in.mouseX >= cx && in.mouseX < cx + lw && in.mouseY >= ry && in.mouseY < ry + rowH - 2;
-            if (active) hot(cx, ry, lw, rowH - 2);
-            cv.fillRect(cx, ry, lw, rowH - 2, sel ? L_SEL : hv ? L_HOVER : L_PANEL);
-            if (sel) cv.rect(cx, ry, lw, rowH - 2, L_AMBER);
-            for (int yy = 0; yy < 16; yy++) for (int xx = 0; xx < 16; xx++) { Color8 px = icons.get(32 + c.iconC * 32 + xx * 2, 32 + c.iconR * 32 + yy * 2); if (px.a) cv.put(cx + 6 + xx, ry + 6 + yy, px); }
-            std::string nm = c.name; while (f.width(nm) > lw - 34 && !nm.empty()) nm.pop_back();
-            f.draw(cv, *ctx.ts, cx + 28, ry + 3, nm, sel ? L_AMBER : L_TEXT);
-            std::string tag = c.id == "triffall" ? "the main story" : c.id == "tutorial" ? "start here" : c.author.empty() ? "campaign" : "by " + c.author;
-            while (f.width(tag) > lw - 34 && !tag.empty()) tag.pop_back();
-            f.draw(cv, *ctx.ts, cx + 28, ry + 15, tag, c.id == "tutorial" ? L_GOOD : L_DIM);
-            if (hv && in.mousePressed[0]) { mouseUsed = true; gAudio.play("desktop_click");
-                if (sel && dblTimer > 0 && dblIcon == 300 + first + i) { dblTimer = 0; openNewGame(c.id); return; }   // double-click: New Game for it
-                pickCampaign(c.id); dblTimer = 0.4f; dblIcon = 300 + first + i; }
-        }
-        // the picked one: what it is, its newest save, and the big buttons
-        int dx = cx + lw + 10, dw = cx + cw - dx;
-        if (cur) {
-            int y = cy + 2;
-            if (game->running) {
-                std::string run = "Playing now: " + game->heroName + (game->campaignId != "triffall" ? " (" + game->campaign.name + ")" : "");
-                while (f.width(run) > dw && !run.empty()) run.pop_back();
-                f.draw(cv, *ctx.ts, dx, y, run, L_GOOD);
-                if (launchButton(cv, in, dx, y + 16, dw, 24, "Resume", true, true, active)) { runAction("resume"); return; }
-                y += 48;
-            }
-            f.bold = true; f.draw(cv, *ctx.ts, dx, y, cur->name, L_AMBER); f.bold = false; y += 14;
-            std::string by2 = cur->id == "triffall" ? "The main story" : cur->author.empty() ? "" : "by " + cur->author;
-            if (!cur->version.empty()) by2 += (by2.empty() ? "version " : ", version ") + cur->version;
-            if (!by2.empty()) { f.draw(cv, *ctx.ts, dx, y, by2, L_DIM); y += 14; }
-            y += 4;
-            auto ls = f.wrap(cur->desc.empty() ? "No description." : cur->desc, dw);
-            int maxL = game->running ? 4 : 7;
-            for (size_t i = 0; i < ls.size() && (int)i < maxL; i++) { f.draw(cv, *ctx.ts, dx, y, ls[i], L_TEXT); y += 13; }
-            if (cur->id == "tutorial" && !game->running) { y += 2; f.draw(cv, *ctx.ts, dx, y, "Recommended for your first time.", L_GOOD); y += 13; }
-            int byB = cy + ch - 92;
-            int nw2 = newestSlot();
-            cv.hline(dx, byB - 26, dw, L_EDGE);
-            if (nw2 >= 0) { std::string s = "Newest save: " + slotLine(slots[nw2]); std::string a = ago(slots[nw2].saved); while (f.width(s) > dw && !s.empty()) s.pop_back(); f.draw(cv, *ctx.ts, dx, byB - 20, s, L_TEXT); if (!a.empty()) f.draw(cv, *ctx.ts, dx, byB - 8, (nw2 == 3 ? "autosave, " : fmt("slot %d, ", nw2 + 1)) + a, L_DIM); }
-            else f.draw(cv, *ctx.ts, dx, byB - 16, "No saves for this adventure yet.", L_DIM);
-            if (w.focusFirst && active) { w.focusFirst = false; w.focusX = dx + dw / 2; w.focusY = (nw2 >= 0 ? byB + 4 : byB + 34) + 13; }   // a controller starts on Continue (or New Game)
-            if (launchButton(cv, in, dx, byB + 4, dw, 26, "Continue", nw2 >= 0, nw2 >= 0 && !game->running, active)) { loadSlotAsk(nw2); return; }
-            if (launchButton(cv, in, dx, byB + 34, dw, 26, "New Game", true, nw2 < 0 && !game->running, active)) { openNewGame(cur->id); return; }
-            // 1.7.0 (#145): an adventure the player added or made can be deleted (not the main story or the Tutorial)
-            bool canDelete = !isCoreCampaign(cur->id); int lw2 = canDelete ? dw - 92 : dw;
-            if (launchButton(cv, in, dx, byB + 64, lw2, 24, "Load a save...", true, false, active)) { w.page = LP_SAVES; w.scroll = 0; w.pick = std::max(0, nw2); }
-            if (canDelete && launchButton(cv, in, dx + dw - 86, byB + 64, 86, 24, "Delete...", true, false, active)) { askDeleteCampaign(cur->id); return; }
-        }
-    } else if (w.page == LP_SAVES) {
+    if (w.page == LP_SAVES) {
         heading(cx, cy + 2, "Saves");
         campaignSwitcher(cx + 60, cy, cw - 60);
         f.draw(cv, *ctx.ts, cx, cy + 26, "Every adventure keeps its own three slots and autosave.", L_DIM);
@@ -324,5 +255,234 @@ void Desktop::drawLauncher(Canvas& cv, DeskWindow& w, InputState& in, bool activ
         if (launchButton(cv, in, cx, y, bw2, 24, "Join the Discord", true, false, active)) { runAction("discord"); return; }
         y += 30;
         if (game && game->demoMode && !game->storeUrl.empty()) { if (launchButton(cv, in, cx, y, bw2, 24, "Wishlist Triffall", true, true, active)) { runAction("wishlist"); return; } y += 30; }
+    }
+}
+
+// ---------------- 1.8.3 (#175 #179 #183): the launcher's first page in each theme ----------------
+void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool active, Rect a) {
+    Font& f = *ctx.font; Theme::NoMap nm; const UiTheme& th = Theme::th(); Theme::Pen pen{&cv, ctx.font, ctx.ts};
+    const bool one = Theme::onebit(), nat = Theme::native();
+    auto camps = listCampaigns(assetDir);
+    int ci = 0; for (size_t i = 0; i < camps.size(); i++) if (camps[i].id == launchCampaign) ci = (int)i;
+    const CampaignInfo* cur = camps.empty() ? nullptr : &camps[ci];
+    auto pickCampaign = [&](const std::string& id) { if (id == launchCampaign) return; launchCampaign = id; slotsCampaign = id; refreshSlots(); w.pick = 0; saveDesktopSettings(); };
+    auto tagOf = [](const CampaignInfo& c) { return c.id == "triffall" ? std::string("the main story") : c.id == "tutorial" ? std::string("start here") : c.author.empty() ? std::string("campaign") : "by " + c.author; };
+    auto icon = [&](int ic, int ir, int x, int y, int size) { for (int yy = 0; yy < size; yy++) for (int xx = 0; xx < size; xx++) { Color8 c = icons.get(32 + ic * 32 + xx * 32 / size, 32 + ir * 32 + yy * 32 / size); if (c.a) cv.put(x + xx, y + yy, c); } };
+    const int newest = newestSlot();
+    const bool hasSave = newest >= 0;
+    auto loadSlotAsk = [&](int slot) { if (game->running) showDialog("Load Game", "Loading will discard unsaved progress in the running game. Continue?", [this, slot]() { loadSlot(slot); }, true); else loadSlot(slot); };
+    const int nAch = (int)game->achievements.size(), nGot = (int)game->unlocked.size();
+#ifndef TRIFFALL_NO_EDITOR
+    const bool editor = !(game && game->demoMode);
+#else
+    const bool editor = false;
+#endif
+    // what each Begin entry does; returns true when the window may be gone (a new window opened)
+    enum { B_RESUME, B_CONTINUE, B_NEW, B_LOAD, B_DELETE, B_SEP, B_SAVES, B_HELP, B_ACH, B_SETTINGS, B_EDITOR, B_ABOUT };
+    auto act = [&](int b) -> bool {
+        switch (b) {
+            case B_RESUME: runAction("resume"); return true;
+            case B_CONTINUE: if (hasSave) { loadSlotAsk(newest); return true; } return false;
+            case B_NEW: if (cur) { openNewGame(cur->id); return true; } return false;
+            case B_LOAD: case B_SAVES: w.page = LP_SAVES; w.scroll = 0; w.pick = std::max(0, newest); gAudio.play("desktop_click"); return false;
+            case B_DELETE: if (cur) { askDeleteCampaign(cur->id); return true; } return false;
+            case B_HELP: w.page = LP_HELP; w.scroll = 0; gAudio.play("desktop_click"); return false;
+            case B_ACH: w.page = LP_ACHIEV; w.scroll = 0; gAudio.play("desktop_click"); return false;
+            case B_SETTINGS: openWindow("settings"); return true;
+            case B_EDITOR: runAction("editor"); return true;
+            case B_ABOUT: w.page = LP_ABOUT; w.scroll = 0; gAudio.play("desktop_click"); return false;
+        }
+        return false;
+    };
+    struct Entry { int id; std::string label, sub; bool enabled, primary; std::string right; };
+    std::vector<Entry> begin;
+    if (game->running) begin.push_back({B_RESUME, "Resume", "back to " + game->heroName, true, true, ""});
+    begin.push_back({B_CONTINUE, "Continue", hasSave ? "newest save: " + slots[newest].hero + ", " + slots[newest].mapName : "no saves for this adventure yet", hasSave, hasSave && !game->running, ""});
+    begin.push_back({B_NEW, "New Game", "pick a name and a class", true, !hasSave && !game->running, ""});
+    begin.push_back({B_LOAD, "Load a save", "3 slots per adventure", true, false, ""});
+    if (cur && !isCoreCampaign(cur->id)) begin.push_back({B_DELETE, "Delete this adventure...", "", true, false, ""});
+    begin.push_back({B_SEP, "", "", false, false, ""});
+    begin.push_back({B_SAVES, "Saves", "", true, false, ""});
+    begin.push_back({B_HELP, "How to Play", "", true, false, ""});
+    begin.push_back({B_ACH, "Achievements", fmt("%d of %d", nGot, nAch), true, false, fmt("%d/%d", nGot, nAch)});
+    begin.push_back({B_SETTINGS, "Settings", "", true, false, ""});
+    if (editor) begin.push_back({B_EDITOR, "Editor", "make your own campaigns", true, false, ""});
+    begin.push_back({B_ABOUT, "About", "", true, false, ""});
+    auto clickCampaign = [&](size_t i, bool sel) -> bool {   // a click on an adventure: pick it; a double-click starts a New Game
+        mouseUsed = true; gAudio.play("desktop_click");
+        if (sel && dblTimer > 0 && dblIcon == 300 + (int)i) { dblTimer = 0; openNewGame(camps[i].id); return true; }
+        pickCampaign(camps[i].id); dblTimer = 0.4f; dblIcon = 300 + (int)i; return false;
+    };
+    auto blurb = [&]() { return cur ? (cur->desc.empty() ? std::string("No description.") : cur->desc) : std::string(""); };
+
+    if (nat) {
+        // ---- desktop-native: a menu bar, the banner in a sunken well, a tree view and a details pane ----
+        int mx = a.x + 6; static const char* MENUS[] = {"File", "Adventure", "View", "Help"}; static const int MACT[] = {B_SETTINGS, B_NEW, B_HELP, B_ABOUT};
+        for (int k = 0; k < 4; k++) {
+            int mw = f.width(MENUS[k]) + 12; bool hv = active && !mouseUsed && in.mouseX >= mx && in.mouseX < mx + mw && in.mouseY >= a.y + 1 && in.mouseY < a.y + 18;
+            if (active) hot(mx, a.y + 1, mw, 17);
+            if (hv) Theme::bevel(cv, mx, a.y + 1, mw, 17, th.hi, th.lo2);
+            f.draw(cv, *ctx.ts, mx + 6, a.y + 3, MENUS[k], RGB(0, 0, 0)); cv.hline(mx + 6, a.y + 14, f.width(std::string(1, MENUS[k][0])), RGB(0, 0, 0));
+            if (hv && in.mousePressed[0]) { mouseUsed = true; if (act(MACT[k])) return; }
+            mx += mw;
+        }
+        int bannerH = 88; Color8 blk{0, 0, 0, 255}; Theme::well(cv, a.x + 4, a.y + 20, a.w - 8, bannerH, &blk);
+        drawLauncherBanner(cv, a.x + 6, a.y + 22, a.w - 12, bannerH - 4);
+        // the tree
+        int tx = a.x + 4, ty = a.y + bannerH + 26, tw = 210, tBottom = a.y + a.h - 40, th2 = tBottom - ty;
+        Color8 white{255, 255, 255, 255}; Theme::well(cv, tx, ty, tw, th2, &white);
+        struct Node { int depth; std::string label; int ic, ir; int kind; int arg; bool sel; bool dim; };   // kind: 0 folder/none, 1 campaign, 2 slot, 3 action
+        std::vector<Node> nodes;
+        nodes.push_back({0, "Adventures", 3, 0, 0, 0, false, false});
+        for (size_t i = 0; i < camps.size(); i++) nodes.push_back({1, camps[i].name, camps[i].iconC, camps[i].iconR, 1, (int)i, camps[i].id == launchCampaign, false});
+        nodes.push_back({0, "Saves", 3, 0, 3, B_SAVES, false, false});
+        bool anySave = false; for (int i = 0; i < 4; i++) if (slots[i].exists) { anySave = true; nodes.push_back({1, (i == 3 ? std::string("Autosave") : fmt("Slot %d", i + 1)) + ": " + slots[i].hero, 3, 10, 2, i, false, false}); }
+        if (!anySave) nodes.push_back({1, "(no saves yet)", -1, -1, 0, 0, false, true});
+        static const int AICON[][2] = {{1, 4}, {3, 8}, {2, 3}, {3, 3}, {3, 3}};
+        nodes.push_back({0, "How to Play", AICON[0][0], AICON[0][1], 3, B_HELP, false, false});
+        nodes.push_back({0, "Achievements", AICON[1][0], AICON[1][1], 3, B_ACH, false, false});
+        nodes.push_back({0, "Settings", AICON[2][0], AICON[2][1], 3, B_SETTINGS, false, false});
+        if (editor) nodes.push_back({0, "Editor", 2, 4, 3, B_EDITOR, false, false});
+        nodes.push_back({0, "About", AICON[4][0], AICON[4][1], 3, B_ABOUT, false, false});
+        int rowH = std::max(16, std::min(24, (th2 - 8) / std::max(1, (int)nodes.size())));
+        for (size_t k = 0; k < nodes.size(); k++) {
+            const Node& nd = nodes[k]; int ry = ty + 4 + (int)k * rowH; if (ry + rowH > tBottom) break;
+            int nx0 = tx + 6 + nd.depth * 18;
+            if (nd.depth) cv.hline(nx0 - 12, ry + rowH / 2, 8, RGB(128, 128, 128));
+            if (nd.ic >= 0) icon(nd.ic, nd.ir, nx0, ry + (rowH - 16) / 2, 16);
+            int lx = nx0 + (nd.ic >= 0 ? 20 : 2); std::string lbl = nd.label; while (lbl.size() > 3 && f.width(lbl) > tx + tw - 8 - lx) lbl.pop_back();
+            bool hv = active && !mouseUsed && nd.kind && in.mouseX >= tx + 2 && in.mouseX < tx + tw - 2 && in.mouseY >= ry && in.mouseY < ry + rowH;
+            if (nd.kind && active) hot(lx - 2, ry, f.width(lbl) + 4, rowH);
+            if (nd.sel) cv.fillRect(lx - 2, ry + (rowH - 14) / 2, f.width(lbl) + 4, 14, RGB(0, 0, 128));
+            else if (hv) { for (int xx = lx - 2; xx < lx + f.width(lbl) + 2; xx += 2) { cv.put(xx, ry + (rowH - 14) / 2, RGB(0, 0, 0)); cv.put(xx, ry + (rowH + 12) / 2, RGB(0, 0, 0)); } }
+            f.draw(cv, *ctx.ts, lx, ry + (rowH - 12) / 2, lbl, nd.sel ? RGB(255, 255, 255) : nd.dim ? RGB(128, 128, 128) : RGB(0, 0, 0));
+            if (hv && in.mousePressed[0]) {
+                if (nd.kind == 1) { if (clickCampaign((size_t)nd.arg, nd.sel)) return; }
+                else if (nd.kind == 2) { mouseUsed = true; loadSlotAsk(nd.arg); return; }
+                else if (nd.kind == 3) { mouseUsed = true; if (act(nd.arg)) return; }
+            }
+        }
+        // details and Start
+        int dx = tx + tw + 8, dw = a.x + a.w - 4 - dx, dy = ty - 4;
+        std::string head = cur ? cur->name + " - " + tagOf(*cur) : std::string("Triffall");
+        int detH = std::min(150, (tBottom - dy) / 2 + 10);
+        Theme::panelTitled(pen, dx, dy, dw, detH, head);
+        { int yy = dy + 20; auto ls = f.wrap(blurb(), dw - 24); for (size_t i = 0; i < ls.size() && yy < dy + detH - 46; i++) { f.draw(cv, *ctx.ts, dx + 12, yy, ls[i], RGB(0, 0, 0)); yy += 15; }
+          f.draw(cv, *ctx.ts, dx + 12, dy + detH - 42, hasSave ? "Saves: newest " + slots[newest].hero + ", " + slots[newest].mapName : std::string("Saves: none for this adventure yet"), RGB(128, 128, 128));
+          f.draw(cv, *ctx.ts, dx + 12, dy + detH - 24, std::string("Version ") + TRIFFALL_VERSION, RGB(128, 128, 128)); }
+        int sy = dy + detH + 6, sh = tBottom - sy;
+        Theme::panelTitled(pen, dx, sy, dw, sh, "Start");
+        struct SB { int id; const char* label; std::string expl; bool enabled, def; };
+        std::vector<SB> sbs;
+        if (game->running) sbs.push_back({B_RESUME, "Resume", "Back to " + game->heroName + ".", true, true});
+        sbs.push_back({B_NEW, "New Game", "Pick a name and a class.", true, !game->running && !hasSave});
+        sbs.push_back({B_CONTINUE, "Continue", hasSave ? "Your newest save." : "Nothing to continue yet.", hasSave, !game->running && hasSave});
+        sbs.push_back({B_LOAD, "Load a save...", "3 named slots per adventure.", true, false});
+        int pitch = std::min(32, (sh - 24) / (int)sbs.size());
+        for (size_t k = 0; k < sbs.size(); k++) {
+            int by = sy + 20 + (int)k * pitch;
+            bool hv = active && sbs[k].enabled && !mouseUsed && in.mouseX >= dx + 12 && in.mouseX < dx + 152 && in.mouseY >= by && in.mouseY < by + 26;
+            if (active && sbs[k].enabled) hot(dx + 12, by, 140, 26);
+            Theme::button(pen, dx + 12, by, 140, 26, sbs[k].label, !sbs[k].enabled ? Theme::BS_DISABLED : sbs[k].def ? Theme::BS_DEFAULT : Theme::BS_NORMAL, hv);
+            f.draw(cv, *ctx.ts, dx + 164, by + 7, sbs[k].expl, sbs[k].enabled ? RGB(0, 0, 0) : RGB(128, 128, 128));
+            if (hv && in.mousePressed[0]) { mouseUsed = true; gAudio.play("desktop_click"); if (act(sbs[k].id)) return; }
+        }
+        if (cur && !isCoreCampaign(cur->id)) { int bx = dx + dw - 100; if (launchButton(cv, in, bx, sy + sh - 32, 90, 24, "Delete...", true, false, active)) { askDeleteCampaign(cur->id); return; } }
+        Theme::rule(cv, a.x + 4, a.y + a.h - 34, a.w - 8);
+        f.draw(cv, *ctx.ts, a.x + 8, a.y + a.h - 24, "Tip: every launcher page is also in the Start menu.", RGB(128, 128, 128));
+        if (launchButton(cv, in, a.x + a.w - 100, a.y + a.h - 28, 94, 24, "Close", true, false, active)) { w.wantClose = true; mouseUsed = true; }
+        return;
+    }
+
+    if (one) {
+        // ---- one-bit: the banner in an ash frame, adventure cards on the left, the Begin list with the torch on the right ----
+        int bw = std::min(596, a.w - 100), bx = a.x + (a.w - bw) / 2, by = a.y + 8;
+        drawLauncherBanner(cv, bx, by, bw, 84); cv.rect(bx - 1, by - 1, bw + 2, 86, th.dim);
+        int lx = a.x + 16, ly = by + 98, lw = std::min(250, (a.w - 48) / 2 - 20);
+        Theme::title(pen, lx, ly, "Adventure");
+        int cy = ly + 20, cardH = 46, maxCards = std::max(1, std::min((int)camps.size(), (a.y + a.h - 70 - cy) / (cardH + 8)));
+        int first = clampi(w.scroll, 0, std::max(0, (int)camps.size() - maxCards)); w.scroll = first;
+        if (active && in.wheel && in.mouseX >= lx && in.mouseX < lx + lw && in.mouseY >= cy) w.scroll = clampi(w.scroll - in.wheel, 0, std::max(0, (int)camps.size() - maxCards));
+        for (int k = 0; k < maxCards && first + k < (int)camps.size(); k++) {
+            const CampaignInfo& c = camps[first + k]; int ry = cy + k * (cardH + 8); bool sel = c.id == launchCampaign;
+            bool hv = active && !mouseUsed && in.mouseX >= lx && in.mouseX < lx + lw && in.mouseY >= ry && in.mouseY < ry + cardH;
+            if (active) hot(lx, ry, lw, cardH);
+            if (sel) Theme::glow(cv, lx, ry, lw, cardH); else for (int xx = lx; xx < lx + lw; xx += 2) { cv.put(xx, ry, hv ? th.accent : th.dim); cv.put(xx, ry + cardH - 1, hv ? th.accent : th.dim); }
+            if (!sel) for (int yy = ry; yy < ry + cardH; yy += 2) { cv.put(lx, yy, hv ? th.accent : th.dim); cv.put(lx + lw - 1, yy, hv ? th.accent : th.dim); }
+            icon(c.iconC, c.iconR, lx + 8, ry + 7, 32);
+            std::string nm = c.name; while (nm.size() > 3 && f.width(nm) > lw - 60) nm.pop_back();
+            f.draw(cv, *ctx.ts, lx + 48, ry + 8, nm, sel ? th.accent : th.text);
+            f.draw(cv, *ctx.ts, lx + 48, ry + 25, tagOf(c), c.id == "tutorial" ? th.good : th.text);
+            if (hv && in.mousePressed[0]) { if (clickCampaign((size_t)(first + k), sel)) return; }
+        }
+        int byy = cy + maxCards * (cardH + 8) + 4;
+        { auto ls = f.wrap(blurb(), lw); for (size_t i = 0; i < ls.size() && byy < a.y + a.h - 56; i++) { f.draw(cv, *ctx.ts, lx, byy, ls[i], th.dim); byy += 14; } }
+        if (!hasSave && byy < a.y + a.h - 36) f.draw(cv, *ctx.ts, lx, byy + 14, "no saves for this adventure yet", th.dim);
+        // Begin
+        int rx = a.x + a.w / 2 - 4, rw = a.x + a.w - 24 - rx;
+        Theme::title(pen, rx, ly, "Begin");
+        const ItemDef* torch = ctx.gd ? ctx.gd->item("torch_item") : nullptr;
+        int yy = cy, rowH = std::max(18, std::min(27, (a.y + a.h - 30 - cy) / (int)begin.size()));
+        int chosen = -1; for (size_t k = 0; k < begin.size(); k++) if (begin[k].primary) { chosen = (int)k; break; }
+        int hoverRow = -1; for (size_t k = 0; k < begin.size(); k++) { int ry = cy + (int)k * rowH; if (begin[k].id != B_SEP && active && in.mouseX >= rx && in.mouseX < rx + rw && in.mouseY >= ry && in.mouseY < ry + rowH - 4) hoverRow = (int)k; }
+        if (hoverRow >= 0) chosen = hoverRow;
+        for (size_t k = 0; k < begin.size(); k++) {
+            const Entry& e = begin[k]; int ry = yy + (int)k * rowH;
+            if (e.id == B_SEP) { for (int xx = rx; xx < rx + rw; xx += 2) cv.put(xx, ry + rowH / 2 - 2, th.dim); continue; }
+            if (active && e.enabled) hot(rx, ry, rw, rowH - 4);
+            if ((int)k == chosen) { Theme::glow(cv, rx, ry, rw, rowH - 4); if (torch) drawItemTile(*ctx.ts, cv, *torch, rx + 6, ry + (rowH - 16) / 2, 1); }
+            f.draw(cv, *ctx.ts, rx + 24, ry + (rowH - 16) / 2, e.label, !e.enabled ? th.dim : (int)k == chosen ? th.accent : th.text);
+            std::string right = e.id == B_CONTINUE && !e.enabled ? std::string("nothing yet") : e.right;
+            if (!right.empty()) f.draw(cv, *ctx.ts, rx + rw - 8 - f.width(right), ry + (rowH - 16) / 2, right, th.dim);
+            if ((int)k == hoverRow && e.enabled && in.mousePressed[0] && !mouseUsed) { mouseUsed = true; gAudio.play("desktop_click"); if (act(e.id)) return; }
+        }
+        ctx.font->drawSmall(cv, a.x + 16, a.y + a.h - 14, "enter: open   up/down: choose   esc: close", th.dim);
+        return;
+    }
+
+    // ---- Adventurer's Frame: box art, the story and the adventures on the left, a carved Begin panel on the right ----
+    int lw = std::min(300, a.w * 46 / 100), lx = a.x + 6, ly = a.y + 6, lh = a.h - 12;
+    Color8 blk{0, 0, 0, 255}; Theme::well(cv, lx, ly, lw, lh, &blk);
+    int cw2 = lw - 2, bh2 = 84;
+    drawLauncherBanner(cv, lx + 1, ly + 1, cw2 * 2, bh2, {lx + 1, ly + 1, cw2, bh2});
+    drawLauncherBanner(cv, lx + 1 - cw2, ly + 2 + bh2, cw2 * 2, bh2, {lx + 1, ly + 2 + bh2, cw2, bh2});
+    int ty = ly + 2 + 2 * bh2 + 12;
+    { auto ls = f.wrap(blurb(), lw - 28); for (size_t i = 0; i < ls.size() && i < 4; i++) { f.draw(cv, *ctx.ts, lx + 12, ty, ls[i], th.text); ty += 15; } }
+    int listTop = std::max(ty + 8, ly + lh - 132);
+    cv.fillRect(lx + 12, listTop, lw - 24, 1, th.selLo);
+    f.draw(cv, *ctx.ts, lx + 12, listTop + 8, "Adventure", th.dim);
+    int rowsY = listTop + 24, rowH = 34, maxRows = std::max(1, (ly + lh - 4 - rowsY) / rowH);
+    int first = clampi(w.scroll, 0, std::max(0, (int)camps.size() - maxRows)); w.scroll = first;
+    if (active && in.wheel && in.mouseX >= lx && in.mouseX < lx + lw && in.mouseY >= rowsY) w.scroll = clampi(w.scroll - in.wheel, 0, std::max(0, (int)camps.size() - maxRows));
+    for (int k = 0; k < maxRows && first + k < (int)camps.size(); k++) {
+        const CampaignInfo& c = camps[first + k]; int ry = rowsY + k * rowH; bool sel = c.id == launchCampaign;
+        bool hv = active && !mouseUsed && in.mouseX >= lx + 8 && in.mouseX < lx + lw - 8 && in.mouseY >= ry - 3 && in.mouseY < ry + rowH - 4;
+        if (active) hot(lx + 8, ry - 3, lw - 16, rowH - 2);
+        if (sel) { cv.fillRect(lx + 8, ry - 3, lw - 16, 30, th.rowSel); cv.rect(lx + 8, ry - 3, lw - 16, 30, th.accent); }
+        else if (hv) cv.fillRect(lx + 8, ry - 3, lw - 16, 30, RGB(30, 33, 46));
+        icon(c.iconC, c.iconR, lx + 12, ry - 1, 24);
+        std::string nm = c.name; while (nm.size() > 3 && f.width(nm) > lw - 64) nm.pop_back();
+        f.draw(cv, *ctx.ts, lx + 42, ry, nm, sel ? th.accent : th.text);
+        ctx.font->drawSmall(cv, lx + 42, ry + 15, tagOf(c), c.id == "tutorial" ? th.good : th.dim);
+        if (hv && in.mousePressed[0]) { if (clickCampaign((size_t)(first + k), sel)) return; }
+    }
+    // Begin
+    int px = lx + lw + 6, pw = a.x + a.w - 6 - px;
+    Theme::panel(cv, px, ly, pw, lh);
+    Theme::title(pen, px + 18, ly + 12, "Begin");
+    int bx = px + 12, bwid = pw - 24, by = ly + 34;
+    int avail = ly + lh - 8 - by, need = 0; for (auto& e : begin) need += e.id == B_SEP ? 12 : (e.sub.empty() ? 22 : 30) + 5;
+    bool compact = need > avail;
+    for (auto& e : begin) {
+        if (e.id == B_SEP) { Theme::rule(cv, bx + 2, by + 4, bwid - 4); by += 12; continue; }
+        bool withSub = !e.sub.empty() && !compact; int bh = withSub ? 30 : 22;
+        if (by + bh > ly + lh - 6) break;
+        bool hv = active && e.enabled && !mouseUsed && in.mouseX >= bx && in.mouseX < bx + bwid && in.mouseY >= by && in.mouseY < by + bh;
+        if (active && e.enabled) hot(bx, by, bwid, bh);
+        Theme::button(pen, bx, by, bwid, bh, e.label, !e.enabled ? Theme::BS_DISABLED : e.primary ? Theme::BS_SELECTED : Theme::BS_NORMAL, hv, "", "", withSub ? e.sub : "");
+        if (e.primary) f.draw(cv, *ctx.ts, bx + bwid - 14, by + (bh - 12) / 2, ">", th.accent);
+        if (hv && (in.gamepadActive || padNavWindows)) Theme::frameRect(cv, bx - 2, by - 2, bwid + 4, bh + 4, th.accentHi);
+        if (hv && in.mousePressed[0]) { mouseUsed = true; gAudio.play("desktop_click"); if (act(e.id)) return; }
+        by += bh + 5;
     }
 }

@@ -1,5 +1,6 @@
 # Runs headless tests in parallel, each from a fresh copy of src/assets. Usage: tools/run-tests.ps1 -Tests a,b,c [-Par 8] [-Tag name] [-Root C:/Apps/Triffall]
-param([string]$Root = "C:\Apps\Triffall", [string[]]$Tests, [int]$Par = 8, [string]$Tag = "main")
+param([string]$Root = "C:\Apps\Triffall", [string[]]$Tests, [int]$Par = 8, [string]$Tag = "main", [string]$Theme = "")
+# 1.8.3 (#184): -Theme frame|native|onebit runs each script with "theme X" first (a copy next to the original, removed after)
 $exe = Join-Path $Root "build\cmake\Release\triffall_headless.exe"
 $work = Join-Path $env:TEMP "tri-tests-$Tag"
 if (Test-Path $work) { Remove-Item $work -Recurse -Force }
@@ -13,7 +14,9 @@ while ($queue.Count -gt 0 -or $running.Count -gt 0) {
         $dir = Join-Path $work $t; New-Item -ItemType Directory $dir | Out-Null
         Copy-Item (Join-Path $Root "src\assets") (Join-Path $dir "assets") -Recurse
         $out = Join-Path $dir "out"; New-Item -ItemType Directory $out | Out-Null
-        $p = Start-Process -FilePath $exe -ArgumentList @((Join-Path $Root "src\tests\$t.txt"), "$out\") -WorkingDirectory $dir -RedirectStandardOutput (Join-Path $dir "stdout.txt") -RedirectStandardError (Join-Path $dir "stderr.txt") -NoNewWindow -PassThru
+        $script = Join-Path $Root "src\tests\$t.txt"
+        if ($Theme) { $copy = Join-Path $Root "src\tests\_th_${Theme}_$t.txt"; Set-Content -Path $copy -Value (@("theme $Theme") + (Get-Content $script)) -Encoding ascii; $script = $copy }
+        $p = Start-Process -FilePath $exe -ArgumentList @($script, "$out\") -WorkingDirectory $dir -RedirectStandardOutput (Join-Path $dir "stdout.txt") -RedirectStandardError (Join-Path $dir "stderr.txt") -NoNewWindow -PassThru
         $running += [pscustomobject]@{ Name = $t; Proc = $p; Dir = $dir; Start = Get-Date }
     }
     Start-Sleep -Milliseconds 500
@@ -30,3 +33,4 @@ while ($queue.Count -gt 0 -or $running.Count -gt 0) {
     }
     $running = $still
 }
+if ($Theme) { Get-ChildItem (Join-Path $Root "src\tests") -Filter "_th_${Theme}_*.txt" | Remove-Item -Force }

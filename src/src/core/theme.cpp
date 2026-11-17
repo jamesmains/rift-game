@@ -78,6 +78,25 @@ void beginUiMap() { if (gMapDepth++ == 0) gCanvasMap = mapHook; }
 void endUiMap() { if (gMapDepth > 0 && --gMapDepth == 0) gCanvasMap = nullptr; }
 bool uiMapOn() { return gCanvasMap != nullptr; }
 void beginFrame() { gInverted.clear(); }
+static Color8 deskHook(Color8 c, int kind, int x, int y) {
+    (void)x; (void)y; const UiTheme& t = Theme::th(); uint8_t a = c.a;
+    auto is = [&](int r, int g, int b) { return c.r == r && c.g == g && c.b == b; };
+    if (kind == 1) {
+        if (is(0, 0, 0) || is(255, 255, 255) || is(192, 192, 192) || is(64, 64, 64)) return withA(t.text, a);
+        if (is(128, 128, 128)) return withA(t.dim, a);
+        if (is(0, 0, 128)) return withA(t.accent, a);
+        return c;
+    }
+    if (is(192, 192, 192) || is(255, 255, 255) || is(220, 220, 220) || is(223, 223, 223) || is(212, 208, 200)) return withA(t.back, a);
+    if (is(128, 128, 128)) return withA(t.dim, a);
+    if (is(0, 0, 0)) return withA(t.text, a);
+    if (is(0, 0, 128) || is(16, 132, 208)) return withA(t.selLo, a);
+    if (is(255, 255, 180) || is(255, 255, 225)) return withA(t.back, a);
+    return c;
+}
+static Color8 (*gSavedHook)(Color8, int, int, int) = nullptr;
+void beginDeskMap() { gSavedHook = gCanvasMap; gCanvasMap = deskHook; }
+void endDeskMap() { gCanvasMap = gSavedHook; gSavedHook = nullptr; }
 void invert(Rect r) { if (gId != ThemeId::Frame && gInverted.size() < 64) gInverted.push_back(r); }
 NoMap::NoMap() : was(gCanvasMap != nullptr) { gCanvasMap = nullptr; }
 NoMap::~NoMap() { if (was) gCanvasMap = mapHook; }

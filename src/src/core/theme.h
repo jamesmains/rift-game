@@ -63,6 +63,10 @@ Color8 mapText(Color8 c);
 struct NoMap { bool was; NoMap(); ~NoMap(); };   // primitives draw their own exact colours
 struct YesMap { Color8 (*was)(Color8, int, int, int); YesMap(); ~YesMap(); };   // an older drawing inside a primitive-drawn panel
 void beginFrame();                    // forgets last frame's inverted boxes
+// one-bit desktop windows drawn with the 90s grey palette (My Computer, About, dialogs...): grey faces and white wells
+// become black, black text paper, navy amber
+void beginDeskMap();
+void endDeskMap();
 void invert(Rect r);                  // native / onebit: mapped text starting in r takes the selection's text colour (a navy row's white)
 
 // ---- drawing context ----

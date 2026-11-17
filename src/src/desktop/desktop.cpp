@@ -13,6 +13,12 @@
 static const Color8 FACE = RGB(192, 192, 192), SHADOW = RGB(128, 128, 128), HILITE = RGB(255, 255, 255), DKSHADOW = RGB(0, 0, 0);
 static const Color8 TITLE_A = RGB(0, 0, 128), TITLE_B = RGB(16, 132, 208), DESK = RGB(0, 128, 128);
 static const int TASKBAR_H = 28;
+// 1.8.3 (#183): the One-Bit Desktop has a paper menu bar at the top instead of the taskbar at the bottom
+static bool topBar() { return Theme::onebit(); }
+static int barH() { return topBar() ? 22 : TASKBAR_H; }
+static int barY() { return topBar() ? 0 : UI::SCREEN_H - TASKBAR_H; }
+static int deskTop() { return topBar() ? 22 : 0; }
+static int deskBottom() { return topBar() ? UI::SCREEN_H : UI::SCREEN_H - TASKBAR_H; }
 static const char* DISCORD_INVITE = "https://discord.gg/BnPjBWZMaS";
 
 
@@ -31,6 +37,7 @@ bool Desktop::init(Tileset* ts, Font* font, GameData* gd, Game* g, GameSettings*
     tidyIcons = hadIni && layout < 2;   // 1.6.1: most of the old icons moved into the launcher - pack what's left once
     if (migrateCampaignSaves(saveDir) > 0) showToast("Saves sorted by adventure.");   // 1.6.1 (#135)
     refreshCampaignIcons();
+    iconsPlaced = true;
     slotsCampaign = launchCampaign; refreshSlots();
     return true;
 }
@@ -67,13 +74,13 @@ bool Desktop::snapIconCursor(int dx, int dy) {
 
 void Desktop::setIconPosition(int index, int x, int y) {
     if (index < 0 || index >= (int)iconPositions.size()) return;
-    iconPositions[index] = {clampi(x, 0, UI::SCREEN_W - 76), clampi(y, 0, UI::SCREEN_H - TASKBAR_H - 54)};
+    iconPositions[index] = {clampi(x, 0, UI::SCREEN_W - 76), clampi(y, deskTop(), deskBottom() - 54)};
 }
 
 // 1.2.2 (#39): the screen changed size (window resized, fullscreen, Classic 4:3): keep icons, windows and the pointer on it
 void Desktop::screenChanged() {
-    for (auto& p : iconPositions) if (p[0] >= 0) { p[0] = clampi(p[0], 0, UI::SCREEN_W - 76); p[1] = clampi(p[1], 0, UI::SCREEN_H - TASKBAR_H - 54); }
-    for (auto& w : windows) { w.x = clampi(w.x, 0, std::max(0, UI::SCREEN_W - w.w)); w.y = clampi(w.y, 0, std::max(0, UI::SCREEN_H - TASKBAR_H - w.h)); }
+    for (auto& p : iconPositions) if (p[0] >= 0) { p[0] = clampi(p[0], 0, UI::SCREEN_W - 76); p[1] = clampi(p[1], deskTop(), deskBottom() - 54); }
+    for (auto& w : windows) { w.x = clampi(w.x, 0, std::max(0, UI::SCREEN_W - w.w)); w.y = clampi(w.y, deskTop(), std::max(deskTop(), deskBottom() - w.h)); }
     cursorX = clampi(cursorX, 0, UI::SCREEN_W - 1); cursorY = clampi(cursorY, 0, UI::SCREEN_H - 1);
 }
 
@@ -120,21 +127,33 @@ void Desktop::contextAction(int action) {
 void Desktop::drawWallpaper(Canvas& cv) {
     static const Color8 bases[] = {DESK, RGB(0, 24, 72), RGB(48, 12, 58), RGB(35, 55, 42)};
     static const Color8 accents[] = {RGB(0, 128, 128), RGB(0, 42, 112), RGB(74, 22, 86), RGB(44, 68, 50)};
+    // 1.8.3 (#175 #183): the default wallpaper is the theme's: dusk slate with a sparse dither (frame), teal (native),
+    // a 1-px checker on black (one-bit). The other wallpapers (Display Properties) are the same in every theme.
+    if (wallpaper == 0 && Theme::frame()) {
+        cv.clear(RGB(46, 58, 79));
+        for (int y = 0; y < deskBottom(); y += 2) for (int x = ((y / 2) % 2) * 2; x < UI::SCREEN_W; x += 4) cv.px[(size_t)y * cv.w + x] = RGB(52, 66, 90);
+        return;
+    }
+    if (wallpaper == 0 && Theme::onebit()) {
+        cv.clear(C::Black);
+        for (int y = 0; y < UI::SCREEN_H; y++) for (int x = y & 1; x < UI::SCREEN_W; x += 2) cv.px[(size_t)y * cv.w + x] = RGB(85, 82, 94);
+        return;
+    }
     cv.clear(bases[clampi(wallpaper, 0, 3)]);
     if (wallpaper == 1) {
-        for (int y = 20; y < UI::SCREEN_H - TASKBAR_H; y += 40) cv.hline(0, y, UI::SCREEN_W, accents[1]);
+        for (int y = 20; y < deskBottom(); y += 40) cv.hline(0, y, UI::SCREEN_W, accents[1]);
     } else if (wallpaper == 2) {
-        for (int y = 8; y < UI::SCREEN_H - TASKBAR_H; y += 32) for (int x = (y / 32 % 2) * 16; x < UI::SCREEN_W; x += 32) cv.fillRect(x, y, 8, 8, accents[2]);
+        for (int y = 8; y < deskBottom(); y += 32) for (int x = (y / 32 % 2) * 16; x < UI::SCREEN_W; x += 32) cv.fillRect(x, y, 8, 8, accents[2]);
     } else if (wallpaper == 3) {
-        for (int x = 16; x < UI::SCREEN_W; x += 32) cv.vline(x, 0, UI::SCREEN_H - TASKBAR_H, accents[3]);
-        for (int y = 16; y < UI::SCREEN_H - TASKBAR_H; y += 32) cv.hline(0, y, UI::SCREEN_W, accents[3]);
+        for (int x = 16; x < UI::SCREEN_W; x += 32) cv.vline(x, 0, deskBottom(), accents[3]);
+        for (int y = 16; y < deskBottom(); y += 32) cv.hline(0, y, UI::SCREEN_W, accents[3]);
     }
 }
 
 void Desktop::dropIcon(int index) {
     if (index < 0 || index >= (int)iconPositions.size()) return;
     const int cols = (UI::SCREEN_W - 16 - 76) / 84 + 1;
-    const int rows = (UI::SCREEN_H - TASKBAR_H - 8 - 54) / 54 + 1;
+    const int rows = (deskBottom() - deskTop() - 8 - 54) / 54 + 1;
     int wantCol = clampi((iconPositions[index][0] - 16 + 42) / 84, 0, cols - 1);
     int wantRow = clampi((iconPositions[index][1] - 8 + 27) / 54, 0, rows - 1);
     int bestCol = wantCol, bestRow = wantRow, bestScore = 0x7fffffff;
@@ -242,8 +261,8 @@ void Desktop::openWindow(const std::string& type) {
     DeskWindow w; w.type = type;
     int n = 0; for (auto& o : windows) if (!o.wantClose) n++;   // a window that is closing doesn't push the new one aside
     if (type == "new") { w.title = "New Game - Triffall"; w.w = 420; w.h = 386; w.text = gPlatform->userName().substr(0, 14); w.page = 1; }
-    else if (type == "launcher") { w.title = "Triffall"; w.w = 608; w.h = 432; }   // 1.6.1 (#134)
-    else if (type == "settings") { w.title = "Settings"; w.w = 420; w.h = 420; }
+    else if (type == "launcher") { w.title = "Triffall"; windowSize(w); }   // 1.6.1 (#134); 1.8.3: sized per theme
+    else if (type == "settings") { w.title = "Settings"; windowSize(w); setPanel.begin(*settings); }
     else if (type == "discord") { w.title = "Discord"; w.w = 320; w.h = 150; }
     else if (type == "setup") { w.title = "Triffall Setup"; w.w = 420; w.h = 300; w.sel = 1; w.noClose = true; }   // 1.6.1 (#134): no way out but through
     else if (type == "properties") { w.title = "Display Properties"; w.w = 360; w.h = 250; }
@@ -252,7 +271,7 @@ void Desktop::openWindow(const std::string& type) {
     else if (type == "minesweeper") { w.title = "Minesweeper"; w.w = 168; w.h = 220; }
     else if (type == "solitaire") { w.title = "Solitaire"; w.w = 286; w.h = 340; }
     else { w.title = type; w.w = 300; w.h = 150; }
-    w.x = (UI::SCREEN_W - w.w) / 2 + n * 12; w.y = std::max(0, (UI::SCREEN_H - TASKBAR_H - w.h) / 2 + n * 12);
+    w.x = (UI::SCREEN_W - w.w) / 2 + n * 12; w.y = std::max(deskTop(), deskTop() + (deskBottom() - deskTop() - w.h) / 2 + n * 12);
     windows.push_back(w);
     startOpen = false;
     gAudio.play("desktop_open");
@@ -261,8 +280,32 @@ void Desktop::openWindow(const std::string& type) {
 void Desktop::showDialog(const std::string& title, const std::string& text, std::function<void()> onYes, bool yesNo) {
     DeskWindow w; w.type = yesNo ? "yesno" : "msg"; w.title = title; w.text = text; w.onYes = onYes;
     auto lines = ctx.font->wrap(text, 280);
-    w.w = 330; w.h = 90 + (int)lines.size() * 13; w.x = (UI::SCREEN_W - w.w) / 2; w.y = (UI::SCREEN_H - TASKBAR_H - w.h) / 2;
+    w.w = 330; w.h = 90 + (int)lines.size() * 13; w.x = (UI::SCREEN_W - w.w) / 2; w.y = std::max(deskTop(), deskTop() + (deskBottom() - deskTop() - w.h) / 2);
     windows.push_back(w); gAudio.play(yesNo ? "desktop_open" : "ui_error");
+}
+
+// 1.8.3 (#183): an icon's default spot - a grid from the top left (frame, native) or a column at the right edge (one-bit)
+std::array<int, 2> Desktop::defaultIconSpot(int slot, ThemeId t) {
+    if (t == ThemeId::OneBit) { int rows = std::max(1, (UI::SCREEN_H - 40) / 62); return {UI::SCREEN_W - 84 - (slot / rows) * 84, 30 + (slot % rows) * 62}; }
+    return {16 + (slot / 8) * 84, 8 + (slot % 8) * 54};
+}
+// the theme changed: icons still on the old theme's default spots move to the new theme's (moved ones stay put)
+void Desktop::themeChanged(ThemeId from, ThemeId to) {
+    static const std::map<std::string, int> defSlot = {{"launcher", 0}, {"mycomputer", 1}, {"minesweeper", 2}, {"solitaire", 3}, {"shutdown", 4}};
+    bool moved = false;
+    for (size_t i = 0; i < iconDefs.size() && i < iconPositions.size(); i++) {
+        auto ds = defSlot.find(iconDefs[i].action); int slot = ds != defSlot.end() ? ds->second : (int)i;
+        auto a = defaultIconSpot(slot, from); if (iconPositions[i][0] == a[0] && iconPositions[i][1] == a[1]) { iconPositions[i] = defaultIconSpot(slot, to); moved = true; }
+    }
+    // the launcher and Settings windows take the new theme's size
+    for (auto& w : windows) if (w.type == "launcher" || w.type == "settings") { int ow = w.w, oh = w.h; windowSize(w); w.x = clampi(w.x - (w.w - ow) / 2, 0, std::max(0, UI::SCREEN_W - w.w)); w.y = clampi(w.y - (w.h - oh) / 2, deskTop(), std::max(deskTop(), deskBottom() - w.h)); }
+    if (moved) saveDesktopSettings();
+}
+void Desktop::windowSize(DeskWindow& w) const {
+    // 1.8.3 (#175 #179 #183): the launcher and Settings are laid out per theme
+    if (w.type == "launcher") { if (Theme::native()) { w.w = 700; w.h = 470; w.title = "Triffall Launcher"; } else if (Theme::onebit()) { w.w = 700; w.h = 446; w.title = "Triffall"; } else { w.w = 660; w.h = 440; w.title = "Triffall"; } }
+    else if (w.type == "settings") { if (Theme::native()) { w.w = 560; w.h = 480; } else if (Theme::onebit()) { w.w = 640; w.h = 456; } else { w.w = 560; w.h = 486; } }
+    w.w = std::min(w.w, UI::SCREEN_W - 4); w.h = std::min(w.h, deskBottom() - deskTop() - 2);
 }
 
 void Desktop::refreshCampaignIcons() {
@@ -282,7 +325,7 @@ void Desktop::refreshCampaignIcons() {
     fixedIcons = iconDefs.size();
     for (auto& d : iconDefs) { d.dc = d.ic; d.dr = d.ir; auto it = customIcon.find(d.action); if (it != customIcon.end()) { d.ic = it->second[0]; d.ir = it->second[1]; } }
     iconPositions.assign(iconDefs.size(), {-1, -1});
-    auto grid = [](int slot) { return std::array<int, 2>{16 + (slot / 8) * 84, 8 + (slot % 8) * 54}; };
+    auto grid = [](int slot) { return defaultIconSpot(slot, Theme::id()); };
     if (tidyIcons) {   // once, for a desktop from before 1.6.1: keep the icons' old order (column by column), Triffall first
         tidyIcons = false;
         auto key = [&](size_t i) -> long long { if (iconDefs[i].action == "launcher") return -1; auto it = now.find(iconDefs[i].action); if (it == now.end()) return 100000000LL + (long long)i; return (long long)(it->second[0] / 84) * 100000 + it->second[1]; };
@@ -331,6 +374,8 @@ void Desktop::runAction(const std::string& a) {
     else if (a == "worldmap") { if (!game->running) showDialog("World Map", "The map shows the world of a running game. Start or load a game first."); else { game->openWorldMap(); launchGame = true; } }
     else if (a == "editor") { launchEditor = true; windows.clear(); }
     else if (a == "resume") { if (game->running) launchGame = true; }
+    else if (a == "continue") { slotsCampaign = launchCampaign; refreshSlots(); int n = newestSlot(); if (n >= 0) loadSlot(n); }   // 1.8.3: the launcher's Continue (tests)
+    else if (a == "deleteadventure") askDeleteCampaign(launchCampaign);                                                            // 1.8.3: the launcher's Delete (tests)
     else if (a == "update") askUpdate();   // 1.7.0 (#140)
     else if (a == "shutdown") showDialog("Shut Down", "Are you sure you want to shut down the computer? Unsaved progress will be lost.", [this]() { quit = true; }, true);
 }
@@ -356,7 +401,7 @@ void Desktop::askUpdate() {
         if (gUpdater.remote()) {   // the download window shows the progress and starts the update when it's done
             gUpdater.startDownload();
             DeskWindow w; w.type = "download"; w.title = "Downloading Triffall " + gUpdater.newVersion(); w.noClose = true;
-            w.w = 340; w.h = 130; w.x = (UI::SCREEN_W - w.w) / 2; w.y = (UI::SCREEN_H - TASKBAR_H - w.h) / 2;
+            w.w = 340; w.h = 130; w.x = (UI::SCREEN_W - w.w) / 2; w.y = std::max(deskTop(), deskTop() + (deskBottom() - deskTop() - w.h) / 2);
             windows.push_back(w);
         } else if (req) req->startUpdate = true;
     }, true);
@@ -392,6 +437,7 @@ static const std::vector<StartItem>& startMenuItems() {
 
 // ---------------- update ----------------
 void Desktop::update(InputState& in, float dt, Canvas& cv) {
+    if (Theme::id() != lastTheme) { ThemeId was = lastTheme; lastTheme = Theme::id(); if (iconsPlaced) themeChanged(was, lastTheme); }
     ctx.cv = &cv; ctx.frame++; ctx.time += dt; clockT += dt; mouseUsed = false; bool clickInWin = false;
     if (toastT > 0) toastT -= dt;
     if (dblTimer > 0) dblTimer -= dt;
@@ -410,7 +456,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
             if (in.gamepadActive) { int best = -1; for (size_t i = 0; i < hotsPrev.size(); i++) { const Rect& r = hotsPrev[i]; if (r.x < tw.x || r.y < tw.y + 22 || r.x >= tw.x + tw.w || r.y >= tw.y + tw.h) continue; if (best < 0 || r.y < hotsPrev[best].y - 2 || (abs(r.y - hotsPrev[best].y) <= 2 && r.x < hotsPrev[best].x)) best = (int)i; }
                 if (best >= 0) { cursorX = hotsPrev[best].x + hotsPrev[best].w / 2; cursorY = hotsPrev[best].y + hotsPrev[best].h / 2; } } } }
     bool onSlider = false; for (auto& r : sliderRectsPrev) if (r.contains(cursorX, cursorY)) onSlider = true;
-    bool bindingKey = !windows.empty() && windows.back().type == "settings" && windows.back().page == 1 && windows.back().sub >= 0;
+    bool bindingKey = !windows.empty() && windows.back().type == "settings" && (setPanel.waiting >= 0 || setPanel.openCombo >= 0);
     // keyboard users steer the same cursor with the arrow keys inside windows that have no list of their own
     std::string topType = windows.empty() ? "" : windows.back().type;
     bool kbNav = !in.gamepadActive && !windows.empty() && !startOpen && (topType == "settings" || topType == "about" || topType == "discord" || topType == "mycomputer" || topType == "launcher" || topType == "minesweeper" || topType == "solitaire");
@@ -454,7 +500,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
                     if (actP(in, A_RIGHT)) moved = snapIconCursor(1, 0) || moved;
                     if (moved) { int target = iconAt(cursorX, cursorY); if (target >= 0) selIcon = target; padOnStart = false; }
                     // past the bottom of the icons: down to the Start button (A opens the menu)
-                    if (!moved && actP(in, A_DOWN) && !padOnStart) { cursorX = 2 + startBtnW / 2; cursorY = UI::SCREEN_H - TASKBAR_H / 2; selIcon = -1; padOnStart = true; moved = true; }
+                    if (!moved && actP(in, A_DOWN) && !padOnStart) { cursorX = 2 + startBtnW / 2; cursorY = barY() + barH() / 2; selIcon = -1; padOnStart = true; moved = true; }
                 }
                 if (moved) gAudio.play("ui_move");
                 if (actP(in, A_CONFIRM)) {
@@ -485,7 +531,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     if (bindingKey) { if (in.pressed[K_ESCAPE]) { /* handled by the window */ } }
     // taskbar / start button
     int sbW = startBtnW;
-    bool overStart = in.mouseX >= 2 && in.mouseX < 2 + sbW && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3;
+    bool overStart = in.mouseX >= (topBar() ? 6 : 2) && in.mouseX < (topBar() ? 6 : 2) + sbW && in.mouseY >= barY() + 2 && in.mouseY < barY() + barH() - 2;
     bool justOpened = false;
     if (isModal) { startOpen = false; contextOpen = false; }
     if (in.mousePressed[0] && overStart && !isModal) { startOpen = !startOpen; mouseUsed = true; gAudio.play("desktop_click"); if (startOpen) { startSel = 0; justOpened = true; } }
@@ -507,7 +553,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     }
     if (startOpen) {
         const auto& items = startMenuItems();
-        int mx = 2, mh = (int)items.size() * 22 + 8, my = UI::SCREEN_H - TASKBAR_H - mh;
+        int mx = 2, mh = (int)items.size() * 22 + 8, my = topBar() ? barH() : deskBottom() - mh;
         int n = (int)items.size();
         // the menu keeps the controller in: up/down wrap around it, left/right do nothing; Start or Back closes it
         if (actP(in, A_UP)) startSel = (startSel + n - 1) % n; if (actP(in, A_DOWN)) startSel = (startSel + 1) % n;
@@ -519,7 +565,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         if (startOpen) { mouseUsed = true; }
     }
     // 1.7.0 (#140): the taskbar's Update button
-    if (updBtnW > 0 && !isModal && in.mousePressed[0] && !mouseUsed && in.mouseX >= updBtnX && in.mouseX < updBtnX + updBtnW && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { mouseUsed = true; startOpen = false; gAudio.play("desktop_click"); askUpdate(); }
+    if (updBtnW > 0 && !isModal && in.mousePressed[0] && !mouseUsed && in.mouseX >= updBtnX && in.mouseX < updBtnX + updBtnW && in.mouseY >= barY() + 2 && in.mouseY < barY() + barH() - 2) { mouseUsed = true; startOpen = false; gAudio.play("desktop_click"); askUpdate(); }
     // after an update: say how it went (once)
     if (!updateResultShown && gUpdater.resultPending && !isModal) {
         updateResultShown = true; gUpdater.resultPending = false;
@@ -527,7 +573,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         else showDialog("Triffall Update", "The update to " + gUpdater.resultVersion + " didn't finish" + (gUpdater.resultText.empty() ? std::string(".") : ": " + gUpdater.resultText) + " Triffall " + TRIFFALL_VERSION + " is still installed, so nothing was lost.");
     }
     // taskbar app button (resume game)
-    if (game->running && !isModal) { int bx = 2 + sbW + 6; if (in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + 160 && in.mouseY >= UI::SCREEN_H - TASKBAR_H + 3 && in.mouseY < UI::SCREEN_H - 3) { launchGame = true; mouseUsed = true; } }
+    if (game->running && !isModal) { int bx = topBar() ? appBtnX : 2 + sbW + 6, bw = topBar() ? appBtnW : 160; if (bw > 0 && in.mousePressed[0] && in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY >= barY() + 2 && in.mouseY < barY() + barH() - 2) { launchGame = true; mouseUsed = true; } }
     // windows: topmost gets input
     for (int i = (int)windows.size() - 1; i >= 0; i--) {
         bool active = i == activeWindow();
@@ -543,7 +589,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     // desktop icons
     // nothing behind an open menu, a window or the taskbar reacts to the pointer
     bool overAnyWindow = false; for (const auto& w : windows) if (mouseInWindow(in, w)) { overAnyWindow = true; break; }
-    bool overTaskbar = in.mouseY >= UI::SCREEN_H - TASKBAR_H;
+    bool overTaskbar = in.mouseY >= barY() && in.mouseY < barY() + barH();
     hoverIcon = (startOpen || contextOpen || overAnyWindow || overTaskbar) ? -1 : iconAt(in.mouseX, in.mouseY);
     if (iconPress >= 0 && !iconPressPad) {
         if (in.mouseDown[0]) {
@@ -582,15 +628,15 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
     }
     // right click on an icon (or E / pad X on the selected one): Open, Change Icon..., Default Icon
     auto openIconMenu = [&](int ic) { contextOpen = true; contextSel = 0; contextIcon = ic; selIcon = ic;
-        contextX = clampi(iconPositions[ic][0] + 40, 0, UI::SCREEN_W - 172); contextY = clampi(iconPositions[ic][1] + 20, 0, UI::SCREEN_H - TASKBAR_H - 82); mouseUsed = true; };
-    if (in.mousePressed[2] && hoverIcon >= 0 && !startOpen) { openIconMenu(hoverIcon); contextX = clampi(in.mouseX, 0, UI::SCREEN_W - 172); contextY = clampi(in.mouseY, 0, UI::SCREEN_H - TASKBAR_H - 82); }
+        contextX = clampi(iconPositions[ic][0] + 40, 0, UI::SCREEN_W - 172); contextY = clampi(iconPositions[ic][1] + 20, 0, deskBottom() - 82); mouseUsed = true; };
+    if (in.mousePressed[2] && hoverIcon >= 0 && !startOpen) { openIconMenu(hoverIcon); contextX = clampi(in.mouseX, 0, UI::SCREEN_W - 172); contextY = clampi(in.mouseY, 0, deskBottom() - 82); }
     else if (windows.empty() && !startOpen && selIcon >= 0 && iconPress < 0 && actP(in, A_INTERACT)) { openIconMenu(selIcon); in.eatKeys(); }
     else if (in.mousePressed[2] && !startOpen && !mouseUsed) {
         bool overWindow = false; for (const auto& w : windows) if (mouseInWindow(in, w)) { overWindow = true; break; }
         if (!overWindow && !overStart) {
             contextOpen = true; contextSel = 0; contextIcon = -1;
             contextX = clampi(in.mouseX, 0, UI::SCREEN_W - 172);
-            contextY = clampi(in.mouseY, 0, UI::SCREEN_H - TASKBAR_H - 82);
+            contextY = clampi(in.mouseY, 0, deskBottom() - 82);
             mouseUsed = true;
         }
     }
@@ -604,11 +650,12 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
     w.timer += dt;
     if (!active) return;
     // drag
-    bool overTitle = in.mouseX >= w.x + 3 && in.mouseX < w.x + w.w - 22 && in.mouseY >= w.y + 3 && in.mouseY < w.y + 21;
+    const bool closeLeft = Theme::onebit();   // 1.8.3 (#183): the one-bit close box is at the left of the title bar
+    bool overTitle = in.mouseX >= w.x + (closeLeft ? 24 : 3) && in.mouseX < w.x + w.w - (closeLeft ? 3 : 22) && in.mouseY >= w.y + 3 && in.mouseY < w.y + 21;
     if (in.mousePressed[0] && overTitle) { w.dragging = true; w.dragDX = in.mouseX - w.x; w.dragDY = in.mouseY - w.y; mouseUsed = true; }
-    if (w.dragging) { if (!in.mouseDown[0]) w.dragging = false; else { w.x = clampi(in.mouseX - w.dragDX, -w.w + 40, UI::SCREEN_W - 40); w.y = clampi(in.mouseY - w.dragDY, 0, UI::SCREEN_H - TASKBAR_H - 20); } }
+    if (w.dragging) { if (!in.mouseDown[0]) w.dragging = false; else { w.x = clampi(in.mouseX - w.dragDX, -w.w + 40, UI::SCREEN_W - 40); w.y = clampi(in.mouseY - w.dragDY, deskTop(), deskBottom() - 20); } }
     // close button
-    int cx = w.x + w.w - 20, cy = w.y + 5;
+    int cx = closeLeft ? w.x + 7 : w.x + w.w - 20, cy = closeLeft ? w.y + 4 : w.y + 5;
     if (!w.noClose && in.mousePressed[0] && in.mouseX >= cx && in.mouseX < cx + 16 && in.mouseY >= cy && in.mouseY < cy + 14) { w.wantClose = true; mouseUsed = true; return; }
     // keyboard for text windows
     if (w.type == "new") {
@@ -635,6 +682,16 @@ void Desktop::updateWindow(DeskWindow& w, InputState& in, float dt, bool active)
 
 // ---------------- drawing ----------------
 void Desktop::drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool active) {
+    if (Theme::onebit()) {   // 1.8.3 (#183): black body, paper frame, drop shadow, striped title bar, close box at the left
+        Theme::Pen p{&cv, ctx.font, ctx.ts};
+        Theme::windowChrome(p, w.x, w.y, w.w, w.h, w.title, active, !w.noClose);
+        if (!w.noClose && active) {
+            int cx = w.x + 7, cy = w.y + 4; hot(cx, cy, 14, 14);
+            bool closeHover = !startOpen && !contextOpen && in.mouseX >= cx && in.mouseX < cx + 14 && in.mouseY >= cy && in.mouseY < cy + 14;
+            if (closeHover) Theme::frameRect(cv, cx - 1, cy - 1, 16, 16, Theme::th().accent);
+        }
+        return;
+    }
     bevelBox(cv, w.x, w.y, w.w, w.h, false);
     // title bar gradient
     for (int i = 0; i < w.w - 8; i++) {
@@ -642,8 +699,9 @@ void Desktop::drawWindowFrame(Canvas& cv, DeskWindow& w, InputState& in, bool ac
         Color8 c = active ? RGB((uint8_t)(TITLE_A.r + (TITLE_B.r - TITLE_A.r) * f), (uint8_t)(TITLE_A.g + (TITLE_B.g - TITLE_A.g) * f), (uint8_t)(TITLE_A.b + (TITLE_B.b - TITLE_A.b) * f)) : RGB(128, 128, 128);
         cv.vline(w.x + 4 + i, w.y + 4, 18, c);
     }
-    ctx.font->bold = false;
+    ctx.font->bold = Theme::native();   // 1.8.3 (#176): bold title bars in the desktop-native theme
     ctx.font->draw(cv, *ctx.ts, w.x + 8, w.y + 7, w.title, active ? HILITE : FACE);
+    ctx.font->bold = false;
     // close button
     int cx = w.x + w.w - 20, cy = w.y + 5;
     if (w.noClose) return;   // 1.6.1 (#134): the installer
@@ -769,7 +827,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         if (win98Button(cv, in, w.x + w.w - 270, w.y + w.h - 34, 80, 24, "Default", true, false, active)) { setIconPicture(idx, -1, -1); showToast("Icon reset."); w.wantClose = true; }
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Cancel", true, false, active)) w.wantClose = true;
     } else if (w.type == "properties") {
-        static const char* names[] = {"Classic Teal", "Blue Scanlines", "Plum Checker", "Forest Grid"};
+        static const char* names[] = {"Theme default", "Blue Scanlines", "Plum Checker", "Forest Grid"};   // 1.8.3: 0 = the theme's own (slate / teal / one-bit checker)
         static const Color8 colors[] = {RGB(0, 128, 128), RGB(0, 24, 72), RGB(48, 12, 58), RGB(35, 55, 42)};
         f.draw(cv, *ctx.ts, x, y, "Desktop background:", DKSHADOW);
         for (int i = 0; i < 4; i++) {
@@ -783,88 +841,24 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         f.draw(cv, *ctx.ts, x + 4, y + 180, "Right-click the desktop for more options.", SHADOW);
         if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "OK", true, true, active)) w.wantClose = true;
     } else if (w.type == "settings") {
+        // 1.8.3 (#170 #175 #179 #183): the Settings pages in the theme's look (game/settings_ui.cpp); the desktop's cursor
+        // steers it with the pad / keyboard (hot spots), the mouse clicks it
         GameSettings& s = *settings;
-        int cy = y;
-        // tabs: General / Controls
-        { static const char* tabs[] = {"General", "Controls", "Access"}; for (int t = 0; t < 3; t++) { if (win98Button(cv, in, x + t * 90, cy - 4, 86, 20, tabs[t], true, w.page == t, active)) { w.page = t; w.sub = -1; } } }
-        cy += 24;
-        if (w.page == 2) {
-            // ---- accessibility ----
-            f.draw(cv, *ctx.ts, x, cy, "Reading", RGB(0, 0, 128)); cy += 16;
-            // 1.1.1: the clear font is the only text face (the owner's call); the tileset's letters stay only in the logo
-            checkbox(cv, in, x + 10, cy, "Large text (dialogue, messages, hints, story)", s.largeText, active); cy += 18;
-            { static const char* ts[] = {"Text speed: slow", "Text speed: normal", "Text speed: fast", "Text speed: instant"}; if (win98Button(cv, in, x + 10, cy, 190, 18, ts[clampi(s.textSpeed, 0, 3)], true, false, active)) s.textSpeed = (s.textSpeed + 1) % 4; cy += 26; }
-            f.draw(cv, *ctx.ts, x, cy, "Colour", RGB(0, 0, 128)); cy += 16;
-            checkbox(cv, in, x + 10, cy, "Colour-blind friendly colours (blue / orange)", s.colorblind, active); cy += 14;
-            f.draw(cv, *ctx.ts, x + 28, cy, "Your side, hit chances and cover stop using red/green.", SHADOW); cy += 20;
-            f.draw(cv, *ctx.ts, x, cy, "Comfort", RGB(0, 0, 128)); cy += 16;
-            checkbox(cv, in, x + 10, cy, "Reduce flashing (no lightning flashes)", s.reduceFlashing, active); cy += 18;
-            checkbox(cv, in, x + 10, cy, "Screen shake", s.screenShake, active); cy += 18;
-            checkbox(cv, in, x + 10, cy, "Fast combat animations", s.fastCombat, active); cy += 24;
-            f.drawWrapped(cv, *ctx.ts, x, cy, w.w - 30, "Small screens (Steam Deck): with integer scaling on, the game uses a sharp 2x when it fits and a smooth fit to the screen when it doesn't.", SHADOW);
-            if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "OK", true, true, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); w.wantClose = true; }
-            if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Apply", true, false, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); }
-            return;
-        }
-        if (w.page == 1) {
-            // ---- controls ----
-            f.draw(cv, *ctx.ts, x, cy, "Click a binding, then press a key or pad button. Esc clears.", SHADOW); cy += 16;
-            int rows = std::max(1, (w.y + w.h - 44 - (cy + 14)) / 15); int maxScroll = std::max(0, A_COUNT - rows);
-            if (in.wheel && mouseInWindow(in, w)) w.sel = clampi(w.sel - in.wheel * 3, 0, maxScroll);
-            w.sel = clampi(w.sel, 0, maxScroll);
-            f.draw(cv, *ctx.ts, x + 150, cy, "Key", RGB(0, 0, 128)); f.draw(cv, *ctx.ts, x + 230, cy, "Alt key", RGB(0, 0, 128)); f.draw(cv, *ctx.ts, x + 310, cy, "Gamepad", RGB(0, 0, 128)); cy += 14;
-            for (int r = 0; r < rows && w.sel + r < A_COUNT; r++) {
-                int a = w.sel + r; int ry = cy + r * 15;
-                f.draw(cv, *ctx.ts, x, ry, actionLabel(a), DKSHADOW);
-                for (int col = 0; col < 3; col++) {
-                    uint8_t& slot = col == 0 ? gKeys.key1[a] : col == 1 ? gKeys.key2[a] : gKeys.pad[a];
-                    int bx = x + 150 + col * 80; bool waiting = (w.sub == a * 3 + col);
-                    bool hover = in.mouseX >= bx && in.mouseX < bx + 74 && in.mouseY >= ry - 2 && in.mouseY < ry + 12; hot(bx, ry - 2, 74, 14);
-                    bevelBox(cv, bx, ry - 2, 74, 14, waiting);
-                    if (hover && (in.gamepadActive || padNavWindows) && !waiting) cv.rect(bx + 1, ry - 1, 72, 12, RGB(0, 0, 128));
-                    if (waiting) cv.fillRect(bx + 2, ry, 70, 10, RGB(255, 255, 180));
-                    f.draw(cv, *ctx.ts, bx + 4, ry - 1, waiting ? "press..." : keyName(slot), waiting ? C::Red : DKSHADOW);
-                    if (hover && in.mousePressed[0] && active) { w.sub = a * 3 + col; mouseUsed = true; }
-                }
-            }
-            if (maxScroll > 0) { int sbx = w.x + w.w - 16, sby = cy - 2, sbh = rows * 15; cv.fillRect(sbx, sby, 10, sbh, RGB(220, 220, 220)); int th = std::max(12, sbh * rows / A_COUNT), ty = sby + (sbh - th) * w.sel / maxScroll; bevelBox(cv, sbx, ty, 10, th, false); f.draw(cv, *ctx.ts, x + 118, w.y + w.h - 28, fmt("%d-%d / %d", w.sel + 1, std::min((int)A_COUNT, w.sel + rows), (int)A_COUNT), SHADOW); }
-            if (w.sub >= 0 && in.lastKey != K_NONE) {
-                int a = w.sub / 3, col = w.sub % 3; int k = in.lastKey;
-                if (k == K_ESCAPE) k = K_NONE;
-                bool padSlot = col == 2;
-                if (k == K_NONE || isPadKey(k) == padSlot) { (col == 0 ? gKeys.key1[a] : col == 1 ? gKeys.key2[a] : gKeys.pad[a]) = (uint8_t)k; w.sub = -1; in.eatKeys(); }
-            }
-            if (win98Button(cv, in, x, w.y + w.h - 34, 110, 24, "Reset defaults", true, false, active)) gKeys.reset();
-            if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "OK", true, true, active)) { s.save(saveDir + "/settings.ini"); showToast("Controls saved."); w.wantClose = true; }
-            if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Apply", true, false, active)) { s.save(saveDir + "/settings.ini"); showToast("Controls saved."); }
-            return;
-        }
-        f.draw(cv, *ctx.ts, x, cy, "Display", RGB(0, 0, 128)); cy += 16;
-        if (checkbox(cv, in, x + 10, cy, "Fullscreen (F11)", s.fullscreen, active)) { if (req) { req->setFullscreen = true; req->fullscreenValue = s.fullscreen; } }
-        // 1.2.2 (#39): the game fills the screen; this brings back the 640x480 picture with bars at the sides
-        if (checkbox(cv, in, x + 190, cy, "Classic 4:3 screen", s.classic43, active)) { if (req) req->setScale = std::max(1, s.scale); } cy += 18;
-        if (checkbox(cv, in, x + 10, cy, "Pixel-perfect integer scaling", s.integerScaling, active)) { if (req) { req->setIntegerScaling = true; req->integerScalingValue = s.integerScaling; } } cy += 18;
-        checkbox(cv, in, x + 10, cy, "CRT display effect", s.crt, active);
-        // 1.8.0 (#160): how nights look - the grey-blue Stage palette with a lantern circle, or the old darkening
-        if (win98Button(cv, in, x + 190, cy - 3, 196, 18, s.nightClassic ? "Night colours: Darken (classic)" : "Night colours: Stage", true, false, active)) s.nightClassic = !s.nightClassic;
-        cy += 18;
-        if (checkbox(cv, in, x + 10, cy, "V-Sync", s.vsync, active)) { if (req) { req->setVsync = true; req->vsyncValue = s.vsync; } } cy += 18;
-        f.draw(cv, *ctx.ts, x + 10, cy, "Window scale:", DKSHADOW);
-        for (int sc = 1; sc <= 3; sc++) { if (win98Button(cv, in, x + 110 + (sc - 1) * 40, cy - 4, 36, 20, std::to_string(sc) + "x", true, s.scale == sc, active)) { s.scale = sc; if (req) req->setScale = sc; } } cy += 26;
-        f.draw(cv, *ctx.ts, x, cy, "Audio", RGB(0, 0, 128)); cy += 16;
-        slider(cv, in, x + 10, cy, 150, "Master volume", s.masterVolume, 0, 100, active); cy += 18;
-        slider(cv, in, x + 10, cy, 150, "Music volume", s.musicVolume, 0, 100, active); cy += 18;
-        slider(cv, in, x + 10, cy, 150, "SFX volume", s.sfxVolume, 0, 100, active); cy += 18;
-        slider(cv, in, x + 10, cy, 150, "Ambience volume", s.ambientVolume, 0, 100, active); cy += 22;
-        f.draw(cv, *ctx.ts, x, cy, "Gameplay", RGB(0, 0, 128)); cy += 16;
-        checkbox(cv, in, x + 10, cy, "Gamepad enabled", s.gamepad, active); cy += 18;
-        checkbox(cv, in, x + 10, cy, "Screen shake", s.screenShake, active); cy += 18;
-        checkbox(cv, in, x + 10, cy, "Fast combat animations", s.fastCombat, active); cy += 18;
-        checkbox(cv, in, x + 10, cy, "Interact while moving", s.interactWhileMoving, active); cy += 18;
-        checkbox(cv, in, x + 10, cy, "Edge scrolling in combat", s.edgeScroll, active); cy += 18;
-        { static const char* bl[] = {"Companion chatter: off", "Companion chatter: rare", "Companion chatter: normal", "Companion chatter: often"}; if (win98Button(cv, in, x + 10, cy, 190, 18, bl[clampi(s.banter, 0, 3)], true, false, active)) s.banter = (s.banter + 1) % 4; cy += 22; }
-        if (win98Button(cv, in, w.x + w.w - 180, w.y + w.h - 34, 80, 24, "OK", true, true, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); w.wantClose = true; }
-        if (win98Button(cv, in, w.x + w.w - 90, w.y + w.h - 34, 80, 24, "Apply", true, false, active)) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); }
+        Theme::Pen p{&cv, ctx.font, ctx.ts};
+        Rect inner{w.x + 4, w.y + 24, w.w - 8, w.h - 28};
+        if (Theme::onebit()) inner = {w.x + 1, w.y + 22, w.w - 2, w.h - 23};
+        else if (Theme::frame()) { Theme::NoMap nm; cv.fillRect(inner.x, inner.y, inner.w, inner.h, Theme::th().back); }
+        setPanel.ownNav = false; setPanel.inGame = false;
+        setPanel.padCursor = in.gamepadActive || padNavWindows;
+        setPanel.hot = [this](Rect r) { hot(r.x, r.y, r.w, r.h); };
+        setPanel.sliderHot = [this](Rect r) { sliderRects.push_back(r); };
+        InputState pin = in; if (mouseUsed || !active) { pin.mousePressed[0] = false; pin.mouseDown[0] = false; }
+        int res = setPanel.draw(p, pin, inner, s, req, active);
+        if (pin.mousePressed[0] != in.mousePressed[0] && !pin.mousePressed[0]) mouseUsed = true;
+        if (setPanel.waiting >= 0 && pin.lastKey == K_NONE && in.lastKey != K_NONE) in.eatKeys();
+        if (res == SettingsPanel::R_APPLY) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); }
+        else if (res == SettingsPanel::R_OK) { s.save(saveDir + "/settings.ini"); showToast("Settings saved."); w.wantClose = true; }
+        else if (res == SettingsPanel::R_CANCEL) w.wantClose = true;
     } else if (w.type == "discord") {
         drawIcon(cv, 1, 6, x + 6, y, 1);
         f.drawWrapped(cv, *ctx.ts, x + 48, y, w.w - 70, std::string("Opening the Triffall Discord in your browser:\n\n") + discordUrl(), DKSHADOW);
@@ -956,6 +950,7 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
 }
 
 void Desktop::drawTaskbar(Canvas& cv, InputState& in) {
+    if (topBar()) { drawMenuBar(cv, in); return; }
     int y = UI::SCREEN_H - TASKBAR_H;
     cv.fillRect(0, y, UI::SCREEN_W, TASKBAR_H, FACE);
     cv.hline(0, y, UI::SCREEN_W, FACE); cv.hline(0, y + 1, UI::SCREEN_W, HILITE);
@@ -968,10 +963,20 @@ void Desktop::drawTaskbar(Canvas& cv, InputState& in) {
     for (int ry = 0; ry < 11; ry++) for (int rx = 0; rx < 11; rx++) { char c = rift[ry][rx]; if (c == '.') continue; cv.put(fx + rx, fy + ry, c == 'X' ? RGB(40, 10, 70) : c == 'P' ? RGB(140, 60, 220) : RGB(240, 230, 255)); }
     ctx.font->bold = true; ctx.font->draw(cv, *ctx.ts, fx + 16, y + 9, "Start", DKSHADOW); ctx.font->bold = false;
     cv.vline(startW + 6, y + 5, 20, SHADOW); cv.vline(startW + 7, y + 5, 20, HILITE);
+    int nbx = 2 + startW + 6;
     if (game->running) {
-        int bx = 2 + startW + 6; bevelBox(cv, bx, y + 4, 160, 22, false);
+        int bx = nbx; bevelBox(cv, bx, y + 4, 160, 22, false);
         ctx.ts->draw(cv, T(ctx.gd->cls(game->party.members[0].classId) ? ctx.gd->cls(game->party.members[0].classId)->spriteCol : 104, game->party.members[0].tile.r), bx + 6, y + 9, 1);
         ctx.font->draw(cv, *ctx.ts, bx + 24, y + 9, "Triffall - " + game->heroName, DKSHADOW);
+        nbx += 164;
+    }
+    // 1.8.3 (#175 #179): the window in front shows as a pressed taskbar button
+    if (!windows.empty() && !windows.back().noClose && nbx + 150 < UI::SCREEN_W - 180) {
+        const DeskWindow& tw0 = windows.back(); int bw = 150;
+        bevelBox(cv, nbx, y + 4, bw, 22, true); cv.fillRect(nbx + 2, y + 6, bw - 4, 18, RGB(220, 220, 220));
+        for (int yy = y + 6; yy < y + 24; yy++) for (int xx = nbx + 2 + (yy & 1); xx < nbx + bw - 2; xx += 2) cv.put(xx, yy, HILITE);
+        ctx.font->bold = Theme::native(); std::string t = tw0.title; while (t.size() > 3 && ctx.font->width(t) > bw - 14) t.pop_back();
+        ctx.font->draw(cv, *ctx.ts, nbx + 8, y + 10, t, DKSHADOW); ctx.font->bold = false;
     }
     // tray with clock
     int tw = 70;
@@ -994,10 +999,58 @@ void Desktop::drawTaskbar(Canvas& cv, InputState& in) {
     ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 42, y + 9, buf, DKSHADOW);
 }
 
+// 1.8.3 (#183): the One-Bit Desktop's paper menu bar at the top: Start (torch + "Start"), the front window's name in bold and
+// its menus, the update button and the clock at the right
+void Desktop::drawMenuBar(Canvas& cv, InputState& in) {
+    Theme::NoMap nm; const UiTheme& t = Theme::th(); Theme::Pen p{&cv, ctx.font, ctx.ts};
+    cv.fillRect(0, 0, UI::SCREEN_W, 22, t.text); cv.fillRect(0, 22, UI::SCREEN_W, 1, t.back);
+    int sw = 64; startBtnW = sw;
+    cv.fillRect(6, 2, sw, 18, t.back);
+    if (startOpen) Theme::frameRect(cv, 6, 2, sw, 18, t.accent);
+    if (const ItemDef* torch = ctx.gd ? ctx.gd->item("torch_item") : nullptr) drawItemTile(*ctx.ts, cv, *torch, 10, 5, 1);
+    ctx.font->draw(cv, *ctx.ts, 26, 5, "Start", t.text);
+    std::string app = "Triffall"; std::vector<std::string> menus = {"Adventure", "View", "Help"};
+    if (!windows.empty()) {
+        const DeskWindow& w = windows.back();
+        if (w.type == "settings") { app = "Settings"; menus = {"Edit", "Help"}; }
+        else if (w.type == "launcher") { app = "Triffall"; }
+        else { app = w.title; menus.clear(); }
+    } else if (game->running) { app = "Triffall - " + game->heroName; menus.clear(); }
+    ctx.font->bold = true; int ax = 84; ctx.font->draw(cv, *ctx.ts, ax, 5, app, t.back); ax += ctx.font->width(app) + 18; ctx.font->bold = false;
+    for (auto& m : menus) { ctx.font->draw(cv, *ctx.ts, ax, 5, m, t.back); ax += ctx.font->width(m) + 18; }
+    appBtnX = game->running && windows.empty() ? 84 : 0; appBtnW = appBtnX ? ctx.font->width(app) + 8 : 0;
+    // tray: the update button and the clock
+    time_t tt = time(nullptr); struct tm* lt = localtime(&tt);
+    char buf[16]; if (lt) strftime(buf, sizeof buf, "%H:%M", lt); else snprintf(buf, sizeof buf, "00:00");
+    int cx = UI::SCREEN_W - 8 - ctx.font->width(buf); ctx.font->draw(cv, *ctx.ts, cx, 5, buf, t.back);
+    updBtnW = 0;
+    if (gUpdater.available()) {
+        std::string lbl = "Update to " + gUpdater.newVersion();
+        int bw = ctx.font->width(lbl) + 12, bx = cx - 14 - bw;
+        bool hv = !modal() && in.mouseX >= bx && in.mouseX < bx + bw && in.mouseY < 22;
+        cv.fillRect(bx, 2, bw, 18, hv ? t.accent : t.back); ctx.font->draw(cv, *ctx.ts, bx + 6, 5, lbl, hv ? t.back : t.accent);
+        updBtnX = bx; updBtnW = bw;
+    }
+    (void)p;
+}
+
 void Desktop::drawStartMenu(Canvas& cv, InputState& in) {
     (void)in;
     const auto& items = startMenuItems();
-    int mx = 2, mh = (int)items.size() * 22 + 8, my = UI::SCREEN_H - TASKBAR_H - mh;
+    int mx = 2, mh = (int)items.size() * 22 + 8, my = topBar() ? barH() : deskBottom() - mh;
+    if (topBar()) {   // 1.8.3 (#183): a one-bit tool window dropped from Start: torch + glow on the chosen entry
+        Theme::NoMap nm; const UiTheme& t = Theme::th(); Theme::Pen p{&cv, ctx.font, ctx.ts};
+        cv.fillRect(mx + 4, my + 4, 180, mh, t.back); cv.fillRect(mx, my, 180, mh, t.back); cv.rect(mx, my, 180, mh, t.text);
+        const ItemDef* torch = ctx.gd ? ctx.gd->item("torch_item") : nullptr;
+        for (size_t i = 0; i < items.size(); i++) {
+            int iy = my + 4 + (int)i * 22; bool sel = (int)i == startSel;
+            bool enabled = !(std::string(items[i].action) == "resume" && !game->running);
+            if (sel) { Theme::glow(cv, mx + 4, iy, 172, 21); if (torch) drawItemTile(*ctx.ts, cv, *torch, mx + 8, iy + 4, 1); }
+            ctx.font->draw(cv, *ctx.ts, mx + 26, iy + 5, items[i].label, !enabled ? t.dim : sel ? t.accent : t.text);
+            if (i + 2 == items.size()) for (int xx = mx + 8; xx < mx + 172; xx += 2) cv.put(xx, iy + 22, t.dim);
+        }
+        return;
+    }
     bevelBox(cv, mx, my, 180, mh, false);
     cv.fillRect(mx + 3, my + 3, 20, mh - 6, TITLE_A);
     // vertical text strip
@@ -1055,7 +1108,13 @@ void Desktop::draw(Canvas& cv, InputState& in) {
         std::string label = full ? iconDefs[i].label : fitLabel(iconDefs[i].label);
         int tw = ctx.font->width(label);
         int lx = clampi(ix + 34 - tw / 2, 1, UI::SCREEN_W - tw - 2);
-        if (sel || full) cv.fillRect(lx - 2, iy + 34, tw + 4, 14, sel ? TITLE_A : RGB(0, 90, 90));
+        if (Theme::onebit()) {   // 1.8.3 (#183): paper on black; the selected one inverted
+            const UiTheme& t = Theme::th();
+            cv.fillRect(lx - 2, iy + 34, tw + 4, 14, sel ? t.text : t.back);
+            ctx.font->draw(cv, *ctx.ts, lx, iy + 35, label, sel ? t.back : t.text);
+            return;
+        }
+        if (sel || full) cv.fillRect(lx - 2, iy + 34, tw + 4, 14, sel ? TITLE_A : Theme::frame() ? RGB(34, 42, 58) : RGB(0, 90, 90));
         ctx.font->draw(cv, *ctx.ts, lx + 1, iy + 36, label, DKSHADOW);
         ctx.font->draw(cv, *ctx.ts, lx, iy + 35, label, HILITE);
     };
@@ -1073,19 +1132,24 @@ void Desktop::draw(Canvas& cv, InputState& in) {
     // welcome text when idle
     if (!game->running && windows.empty()) {
         { int keep = ctx.font->style; ctx.font->style = Font::STYLE_CLASSIC;   // the logo always keeps the game's own letters
-          ctx.font->bold = true; ctx.font->drawShadow(cv, *ctx.ts, UI::SCREEN_W - 300, UI::SCREEN_H - TASKBAR_H - 60, "TRIFFALL", RGB(255, 230, 120), RGB(0, 60, 60), 2); ctx.font->bold = false; ctx.font->style = keep; }
-        ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 300, UI::SCREEN_H - TASKBAR_H - 28, firstRun() ? "Setting up..." : "Double-click Triffall to begin.", RGB(200, 240, 240));
+          ctx.font->bold = true; ctx.font->drawShadow(cv, *ctx.ts, UI::SCREEN_W - 300, deskBottom() - 60, "TRIFFALL", RGB(255, 230, 120), RGB(0, 60, 60), 2); ctx.font->bold = false; ctx.font->style = keep; }
+        ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - 300, deskBottom() - 28, firstRun() ? "Setting up..." : "Double-click Triffall to begin.", RGB(200, 240, 240));
     }
     // windows
     for (size_t i = 0; i < windows.size(); i++) {
         bool active = (int)i == activeWindow();
         drawWindowFrame(cv, windows[i], in, active);
+        const std::string& ty = windows[i].type;
+        bool mapped = Theme::onebit() && ty != "minesweeper" && ty != "solitaire" && ty != "launcher" && ty != "settings";   // 1.8.3 (#183)
+        if (mapped) Theme::beginDeskMap();
         drawWindowContent(cv, windows[i], in, active);
+        if (mapped) Theme::endDeskMap();
     }
     drawTaskbar(cv, in);
     if (startOpen) drawStartMenu(cv, in);
     if (contextOpen) drawContextMenu(cv, in);
-    if (toastT > 0) { int tw = ctx.font->width(toast) + 20; bevelBox(cv, UI::SCREEN_W - tw - 8, UI::SCREEN_H - TASKBAR_H - 30, tw, 22, false); ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - tw + 2, UI::SCREEN_H - TASKBAR_H - 25, toast, DKSHADOW); }
+    if (toastT > 0 && Theme::onebit()) { const UiTheme& t = Theme::th(); int tw = ctx.font->width(toast) + 20; cv.fillRect(UI::SCREEN_W - tw - 8, deskBottom() - 30, tw, 22, t.back); cv.rect(UI::SCREEN_W - tw - 8, deskBottom() - 30, tw, 22, t.text); ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - tw + 2, deskBottom() - 25, toast, t.text); }
+    else if (toastT > 0) { int tw = ctx.font->width(toast) + 20; bevelBox(cv, UI::SCREEN_W - tw - 8, deskBottom() - 30, tw, 22, false); ctx.font->draw(cv, *ctx.ts, UI::SCREEN_W - tw + 2, deskBottom() - 25, toast, DKSHADOW); }
     cursorHand = hoverIcon >= 0 && windows.empty();
     if (!startOpen && !contextOpen) for (const Rect& r : hots) if (r.contains(cursorX, cursorY)) { cursorHand = true; break; }
     if (in.mouseInWindow || in.gamepadActive) drawCursor(cv, cursorX, cursorY);

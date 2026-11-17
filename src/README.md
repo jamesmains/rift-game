@@ -29,6 +29,36 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.3 three looks: Settings > Theme
+
+* **Settings > General > Display > Theme** picks how the desktop and the game look; it changes at once, on the desktop
+  and in a running game, no restart. The old navy and gold look is gone.
+  * *Adventurer's Frame* (the default): the world sits in a carved slate frame. A column at the right holds the place
+    (name, day and time, weather, gold), the party with health and mana, and Orders (Party, Items, Spells, Journal,
+    World map, Craft, Talk / Use, Menu - click them or press their keys). Along the bottom are the Chronicle (the
+    message log, which keeps what was said) and the Belt (hotbar slots 1-8). In a fight the column shows the round and
+    the turn order, the acting character with AP and movement as pips, and an Actions list (Attack, Aimed shot, Spell,
+    Item, Defend, Overwatch, More actions, Flee, End turn, Menu); the bottom shows the target card (hit and crit
+    chances, damage, what you know of its resistances, the ground it stands on) and the log. Nothing floats over the
+    battlefield except the target's bracket and its hit chance. The party screen is a paper doll with six equipment
+    slots, attributes, class ranks and notes; the column compares the item you point at.
+  * *Desktop-native*: the game runs as a program window on the 90s desktop, with a menu bar, a toolbar, a status bar,
+    tool windows and the party on the taskbar; menus open as dialog boxes.
+  * *One-Bit Desktop*: black windows with paper frames and striped title bars under a paper menu bar at the top of
+    the screen, with a lantern-amber glow on whatever has the focus.
+* **Settings in the game**: Pause > Settings opens the Settings screen over the paused game (it used to drop you to the
+  desktop). Same pages as the desktop's: General (Display with Theme, Sound, Play), Controls (every action: key, alt key,
+  gamepad) and Access (large text, text speed, colour-blind colours, reduced flashing, screen shake, fast combat).
+  Apply / Done (OK) save to settings.ini.
+* The launcher and the desktop follow the theme too: box art, the story and the adventures next to a Begin list
+  (Continue, New Game, Load a save, Saves, How to Play, Achievements, Settings, Editor, About).
+* Small labels use Spleen 5x8 (BSD licence, same author and licence file as the 6x12); headings use the tileset's own
+  classic letters.
+* Greywood Cave: telling Grakk's tribe "No. Go." when you walk back into the hall now sends them on their way at once;
+  they no longer stand there until you next come back to the cave.
+* Enclosed dark places (caves, crypts) are pitch black only until you have seen a spot; after that it keeps a dark
+  night tint when your light moves on, so you can find your way back.
+
 ## 1.8.1 out of the light
 
 * Trails, roads, rivers and props no longer sit on a pure black square where nothing around them gave a ground colour
