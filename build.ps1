@@ -76,7 +76,8 @@ $updateUrl = ""
 if ($kind -eq "full" -and (Test-Path $repoFile)) { $r = (Get-Content $repoFile -Raw).Trim(); if ($r) { $updateUrl = "https://github.com/$r/releases/latest/download/" } }
 function Add-UpdatePieces([string]$copyDir) {
     & "$PSScriptRoot\tools\pull-editor-edits.ps1" -ManifestFor $copyDir
-    if ($updateUrl) { [System.IO.File]::WriteAllText((Join-Path $copyDir "update-source.txt"), $updateUrl + "`r`n", (New-Object System.Text.UTF8Encoding $false)) }
+    # .NET resolves relative paths against the process's folder, not PowerShell's location: use the full path (1.7.4)
+    if ($updateUrl) { [System.IO.File]::WriteAllText((Join-Path (Resolve-Path $copyDir).Path "update-source.txt"), $updateUrl + "`r`n", (New-Object System.Text.UTF8Encoding $false)) }
 }
 
 if ($Package) {   # clean copy to hand out: exe, assets, readme - no saves\

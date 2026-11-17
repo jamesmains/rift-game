@@ -1102,7 +1102,7 @@ void Desktop::drawBoot(Canvas& cv, float t) {
     f.draw(cv, *ctx.ts, 18, 70, "an old-school RPG", RGB(200, 190, 150));
     f.draw(cv, *ctx.ts, cv.w - 16 - f.width(TRIFFALL_VERSION_LABEL), 20, TRIFFALL_VERSION_LABEL, DIMG);
     cv.hline(16, 90, cv.w - 32, RGB(70, 70, 70));
-    const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Loading Aldmoor...", "Starting Triffall..."};
+    const char* lines[] = {"Triffall BIOS v1.0 (C) 1998", "CPU: 266 MHz", "Memory Test: 65536K OK", "", "Detecting IDE drives...", "  Primary Master: TRIFFALL-HDD", "  Secondary Master: CD-ROM", "", "Loading Aldmoor...", "Starting Triffall " TRIFFALL_VERSION_LABEL "..."};
     int n = sizeof(lines) / sizeof(lines[0]);
     int show = std::min(n, (int)(t / 0.2f));
     for (int i = 0; i < show; i++) f.draw(cv, *ctx.ts, 16, 104 + i * 14, lines[i], GREY);
