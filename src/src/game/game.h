@@ -242,6 +242,13 @@ public:
     // Returns the per-view-tile dim (256 = none) for NPCs / monsters / objects outside the circle, empty = no dimming.
     std::vector<uint16_t> sceneryLook(Canvas& cv, int cx, int cy, int x0, int y0, int x1, int y1, const std::vector<Color8>& viewBg, bool combat);
     bool partyLightOn() const;          // a torch / Light spell burning or light gear worn (the lantern circle doubles)
+    // 1.8.1: the lantern circles at night outdoors (the leader / active fighter's radius 4 or 8, plus radius 2 round
+    // every party unit in a fight), used by sceneryLook and darkHides
+    struct NightLamp { int x, y; float r; };
+    std::vector<NightLamp> nightLamps(bool combat) const;
+    // 1.8.1 (#165): true = the tile lies outside every light, so objects, NPCs and monsters on it aren't drawn: on dark
+    // maps any tile not both seen and lit; outdoors from half-dark on (19:30 - 06:00) any tile outside the lantern circles
+    bool darkHides(int x, int y, bool combat) const;
     bool shopOpen(const std::string& shopId, std::string& hoursOut) const;
     std::map<std::string, std::string> extra;    // free-form persistent key/values (saved in [extra])
     // ---- stats, bestiary, companions, achievements (journal.cpp) ----
@@ -575,7 +582,7 @@ public:
     bool groupOnTrap(EnemyGroup& e);                        // the group stands on an armed trap: hurt or gone
     void partyOnTrap();
     void applyGroupHurt(Combatant& u, int groupIndex);
-    void drawTraps(Canvas& cv, int cx, int cy);
+    void drawTraps(Canvas& cv, int cx, int cy, bool combat);
     void drawThrowAim(Canvas& cv);
     bool gatherReady(const GatherNode& g) const { auto it = extra.find("gather_" + mapId + "_" + std::to_string(g.x) + "_" + std::to_string(g.y)); return it == extra.end() || day - atoi(it->second.c_str()) >= g.respawn; }
     bool interactable(int x, int y) { return map->crateAt(x, y) || map->npcAt(x, y) || map->chestAt(x, y) || map->doorAt(x, y) || map->signAt(x, y) || map->enemyAt(x, y) || map->obstacleAt(x, y) || map->leverAt(x, y) || map->gatherAt(x, y); }

@@ -23,7 +23,7 @@ void Game::runConsole(const std::string& line) {
         if (st < 0) { out("usage: setstat str|dex|con|int|wis|cha N [MEMBER]"); return; } party.members[mi].baseStats[st] = argi(2, 10); out(fmt("%s %s = %d (with gear %d)", party.members[mi].name.c_str(), statName(st), party.members[mi].baseStats[st], party.members[mi].stat(st, *gd))); return; }
     if (c == "spellsof") { if (party.members.empty()) return; int mi = clampi(argi(1, 0), 0, (int)party.members.size() - 1); std::string s; for (auto& sp : party.members[mi].spells) s += sp + " "; out(party.members[mi].name + ": " + (s.empty() ? "(none)" : s)); return; }
     if (c == "help") {   // one topic per line; drawConsole wraps anything wider than the screen
-        out("world: teleport MAP [X Y] | maps | pos | reveal | worldmap MODE | time HH:MM | day N | weather clear|rain|storm|fog|snow");
+        out("world: teleport MAP [X Y] | maps | pos | reveal | worldmap MODE | sky [0|1] | time HH:MM | day N | weather clear|rain|storm|fog|snow");
         out("party: give ITEM [N] | gold N | xp N | level N | heal | hurt N [poison] | god | auto | spells | learn SPELL [MEMBER] | join CLASS | item?");
         out("1.4.0: stealth [N] | setstat STAT N [MEMBER] | spellsof [MEMBER] | run teach:bram:SPELL");
         out("story: flag NAME [V] | unflag NAME | flags | approve CLASS N | rep [FACTION N] | questfail QUEST COND|TEXT | achieve ID | reset_achievements");
@@ -68,6 +68,7 @@ void Game::runConsole(const std::string& line) {
     else if (c == "bestiary") { if (gd->creature(arg(1))) { bestiary[arg(1)] = std::max(1, atoi(arg(2).c_str())); out("ok"); } else out("unknown creature"); }
     else if (c == "bounties") { out(fmt("%d boards:", (int)boards.size())); for (auto& b : boards) out("  board " + b.id + " (map " + b.map + ")"); for (auto& b : bountyOffers) out("  offer " + b.town + " " + b.kind + " " + b.target + (b.title.empty() ? "" : " '" + b.title + "'")); for (auto& b : bounties) out("  taken " + b.town + " " + b.kind + " " + b.target); }
     else if (c == "combatmusic") { if (!map) return; if (!arg(1).empty()) map->combatMusic = arg(1) == "-" ? "" : arg(1); out("combatmusic = " + (map->combatMusic.empty() ? std::string("(campaign: ") + (campaign.combatMusic.empty() ? "combat" : campaign.combatMusic) + ")" : map->combatMusic) + " - this visit; map header combatmusic="); }   // 1.3.1 (#47)
+    else if (c == "sky") { if (!map) return; if (!arg(1).empty()) { map->sky = argi(1) != 0 ? 1 : 0; computeLight(); } out(std::string("sky = ") + (map->skyOpen() ? "1 (open: outside the light keeps the night tint)" : "0 (enclosed: outside the light is pitch black)") + " - this visit; map header sky=1|0"); }   // 1.8.1 (#166)
     else if (c == "touch") { if (!map) return; if (!arg(1).empty()) map->touchCombat = argi(1) != 0; out(std::string("touch = ") + (map->touchCombat ? "1 (fights start when a group touches the party)" : "0 (groups attack within aggro range)") + " - this visit; map header touch=1"); }
     else if (c == "worldmap") { if (!arg(1).empty()) campaign.worldMap = arg(1); out("world map = " + campaign.worldMap + " (overworld | off | current | MAP_ID; campaign.txt worldmap=)"); }
     else if (c == "reveal") { if (map) { for (auto& cell : map->cells) cell.explored = true; } out("map revealed"); }

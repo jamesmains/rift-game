@@ -171,3 +171,6 @@ what can be made). Command: `craftsel RECIPE` (select a recipe on the open craft
 - 1.8.0 (#159-#162) day colours and night look: command `nightclassic 0|1` (Settings > Display "Night colours"); expects
   `daybg:<kind>` / `daytint:<kind>` ("r,g,b"), `px:X,Y` (screen pixel "r,g,b"), `pxlum:X,Y`, `pxblue:X,Y` (blue minus red:
   > 0 in the night palette). Test `night_look_1_8_0` (Hollowmere at 10:00 / 19:30 / 22:00, classic, Greywood Cave with a torch).
+- 1.8.1 (#164-#166): console `sky [0|1]` (this visit); expects `blackbg` (under=1 cells of the current map whose bg is
+  still pure black), `darkhides:X,Y` (1 = objects on that tile aren't drawn). Test `dark_sky_1_8_1`; `night_look_1_8_0`
+  now sets `con sky 1` in Greywood Cave to check the open-sky shadow tint.

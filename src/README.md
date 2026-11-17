@@ -29,6 +29,17 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.1 out of the light
+
+* Trails, roads, rivers and props no longer sit on a pure black square where nothing around them gave a ground colour
+  (a lane between two houses, a road crossing, the middle of a clump of trees): they take the nearest ground's colour.
+* At night, and on dark maps, nothing is drawn where your light doesn't reach: people, monsters, chests, signs, save
+  points and loot only show inside the lantern circle (outdoors, from about 19:30 to 06:00) or on lit tiles you can see.
+* Caves, crypts and other enclosed places are pitch black outside the light now, explored or not. Places open to the
+  sky (towns, the bandit camp, the marsh) keep the grey-blue night tint outside the light.
+* Editor: a "sky" box on the Maps header (and on generated dungeons) says whether a map is open to the sky. Not set:
+  dark maps are enclosed, the rest open.
+
 ## 1.8.0 day, dusk and lantern
 
 * By day the ground has its own colours: dark green lawns, brown lanes, wooden floors. Each kind of ground works its

@@ -215,6 +215,14 @@ void computeTileKindDay(TileKind& k) {
     }
     if (k.hasDayBg) k.dayBg = k.dayBgSet;
     if (k.hasDayTint) k.dayTint = k.dayTintSet;
+    // 1.8.1 (#164): an under=1 kind with no ground around it falls back to its own colour (a path's brown, a tree's green)
+    k.fallbackBg = k.dayBg;
+    if (k.under && !k.hasDayBg && !k.opaque && !(k.bg.r || k.bg.g || k.bg.b)) {
+        Color8 base; bool have = false;
+        if (k.recolor) { base = k.tint; have = true; }
+        else { for (auto& g : k.ground) if (g.valid()) { have = tileOwnColour(g, base); break; } if (!have) have = tileOwnColour(k.prop, base); }
+        if (have) k.fallbackBg = toLum(base, 34, 0.30f, 0.70f);
+    }
 }
 void computeTileKindDayColors() { gOwnColCache.clear(); for (auto& k : gKinds) computeTileKindDay(k); }   // the sheet may have changed (campaign switch)
 
@@ -321,6 +329,7 @@ bool loadMapText(const std::string& text, Map& m, Rng& rng, std::string& err) {
             else if (k == "worldmap") m.worldMap = v;
             else if (k == "onenter") m.onEnter = v;
             else if (k == "touch") m.touchCombat = atoi(v.c_str()) != 0;
+            else if (k == "sky") m.sky = v.empty() ? -1 : (atoi(v.c_str()) != 0 ? 1 : 0);   // 1.8.1 (#166)
             else if (k == "bg") m.bg = parseColor(v);
         } else if (section == "legend") {
             if (!k.empty()) legend[k[0]] = v;

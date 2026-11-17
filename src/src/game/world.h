@@ -42,6 +42,8 @@ struct TileKind {
     // what the game draws, worked out by computeTileKindDayColors from the kind's own colour (tint if recolor=1, else
     // the most common colour of its ground or prop picture). daybg= / daytint= (hasDayBg / hasDayTint) pick them by hand.
     Color8 dayBg = C::Black, dayTint = C::White, dayBgSet = C::Black, dayTintSet = C::White;
+    // 1.8.1 (#164): an under=1 kind's own day colour, used only when no ground is found around it (see tileKindLook)
+    Color8 fallbackBg = C::Black;
     bool hasDayBg = false, hasDayTint = false;
 };
 // Picks a cell's ground piece and background from its neighbours (edges=/join=/under=). nb(dx, dy) returns the
@@ -71,20 +73,46 @@ template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Colo
     }
     if (!k.under) return;   // props with under=1 and no edges just stand on the floor around them
     // the ground most of the open neighbours stand on (sides count double; walls, doors and void don't count)
-    static const int D[8][3] = {{0, -1, 2}, {1, 0, 2}, {0, 1, 2}, {-1, 0, 2}, {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}};
-    Color8 cand[8]; int score[8], n = 0;
-    for (auto& d : D) {
-        const TileKind* o = nb(d[0], d[1]);
-        if (!o || (o->joinBits & k.linkBits) || o->opaque || o->blocksSight || o->name == "void") continue;
-        if (o->under && o->edges.empty()) continue;   // another prop: only real ground counts
-        if (o->water && !k.water && k.edges.empty()) continue;   // a prop by the water stands on the land side
-        const Color8& ob = o->dayBg;   // 1.8.0 (#159): the neighbour's day colour
+    // 1.8.1 (#164): a neighbour without a day colour of its own (another trail, a river, a prop: dayBg black) no longer
+    // votes black, and when no neighbour gives a colour (a path between two houses, a junction, a tree inside a clump)
+    // the search walks outwards (up to UNDER_REACH steps, first only through cells you could see through, then through
+    // anything not solid) to the nearest real ground. Nothing at all: the kind's own colour (fallbackBg), not black.
+    auto isGround = [&](const TileKind* o, bool relaxed) {
+        if (!o || (o->joinBits & k.linkBits) || o->opaque || o->name == "void") return false;
+        if (o->blocksSight && !relaxed) return false;
+        if (o->under && o->edges.empty()) return false;   // another prop: only real ground counts
+        if (o->water && !k.water && k.edges.empty()) return false;   // a prop by the water stands on the land side
+        return o->dayBg.r || o->dayBg.g || o->dayBg.b;
+    };
+    Color8 cand[64]; int score[64], n = 0;
+    auto vote = [&](const Color8& ob, int w) {
         int i = 0; while (i < n && !(cand[i].r == ob.r && cand[i].g == ob.g && cand[i].b == ob.b)) i++;
-        if (i == n) { cand[n] = ob; score[n++] = 0; }
-        score[i] += d[2];
+        if (i == n) { if (n == 64) return; cand[n] = ob; score[n++] = 0; }
+        score[i] += w;
+    };
+    static const int D[8][3] = {{0, -1, 2}, {1, 0, 2}, {0, 1, 2}, {-1, 0, 2}, {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}};
+    for (auto& d : D) { const TileKind* o = nb(d[0], d[1]); if (isGround(o, false)) vote(o->dayBg, d[2]); }
+    constexpr int UNDER_REACH = 6, SIDE = 2 * UNDER_REACH + 1;
+    for (int pass = 0; pass < 2 && n == 0; pass++) {
+        bool relaxed = pass == 1;
+        uint8_t seen[SIDE * SIDE] = {}; int qx[SIDE * SIDE], qy[SIDE * SIDE], qh = 0, qt = 0;
+        seen[UNDER_REACH * SIDE + UNDER_REACH] = 1; qx[qt] = 0; qy[qt++] = 0;
+        while (qh < qt && n == 0) {
+            int end = qt;   // one ring (BFS step) at a time: the nearest ground wins
+            for (; qh < end; qh++) for (auto& d : D) {
+                int x = qx[qh] + d[0], y = qy[qh] + d[1];
+                if (x < -UNDER_REACH || y < -UNDER_REACH || x > UNDER_REACH || y > UNDER_REACH) continue;
+                uint8_t& s = seen[(y + UNDER_REACH) * SIDE + x + UNDER_REACH]; if (s) continue; s = 1;
+                const TileKind* o = nb(x, y);
+                if (!o || o->opaque || o->name == "void" || (o->blocksSight && !relaxed)) continue;   // the search doesn't pass walls
+                if (isGround(o, relaxed)) vote(o->dayBg, 1);
+                qx[qt] = x; qy[qt++] = y;
+            }
+        }
     }
     int best = -1; for (int i = 0; i < n; i++) if (best < 0 || score[i] > score[best]) best = i;
     if (best >= 0) bg = cand[best];
+    else if (k.fallbackBg.r || k.fallbackBg.g || k.fallbackBg.b) bg = k.fallbackBg;
 }
 // Draws a cell's ground piece (after its bg): plain, recoloured or opaque, and for joined pieces the 1.0.14 extras -
 // shift= (moved down, with the top filled from the unshifted piece when the cell joins northwards) and solid corners
@@ -272,6 +300,11 @@ struct Map {
     std::string onEnter;         // 1.1.10 header onenter=: actions (script:<id>...) run each time the party arrives (not on loading a save)
     bool touchCombat = false;    // 1.2.3 (#40) header touch=1: map enemy groups only start a fight by touching the party (next to it), not by seeing it;
                                  // 1.2.4 (#41) they chase it step for step inside their leash, random ambushes appear a few tiles away (coach ambushes still fight at once)
+    // 1.8.1 (#166) header sky=1 / sky=0: open to the sky (towns, camps, marshes: what lies outside the light keeps the
+    // grey-blue night tint) or enclosed (caves, dungeons: outside the light is pitch black). -1 = not set: dark=1 maps are
+    // enclosed, the rest open.
+    int sky = -1;
+    bool skyOpen() const { return sky >= 0 ? sky != 0 : !dark; }
     Color8 bg = C::Black;
     bool generated = false;      // procedurally generated (not saved in full)
 

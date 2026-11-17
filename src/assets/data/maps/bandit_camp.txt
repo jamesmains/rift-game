@@ -5,6 +5,7 @@ kind=dungeon
 spawn=26,27
 dark=1
 light=4
+sky=1
 bg=0,0,0
 music=tales_by_firelight
 

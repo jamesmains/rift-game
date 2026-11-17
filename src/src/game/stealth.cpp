@@ -158,10 +158,10 @@ void Game::applyGroupHurt(Combatant& u, int groupIndex) {
 }
 
 // ---- drawing ----
-void Game::drawTraps(Canvas& cv, int cx, int cy) {
+void Game::drawTraps(Canvas& cv, int cx, int cy, bool combat) {
     if (!map) return;
     for (auto& t : map->traps) {
-        if (!map->inBounds(t.x, t.y) || !map->at(t.x, t.y).explored) continue;
+        if (!map->inBounds(t.x, t.y) || !map->at(t.x, t.y).explored || darkHides(t.x, t.y, combat)) continue;   // 1.8.1 (#165)
         bool vis = visible(t.x, t.y); int sx = t.x * TILE - cx, sy = t.y * TILE - cy;
         Tile pic = t.sprung && t.sprungSprite.valid() ? t.sprungSprite : t.sprite;
         if (pic.valid()) { Color8 c = t.hasColor ? t.color : C::White; if (!vis) c = RGB(c.r / 3, c.g / 3, c.b / 3); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, c); continue; }

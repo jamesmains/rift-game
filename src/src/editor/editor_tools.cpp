@@ -52,6 +52,7 @@ bool Editor::bakeDungeon(const EdSection& sec, std::string& err) {
                 {"music", sec.get("music", style == "tech" || style == "ship" ? "tech" : "dungeon")}};
     if (!sec.get("table").empty()) e.header.push_back({"table", sec.get("table")});
     if (atoi(sec.get("touch").c_str()) != 0) e.header.push_back({"touch", "1"});   // 1.2.3 (#40)
+    if (atoi(sec.get("sky").c_str()) != 0) e.header.push_back({"sky", "1"});   // 1.8.1 (#166)
     if (!sec.get("combatmusic").empty()) e.header.push_back({"combatmusic", sec.get("combatmusic")});   // 1.3.1 (#47)
     if (!sec.get("ambient").empty()) e.header.push_back({"ambient", sec.get("ambient")});
     mapToEd(m, e, id, false);

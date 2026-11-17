@@ -52,7 +52,7 @@ const StageRamp& nightRamp() { static StageRamp r; static bool made = false; if 
 const StageRamp& shadeRamp() { static StageRamp r; static bool made = false; if (!made) { buildStageRamp(r, 1.0f); made = true; } return r; }
 // per view tile: what the pass does to its pixels
 struct TileLook {
-    uint8_t mode = 0;              // 0 untouched, 1 Stage ramp, 2 day colours x mul (lantern / lit)
+    uint8_t mode = 0;              // 0 untouched, 1 Stage ramp, 2 day colours x mul (lantern / lit), 3 black (1.8.1 enclosed)
     bool water = false, bank = false; Color8 bankBg;   // water: the ramp keeps 45% of #284096 (not on its bank pixels)
     const StageRamp* ramp = nullptr;
     int mr = 256, mg = 256, mb = 256;   // mode 2: brightness x warm tint, 8.8 fixed point
@@ -68,10 +68,34 @@ bool Game::partyLightOn() const {
     return false;
 }
 
+std::vector<Game::NightLamp> Game::nightLamps(bool combat) const {
+    // the party: explore = the leader; a fight = every living party unit (the active one carries the big lantern)
+    std::vector<std::pair<int, int>> partyAt; int bigX = px, bigY = py;
+    if (combat) {
+        for (auto& u : cb.units) if (u.partyIndex >= 0 && u.ch.alive) partyAt.push_back({u.x, u.y});
+        int a = -1;
+        if (cb.turnPos >= 0 && cb.turnPos < (int)cb.order.size()) a = cb.order[cb.turnPos];
+        if (a < 0 || a >= (int)cb.units.size() || cb.units[a].partyIndex < 0 || !cb.units[a].ch.alive) a = cb.selectedUnit;
+        if (a >= 0 && a < (int)cb.units.size() && cb.units[a].partyIndex >= 0 && cb.units[a].ch.alive) { bigX = cb.units[a].x; bigY = cb.units[a].y; }
+        else if (!partyAt.empty()) { bigX = partyAt[0].first; bigY = partyAt[0].second; }
+    }
+    std::vector<NightLamp> lamps{{bigX, bigY, partyLightOn() ? 8.0f : 4.0f}};
+    if (combat) for (auto& p : partyAt) lamps.push_back({p.first, p.second, 2.0f});   // every party unit stays readable in a night fight
+    return lamps;
+}
+
+bool Game::darkHides(int x, int y, bool combat) const {
+    if (!map) return false;
+    if (map->dark) return !(visible(x, y) && lit(x, y));
+    if (!outdoors() || nightAmount() < 0.5f) return false;
+    for (auto& l : nightLamps(combat)) if (lanternRing(std::sqrt((float)((x - l.x) * (x - l.x) + (y - l.y) * (y - l.y))), l.r) < 4) return false;
+    return true;
+}
+
 std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int y0, int x1, int y1, const std::vector<Color8>& viewBg, bool combat) {
     std::vector<uint16_t> dim;
     if (!map || x1 < x0 || y1 < y0 || (settings && settings->nightClassic)) return dim;
-    bool out = outdoors(), dark = map->dark;
+    bool out = outdoors(), dark = map->dark, sky = map->skyOpen();
     float n = out ? nightAmount() : 0;
     if (!dark && n <= 0.01f) return dim;   // day, or an interior: the day look as drawn
     const int vw = x1 - x0 + 1, vh = y1 - y0 + 1, viewH = SCREEN_H - 72;
@@ -89,16 +113,7 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
         // a shore / river piece stands on the land next to it (under=1): its bg pixels are that land, not water
         if (!(bg.r == k->dayBg.r && bg.g == k->dayBg.g && bg.b == k->dayBg.b)) { t.bank = true; t.bankBg = bg; }
     };
-    // the party: explore = the leader; a fight = every living party unit (the active one carries the big lantern)
-    std::vector<std::pair<int, int>> partyAt; int bigX = px, bigY = py;
-    if (combat) {
-        for (auto& u : cb.units) if (u.partyIndex >= 0 && u.ch.alive) partyAt.push_back({u.x, u.y});
-        int a = -1;
-        if (cb.turnPos >= 0 && cb.turnPos < (int)cb.order.size()) a = cb.order[cb.turnPos];
-        if (a < 0 || a >= (int)cb.units.size() || cb.units[a].partyIndex < 0 || !cb.units[a].ch.alive) a = cb.selectedUnit;
-        if (a >= 0 && a < (int)cb.units.size() && cb.units[a].partyIndex >= 0 && cb.units[a].ch.alive) { bigX = cb.units[a].x; bigY = cb.units[a].y; }
-        else if (!partyAt.empty()) { bigX = partyAt[0].first; bigY = partyAt[0].second; }
-    } else partyAt.push_back({px, py});
+    const std::vector<NightLamp> lamps = nightLamps(combat);   // [0] = the leader / active fighter, then (fights) every party unit
     if (dark) {
         // 1.8.0 (#162): lit tiles (computeLight) keep the day colours, banded by the nearest light; the warm tint only in
         // the three rings round the party. Seen-but-unlit and remembered tiles (drawn darker already) take the ramp.
@@ -108,10 +123,12 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
             const Cell& c = map->at(tx, ty); TileLook& t = look[(size_t)(ty - y0) * vw + (tx - x0)];
             if (!c.explored) continue;   // unexplored stays black
             size_t i = (size_t)ty * map->w + tx;
-            if (visible(tx, ty) && lit(tx, ty)) {
+            bool seenLit = visible(tx, ty) && lit(tx, ty);
+            if (!seenLit && !sky) continue;   // 1.8.1 (#166) enclosed: drawWorld left it pitch black
+            if (seenLit) {
                 float d = i < lightDist.size() ? lightDist[i] : 0;
                 int b = d <= 1.5f ? 0 : d <= 2.5f ? 1 : d <= 3.5f ? 2 : d <= 4.5f ? 3 : 4;
-                float pd = 1e9f; for (auto& p : partyAt) pd = std::min(pd, std::sqrt((float)((tx - p.first) * (tx - p.first) + (ty - p.second) * (ty - p.second))));
+                float pd = 1e9f; for (auto& p : lamps) pd = std::min(pd, std::sqrt((float)((tx - p.x) * (tx - p.x) + (ty - p.y) * (ty - p.y))));
                 float w = pd <= 1.5f ? WARMD[0] : pd <= 2.5f ? WARMD[1] : pd <= 3.5f ? WARMD[2] : 0.0f;
                 setMul(t, BAND[b], w);
             } else { t.mode = 1; t.ramp = &shadeRamp(); waterOf(t, c, viewBg[(size_t)(ty - y0) * vw + (tx - x0)]); }
@@ -120,10 +137,6 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
         // 1.8.0 (#160 #161): the Stage ramp at night, blended in through dusk / dawn; around the party a lantern circle
         // stepped in whole tiles (anchored to the map, so it never swims) shows the day colours with a warm tint.
         static const float BRIGHT[4] = {1.00f, 0.85f, 0.68f, 0.50f};
-        float R = partyLightOn() ? 8.0f : 4.0f;
-        struct Lamp { int x, y; float r; };
-        std::vector<Lamp> lamps{{bigX, bigY, R}};
-        if (combat) for (auto& p : partyAt) lamps.push_back({p.first, p.second, 2.0f});   // every party unit stays readable in a night fight
         int blend = (int)std::lround(256 * std::min(1.0f, n));
         int k = 256 - (int)std::lround(51 * std::min(1.0f, n));   // x0.8 at full night
         if (!combat) dim.assign((size_t)vw * vh, 256);
@@ -132,6 +145,7 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
             int ring = 4;
             for (auto& l : lamps) ring = std::min(ring, lanternRing(std::sqrt((float)((tx - l.x) * (tx - l.x) + (ty - l.y) * (ty - l.y))), l.r));
             if (ring < 4) setMul(t, BRIGHT[ring], 0.35f);
+            else if (!sky) { t.mode = 3; if (!dim.empty()) dim[vi] = (uint16_t)k; }   // 1.8.1 (#166) enclosed: black outside the lantern
             else { t.mode = 1; t.ramp = &nightRamp(); waterOf(t, c, viewBg[vi]); if (!dim.empty()) dim[vi] = (uint16_t)k; }
             t.blend = blend;
         }
@@ -146,7 +160,8 @@ std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int 
             Color8* row = &cv.px[(size_t)y * cv.w];
             for (int x = sx0; x < sx1; x++) {
                 Color8& p = row[x]; int r = p.r, g = p.g, b = p.b, tr, tg, tb;
-                if (t.mode == 1) {
+                if (t.mode == 3) { tr = tg = tb = 0; }
+                else if (t.mode == 1) {
                     const Color8& m = t.ramp->c[(r * 77 + g * 150 + b * 29) >> 8]; tr = m.r; tg = m.g; tb = m.b;
                     if (t.water && !(t.bank && r == t.bankBg.r && g == t.bankBg.g && b == t.bankBg.b)) { tr = (tr * 141 + 40 * 115) >> 8; tg = (tg * 141 + 64 * 115) >> 8; tb = (tb * 141 + 150 * 115) >> 8; }
                 } else { tr = std::min(255, r * t.mr >> 8); tg = std::min(255, g * t.mg >> 8); tb = std::min(255, b * t.mb >> 8); }

@@ -1230,7 +1230,7 @@ left, resize, then Select everything (Ctrl+A), cut and paste it further down.
 Resize can be undone with Ctrl+Z.
 
 == maps.header | Map header fields
-see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.combatmusic, map.table, map.bg, map.worldmap, map.ambient, map.touch
+see: map.id, map.name, map.kind, map.spawn, map.dark, map.light, map.encounter, map.music, map.combatmusic, map.table, map.bg, map.worldmap, map.ambient, map.touch, map.sky
 
 The two rows above the map view edit the [map] header of the file:
 
@@ -1321,7 +1321,7 @@ free tile within 6 - Check warns about it. Put the spawn next to the main
 entrance so a party arriving there can find the way out.
 
 == map.dark | Dark map
-see: map.light, item.light, tilekind.name, spell.utility, concepts.stealth
+see: map.light, map.sky, item.light, tilekind.name, spell.utility, concepts.stealth
 
 dark=1 turns on darkness: the party only sees what light reaches. Each member
 glows with the map's light radius; torches, lanterns, the Light spell and
@@ -1472,6 +1472,32 @@ dungeon level in an otherwise overworld campaign.
 
 Gotchas: a map id that does not exist is reported by Check all. Coach travel
 still only works from the overworld world map.
+
+== map.sky | Open to the sky or enclosed
+see: map.dark, map.light, dungeon.sky, maps.header
+
+Decides what lies outside the light looks like. Open to the sky (ticked,
+sky=1): towns, camps, marshes, the overworld. At night, and on a dark map,
+whatever the light doesn't reach keeps a dim grey-blue night tint, so you can
+still make out the shape of the place. Enclosed (unticked, sky=0): caves,
+mines, crypts, ship holds. Whatever the light doesn't reach is pitch black,
+including places you have already walked through.
+
+Either way, nothing standing outside the light is drawn: people, monsters,
+chests, signs, save points and items on the ground only show where the light
+reaches them (on a dark map: tiles you can see that a light reaches; outdoors
+from half-dark, about 19:30 to 06:00: the lantern circle round the party).
+
+It is the "sky" box on the second header row of the Maps tab.
+
+Format: 1 or 0. Default: not set = dark maps (dark=1) are enclosed, every other
+map is open. Interiors (kind=interior) have no night at all, so it changes
+nothing there.
+
+  sky=1
+
+Gotchas: a dark map you want outdoors (a bandit camp at night, a marsh) needs
+sky=1 written, since dark maps count as enclosed unless told otherwise.
 
 == map.touch | Fights start by touch
 see: obj.enemy, obj.enemy.aggro, obj.enemy.leash, obj.enemy.link, dungeon.touch, maps.header, concepts.encounters
@@ -5514,6 +5540,18 @@ for a map. Default: empty = the campaign's fight music. Baking copies it into
 the map header.
 
   combatmusic=riders_of_the_storm
+
+== dungeon.sky | Dungeon open to the sky
+see: map.sky, map.dark
+
+Ticked (sky=1): what the party's light doesn't reach in this generated dungeon
+keeps a dim night tint instead of going pitch black, as map.sky does for a map.
+Generated dungeons are dark, so they are enclosed (pitch black) unless this is
+ticked. Baking the dungeon copies it into the map header.
+
+Format: 1 or empty. Default: empty (enclosed).
+
+  sky=1
 
 == dungeon.touch | Dungeon fights start by touch
 see: map.touch, obj.enemy.aggro

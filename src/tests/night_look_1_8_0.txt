@@ -54,6 +54,9 @@ teleport goblin_cave 5 13
 frames 60
 walk 5 17
 frames 330
+# 1.8.1 (#166): dark maps are enclosed (pitch black outside the light) unless sky=1; this checks the open look
+con sky 1
+frames 10
 warp 900 300
 frames 2
 expect pxblue:100,200 < 0

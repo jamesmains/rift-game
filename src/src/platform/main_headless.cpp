@@ -352,6 +352,13 @@ int main(int argc, char** argv) {
                 // 1.8.0 (#159-#162): daybg:/daytint:<kind> = the worked-out day colours ("r,g,b"); px:X,Y = the screen pixel
                 // after the last frame ("r,g,b"), pxlum:X,Y its luminance, pxblue:X,Y = blue minus red (the night palette is > 0)
                 if (startsWith(key, "daybg:") || startsWith(key, "daytint:")) { bool bgk = key[3] == 'b'; const TileKind* k = tileKind(key.substr(bgk ? 6 : 8)); Color8 c = k ? (bgk ? k->dayBg : k->dayTint) : C::Black; got = k ? fmt("%d,%d,%d", c.r, c.g, c.b) : "none"; num = false; return true; }
+                // 1.8.1 (#164): blackbg = how many walkable / see-through under=1 cells of the current map still get a pure
+                // black background (bg from Map::look); darkhides:X,Y = 1 if objects on that tile aren't drawn (#165)
+                if (key == "blackbg") { int n = 0; const auto& ks = allTileKinds(); if (g.map) for (int y = 0; y < g.map->h; y++) for (int x = 0; x < g.map->w; x++) {
+                        const Cell& c = g.map->at(x, y); if (c.kind >= ks.size() || !ks[c.kind].under || ks[c.kind].opaque) continue;
+                        Tile gt; Color8 bg; g.map->look(x, y, gt, bg); if (!bg.r && !bg.g && !bg.b) n++; }
+                    got = std::to_string(n); return true; }
+                if (startsWith(key, "darkhides:")) { auto q = split(key.substr(10), ','); got = q.size() > 1 && g.darkHides(atoi(q[0].c_str()), atoi(q[1].c_str()), g.inCombat()) ? "1" : "0"; return true; }
                 if (startsWith(key, "px:") || startsWith(key, "pxlum:") || startsWith(key, "pxblue:")) {
                     std::string xy = key.substr(key.find(':') + 1); auto q = split(xy, ','); int X = q.size() > 1 ? atoi(q[0].c_str()) : -1, Y = q.size() > 1 ? atoi(q[1].c_str()) : -1;
                     Color8 c = X >= 0 && Y >= 0 && X < app.canvas.w && Y < app.canvas.h ? app.canvas.px[(size_t)Y * app.canvas.w + X] : C::Black;

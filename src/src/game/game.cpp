@@ -177,6 +177,7 @@ Map* Game::loadMap(const std::string& id) {
                 m->name = sec.get("name", id); m->encounterTable = sec.get("table");
                 std::string st = sec.get("style", "cave"); m->music = sec.get("music", st == "tech" || st == "ship" ? "tech" : "dungeon"); m->ambient = sec.get("ambient"); m->combatMusic = sec.get("combatmusic");   // 1.3.1: no ambient by style (#50), fight music (#47)
                 m->touchCombat = sec.geti("touch", 0) != 0;   // 1.2.3 (#40)
+                if (!trim(sec.get("sky")).empty()) m->sky = sec.geti("sky", 0) != 0 ? 1 : 0;   // 1.8.1 (#166)
                 if (sec.has("bossdefeat")) for (auto& e : m->enemies) if (e.flag == sec.get("bossflag")) e.onDefeatScript = sec.get("bossdefeat");
                 ok = true; break;
             }
@@ -1555,10 +1556,15 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     // 1.1.0: a resource node with its own picture (resources.txt sprite=) replaces its cell's picture while it is in view
     std::set<int> nodeCells; for (auto& gn : map->gathers) if (gn.sprite.valid() && map->inBounds(gn.x, gn.y) && visible(gn.x, gn.y)) nodeCells.insert(gn.y * map->w + gn.x);
     std::vector<Color8> viewBg((size_t)std::max(0, x1 - x0 + 1) * std::max(0, y1 - y0 + 1), C::Black);   // 1.8.0: each view tile's bg (sceneryLook)
+    const bool enclosedDark = map->dark && !map->skyOpen();
+    // 1.8.1 (#165): nothing is drawn on a tile outside every light (dark maps: not seen and lit; outdoors from half-dark
+    // on: outside the lantern circles) - no objects, NPCs or monsters standing in the dark
+    auto hid = [&](int x, int y) { return darkHides(x, y, combat); };
     for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++) {
         const Cell& c = map->at(x, y);
         if (map->dark && !c.explored) continue;
         bool vis = visible(x, y);
+        if (enclosedDark && !(vis && lit(x, y))) continue;   // 1.8.1 (#166) enclosed (sky=0): outside the light is pitch black
         int sx = x * TILE - cx, sy = y * TILE - cy;
         Color8 tint = c.tint;
         Color8 bg; Tile g; int mask = 0, corners = 0; map->look(x, y, g, bg, &mask, &corners);   // joined pieces (paths, shores, rivers...) pick their piece here
@@ -1583,7 +1589,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     std::vector<Color8> scenery; if (!nightDim.empty()) scenery = cv.px;   // to tell what was drawn on top of it afterwards
     // 1.4.0 (#76): pressure plates (a stone square, sunk while something stands on it) and crates
     for (auto& pl : map->plates) {
-        if (!map->inBounds(pl.x, pl.y) || !map->at(pl.x, pl.y).explored) continue;
+        if (!map->inBounds(pl.x, pl.y) || !map->at(pl.x, pl.y).explored || hid(pl.x, pl.y)) continue;
         int sx = pl.x * TILE - cx, sy = pl.y * TILE - cy; bool vis = visible(pl.x, pl.y);
         if (pl.sprite.valid()) { if (pl.hasColor) ctx.ts->drawRecolor(cv, pl.sprite, sx, sy, 2, pl.color); else ctx.ts->draw(cv, pl.sprite, sx, sy, 2); continue; }
         Color8 rim = pl.hasColor ? pl.color : RGB(150, 140, 120); if (!vis) rim = RGB(rim.r / 3, rim.g / 3, rim.b / 3);
@@ -1593,35 +1599,35 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if (!pl.down) cv.hline(sx + in + 1, sy + in + 1, TILE - 2 * in - 2, RGB(std::min(255, rim.r + 50), std::min(255, rim.g + 50), std::min(255, rim.b + 50)));
     }
     for (auto& cr : map->crates) {
-        if (!map->inBounds(cr.x, cr.y) || !(visible(cr.x, cr.y) || (map->dark && map->at(cr.x, cr.y).explored))) continue;
+        if (!map->inBounds(cr.x, cr.y) || !visible(cr.x, cr.y) || hid(cr.x, cr.y)) continue;
         int sx = cr.x * TILE - cx, sy = cr.y * TILE - cy;
         Tile pic = cr.sprite.valid() ? cr.sprite : (cr.heavy > 0 ? T(20, 36) : T(8, 36));
         Color8 col = cr.hasColor ? cr.color : cr.heavy > 0 ? RGB(190, 150, 110) : RGB(225, 180, 110);
         if (!visible(cr.x, cr.y)) col = RGB(col.r / 3, col.g / 3, col.b / 3);
         ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, col);
     }
-    drawTraps(cv, cx, cy);   // 1.5.0 (#99)
+    drawTraps(cv, cx, cy, combat);   // 1.5.0 (#99)
     // objects
     for (auto& ch : map->chests) {
         bool detect = detectSteps > 0 && !ch.opened;
-        if (!detect && !visible(ch.x, ch.y) && !(map->dark && map->at(ch.x, ch.y).explored)) continue;
+        if (!detect && (!visible(ch.x, ch.y) || hid(ch.x, ch.y))) continue;   // (Sense Treasure still shows it)
         if (detect && (ctx.frame / 10) % 2) cv.rect(ch.x * TILE - cx - 1, ch.y * TILE - cy - 1, TILE + 2, TILE + 2, C::Yellow);
         // 1.1.1: pictures and colour from the chest's type / template / own keys (objects.txt), else the built-in chest
         Tile pic = ch.opened ? (ch.openSprite.valid() ? ch.openSprite : ch.sprite.valid() ? ch.sprite : TL::CHEST_OPEN) : (ch.sprite.valid() ? ch.sprite : TL::CHEST);
         ctx.ts->drawBacking(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2);
         if (ch.hasColor) ctx.ts->drawRecolor(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2, ch.color); else ctx.ts->draw(cv, pic, ch.x * TILE - cx, ch.y * TILE - cy, 2);
     }
-    for (auto& s : map->signs) if (visible(s.x, s.y)) { Tile pic = s.sprite.valid() ? s.sprite : TL::SIGN; ctx.ts->drawBacking(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2);
+    for (auto& s : map->signs) if (visible(s.x, s.y) && !hid(s.x, s.y)) { Tile pic = s.sprite.valid() ? s.sprite : TL::SIGN; ctx.ts->drawBacking(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2);
         if (s.hasColor) ctx.ts->drawRecolor(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2, s.color); else ctx.ts->draw(cv, pic, s.x * TILE - cx, s.y * TILE - cy, 2); }
     for (auto& s : map->savepoints) {
-        if (!visible(s.x, s.y)) continue;
+        if (!visible(s.x, s.y) || hid(s.x, s.y)) continue;
         int sx = s.x * TILE - cx, sy = s.y * TILE - cy;
         Tile pic = s.sprite.valid() ? s.sprite : TL::ALTAR;
         if (s.hasColor) { ctx.ts->drawBacking(cv, pic, sx, sy, 2); ctx.ts->drawRecolor(cv, pic, sx, sy, 2, s.color); } else ctx.ts->draw(cv, pic, sx, sy, 2);
         if (s.sparkle && (ctx.frame / 12) % 2) ctx.ts->draw(cv, TL::SPARKLE, sx, sy - 8, 2, s.sparkleColor);
     }
     for (auto& g : map->gathers) {
-        if (!visible(g.x, g.y) || !map->at(g.x, g.y).explored) continue;
+        if (!visible(g.x, g.y) || !map->at(g.x, g.y).explored || hid(g.x, g.y)) continue;
         int sx = g.x * TILE - cx, sy = g.y * TILE - cy;
         // the node's own tile drawn again in a colour that says what it is (ore copper, herbs green, tech cyan...)
         // while it can be harvested, and in dull grey once it has been picked clean
@@ -1640,17 +1646,17 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         if ((ctx.frame / 4) % 2) cv.rect(sx - 2 * TILE, sy - 2 * TILE, 5 * TILE, 5 * TILE, C::Red);
         ctx.font->drawShadow(cv, *ctx.ts, sx, sy - 14, fmt("%.1f", fuseT), C::Orange, C::Black);
     }
-    for (auto& d : map->drops) if (visible(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawBacking(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); if (it) drawItemTile(*ctx.ts, cv, *it, d.x * TILE - cx, d.y * TILE - cy, 2); else ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
+    for (auto& d : map->drops) if (visible(d.x, d.y) && !hid(d.x, d.y)) { const ItemDef* it = gd->item(d.item); Tile t = it ? it->tile : TL::IT_COINS; ctx.ts->drawBacking(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); if (it) drawItemTile(*ctx.ts, cv, *it, d.x * TILE - cx, d.y * TILE - cy, 2); else ctx.ts->draw(cv, t, d.x * TILE - cx, d.y * TILE - cy, 2); }
     if (!combat) {
         for (auto& n : map->npcs) {
-            if (n.hidden || !visible(n.x, n.y)) continue;
+            if (n.hidden || !visible(n.x, n.y) || hid(n.x, n.y)) continue;
             int sx = n.x * TILE - cx, sy = n.y * TILE - cy;
             ctx.ts->drawBacking(cv, n.tile, sx, sy, 2);
             if (n.recolor) ctx.ts->drawRecolor(cv, n.tile, sx, sy, 2, n.color); else ctx.ts->drawLit(cv, n.tile, sx, sy, 2);
             if (!n.dialogue.empty() && chebyshev(n.x, n.y, px, py) <= 1) ctx.ts->draw(cv, TL::UI_QUESTION, sx + 8, sy - 16, 1);
         }
         for (auto& e : map->enemies) {
-            if (e.defeated || !visible(e.x, e.y)) continue;
+            if (e.defeated || !visible(e.x, e.y) || hid(e.x, e.y)) continue;
             if (!e.showFlag.empty() && !evalCond(e.showFlag)) continue;
             if (!e.hideFlag.empty() && evalCond(e.hideFlag)) continue;
             const CreatureDef* cd = e.creatures.empty() ? nullptr : gd->creature(e.creatures[0]);
