@@ -33,7 +33,7 @@ void Desktop::drawMinesweeper(Canvas& cv, DeskWindow& w, InputState& in, bool ac
     Font& f = *ctx.font; const int CS = 16;
     int needW = std::max(204, m.w * CS + 24), needH = m.h * CS + 80;   // 1.1.5 (#26): 4 px more under the footer hint
     if (w.w != needW || w.h != needH) { w.w = needW; w.h = needH; w.x = clampi(w.x, 0, UI::SCREEN_W - w.w); w.y = clampi(w.y, 0, UI::SCREEN_H - TASKBAR_H - w.h); }
-    int x0 = w.x + 12, y0 = w.y + 60;
+    int x0 = w.x + (w.w - m.w * CS) / 2, y0 = w.y + 60;   // 1.7.6 (#154): grid centred (Beginner's window is wider than its grid)
     if (m.started && !m.dead && !m.won) m.time += ctx.time - m.lastT; m.lastT = ctx.time;
     // menu row: difficulty
     int bx = w.x + 6, by = w.y + 24;

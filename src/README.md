@@ -29,6 +29,10 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.7.6 Minesweeper tidied
+
+* Minesweeper's field sits in the middle of its window (on Beginner it used to hug the left side).
+
 ## 1.7.5 the Update button can't go missing
 
 * The full game knows where its updates come from by itself. Before, a downloaded copy needed a small settings file
