@@ -314,6 +314,7 @@ void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool a
         pickCampaign(camps[i].id); dblTimer = 0.4f; dblIcon = 300 + (int)i; return false;
     };
     auto blurb = [&]() { return cur ? (cur->desc.empty() ? std::string("No description.") : cur->desc) : std::string(""); };
+    auto padStart = [&](int x, int y) { if (w.focusFirst && active) { w.focusFirst = false; w.focusX = x; w.focusY = y; } };   // a controller starts on the main entry
 
     if (nat) {
         // ---- desktop-native: a menu bar, the banner in a sunken well, a tree view and a details pane ----
@@ -384,6 +385,7 @@ void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool a
             bool hv = active && sbs[k].enabled && !mouseUsed && in.mouseX >= dx + 12 && in.mouseX < dx + 152 && in.mouseY >= by && in.mouseY < by + 26;
             if (active && sbs[k].enabled) hot(dx + 12, by, 140, 26);
             Theme::button(pen, dx + 12, by, 140, 26, sbs[k].label, !sbs[k].enabled ? Theme::BS_DISABLED : sbs[k].def ? Theme::BS_DEFAULT : Theme::BS_NORMAL, hv);
+            if (sbs[k].def) padStart(dx + 82, by + 13);
             f.draw(cv, *ctx.ts, dx + 164, by + 7, sbs[k].expl, sbs[k].enabled ? RGB(0, 0, 0) : RGB(128, 128, 128));
             if (hv && in.mousePressed[0]) { mouseUsed = true; gAudio.play("desktop_click"); if (act(sbs[k].id)) return; }
         }
@@ -430,6 +432,7 @@ void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool a
             const Entry& e = begin[k]; int ry = yy + (int)k * rowH;
             if (e.id == B_SEP) { for (int xx = rx; xx < rx + rw; xx += 2) cv.put(xx, ry + rowH / 2 - 2, th.dim); continue; }
             if (active && e.enabled) hot(rx, ry, rw, rowH - 4);
+            if (e.primary) padStart(rx + rw / 2, ry + (rowH - 4) / 2);
             if ((int)k == chosen) { Theme::glow(cv, rx, ry, rw, rowH - 4); if (torch) drawItemTile(*ctx.ts, cv, *torch, rx + 6, ry + (rowH - 16) / 2, 1); }
             f.draw(cv, *ctx.ts, rx + 24, ry + (rowH - 16) / 2, e.label, !e.enabled ? th.dim : (int)k == chosen ? th.accent : th.text);
             std::string right = e.id == B_CONTINUE && !e.enabled ? std::string("nothing yet") : e.right;
@@ -480,7 +483,7 @@ void Desktop::drawLauncherHome(Canvas& cv, DeskWindow& w, InputState& in, bool a
         bool hv = active && e.enabled && !mouseUsed && in.mouseX >= bx && in.mouseX < bx + bwid && in.mouseY >= by && in.mouseY < by + bh;
         if (active && e.enabled) hot(bx, by, bwid, bh);
         Theme::button(pen, bx, by, bwid, bh, e.label, !e.enabled ? Theme::BS_DISABLED : e.primary ? Theme::BS_SELECTED : Theme::BS_NORMAL, hv, "", "", withSub ? e.sub : "");
-        if (e.primary) f.draw(cv, *ctx.ts, bx + bwid - 14, by + (bh - 12) / 2, ">", th.accent);
+        if (e.primary) { f.draw(cv, *ctx.ts, bx + bwid - 14, by + (bh - 12) / 2, ">", th.accent); padStart(bx + bwid / 2, by + bh / 2); }
         if (hv && (in.gamepadActive || padNavWindows)) Theme::frameRect(cv, bx - 2, by - 2, bwid + 4, bh + 4, th.accentHi);
         if (hv && in.mousePressed[0]) { mouseUsed = true; gAudio.play("desktop_click"); if (act(e.id)) return; }
         by += bh + 5;

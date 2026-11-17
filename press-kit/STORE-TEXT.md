@@ -58,6 +58,7 @@ And it all starts on a lovingly faked 90s PC desktop - Minesweeper and Solitaire
 - Deep crafting with skill, failure, fine and masterwork results, enchanting and salvage
 - Day and night, weather, shop hours, town reputation and fast travel by coach
 - A retro 90s PC desktop with its own Triffall launcher, Minesweeper, Solitaire and a screensaver
+- Three looks to pick from in Settings: a carved adventurer's frame round the world, a classic program window, or crisp one-bit windows with a lantern glow
 - A Tutorial campaign that sets up the story, and a built-in Editor for making your own campaigns
 - Fills any screen shape, wide monitors included (a classic 4:3 mode is in Settings)
 - Keyboard, mouse and gamepad, fully rebindable; one deliberately hard difficulty; 33 achievements
