@@ -116,6 +116,7 @@ void Editor::reloadSheets() {
     if (!ts) return;
     ts->useCampaign(baseRoot, dataRoot == baseRoot ? "" : dataRoot, campaignInherit, true);
     ownColCache.clear(); syncBooks(true);
+    computeTileKindDayColors();   // 1.8.0 (#159): day colours come from the sheets
 }
 int Editor::sheetImport(const std::string& png0, const std::string& name0, const SheetGrid& g, std::string& err) {
     std::string png = unquote(png0), name = slug(name0);

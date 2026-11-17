@@ -23,6 +23,7 @@ static void buildKinds() {
     bool haveVoid = false; for (auto& k : gKinds) if (k.name == "void") haveVoid = true;
     if (!haveVoid) { TileKind v; v.name = "void"; v.ground.push_back(Tile{}); v.walkable = false; v.blocksSight = true; v.opaque = true; v.bg = C::Black; gKinds.push_back(v); }
     rebuildTileKindIndex();
+    for (auto& k : gKinds) computeTileKindDay(k);
 }
 // default light radii for the built-in kinds (tilekinds.txt can override with light=N)
 static int defaultLight(const std::string& n) {
@@ -110,6 +111,8 @@ std::string tileKindsText(const std::vector<TileKind>& kinds) {
         if (k.flammable) o += "flammable=1\n";
         if (!k.snuffTo.empty()) o += "snuff=" + k.snuffTo + "\n";
         if (!k.kindleTo.empty()) o += "kindle=" + k.kindleTo + "\n";
+        if (k.hasDayBg) o += "daybg=" + colStr(k.dayBgSet) + "\n";   // 1.8.0 (#159)
+        if (k.hasDayTint) o += "daytint=" + colStr(k.dayTintSet) + "\n";
         o += "\n";
     }
     return o;
@@ -129,6 +132,8 @@ static void parseKindsText(const std::string& text, std::vector<TileKind>& kinds
         k.step = trim(sec.get("step"));
         k.breaks = trim(sec.get("breaks")); k.breakHp = sec.geti("breakhp", 0); k.burns = sec.geti("burns", 0) != 0; k.conduct = sec.geti("conduct", 0) != 0;   // 1.4.0
         k.flammable = sec.geti("flammable", 0) != 0; k.snuffTo = trim(sec.get("snuff")); k.kindleTo = trim(sec.get("kindle"));
+        k.hasDayBg = !trim(sec.get("daybg")).empty(); if (k.hasDayBg) k.dayBgSet = parseColor(sec.get("daybg"));   // 1.8.0 (#159)
+        k.hasDayTint = !trim(sec.get("daytint")).empty(); if (k.hasDayTint) k.dayTintSet = parseColor(sec.get("daytint"));
         readJoinFields(sec, k);
         kinds.push_back(k);
     }
@@ -144,6 +149,7 @@ bool loadTileKinds(const std::string& path) {
     gKinds = kinds; rebuildTileKindIndex();
     if (gKindIndex.find("void") == gKindIndex.end()) { TileKind v; v.name = "void"; v.ground.push_back(Tile{}); v.walkable = false; v.blocksSight = true; v.opaque = true; gKinds.push_back(v); rebuildTileKindIndex(); }
     resolveTileKindGroups();
+    computeTileKindDayColors();
     return true;
 }
 bool loadTileKindsOverlay(const std::string& path) {
@@ -155,9 +161,62 @@ bool loadTileKindsOverlay(const std::string& path) {
         if (it != gKindIndex.end()) gKinds[it->second] = k; else { gKindIndex[k.name] = (int)gKinds.size(); gKinds.push_back(k); }
     }
     resolveTileKindGroups();
+    computeTileKindDayColors();
     return true;
 }
 void ensureTileKindsFile(const std::string& path) { if (!fileExists(path)) saveTileKinds(path); }
+
+// ---------------- 1.8.0 (#159): day ground colours ----------------
+// Every land kind gets its own dark colour by day instead of black, worked out from the kind itself so a campaign's
+// own sheet gets it free: base = tint (recolor=1) or the most common non-black colour of its ground (else prop)
+// picture; bg = base pulled 30% to its grey, scaled to luminance 34; a recoloured pattern = 15% to grey at luminance 70.
+// A very saturated base (a bright green tree picture) is pulled further, so no ground goes neon (chroma cap).
+// Left alone: opaque walls, under=1 pieces (they take the neighbour's colour), rock, void and kinds with a coloured bg.
+static const Tileset* gDaySheet = nullptr;
+static std::map<uint64_t, std::pair<bool, Color8>> gOwnColCache;
+void setTileKindSheet(const Tileset* ts) { gDaySheet = ts; gOwnColCache.clear(); }
+static bool tileOwnColour(Tile t, Color8& out) {
+    if (!t.valid() || !gDaySheet) return false;
+    uint64_t key = ((uint64_t)(uint32_t)t.s << 32) | ((uint64_t)(uint16_t)t.c << 16) | (uint16_t)t.r;
+    auto it = gOwnColCache.find(key); if (it != gOwnColCache.end()) { out = it->second.second; return it->second.first; }
+    const Image8& im = gDaySheet->pics(t.s, 0); std::map<uint32_t, int> n;
+    int bx = 1 + t.c * Tileset::PITCH, by = 1 + t.r * Tileset::PITCH;
+    for (int y = 0; y < Tileset::TS; y++) for (int x = 0; x < Tileset::TS; x++) {
+        int sx = bx + x, sy = by + y; if (sx < 0 || sy < 0 || sx >= im.w || sy >= im.h) continue;
+        Color8 c = im.get(sx, sy); if (c.a == 0 || c.r + c.g + c.b <= 30) continue;
+        n[(uint32_t)c.r << 16 | (uint32_t)c.g << 8 | c.b]++;
+    }
+    uint32_t best = 0; int bn = 0; for (auto& p : n) if (p.second > bn) { bn = p.second; best = p.first; }
+    Color8 c = RGB((uint8_t)(best >> 16), (uint8_t)(best >> 8), (uint8_t)best);
+    gOwnColCache[key] = {bn > 0, c}; out = c; return bn > 0;
+}
+static float lumOf(float r, float g, float b) { return 0.299f * r + 0.587f * g + 0.114f * b; }
+static Color8 toLum(Color8 c, float target, float grey, float maxChroma) {
+    float r = c.r, g = c.g, b = c.b, L = lumOf(r, g, b);
+    if (L < 1.0f) return RGB(0, 0, 0);
+    float chroma = (std::max(r, std::max(g, b)) - std::min(r, std::min(g, b))) / L;
+    float p = grey; if (chroma * (1 - p) > maxChroma) p = 1 - maxChroma / chroma;
+    r = r * (1 - p) + L * p; g = g * (1 - p) + L * p; b = b * (1 - p) + L * p;
+    float s = target / std::max(1.0f, lumOf(r, g, b));
+    auto cl = [](float v) { return (uint8_t)std::max(0.0f, std::min(255.0f, std::round(v))); };
+    return RGB(cl(r * s), cl(g * s), cl(b * s));
+}
+void computeTileKindDay(TileKind& k) {
+    k.dayBg = k.bg; k.dayTint = k.tint;
+    bool skip = k.opaque || k.under || k.name == "rock" || k.name == "void" || k.bg.r || k.bg.g || k.bg.b;
+    if (!skip) {
+        Color8 base; bool have = false;
+        if (k.recolor) { base = k.tint; have = true; }
+        else { for (auto& g : k.ground) if (g.valid()) { have = tileOwnColour(g, base); break; } if (!have) have = tileOwnColour(k.prop, base); }
+        if (have) {
+            k.dayBg = toLum(base, 34, 0.30f, 0.70f);
+            if (k.recolor) k.dayTint = toLum(base, 70, 0.15f, 0.90f);
+        }
+    }
+    if (k.hasDayBg) k.dayBg = k.dayBgSet;
+    if (k.hasDayTint) k.dayTint = k.dayTintSet;
+}
+void computeTileKindDayColors() { gOwnColCache.clear(); for (auto& k : gKinds) computeTileKindDay(k); }   // the sheet may have changed (campaign switch)
 
 // ---------------- Map ----------------
 bool Map::walkable(int x, int y) const { if (!inBounds(x, y)) return false; return at(x, y).walkable; }
@@ -170,7 +229,7 @@ void Map::set(int x, int y, const std::string& kindName, Rng& rng) {
     Cell& c = at(x, y);
     c.kind = (uint16_t)(k - &gKinds[0]);
     c.ground = k->ground.empty() ? Tile{} : rng.pick(k->ground);
-    c.prop = k->prop; c.walkable = k->walkable; c.blocksSight = k->blocksSight; c.water = k->water; c.tint = k->tint; c.bg = k->bg; c.opaque = k->opaque; c.recolor = k->recolor;
+    c.prop = k->prop; c.walkable = k->walkable; c.blocksSight = k->blocksSight; c.water = k->water; c.tint = k->dayTint; c.bg = k->dayBg; c.opaque = k->opaque; c.recolor = k->recolor;
 }
 void Map::fill(int x, int y, int fw, int fh, const std::string& kindName, Rng& rng) { for (int yy = y; yy < y + fh; yy++) for (int xx = x; xx < x + fw; xx++) set(xx, yy, kindName, rng); }
 void Map::rect(int x, int y, int fw, int fh, const std::string& kindName, Rng& rng) {

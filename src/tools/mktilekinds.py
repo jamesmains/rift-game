@@ -4,6 +4,8 @@
 Run from the project's src folder after changing tilekinds.txt by hand or in the Editor's Tiles tab:
     python tools/mktilekinds.py
 build.ps1 runs it before every build, so the built-ins always match the shipped file.
+Every key is passed through as written (1.8.0: daybg= / daytint=, the hand-picked day colours, too); the game
+works the day colours out at load (computeTileKindDayColors in world.cpp), so nothing is baked in here.
 """
 import os
 import sys

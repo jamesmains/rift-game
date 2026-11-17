@@ -3042,6 +3042,28 @@ step_snow, step_stone (dungeon and cave floors, with an echo), step_hard
 step_metal (metal floors and grates), step_water (shallows, fords, mire).
 A name that isn't a sound event plays the plain step.
 
+== tilekind.daybg | Day colours
+see: tilekind.bg, tilekind.tint, concepts.colors
+
+By day the game doesn't draw land on black: each kind gets its own dark
+ground colour, worked out from the kind itself. That's the tint for a
+recoloured kind, else the most common colour of its ground (or prop)
+picture, pulled towards grey and made dark (luminance 34). A recoloured
+pattern gets the same colour a bit brighter (luminance 70). So a campaign
+with its own sprite sheet gets sensible ground colours without any edits.
+
+Left alone: opaque walls, under=1 pieces (they take the colour of the ground
+next to them), rock, void, and kinds that already have a coloured bg= (water,
+lava, mire). bg= and tint= stay what you wrote in the file; the day colours
+are only worked out from them when the game (or the Editor) loads.
+
+Tick "by hand" to pick a colour yourself when the worked-out one looks wrong.
+
+Format: r,g,b. Default: missing = worked out.
+
+  daybg=26,40,24
+  daytint=51,85,45
+
 == world.preview | World preview
 see: tab.world, location.x, location.y, world.bake
 

@@ -85,7 +85,7 @@ void Editor::drawGatherNode(const EdObj& o, int sx, int sy, int scale, const std
     Color8 col = !o.get("color").empty() ? parseColor(o.get("color")) : gatherGuessColor(o.get("item"));
     if (spent) col = !o.get("spent").empty() ? parseColor(o.get("spent")) : RGB(85, 85, 85);
     Tile pic = parseTile(o.get("sprite")); if (spent && parseTile(o.get("spentsprite")).valid()) pic = parseTile(o.get("spentsprite"));
-    if (pic.valid()) { ui.cv->fillRect(sx, sy, 12 * scale, 12 * scale, k ? k->bg : C::Black); ts->drawBacking(*ui.cv, pic, sx, sy, scale); ts->drawRecolor(*ui.cv, pic, sx, sy, scale, col); return; }
+    if (pic.valid()) { ui.cv->fillRect(sx, sy, 12 * scale, 12 * scale, k ? k->dayBg : C::Black); ts->drawBacking(*ui.cv, pic, sx, sy, scale); ts->drawRecolor(*ui.cv, pic, sx, sy, scale, col); return; }
     if (!k) return;
     Tile t = k->prop; if (!t.valid()) for (auto& g : k->ground) if (g.valid()) { t = g; break; }
     if (t.valid()) ts->drawRecolor(*ui.cv, t, sx, sy, scale, col);

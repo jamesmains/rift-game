@@ -14,8 +14,8 @@ using namespace UI;
 // ---------------- settings ----------------
 void GameSettings::save(const std::string& path) const {
     std::string s = "[settings]\n";
-    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\n\n",
-             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, classic43);
+    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\nclassic43=%d\nnightclassic=%d\n\n",
+             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, (int)classic43, (int)nightClassic);
     if (!discord.empty()) s += "[links]\ndiscord=" + discord + "\n\n";
     s += gKeys.serialize();
     writeFile(path, s);
@@ -32,6 +32,7 @@ bool GameSettings::load(const std::string& path) {
         sfxVolume = sec.geti("sfx", sfxVolume); gamepad = sec.geti("gamepad", gamepad); screenShake = sec.geti("shake", screenShake); fastCombat = sec.geti("fastcombat", fastCombat);
         interactWhileMoving = sec.geti("interactmoving", interactWhileMoving);
         largeText = sec.geti("largetext", largeText) != 0; colorblind = sec.geti("colorblind", colorblind) != 0; textSpeed = clampi(sec.geti("textspeed", textSpeed), 0, 3); reduceFlashing = sec.geti("reduceflash", reduceFlashing) != 0;
+        nightClassic = sec.geti("nightclassic", nightClassic) != 0;   // 1.8.0 (#160)
         ambientVolume = clampi(sec.geti("ambient", ambientVolume), 0, 100); fontStyle = Font::STYLE_CLEAR;   // 1.1.1: the clear font is the only text face (no setting any more)
     }
     return true;
@@ -399,12 +400,15 @@ bool Game::lit(int x, int y) const {
 void Game::computeLight() {
     if (!map || !map->dark) { litMask.clear(); return; }
     litMask.assign((size_t)map->w * map->h, 0);
+    lightDist.assign((size_t)map->w * map->h, 1e9f);
     auto spread = [&](int cx, int cy, int r) {
         if (r <= 0) return;
         for (int y = cy - r; y <= cy + r; y++) for (int x = cx - r; x <= cx + r; x++) {
-            if (!map->inBounds(x, y) || litMask[(size_t)y * map->w + x]) continue;
-            if ((x - cx) * (x - cx) + (y - cy) * (y - cy) > r * r + 1) continue;
-            if (lineOfSight(*map, cx, cy, x, y)) litMask[(size_t)y * map->w + x] = 1;
+            if (!map->inBounds(x, y)) continue;
+            int d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy); if (d2 > r * r + 1) continue;
+            size_t i = (size_t)y * map->w + x; float d = std::sqrt((float)d2);
+            if (litMask[i] && d >= lightDist[i]) continue;   // 1.8.0 (#162): keep the nearest light's distance (the banding)
+            if (lineOfSight(*map, cx, cy, x, y)) { litMask[i] = 1; lightDist[i] = d; }
         }
     };
     const auto& kinds = allTileKinds();
@@ -1550,6 +1554,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     std::vector<Later> trails; std::vector<Prop> props;
     // 1.1.0: a resource node with its own picture (resources.txt sprite=) replaces its cell's picture while it is in view
     std::set<int> nodeCells; for (auto& gn : map->gathers) if (gn.sprite.valid() && map->inBounds(gn.x, gn.y) && visible(gn.x, gn.y)) nodeCells.insert(gn.y * map->w + gn.x);
+    std::vector<Color8> viewBg((size_t)std::max(0, x1 - x0 + 1) * std::max(0, y1 - y0 + 1), C::Black);   // 1.8.0: each view tile's bg (sceneryLook)
     for (int y = y0; y <= y1; y++) for (int x = x0; x <= x1; x++) {
         const Cell& c = map->at(x, y);
         if (map->dark && !c.explored) continue;
@@ -1559,7 +1564,7 @@ void Game::drawWorld(Canvas& cv, bool combat) {
         Color8 bg; Tile g; int mask = 0, corners = 0; map->look(x, y, g, bg, &mask, &corners);   // joined pieces (paths, shores, rivers...) pick their piece here
         if (map->dark && !vis) { tint = RGB(tint.r / 3, tint.g / 3, tint.b / 3); bg = RGB(bg.r / 3, bg.g / 3, bg.b / 3); }
         else if (map->dark && !lit(x, y)) { tint = RGB(tint.r * 3 / 5, tint.g * 3 / 5, tint.b * 3 / 5); bg = RGB(bg.r / 2, bg.g / 2, bg.b / 2); }  // seen, but standing in shadow
-        cv.fillRect(sx, sy, TILE, TILE, bg);
+        cv.fillRect(sx, sy, TILE, TILE, bg); viewBg[(size_t)(y - y0) * (x1 - x0 + 1) + (x - x0)] = bg;
         if (!nodeCells.empty() && nodeCells.count(y * map->w + x)) continue;
         const TileKind* k = c.kind < kinds.size() ? &kinds[c.kind] : nullptr;
         if (k && k->shift > 0) trails.push_back({k, g, sx, sy, mask, corners, tint, c.recolor, c.opaque, y + 1 >= map->h || !map->at(x, y + 1).opaque});
@@ -1573,6 +1578,9 @@ void Game::drawWorld(Canvas& cv, bool combat) {
     }
     for (auto& t : trails) drawGroundPiece(cv, *ctx.ts, t.k, t.g, t.sx, t.sy, 2, t.tint, t.recolor, t.opaque, t.mask, t.corners, t.spill);
     for (auto& p : props) ctx.ts->draw(cv, p.p, p.sx, p.sy, 2, p.t);
+    // 1.8.0 (#160-#162): night palette, lantern circle, dark-map light - on the scenery only, before anything stands on it
+    std::vector<uint16_t> nightDim = sceneryLook(cv, cx, cy, x0, y0, x1, y1, viewBg, combat);
+    std::vector<Color8> scenery; if (!nightDim.empty()) scenery = cv.px;   // to tell what was drawn on top of it afterwards
     // 1.4.0 (#76): pressure plates (a stone square, sunk while something stands on it) and crates
     for (auto& pl : map->plates) {
         if (!map->inBounds(pl.x, pl.y) || !map->at(pl.x, pl.y).explored) continue;
@@ -1651,6 +1659,20 @@ void Game::drawWorld(Canvas& cv, bool combat) {
             if (cd) { if (cd->size == 2) { for (int yy = 0; yy < 2; yy++) for (int xx = 0; xx < 2; xx++) { ctx.ts->drawBacking(cv, tileAt(cd->tile, xx, yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); ctx.ts->draw(cv, tileAt(cd->tile, xx, yy), sx + xx * TILE - 12, sy + yy * TILE - 12, 2); } }
                       else { ctx.ts->drawBacking(cv, cd->tile, sx, sy, 2); if (cd->recolor) ctx.ts->drawRecolor(cv, cd->tile, sx, sy, 2, cd->color); else ctx.ts->draw(cv, cd->tile, sx, sy, 2); } }
             if (e.creatures.size() > 1) { ctx.font->draw(cv, *ctx.ts, sx + 16, sy - 4, "x" + std::to_string(e.creatures.size()), C::Red); }
+        }
+        // 1.8.0 (#160): at night what stands outside the lantern circle (people, monsters, chests, signs, drops...) is
+        // drawn a little dimmer: every pixel drawn since the scenery pass, per tile. The party, drawn next, never is.
+        if (!nightDim.empty() && scenery.size() == cv.px.size()) {
+            int vw = x1 - x0 + 1;
+            for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
+                int k = nightDim[(size_t)(ty - y0) * vw + (tx - x0)]; if (k >= 256) continue;
+                int sx0 = std::max(0, tx * TILE - cx), sy0 = std::max(0, ty * TILE - cy), sx1 = std::min(SCREEN_W, tx * TILE - cx + TILE), sy1 = std::min(viewH, ty * TILE - cy + TILE);
+                for (int yy = sy0; yy < sy1; yy++) for (int xx = sx0; xx < sx1; xx++) {
+                    size_t i = (size_t)yy * cv.w + xx; Color8& q = cv.px[i]; const Color8& s0 = scenery[i];
+                    if (q.r == s0.r && q.g == s0.g && q.b == s0.b) continue;
+                    q.r = (uint8_t)(q.r * k >> 8); q.g = (uint8_t)(q.g * k >> 8); q.b = (uint8_t)(q.b * k >> 8);
+                }
+            }
         }
         // party trail
         // the leader walks in front; everyone else follows the trail in party order (a downed leader hands over to the next living member)

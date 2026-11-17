@@ -1020,8 +1020,8 @@ void Editor::drawKinds(InputState& in) {
         int i = idx[kindScroll + r]; int ry = ly + 1 + r * rowH; auto& k = kinds[i];
         bool hv = ui.hover(lx, ry, lw - 8, rowH);
         if (i == kindSel) ui.cv->fillRect(lx + 1, ry, lw - 10, rowH, SEL); else if (hv) ui.cv->fillRect(lx + 1, ry, lw - 10, rowH, HOVER);
-        ui.cv->fillRect(lx + 3, ry + 1, 16, 16, k.bg);
-        if (!k.ground.empty() && k.ground[0].valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); else if (k.opaque) ts->drawOpaque(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); else ts->draw(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.tint); }
+        ui.cv->fillRect(lx + 3, ry + 1, 16, 16, k.dayBg);   // 1.8.0 (#159): as the game draws it by day
+        if (!k.ground.empty() && k.ground[0].valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.dayTint); else if (k.opaque) ts->drawOpaque(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.dayTint); else ts->draw(*ui.cv, k.ground[0], lx + 5, ry + 3, 1, k.dayTint); }
         if (k.prop.valid()) ts->draw(*ui.cv, k.prop, lx + 5, ry + 3, 1);
         font->draw(*ui.cv, *ts, lx + 24, ry + 3, k.name, k.walkable ? TEXT : RGB(255, 150, 150));
         if (hv && in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; kindSel = i; ui.blur(); }
@@ -1047,7 +1047,7 @@ void Editor::drawKinds(InputState& in) {
     ui.label(fx + 22, cy + 2, "ground tiles"); ui.text(fx + 22, cy + 16, "(random per cell)", DIM);
     for (size_t i = 0; i < k.ground.size(); i++) {
         int gx = fx + keyW + (int)i * 70;
-        ui.tile(k.ground[i], gx, cy - 2, 2, k.opaque ? C::White : k.tint, k.bg);
+        ui.tile(k.ground[i], gx, cy - 2, 2, k.opaque ? C::White : k.dayTint, k.dayBg);
         if (ui.button(gx + 28, cy - 2, 26, 13, "...")) { size_t ii = i; openTilePicker(k.ground[i], [&k, ii, this](Tile t) { k.ground[ii] = t; kindsDirty = true; }, 't'); }
         if (k.ground.size() > 1 && ui.button(gx + 28, cy + 12, 26, 13, "x", true, false, DANGER)) { k.ground.erase(k.ground.begin() + i); kindsDirty = true; break; }
     }
@@ -1071,6 +1071,25 @@ void Editor::drawKinds(InputState& in) {
         cy += 22;
     };
     colorRow("tint (ground)", k.tint); colorRow("background", k.bg);
+    // 1.8.0 (#159): the day colours the game draws, worked out from the kind unless picked by hand (daybg= / daytint=)
+    computeTileKindDay(k);
+    auto dayRow = [&](const char* lbl, bool& has, Color8& set, Color8 now, const char* what) {
+        ui.label(fx + 22, cy + 2, lbl); helpBtn(fx + 5, cy + 1, "tilekind.daybg", "tab.tiles");
+        if (ui.checkbox(fx + keyW, cy, "by hand", has)) { if (has) set = now; kindsDirty = true; }
+        int x0 = fx + keyW + 76;
+        if (has) {
+            int r = set.r, g = set.g, bb = set.b;
+            if (ui.intField(x0, cy, 50, r, 0, 255)) { set.r = (uint8_t)r; kindsDirty = true; }
+            if (ui.intField(x0 + 54, cy, 50, g, 0, 255)) { set.g = (uint8_t)g; kindsDirty = true; }
+            if (ui.intField(x0 + 108, cy, 50, bb, 0, 255)) { set.b = (uint8_t)bb; kindsDirty = true; }
+        } else ui.text(x0, cy + 2, fmt("worked out: %d,%d,%d", now.r, now.g, now.b), DIM);
+        ui.cv->fillRect(x0 + 166, cy, 40, 16, now); ui.cv->rect(x0 + 166, cy, 40, 16, BORDER);
+        ui.text(x0 + 214, cy + 2, what, DIM);
+        cy += 22;
+    };
+    dayRow("day background", k.hasDayBg, k.dayBgSet, k.dayBg, k.opaque || k.under || k.name == "rock" || k.name == "void" || k.bg.r || k.bg.g || k.bg.b ? "(kept: wall, piece, water or own bg)" : "(drawn by day)");
+    if (k.recolor) dayRow("day pattern", k.hasDayTint, k.dayTintSet, k.dayTint, "(the pattern's colour by day)");
+    computeTileKindDay(k);
     ui.label(fx + 22, cy + 2, "encounter weight"); kh("encounter", cy); if (ui.intField(fx + keyW, cy, 80, k.encounter, 0, 20)) kindsDirty = true; ui.text(fx + keyW + 90, cy + 2, "overworld: higher = more random fights (0 = none)", DIM); cy += 22;
     ui.label(fx + 22, cy + 2, "biome"); kh("biome", cy); std::string bm = k.biome; if (ui.textField(fx + keyW, cy, 124, bm, 20)) { k.biome = bm; kindsDirty = true; }
     if (ui.button(fx + keyW + 126, cy, 14, 16, "v")) { std::vector<std::string> ids{"(none)"}; for (auto& e : gens[5].secs) { std::string id = e.get("id"); if (id.size() > 6 && id.substr(id.size() - 6) == "_night") continue; ids.push_back(id); } int cur = 0; for (size_t i = 0; i < ids.size(); i++) if (ids[i] == k.biome) cur = (int)i; TileKind* kp = &k; openListPicker("Biome = the encounter table random fights on this tile use", ids, cur, [this, ids, kp](int i) { kp->biome = i == 0 ? "" : ids[i]; kindsDirty = true; }); }
@@ -1105,7 +1124,7 @@ void Editor::drawKinds(InputState& in) {
     cy += 30;
     // big preview
     ui.label(fx + 22, cy, "preview (as in game, 2x):"); cy += 14;
-    for (int i = 0; i < 6; i++) { int px = fx + 10 + i * 26; ui.cv->fillRect(px, cy, 24, 24, k.bg); Tile g = k.ground[i % k.ground.size()]; if (g.valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, g, px, cy, 2, k.tint); else if (k.opaque) ts->drawOpaque(*ui.cv, g, px, cy, 2, k.tint); else ts->draw(*ui.cv, g, px, cy, 2, k.tint); } if (k.prop.valid()) ts->draw(*ui.cv, k.prop, px, cy, 2); }
+    for (int i = 0; i < 6; i++) { int px = fx + 10 + i * 26; ui.cv->fillRect(px, cy, 24, 24, k.dayBg); Tile g = k.ground[i % k.ground.size()]; if (g.valid()) { if (k.recolor) ts->drawRecolor(*ui.cv, g, px, cy, 2, k.dayTint); else if (k.opaque) ts->drawOpaque(*ui.cv, g, px, cy, 2, k.dayTint); else ts->draw(*ui.cv, g, px, cy, 2, k.dayTint); } if (k.prop.valid()) ts->draw(*ui.cv, k.prop, px, cy, 2); }
     cy += 34;
     // usage
     int used = 0; if (mapLoaded) for (auto& c : em.cells) if (split(c, '|')[0] == k.name) used++;
@@ -1137,7 +1156,7 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     const TileKind* k = tileKind(first);
     int sz = 12 * scale;
     if (!k) { ui.cv->fillRect(sx, sy, sz, sz, RGB(255, 0, 255)); return; }
-    Tile g = k->ground.empty() ? Tile{} : k->ground[0]; Color8 bg = k->bg;
+    Tile g = k->ground.empty() ? Tile{} : k->ground[0]; Color8 bg = k->dayBg;   // 1.8.0 (#159): the day look
     for (auto& t : k->ground) if (t.valid()) { g = t; break; }
     // 1.1.1: on the map, each cell shows one of the kind's ground pieces like the game does (which picks one at random
     // per cell; an empty entry draws nothing), so a pattern list with gaps shows its gaps here too
@@ -1146,7 +1165,7 @@ void Editor::drawMapCell(int sx, int sy, const std::string& spec, int scale, int
     if (mx >= 0 && (!k->edges.empty() || k->under))   // joined pieces (paths, shores, rivers...) as the game draws them
         tileKindLook(*k, [&](int dx, int dy) -> const TileKind* { int nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= em.w || ny >= em.h) return nullptr; return tileKind(trim(split(em.at(nx, ny), '|')[0])); }, g, bg, &mask, &corners);
     ui.cv->fillRect(sx, sy, sz, sz, bg);
-    drawGroundPiece(*ui.cv, *ts, k, g, sx, sy, scale, k->tint, k->recolor, k->opaque, mask, corners);
+    drawGroundPiece(*ui.cv, *ts, k, g, sx, sy, scale, k->dayTint, k->recolor, k->opaque, mask, corners);
     if (k->prop.valid()) ts->draw(*ui.cv, k->prop, sx, sy, scale);
 }
 static const char* OBJ_TYPES[] = {"npc", "enemy", "chest", "exit", "trigger", "sign", "door", "savepoint", "obstacle", "lever", "change", "gather", "crate", "plate", "trap"};   // 1.4.0: crate, plate; 1.5.0: trap (keep new types at the end: tests click by index)
@@ -1317,7 +1336,7 @@ void Editor::drawMaps(InputState& in) {
             int i = paletteScroll + r; int ry = ty + 1 + r * rowH; const TileKind* k = tileKind(pal[i]);
             bool hv = ui.hover(x + 5, ry, lw - 10, rowH);
             if (i == psel) ui.cv->fillRect(x + 5, ry, lw - 10, rowH, SEL); else if (hv) ui.cv->fillRect(x + 5, ry, lw - 10, rowH, HOVER);
-            if (k) { ui.cv->fillRect(x + 7, ry + 1, 14, 14, k->bg); if (k->ground[0].valid()) { if (k->recolor) ts->drawRecolor(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); else if (k->opaque) ts->drawOpaque(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); else ts->draw(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->tint); } if (k->prop.valid()) ts->draw(*ui.cv, k->prop, x + 8, ry + 2, 1); }
+            if (k) { ui.cv->fillRect(x + 7, ry + 1, 14, 14, k->dayBg); if (k->ground[0].valid()) { if (k->recolor) ts->drawRecolor(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->dayTint); else if (k->opaque) ts->drawOpaque(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->dayTint); else ts->draw(*ui.cv, k->ground[0], x + 8, ry + 2, 1, k->dayTint); } if (k->prop.valid()) ts->draw(*ui.cv, k->prop, x + 8, ry + 2, 1); }
             font->draw(*ui.cv, *ts, x + 26, ry + 2, pal[i], k && !k->walkable ? RGB(255, 150, 150) : TEXT);
             if (hv && in.mousePressed[0] && !ui.mouseUsed) { ui.mouseUsed = true; brush = pal[i]; }
         }

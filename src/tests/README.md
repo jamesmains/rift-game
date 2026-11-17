@@ -168,3 +168,6 @@ what can be made). Command: `craftsel RECIPE` (select a recipe on the open craft
   new, load, readme, achievements, about, mycomputer...), `launchcampaign ID`, `todesktop`; expects `launcherpage`,
   `deskicons`, `launchcampaign`, `deskslots` (e.g. 0100), `campaignsave:ID:N`. Desktop icons no longer include New Game:
   tests start a game with `deskaction new` (or `newgame`). Test `launcher_saves_1_6_1`.
+- 1.8.0 (#159-#162) day colours and night look: command `nightclassic 0|1` (Settings > Display "Night colours"); expects
+  `daybg:<kind>` / `daytint:<kind>` ("r,g,b"), `px:X,Y` (screen pixel "r,g,b"), `pxlum:X,Y`, `pxblue:X,Y` (blue minus red:
+  > 0 in the night palette). Test `night_look_1_8_0` (Hollowmere at 10:00 / 19:30 / 22:00, classic, Greywood Cave with a torch).

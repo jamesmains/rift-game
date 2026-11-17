@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
     std::string updateApplied = "none";   // 1.7.1: what the last updateapply said
     // 1.1.11: more key / mouse commands (kept out of the long else-if chain below: MSVC limits its depth)
     auto moreCommand = [&](const std::string& cmd, const std::vector<std::string>& p) -> bool {
+            if (cmd == "nightclassic") { app.settings.nightClassic = p.size() > 1 && atoi(p[1].c_str()) != 0; return true; }   // 1.8.0 (#160): Settings > Display "Night colours"
             // 1.6.0 game commands
 
             // 1.6.0 rules commands
@@ -348,6 +349,15 @@ int main(int argc, char** argv) {
                 if (key == "lastautosave") { got = std::to_string(g.lastAutosave); return true; }
                 if (key == "aim") { got = g.throwItem.empty() ? "none" : fmt("%d,%d", g.throwX, g.throwY); num = false; return true; }
                 if (startsWith(key, "aggro:")) { int i = atoi(key.substr(6).c_str()); got = g.map && i >= 0 && i < (int)g.map->enemies.size() ? std::to_string(g.groupAggro(g.map->enemies[i])) : "-1"; return true; }
+                // 1.8.0 (#159-#162): daybg:/daytint:<kind> = the worked-out day colours ("r,g,b"); px:X,Y = the screen pixel
+                // after the last frame ("r,g,b"), pxlum:X,Y its luminance, pxblue:X,Y = blue minus red (the night palette is > 0)
+                if (startsWith(key, "daybg:") || startsWith(key, "daytint:")) { bool bgk = key[3] == 'b'; const TileKind* k = tileKind(key.substr(bgk ? 6 : 8)); Color8 c = k ? (bgk ? k->dayBg : k->dayTint) : C::Black; got = k ? fmt("%d,%d,%d", c.r, c.g, c.b) : "none"; num = false; return true; }
+                if (startsWith(key, "px:") || startsWith(key, "pxlum:") || startsWith(key, "pxblue:")) {
+                    std::string xy = key.substr(key.find(':') + 1); auto q = split(xy, ','); int X = q.size() > 1 ? atoi(q[0].c_str()) : -1, Y = q.size() > 1 ? atoi(q[1].c_str()) : -1;
+                    Color8 c = X >= 0 && Y >= 0 && X < app.canvas.w && Y < app.canvas.h ? app.canvas.px[(size_t)Y * app.canvas.w + X] : C::Black;
+                    if (key[2] == ':') { got = fmt("%d,%d,%d", c.r, c.g, c.b); num = false; } else if (key[2] == 'l') got = std::to_string((c.r * 299 + c.g * 587 + c.b * 114) / 1000); else got = std::to_string((int)c.b - (int)c.r);
+                    return true;
+                }
                 if (startsWith(key, "heard:")) { std::string ev = key.substr(6); got = std::find(gAudio.recent.begin(), gAudio.recent.end(), ev) != gAudio.recent.end() ? "1" : "0"; return true; }
                 // 1.4.0: spells:<member> = the spells member n knows (comma list); answers = the talk box's answers as shown
                 // (only those whose conditions hold, with their [CHA 12] tags), joined by " | "

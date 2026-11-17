@@ -33,15 +33,141 @@ void Game::rerollWeather() {
     if (w != weather) { weather = w; precip.clear(); if (w == "rain") notify("It starts to rain."); else if (w == "storm") notify("A storm rolls in."); else if (w == "fog") notify("Fog creeps over the land."); else if (w == "snow") notify("Snow begins to fall."); else notify("The sky clears."); }
 }
 
+// ---------------- 1.8.0 (#160-#162): the Stage palette, the lantern circle, dark-map light ----------------
+// The Stage ramp: luminance -> grey-blue. Input = the day pixel's luminance x scale (0.82 at night, 1 for dark-map
+// shadow, whose pixels drawWorld has already darkened), then L < 120 -> L x 1.15, else 138 + (L - 120) x 0.6.
+namespace {
+struct StageRamp { Color8 c[256]; };
+void buildStageRamp(StageRamp& out, float scale) {
+    static const int P[6][4] = {{0, 14, 17, 26}, {40, 26, 31, 46}, {90, 52, 60, 82}, {150, 98, 108, 134}, {220, 160, 170, 194}, {255, 205, 212, 228}};
+    for (int i = 0; i < 256; i++) {
+        float l = i * scale; l = l < 120 ? l * 1.15f : 138 + (l - 120) * 0.6f; l = std::max(0.0f, std::min(255.0f, l));
+        int k = 0; while (k < 4 && l > P[k + 1][0]) k++;
+        float t = std::max(0.0f, std::min(1.0f, (l - P[k][0]) / float(P[k + 1][0] - P[k][0])));
+        auto ch = [&](int j) { return (uint8_t)std::lround(P[k][j] + (P[k + 1][j] - P[k][j]) * t); };
+        out.c[i] = RGB(ch(1), ch(2), ch(3));
+    }
+}
+const StageRamp& nightRamp() { static StageRamp r; static bool made = false; if (!made) { buildStageRamp(r, 0.82f); made = true; } return r; }
+const StageRamp& shadeRamp() { static StageRamp r; static bool made = false; if (!made) { buildStageRamp(r, 1.0f); made = true; } return r; }
+// per view tile: what the pass does to its pixels
+struct TileLook {
+    uint8_t mode = 0;              // 0 untouched, 1 Stage ramp, 2 day colours x mul (lantern / lit)
+    bool water = false, bank = false; Color8 bankBg;   // water: the ramp keeps 45% of #284096 (not on its bank pixels)
+    const StageRamp* ramp = nullptr;
+    int mr = 256, mg = 256, mb = 256;   // mode 2: brightness x warm tint, 8.8 fixed point
+    int blend = 256;               // how far from the day pixel to go (nightAmount at dusk / dawn), 0-256
+};
+// a ring index 0-3 inside a lantern circle of radius r tiles (the four steps spread over the radius), 4 = outside
+int lanternRing(float d, float r) { for (int i = 0; i < 4; i++) if (d <= r / 4.0f * (i + 1) + 0.5f) return i; return 4; }
+}
+
+bool Game::partyLightOn() const {
+    if (lightSteps > 0) return true;
+    for (auto& m : party.members) if (m.alive) for (int s = 0; s < SL_COUNT; s++) if (!m.equip[s].empty()) if (auto* it = gd->item(m.equip[s])) if (it->light > 0) return true;
+    return false;
+}
+
+std::vector<uint16_t> Game::sceneryLook(Canvas& cv, int cx, int cy, int x0, int y0, int x1, int y1, const std::vector<Color8>& viewBg, bool combat) {
+    std::vector<uint16_t> dim;
+    if (!map || x1 < x0 || y1 < y0 || (settings && settings->nightClassic)) return dim;
+    bool out = outdoors(), dark = map->dark;
+    float n = out ? nightAmount() : 0;
+    if (!dark && n <= 0.01f) return dim;   // day, or an interior: the day look as drawn
+    const int vw = x1 - x0 + 1, vh = y1 - y0 + 1, viewH = SCREEN_H - 72;
+    const auto& kinds = allTileKinds();
+    std::vector<TileLook> look((size_t)vw * vh);
+    static const float WARM[3] = {1.00f, 0.95f, 0.84f};
+    auto setMul = [](TileLook& t, float bright, float warm) {
+        t.mode = 2; t.mr = (int)std::lround(256 * bright * (1 - warm + warm * WARM[0]));
+        t.mg = (int)std::lround(256 * bright * (1 - warm + warm * WARM[1])); t.mb = (int)std::lround(256 * bright * (1 - warm + warm * WARM[2]));
+    };
+    auto waterOf = [&](TileLook& t, const Cell& c, Color8 bg) {
+        const TileKind* k = c.kind < kinds.size() ? &kinds[c.kind] : nullptr;
+        if (!k || !k->water || k->name.find("lava") != std::string::npos) return;   // chosen by kind; lava isn't water
+        t.water = true;
+        // a shore / river piece stands on the land next to it (under=1): its bg pixels are that land, not water
+        if (!(bg.r == k->dayBg.r && bg.g == k->dayBg.g && bg.b == k->dayBg.b)) { t.bank = true; t.bankBg = bg; }
+    };
+    // the party: explore = the leader; a fight = every living party unit (the active one carries the big lantern)
+    std::vector<std::pair<int, int>> partyAt; int bigX = px, bigY = py;
+    if (combat) {
+        for (auto& u : cb.units) if (u.partyIndex >= 0 && u.ch.alive) partyAt.push_back({u.x, u.y});
+        int a = -1;
+        if (cb.turnPos >= 0 && cb.turnPos < (int)cb.order.size()) a = cb.order[cb.turnPos];
+        if (a < 0 || a >= (int)cb.units.size() || cb.units[a].partyIndex < 0 || !cb.units[a].ch.alive) a = cb.selectedUnit;
+        if (a >= 0 && a < (int)cb.units.size() && cb.units[a].partyIndex >= 0 && cb.units[a].ch.alive) { bigX = cb.units[a].x; bigY = cb.units[a].y; }
+        else if (!partyAt.empty()) { bigX = partyAt[0].first; bigY = partyAt[0].second; }
+    } else partyAt.push_back({px, py});
+    if (dark) {
+        // 1.8.0 (#162): lit tiles (computeLight) keep the day colours, banded by the nearest light; the warm tint only in
+        // the three rings round the party. Seen-but-unlit and remembered tiles (drawn darker already) take the ramp.
+        static const float BAND[5] = {1.00f, 0.90f, 0.78f, 0.68f, 0.60f};
+        static const float WARMD[3] = {0.45f, 0.30f, 0.15f};
+        for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
+            const Cell& c = map->at(tx, ty); TileLook& t = look[(size_t)(ty - y0) * vw + (tx - x0)];
+            if (!c.explored) continue;   // unexplored stays black
+            size_t i = (size_t)ty * map->w + tx;
+            if (visible(tx, ty) && lit(tx, ty)) {
+                float d = i < lightDist.size() ? lightDist[i] : 0;
+                int b = d <= 1.5f ? 0 : d <= 2.5f ? 1 : d <= 3.5f ? 2 : d <= 4.5f ? 3 : 4;
+                float pd = 1e9f; for (auto& p : partyAt) pd = std::min(pd, std::sqrt((float)((tx - p.first) * (tx - p.first) + (ty - p.second) * (ty - p.second))));
+                float w = pd <= 1.5f ? WARMD[0] : pd <= 2.5f ? WARMD[1] : pd <= 3.5f ? WARMD[2] : 0.0f;
+                setMul(t, BAND[b], w);
+            } else { t.mode = 1; t.ramp = &shadeRamp(); waterOf(t, c, viewBg[(size_t)(ty - y0) * vw + (tx - x0)]); }
+        }
+    } else {
+        // 1.8.0 (#160 #161): the Stage ramp at night, blended in through dusk / dawn; around the party a lantern circle
+        // stepped in whole tiles (anchored to the map, so it never swims) shows the day colours with a warm tint.
+        static const float BRIGHT[4] = {1.00f, 0.85f, 0.68f, 0.50f};
+        float R = partyLightOn() ? 8.0f : 4.0f;
+        struct Lamp { int x, y; float r; };
+        std::vector<Lamp> lamps{{bigX, bigY, R}};
+        if (combat) for (auto& p : partyAt) lamps.push_back({p.first, p.second, 2.0f});   // every party unit stays readable in a night fight
+        int blend = (int)std::lround(256 * std::min(1.0f, n));
+        int k = 256 - (int)std::lround(51 * std::min(1.0f, n));   // x0.8 at full night
+        if (!combat) dim.assign((size_t)vw * vh, 256);
+        for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
+            const Cell& c = map->at(tx, ty); size_t vi = (size_t)(ty - y0) * vw + (tx - x0); TileLook& t = look[vi];
+            int ring = 4;
+            for (auto& l : lamps) ring = std::min(ring, lanternRing(std::sqrt((float)((tx - l.x) * (tx - l.x) + (ty - l.y) * (ty - l.y))), l.r));
+            if (ring < 4) setMul(t, BRIGHT[ring], 0.35f);
+            else { t.mode = 1; t.ramp = &nightRamp(); waterOf(t, c, viewBg[vi]); if (!dim.empty()) dim[vi] = (uint16_t)k; }
+            t.blend = blend;
+        }
+    }
+    // the pass: per tile, over that tile's pixels
+    for (int ty = y0; ty <= y1; ty++) for (int tx = x0; tx <= x1; tx++) {
+        const TileLook& t = look[(size_t)(ty - y0) * vw + (tx - x0)];
+        if (t.mode == 0) continue;
+        int sx0 = std::max(0, tx * TILE - cx), sy0 = std::max(0, ty * TILE - cy);
+        int sx1 = std::min(std::min(SCREEN_W, cv.w), tx * TILE - cx + TILE), sy1 = std::min(std::min(viewH, cv.h), ty * TILE - cy + TILE);
+        for (int y = sy0; y < sy1; y++) {
+            Color8* row = &cv.px[(size_t)y * cv.w];
+            for (int x = sx0; x < sx1; x++) {
+                Color8& p = row[x]; int r = p.r, g = p.g, b = p.b, tr, tg, tb;
+                if (t.mode == 1) {
+                    const Color8& m = t.ramp->c[(r * 77 + g * 150 + b * 29) >> 8]; tr = m.r; tg = m.g; tb = m.b;
+                    if (t.water && !(t.bank && r == t.bankBg.r && g == t.bankBg.g && b == t.bankBg.b)) { tr = (tr * 141 + 40 * 115) >> 8; tg = (tg * 141 + 64 * 115) >> 8; tb = (tb * 141 + 150 * 115) >> 8; }
+                } else { tr = std::min(255, r * t.mr >> 8); tg = std::min(255, g * t.mg >> 8); tb = std::min(255, b * t.mb >> 8); }
+                if (t.blend < 256) { tr = r + (tr - r) * t.blend / 256; tg = g + (tg - g) * t.blend / 256; tb = b + (tb - b) * t.blend / 256; }
+                p.r = (uint8_t)tr; p.g = (uint8_t)tg; p.b = (uint8_t)tb;
+            }
+        }
+    }
+    return dim;
+}
+
 void Game::drawWeather(Canvas& cv, float dt) {
     if (!map) return;
     int viewH = SCREEN_H - 72;
     cv.setClip({0, 0, SCREEN_W, viewH});
     bool out = outdoors();
     // ---- night tint (outdoor maps only) ----
-    // Pixel-art friendly: the light circle around the party is computed per 4x4 block anchored to the world (so it
-    // doesn't swim when the camera moves) and stepped into a few hard bands instead of a smooth gradient.
-    float n = out ? nightAmount() : 0;
+    // 1.8.0 (#160): only with Settings > Display "Night colours: Darken (classic)"; the default Stage look is drawn by
+    // sceneryLook inside drawWorld. Classic: the light circle around the party is computed per 4x4 block anchored to the
+    // world (so it doesn't swim when the camera moves) and stepped into a few hard bands instead of a smooth gradient.
+    float n = out && settings && settings->nightClassic ? nightAmount() : 0;
     if (n > 0.01f) {
         const int B = 4;
         int lx = px * TILE + TILE / 2, ly = py * TILE + TILE / 2;       // world pixels

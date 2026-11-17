@@ -38,6 +38,11 @@ struct TileKind {
     std::vector<std::string> join, link;
     std::vector<Tile> edges;
     uint32_t joinBits = 0, linkBits = 0;   // resolved from join/link (see resolveTileKindGroups)
+    // 1.8.0 (#159): the day look. bg/tint stay as authored (black land = the night / classic value); dayBg/dayTint are
+    // what the game draws, worked out by computeTileKindDayColors from the kind's own colour (tint if recolor=1, else
+    // the most common colour of its ground or prop picture). daybg= / daytint= (hasDayBg / hasDayTint) pick them by hand.
+    Color8 dayBg = C::Black, dayTint = C::White, dayBgSet = C::Black, dayTintSet = C::White;
+    bool hasDayBg = false, hasDayTint = false;
 };
 // Picks a cell's ground piece and background from its neighbours (edges=/join=/under=). nb(dx, dy) returns the
 // neighbouring kind, or nullptr off the map (counts as joined, so water and roads run off the edge).
@@ -73,8 +78,9 @@ template <class F> void tileKindLook(const TileKind& k, F nb, Tile& ground, Colo
         if (!o || (o->joinBits & k.linkBits) || o->opaque || o->blocksSight || o->name == "void") continue;
         if (o->under && o->edges.empty()) continue;   // another prop: only real ground counts
         if (o->water && !k.water && k.edges.empty()) continue;   // a prop by the water stands on the land side
-        int i = 0; while (i < n && !(cand[i].r == o->bg.r && cand[i].g == o->bg.g && cand[i].b == o->bg.b)) i++;
-        if (i == n) { cand[n] = o->bg; score[n++] = 0; }
+        const Color8& ob = o->dayBg;   // 1.8.0 (#159): the neighbour's day colour
+        int i = 0; while (i < n && !(cand[i].r == ob.r && cand[i].g == ob.g && cand[i].b == ob.b)) i++;
+        if (i == n) { cand[n] = ob; score[n++] = 0; }
         score[i] += d[2];
     }
     int best = -1; for (int i = 0; i < n; i++) if (best < 0 || score[i] > score[best]) best = i;
@@ -96,6 +102,12 @@ bool loadTileKinds(const std::string& path);      // replaces the table (built-i
 bool saveTileKinds(const std::string& path);
 bool loadTileKindsOverlay(const std::string& path);   // a campaign's tilekinds.txt: replaces kinds by name, adds new ones
 void ensureTileKindsFile(const std::string& path); // writes the built-ins if the file is missing
+// 1.8.0 (#159): the sheet the day colours are read from (App sets it once; the Editor again after a sheet reload, which
+// also forgets the cached picture colours). computeTileKindDayColors fills dayBg/dayTint of every kind; the loaders call
+// it, the Editor after a kind changes.
+void setTileKindSheet(const Tileset* ts);
+void computeTileKindDayColors();
+void computeTileKindDay(TileKind& k);
 std::string tileKindsText(const std::vector<TileKind>& kinds);
 
 struct Cell {

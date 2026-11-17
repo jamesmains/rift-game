@@ -1,0 +1,62 @@
+# 1.8.0 (#159-#162): day ground colours per tile kind, the Stage palette at night with a stepped lantern circle,
+# dark maps lit in day colours with blue-grey shadow, and the classic darkening setting.
+frames 5
+screen 960 540
+frames 5
+newgame Arin warrior normal 7
+frames 120
+# day colours are worked out from each kind (grass is recolor=1: its tint), walls / rock / water keep their own
+expect daybg:grass == 26,40,24
+expect daybg:rock == 0,0,0
+expect daybg:water == 29,33,153
+expect daybg:floor_cave != 0,0,0
+expect daybg:floor_wood != 0,0,0
+con join mage
+con join ranger
+con join cleric
+frames 10
+clock 600
+teleport hollowmere 24 20
+frames 60
+walk 16 20
+frames 30
+walk 16 21
+frames 300
+warp 900 300
+frames 2
+# 10:00: lawn far from the party is its green day colour
+expect pxblue:110,250 <= 0
+expect pxlum:110,250 > 25
+# 22:00: far lawn in the grey-blue ramp, the lawn next to the party keeps its day colour (lantern circle)
+clock 1320
+frames 130
+warp 900 300
+frames 2
+expect pxblue:110,250 > 10
+expect pxblue:420,260 <= 0
+# 19:30: halfway between the two
+clock 1170
+frames 10
+expect pxblue:110,250 > 0
+expect pxblue:110,250 < 15
+# classic setting: the old darkening, no grey-blue
+clock 1320
+nightclassic 1
+frames 10
+expect pxlum:110,250 < 20
+nightclassic 0
+frames 10
+expect pxblue:110,250 > 10
+# a dark map with a torch: lit floor round the party in the cave's own brown, seen shadow blue-grey, unexplored black
+clock 600
+give torch_item 3
+teleport goblin_cave 5 13
+frames 60
+walk 5 17
+frames 330
+warp 900 300
+frames 2
+expect pxblue:100,200 < 0
+expect pxlum:100,200 > 40
+expect pxblue:290,200 > 10
+expect px:600,300 == 0,0,0

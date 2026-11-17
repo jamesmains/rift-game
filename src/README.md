@@ -29,6 +29,21 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.0 day, dusk and lantern
+
+* By day the ground has its own colours: dark green lawns, brown lanes, wooden floors. Each kind of ground works its
+  colour out from its own picture, so a campaign with its own sprite sheet gets it too. Characters stand out as
+  dark-filled figures on mid-tone ground. Walls, rock and water look as before.
+* At dusk the land slides into a grey-blue night palette instead of just getting darker. People, monsters and loot keep
+  their colours (a little dimmer outside your light); the party never dims.
+* At night a lantern circle around the party shows the real colours again, stepped in whole tiles to match the pixel
+  art. A torch, the Light spell or a lantern makes it twice as big. In a night fight every party member carries a
+  little light of their own.
+* Caves, crypts and the other dark places use the same idea: lit tiles in their own colours, in steps away from each
+  light, and the shadows you have seen in blue-grey. Unexplored rock stays black.
+* Settings > Display > "Night colours" switches back to the old darkened nights ("Darken (classic)").
+* Editor: the Tiles tab shows the worked-out day colours and lets you pick them by hand (daybg= / daytint=).
+
 ## 1.7.6 Minesweeper tidied
 
 * Minesweeper's field sits in the middle of its window (on Beginner it used to hug the left side).

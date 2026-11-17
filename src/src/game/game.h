@@ -191,6 +191,7 @@ struct GameSettings {
     bool colorblind = false;        // blue / orange instead of green / red for sides, hit chances and cover
     int textSpeed = 1;              // dialogue text: 0 slow, 1 normal, 2 fast, 3 instant
     bool reduceFlashing = false;    // no lightning flashes, softer hit flashes
+    bool nightClassic = false;      // 1.8.0 (#160): Settings > Display "Night colours": false = Stage (grey-blue palette + lantern circle), true = Darken (classic)
     int fontStyle = 1;              // always Font::STYLE_CLEAR since 1.1.1 (the font setting was removed)
     std::string discord;            // settings.ini discord=: where the desktop's Discord icon points (empty = the built-in invite)
     void save(const std::string& path) const;   // also writes the keybinds
@@ -234,6 +235,13 @@ public:
     void advanceClock(int minutes);
     void rerollWeather();
     void drawWeather(Canvas& cv, float dt);
+    // 1.8.0 (#160-#162): night and dark maps. After ground, trails and props (before objects and people) drawWorld runs
+    // this per tile in view: outdoors at night the scenery goes through the grey-blue Stage ramp, except the stepped
+    // lantern circle around the party, which keeps the day colours; on dark maps lit tiles keep the day colours banded
+    // by the nearest light, the rest takes the ramp. viewBg = the bg each view tile was filled with (water banks).
+    // Returns the per-view-tile dim (256 = none) for NPCs / monsters / objects outside the circle, empty = no dimming.
+    std::vector<uint16_t> sceneryLook(Canvas& cv, int cx, int cy, int x0, int y0, int x1, int y1, const std::vector<Color8>& viewBg, bool combat);
+    bool partyLightOn() const;          // a torch / Light spell burning or light gear worn (the lantern circle doubles)
     bool shopOpen(const std::string& shopId, std::string& hoursOut) const;
     std::map<std::string, std::string> extra;    // free-form persistent key/values (saved in [extra])
     // ---- stats, bestiary, companions, achievements (journal.cpp) ----
@@ -370,6 +378,7 @@ public:
     int lightSteps = 0, stealthSteps = 0, detectSteps = 0;
     int lightPower = 0;              // radius of the light the party carries while lightSteps > 0 (torch 5, Light spell 8)
     std::vector<uint8_t> litMask;    // dark maps: which tiles are lit (party light, torches, braziers, combat lights)
+    std::vector<float> lightDist;    // 1.8.0 (#162): per lit tile, the distance (tiles) to the nearest light that reaches it
     void computeLight();
     bool lit(int x, int y) const;
     int partyGlow() const;           // light radius around each party member on dark maps

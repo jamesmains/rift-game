@@ -844,7 +844,10 @@ void Desktop::drawWindowContent(Canvas& cv, DeskWindow& w, InputState& in, bool 
         // 1.2.2 (#39): the game fills the screen; this brings back the 640x480 picture with bars at the sides
         if (checkbox(cv, in, x + 190, cy, "Classic 4:3 screen", s.classic43, active)) { if (req) req->setScale = std::max(1, s.scale); } cy += 18;
         if (checkbox(cv, in, x + 10, cy, "Pixel-perfect integer scaling", s.integerScaling, active)) { if (req) { req->setIntegerScaling = true; req->integerScalingValue = s.integerScaling; } } cy += 18;
-        checkbox(cv, in, x + 10, cy, "CRT display effect", s.crt, active); cy += 18;
+        checkbox(cv, in, x + 10, cy, "CRT display effect", s.crt, active);
+        // 1.8.0 (#160): how nights look - the grey-blue Stage palette with a lantern circle, or the old darkening
+        if (win98Button(cv, in, x + 190, cy - 3, 196, 18, s.nightClassic ? "Night colours: Darken (classic)" : "Night colours: Stage", true, false, active)) s.nightClassic = !s.nightClassic;
+        cy += 18;
         if (checkbox(cv, in, x + 10, cy, "V-Sync", s.vsync, active)) { if (req) { req->setVsync = true; req->vsyncValue = s.vsync; } } cy += 18;
         f.draw(cv, *ctx.ts, x + 10, cy, "Window scale:", DKSHADOW);
         for (int sc = 1; sc <= 3; sc++) { if (win98Button(cv, in, x + 110 + (sc - 1) * 40, cy - 4, 36, 20, std::to_string(sc) + "x", true, s.scale == sc, active)) { s.scale = sc; if (req) req->setScale = sc; } } cy += 26;
