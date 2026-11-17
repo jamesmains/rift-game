@@ -30,5 +30,13 @@ $kit = Join-Path $root "press-kit"
 foreach ($d in "screenshots\16x9_1920x1080", "screenshots\native") { $p = Join-Path $kit $d; if (Test-Path $p) { Remove-Item $p -Recurse -Force } }
 python (Join-Path $root "src\tools\promo_kit.py") $raw $kit
 if ($LASTEXITCODE -ne 0) { throw "promo_kit.py failed" }
+# 1.8.3 (#184): one picture set per UI theme (desktop, exploring, party, fight, settings) -> screenshots\themes, 2x
+$rawT = Join-Path $raw "themes"; New-Item -ItemType Directory $rawT | Out-Null
+Push-Location $work
+try { & $exe (Join-Path $root "src\tools\presskit_themes.txt") "$rawT\" | Select-String "^shot" } finally { Pop-Location }
+$themes = Join-Path $kit "screenshots\themes"; if (Test-Path $themes) { Remove-Item $themes -Recurse -Force }
+New-Item -ItemType Directory $themes | Out-Null
+python -c "import sys,glob,os; from PIL import Image; [Image.open(f).resize((Image.open(f).width*2, Image.open(f).height*2), Image.NEAREST).save(os.path.join(sys.argv[2], os.path.basename(f))) for f in glob.glob(os.path.join(sys.argv[1], 'theme_*.png'))]" $rawT $themes
+if ($LASTEXITCODE -ne 0) { throw "scaling the theme shots failed" }
 Remove-Item $raw, $work -Recurse -Force
 Write-Host "Image kit remade in press-kit\ (see press-kit\README.md)" -ForegroundColor Green

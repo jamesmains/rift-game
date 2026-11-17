@@ -1,0 +1,150 @@
+# 1.8.3 (#184): one picture set per UI theme for the press kit (tools/make-presskit.ps1 puts them in
+# press-kit/screenshots/themes/, 1920x1080). Adventurer's Frame is the default look; the store shots use it.
+screen 960 540
+frames 5
+installed
+frames 5
+# ---- frame ----
+theme frame
+todesktop
+frames 5
+deskaction launcher
+frames 10
+move 959 539
+frames 3
+shot theme_frame_1_desktop.png
+key ESC
+frames 5
+newgame Arin warrior
+frames 120
+god
+con gold 400
+con join ranger
+con join mage
+con join cleric
+frames 60
+teleport hollowmere 30 22
+clock 900
+weather clear
+frames 120
+move 959 539
+frames 3
+shot theme_frame_2_explore.png
+key TAB
+frames 20
+shot theme_frame_3_party.png
+key ESC
+frames 10
+combat goblin,goblin_archer,goblin,goblin_shaman
+frames 200
+aim
+frames 20
+shot theme_frame_4_combat.png
+forceflee
+frames 200
+key ESC
+frames 5
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 5
+key TAB
+frames 3
+shot theme_frame_5_settings.png
+keys ESC ESC
+frames 5
+# ---- native ----
+theme native
+todesktop
+frames 5
+deskaction launcher
+frames 10
+move 959 539
+frames 3
+shot theme_native_1_desktop.png
+key ESC
+frames 5
+newgame Arin warrior
+frames 120
+god
+con gold 400
+con join ranger
+con join mage
+con join cleric
+frames 60
+teleport hollowmere 30 22
+clock 900
+weather clear
+frames 120
+move 959 539
+frames 3
+shot theme_native_2_explore.png
+key TAB
+frames 20
+shot theme_native_3_party.png
+key ESC
+frames 10
+combat goblin,goblin_archer,goblin,goblin_shaman
+frames 200
+aim
+frames 20
+shot theme_native_4_combat.png
+forceflee
+frames 200
+key ESC
+frames 5
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 5
+key TAB
+frames 3
+shot theme_native_5_settings.png
+keys ESC ESC
+frames 5
+# ---- onebit ----
+theme onebit
+todesktop
+frames 5
+deskaction launcher
+frames 10
+move 959 539
+frames 3
+shot theme_onebit_1_desktop.png
+key ESC
+frames 5
+newgame Arin warrior
+frames 120
+god
+con gold 400
+con join ranger
+con join mage
+con join cleric
+frames 60
+teleport hollowmere 30 22
+clock 900
+weather clear
+frames 120
+move 959 539
+frames 3
+shot theme_onebit_2_explore.png
+key TAB
+frames 20
+shot theme_onebit_3_party.png
+key ESC
+frames 10
+combat goblin,goblin_archer,goblin,goblin_shaman
+frames 200
+aim
+frames 20
+shot theme_onebit_4_combat.png
+forceflee
+frames 200
+key ESC
+frames 5
+keys DOWN DOWN DOWN DOWN DOWN
+key ENTER
+frames 5
+key TAB
+frames 3
+shot theme_onebit_5_settings.png
+keys ESC ESC
+frames 5

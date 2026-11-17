@@ -210,10 +210,17 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             Color8 wf = t.well; int ws = std::min(26, pitch - 6); Theme::well(cv, colX + 10, cy, ws, ws, &wf);
             if (m.alive) { if (m.recolor) ctx.ts->drawRecolor(cv, m.tile, colX + 11, cy + 1, ws >= 26 ? 2 : 1, m.color); else ctx.ts->draw(cv, m.tile, colX + 11, cy + 1, ws >= 26 ? 2 : 1); }
             else ctx.ts->draw(cv, TL::UI_SKULL, colX + 11, cy + 1, ws >= 26 ? 2 : 1);
+            if (pitch < 30) {   // a short screen (480 high): name and numbers on one line, a thin bar under them
+                Theme::text(p, colX + 42, cy - 1, Theme::fit(p, m.name, colW - 130), act ? t.accent : t.text);
+                Theme::bar(cv, colX + 42, cy + 12, colW - 110, 3, m.hp, m.maxHP(*gd), Theme::hp());
+                if (combatRows) { Theme::smallRight(p, W - 12, cy, fmt("AP %d", m.ap), t.accent); Theme::smallRight(p, W - 12, cy + 10, fmt("MV %d", m.move), t.move); }
+                else Theme::smallRight(p, W - 12, cy + 1, fmt("%d/%d", m.hp, m.maxHP(*gd)), t.text);
+            } else {
             Theme::text(p, colX + 42, cy, Theme::fit(p, m.name, colW - 110), act ? t.accent : t.text);
             int bw = colW - 140; Theme::bar(cv, colX + 42, cy + 15, bw, 4, m.hp, m.maxHP(*gd), Theme::hp());
             Theme::small(p, colX + 46 + bw, cy + 13, fmt("%d/%d", m.hp, m.maxHP(*gd)), t.text);
             if (combatRows) { Theme::smallRight(p, W - 12, cy + 1, fmt("AP %d", m.ap), t.accent); Theme::smallRight(p, W - 12, cy + 14, fmt("MV %d", m.move), t.move); }
+            }
             if (combatRows && ui >= 0) hudHit(colX + 6, cy - 2, colW - 12, pitch - 2, HH_UNIT, ui);
             else hudHit(colX + 6, cy - 2, colW - 12, pitch - 2, HH_MEMBER, i);
         }
@@ -279,7 +286,7 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
             hpLabel(colX + 58, 116, "MV"); Theme::pips(cv, colX + 72, 116, std::min(pipN, std::max(m.move, m.maxMove(*gd))), m.move, t.move); Theme::smallRight(p, W - 12, 116, std::to_string(m.move), t.text);
         }
         // the Actions list (the Menu button is in it; Esc still pauses)
-        int ay = 140, ah = big ? 224 : std::min(224, H - ay - 4 - 0);
+        int ay = 140, ah = big ? 224 : std::min(200, H - ay - 4);
         Theme::panel(cv, colX, ay, colW, ah);
         Theme::title(p, colX + 12, ay + 9, "Actions");
         struct A { const char* label; int cmd; int key; };
@@ -322,7 +329,7 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
         static const O orders[] = {{"Party", HH_ACTION, A_MENU, A_MENU}, {"Items", HH_ACTION, A_ITEMS, A_ITEMS}, {"Spells", HH_ACTION, A_SPELLS, A_SPELLS}, {"Journal", HH_ACTION, A_JOURNAL, A_JOURNAL},
                                     {"World map", HH_ACTION, A_WORLDMAP, A_WORLDMAP}, {"Craft", HH_CRAFT, 0, -1}, {"Talk / Use", HH_ACTION, A_INTERACT, A_INTERACT}, {"Menu", HH_ACTION, A_CANCEL, A_CANCEL}};
         bool twoCol = wide;
-        int bw = twoCol ? (colW - 24) / 2 : colW - 20, bh = twoCol ? 24 : std::max(14, std::min(18, (oh - 30) / 8 - 1)), opitch = bh + (twoCol ? 4 : 1);
+        int bw = twoCol ? (colW - 24) / 2 : colW - 20, bh = twoCol ? 24 : std::max(14, std::min(18, (oh - 34) / 8 - 1)), opitch = bh + (twoCol ? 4 : 1);
         int lastY = oy;
         for (int i = 0; i < 8; i++) {
             int bx = colX + 10 + (twoCol ? (i % 2) * (bw + 4) : 0), by = oy + 28 + (twoCol ? i / 2 : i) * opitch;

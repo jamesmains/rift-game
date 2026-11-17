@@ -34,6 +34,7 @@ Store and page text: [STORE-TEXT.md](STORE-TEXT.md). Rights and credits for the 
 | `screenshots/native/11_launcher.png` | 960x540 | screenshot: the retro desktop and the Triffall launcher |
 | `screenshots/native/16_editor_maps.png` | 1280x720 | screenshot: the built-in Editor (it draws at 1280x720 on a 1920x1080 screen) |
 | `screenshots/16x9_1920x1080/*.png` | 1920x1080 | all 18 store screenshots, 2x (combat first; `18_night.png` is Hollowmere at night by lantern light) |
+| `screenshots/themes/theme_<frame\|native\|onebit>_<n>_*.png` | 1920x1080 | the three UI looks (Settings > Theme): desktop + launcher, exploring, party screen, a fight, Settings. The store shots use Adventurer's Frame, the default |
 | `art/steam/header_capsule_920x430.png` | 920x430 | Steam header capsule |
 | `art/steam/small_capsule_462x174.png` | 462x174 | Steam small capsule |
 | `art/steam/main_capsule_1232x706.png` | 1232x706 | Steam main capsule |
