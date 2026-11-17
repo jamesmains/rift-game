@@ -493,6 +493,7 @@ public:
     static bool subViewMode(GMode m);
     void drawModeUI(Canvas& cv, InputState& in);   // the open screen, hotbar, hints and notifications (Game::draw)
     bool subViewOrigin(GMode m, int& x, int& y) const;   // 1.8.3: a 640x480 screen's place in the theme's menu area (false: drawn as it is)
+    bool modeArea(GMode m, Rect& r) const;               // 1.8.3: where a mode draws with its own SCREEN_W/H: a 640x480 menu, or a popup (dialogue, message, victory, save/load, name) in the theme's world area
     void drawMenuBackdrop(Canvas& cv, GMode m);          // 1.8.3: the theme's panel / dialog / window behind a menu screen
     Canvas subCv;
     // ---- 1.8.3 (#170-#183) UI themes: layout, the world view, the HUD's clickable parts ----

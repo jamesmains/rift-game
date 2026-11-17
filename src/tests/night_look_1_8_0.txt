@@ -1,5 +1,7 @@
 # 1.8.0 (#159-#162): day ground colours per tile kind, the Stage palette at night with a stepped lantern circle,
 # dark maps lit in day colours with blue-grey shadow, and the classic darkening setting.
+# 1.8.3 (#184): this test checks pixel / icon positions laid out for the Adventurer's Frame; it runs in that theme
+theme frame
 frames 5
 screen 960 540
 frames 5

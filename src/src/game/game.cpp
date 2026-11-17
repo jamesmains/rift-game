@@ -531,9 +531,9 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
     hudHitsPrev = hudHits;
     if (Theme::native()) nativeHudInput(in);   // 1.8.3 (#176-#178): the native window's menu bar, Alt keys, tool windows
     if (mode == GMode::MENU && in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_MEMBER && h->arg >= 0 && h->arg < (int)party.members.size()) { menuMember = h->arg; menuSubFocus = false; menuPrompt.clear(); in.eatMouse(); }
-    int svX = 0, svY = 0;
-    const bool sv = subViewOrigin(mode, svX, svY);
-    if (sv) { SCREEN_W = BASE_W; SCREEN_H = BASE_H; in.mouseX -= svX; in.mouseY -= svY; }
+    Rect svR; const bool sv = modeArea(mode, svR);
+    const int svX = svR.x, svY = svR.y;
+    if (sv) { SCREEN_W = svR.w; SCREEN_H = svR.h; in.mouseX -= svX; in.mouseY -= svY; }
     if (injectAction >= 0) {   // a HUD button stands in for its action's key
         int a = injectAction; injectAction = -1;
         int k = gKeys.key1[a] ? gKeys.key1[a] : gKeys.key2[a] ? gKeys.key2[a] : gKeys.pad[a];
@@ -1768,16 +1768,16 @@ bool Game::subViewMode(GMode m) {
 
 void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     const int fullW = SCREEN_W, fullH = SCREEN_H;
-    int svX = 0, svY = 0;
-    const bool sv = subViewOrigin(mode, svX, svY);
+    Rect svR; const bool sv = modeArea(mode, svR);
+    const int svX = svR.x, svY = svR.y, svW = svR.w, svH = svR.h;
     if ((subViewMode(mode) || mode == GMode::SETTINGS) && !themedParty()) drawMenuBackdrop(full, mode);
     const GMode drawnMode = mode; const size_t rects0 = uiRects.size();
     InputState subIn;
     if (sv) {
-        if (subCv.w != BASE_W || subCv.h != BASE_H) subCv.init(BASE_W, BASE_H);
-        for (int y = 0; y < BASE_H; y++) std::copy_n(&full.px[(size_t)(y + svY) * full.w + svX], BASE_W, &subCv.px[(size_t)y * BASE_W]);
+        if (subCv.w != svW || subCv.h != svH) subCv.init(svW, svH);
+        for (int y = 0; y < svH; y++) std::copy_n(&full.px[(size_t)(y + svY) * full.w + svX], svW, &subCv.px[(size_t)y * svW]);
         subCv.resetClip();
-        SCREEN_W = BASE_W; SCREEN_H = BASE_H; ctx.cv = &subCv;
+        SCREEN_W = svW; SCREEN_H = svH; ctx.cv = &subCv;
         subIn = fullIn; subIn.mouseX -= svX; subIn.mouseY -= svY;
     }
     Canvas& cv = sv ? subCv : full;
@@ -1816,7 +1816,7 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
         ctx.font->draw(cv, *ctx.ts, ncx - w / 2 + 10, ny + 2 + (int)i * 18, notifications[i], c);
     }
     if (sv) {
-        for (int y = 0; y < BASE_H; y++) std::copy_n(&subCv.px[(size_t)y * BASE_W], BASE_W, &full.px[(size_t)(y + svY) * full.w + svX]);
+        for (int y = 0; y < svH; y++) std::copy_n(&subCv.px[(size_t)y * svW], svW, &full.px[(size_t)(y + svY) * full.w + svX]);
         SCREEN_W = fullW; SCREEN_H = fullH; ctx.cv = &full;
         for (size_t i = rects0; i < uiRects.size(); i++) { uiRects[i].x += svX; uiRects[i].y += svY; }
         (void)drawnMode;

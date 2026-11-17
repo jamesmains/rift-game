@@ -2,6 +2,9 @@
 # real dialogue choices and real fights (the combat AI plays the party; god mode keeps one bad roll from ending the run).
 # Every story flag is checked on the way. If any step can't be done - no path, a missing option, a fight that doesn't
 # set its flag - the run fails. Takes a few seconds.
+# 1.8.3 (#184): which enemy groups join a fight depends on how much of the map is in view, so this story test runs in
+# the default theme (in the one-bit theme's taller view the metro adds Rift Wisps the auto-party can't beat)
+theme frame
 verbose 1
 strict 1
 god

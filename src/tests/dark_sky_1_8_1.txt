@@ -1,5 +1,7 @@
 # 1.8.1 (#164-#166): no trail / prop on a pure black background any more, nothing drawn outside the light at night
 # or on dark maps, and map sky= (open: the night tint outside the light; enclosed: pitch black).
+# 1.8.3 (#184): this test checks pixel / icon positions laid out for the Adventurer's Frame; it runs in that theme
+theme frame
 frames 5
 screen 960 540
 frames 5

@@ -1,5 +1,7 @@
 # 1.0: the boot and the first-launch setup wizard (its options are real settings: large text; Finish starts New
 # Game - the Tutorial when it is ticked). 1.1.1: one boot screen, the BIOS lines under the Triffall title. The wizard opens once, on a first launch, when the boot is not skipped.
+# 1.8.3 (#184): this test checks pixel / icon positions laid out for the Adventurer's Frame; it runs in that theme
+theme frame
 boot 1.0
 shot boot_bios.png
 boot 3.0

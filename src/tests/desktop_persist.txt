@@ -1,6 +1,8 @@
 # 1.0.8: the desktop remembers itself. Change Minesweeper's icon (right-click > Change Icon...), drag Solitaire somewhere
 # else and pick a wallpaper; then a fresh desktop reads saves/desktop.ini back (reloaddesktop) and everything is where it was.
 # 1.6.1: the desktop is Triffall (after setup), My Computer, Minesweeper, Solitaire and Shut Down.
+# 1.8.3 (#184): this test checks pixel / icon positions laid out for the Adventurer's Frame; it runs in that theme
+theme frame
 installed
 frames 5
 expect iconpos:minesweeper == 16,116

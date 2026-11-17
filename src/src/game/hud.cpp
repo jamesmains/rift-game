@@ -60,6 +60,17 @@ bool Game::subViewOrigin(GMode m, int& x, int& y) const {
     else { x = (SCREEN_W - BASE_W) / 2; y = (SCREEN_H - BASE_H) / 2; }
     return !(x == 0 && y == 0 && SCREEN_W == BASE_W && SCREEN_H == BASE_H);
 }
+bool Game::modeArea(GMode m, Rect& r) const {
+    int x = 0, y = 0;
+    if (subViewOrigin(m, x, y)) { r = {x, y, BASE_W, BASE_H}; return true; }
+    if (m == GMode::DIALOGUE || m == GMode::MESSAGE || m == GMode::VICTORY || m == GMode::SAVELOAD || m == GMode::NAME) {
+        // the popups sit over the world, inside the theme's frame (the column, the status bar and taskbar, the bottom windows stay)
+        r = popupArea();
+        if (r.w >= 400 && r.h >= 300 && !(r.x == 0 && r.y == 0 && r.w == SCREEN_W && r.h == SCREEN_H)) return true;
+    }
+    r = {0, 0, SCREEN_W, SCREEN_H};
+    return false;
+}
 void Game::drawMenuBackdrop(Canvas& cv, GMode m) {
     Rect a = menuArea(), in = menuInside(a);
     if (m != GMode::SETTINGS && (in.w < BASE_W || in.h < BASE_H)) { cv.dim(0, 0, SCREEN_W, SCREEN_H, 150); return; }

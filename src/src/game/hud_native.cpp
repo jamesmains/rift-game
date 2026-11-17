@@ -230,7 +230,8 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
             if (open) Theme::bevel(cv, mx - 5, 22, w + 10, 17, SH, HI);
             else if (hover) Theme::bevel(cv, mx - 5, 22, w + 10, 17, HI, SH);
             ulText(p, mx + (open ? 1 : 0), my + (open ? 1 : 0), s, 0, dialog ? SH : DK);
-            if (live) hudHit(mx - 5, 22, w + 10, 17, HH_TOOL, NT_MENU + i);
+            if (live) { if (i == 0 && mode == GMode::COMBAT) hudHit(mx - 5, 22, w + 10, 17, HH_PAUSE, -1);   // in a fight Game pauses it (the fight's own Menu hot spot)
+                        else hudHit(mx - 5, 22, w + 10, 17, HH_TOOL, NT_MENU + i); }
             mx += w + 16;
         }
         cv.fillRect(3, 39, W - 6, 1, SH); cv.fillRect(3, 40, W - 6, 1, HI);

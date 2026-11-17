@@ -111,7 +111,7 @@ Color8 mapFill(Color8 c) {
     if (same(c, C::PanelHi) || same(c, RGB(50, 50, 66)) || same(c, RGB(60, 60, 80)) || same(c, RGB(40, 40, 54)) || same(c, RGB(50, 50, 70))) return withA(t.face, a);
     // old screens' brass "chosen" fills: one-bit a deep amber well (its amber text still reads), native a pressed-in light
     // face (the old yellow text on it maps to navy), frame its own brass
-    if (same(c, RGB(90, 70, 20)) || same(c, RGB(100, 80, 30)) || same(c, RGB(120, 90, 30)) || same(c, RGB(150, 110, 30))) return withA(t.id == ThemeId::OneBit ? H(0x3E280B) : t.id == ThemeId::Native ? H(0xDCDCDC) : t.selFill, a);
+    if (same(c, RGB(90, 70, 20)) || same(c, RGB(100, 80, 30)) || same(c, RGB(120, 90, 30)) || same(c, RGB(150, 110, 30)) || same(c, RGB(70, 55, 20)) || same(c, RGB(40, 34, 20))) return withA(t.id == ThemeId::OneBit ? H(0x3E280B) : t.id == ThemeId::Native ? H(0xDCDCDC) : t.selFill, a);
     if (same(c, C::Gold) || same(c, RGB(120, 90, 30))) return withA(t.accent, a);
     if (same(c, C::Yellow)) return withA(t.accentHi, a);
     if (t.id == ThemeId::Native) {
