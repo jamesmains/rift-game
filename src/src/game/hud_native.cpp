@@ -243,8 +243,9 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
     const int TY = 43, TH = 26;
     // the favorites (1.8.4 #192: in a fight too, the acting member's): 8 toolbar buttons; returns the separator's x
     auto favorites = [&](int member, bool fight, bool clickable) -> int {
+        const int cur = favHudCursor(member);   // 1.8.8 (#208): the picker's cursor is on these buttons
         for (int i = 0; i < 8; i++) {
-            int sx = 8 + i * 30; bool hover = clickable && over(in, sx, TY, 28, TH);
+            int sx = 8 + i * 30; bool hover = clickable && cur < 0 && over(in, sx, TY, 28, TH);
             if (fight && i == favLitSlot(member)) pressedBox(cv, sx, TY, 28, TH); else raised(cv, sx, TY, 28, TH);   // 1.8.6 (#201): held down while it is being aimed
             if (hover) { for (int xx = sx + 3; xx < sx + 25; xx += 2) { cv.put(xx, TY + 2, SH); cv.put(xx, TY + TH - 3, SH); } }
             std::string k = bindName(A_FAV1 + i); Theme::small(p, sx + 3, TY + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, 2), SH);
@@ -260,7 +261,14 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
                     if (cnt > 1) Theme::smallRight(p, sx + 26, TY + 17, "x" + std::to_string(std::min(cnt, 99)), DK);
                 }
             }
-            if (clickable) hudHit(sx, TY, 28, TH, HH_BELT, i);
+            if (clickable || cur >= 0) hudHit(sx, TY, 28, TH, HH_BELT, i);
+        }
+        if (cur >= 0) {   // a navy frame round the chosen button, with the dotted focus line inside
+            int sx = 8 + cur * 30;
+            cv.rect(sx - 1, TY - 1, 30, TH + 2, NAVY); cv.rect(sx - 2, TY - 2, 32, TH + 4, NAVY);
+            for (int xx = sx + 3; xx < sx + 25; xx += 2) { cv.put(xx, TY + 3, DK); cv.put(xx, TY + TH - 4, DK); }
+            for (int yy = TY + 3; yy < TY + TH - 3; yy += 2) { cv.put(sx + 3, yy, DK); cv.put(sx + 24, yy, DK); }
+            favHudShown(member, Rect{4, TY - 2, 8 * 30 + 4, TH + 4}, Rect{sx, TY, 28, TH});
         }
         int sepX = 8 + 8 * 30 + 4;
         cv.fillRect(sepX, TY + 1, 1, 24, SH); cv.fillRect(sepX + 1, TY + 1, 1, 24, HI);

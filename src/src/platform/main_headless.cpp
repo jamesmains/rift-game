@@ -310,6 +310,7 @@ int main(int argc, char** argv) {
                 // 1.8.6 (#203-#206): favpick = the open favorites picker's slot (-1 closed); obshade:N = 1 if that one-bit HUD
                 // window is rolled up; setprobe:page|focus|kind|combo|combosel|value = the in-game Settings screen
                 if (key == "favpick") { got = std::to_string(app.game.favPick); return true; }
+                if (key == "favonhud") { got = app.game.favPickOnHud() ? "1" : "0"; return true; }   // 1.8.8 (#208): the picker is a cursor on the HUD's favorites
                 if (startsWith(key, "obshade:")) { int i = atoi(key.substr(8).c_str()); got = i >= 0 && i < 4 && app.game.obShade[i] ? "1" : "0"; return true; }
                 if (startsWith(key, "setprobe:")) { got = app.game.settingsProbe(key.substr(9)); num = !got.empty() && (isdigit((unsigned char)got[0]) || got[0] == '-'); return true; }
                 if (startsWith(key, "settingsini:")) { got = "none"; num = false; std::string t; if (readFile(app.saveDir + "/settings.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "settings" && sec.has(key.substr(12))) got = sec.get(key.substr(12)); return true; }

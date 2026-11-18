@@ -220,8 +220,9 @@ static std::string bindName(int a) { return UI::bindLabel(a); }   // 1.8.5 (#200
 
 // ---------------- 1.8.6 (#206): the favorites picker ----------------
 // A controller has no number keys, so its Favorites button (RT) opens a strip of the 8 slots over the world (or over the
-// Spells / Items screen, to put something on a slot). It is the same in every theme: the HUD's own favorites may be
-// hidden (one-bit rolled up, native's toolbar in a narrow fight).
+// Spells / Items screen, to put something on a slot). 1.8.8 (#208): when the theme's HUD shows that member's favorites
+// (frame's Favorites panel, native's toolbar, one-bit's Favorites window) the picker is only a cursor on them plus a
+// small tip with the keys; the window is for when they aren't on the screen (a menu, one-bit rolled up, a narrow fight).
 void Game::openFavPicker(int member, const std::string& assign) {
     if (member < 0 || member >= (int)party.members.size()) return;
     favPickMember = member; favAssign = assign; favPick = 0;
@@ -237,16 +238,18 @@ void Game::updateFavPicker(InputState& in) {
     const bool ok = (mode == GMode::EXPLORE && favAssign.empty()) || mode == GMode::MENU || (fight && cb.playerTurn && !autoCombat && cb.selectedUnit >= 0 && !cb.ending);
     if (!ok || favPickMember < 0 || favPickMember >= (int)party.members.size()) { favPick = -1; favAssign.clear(); return; }
     int choose = -1; bool close = false;
-    if (actP(in, A_LEFT, fight) || actP(in, A_UP, fight)) { favPick = (favPick + 7) % 8; gAudio.play("ui_move"); }
+    const bool onHud = favPickOnHud(), grid = onHud && Theme::frame();   // the frame's panel is 4 x 2: Up / Down change rows
+    if (grid && (actP(in, A_UP, fight) || actP(in, A_DOWN, fight))) { favPick = (favPick + 4) % 8; gAudio.play("ui_move"); }
+    else if (actP(in, A_LEFT, fight) || actP(in, A_UP, fight)) { favPick = (favPick + 7) % 8; gAudio.play("ui_move"); }
     else if (actP(in, A_RIGHT, fight) || actP(in, A_DOWN, fight)) { favPick = (favPick + 1) % 8; gAudio.play("ui_move"); }
     for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f, fight)) choose = f;
     if (actP(in, A_CONFIRM, fight)) choose = favPick;
     if (actP(in, A_CANCEL, fight) || actP(in, A_FAVBAR, fight)) close = true;
     if (in.mousePressed[0]) {
         const HudHit* h = hudHitAt(in.mouseX, in.mouseY);
-        if (h && h->kind == HH_FAVPICK) choose = h->arg; else if (!(h && h->kind == HH_TOOL)) close = true;
+        if (h && (h->kind == HH_FAVPICK || (onHud && h->kind == HH_BELT))) choose = h->arg; else if (!(h && h->kind == HH_TOOL)) close = true;
     }
-    if (in.mouseDX || in.mouseDY) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_FAVPICK) favPick = h->arg;
+    if (in.mouseDX || in.mouseDY) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_FAVPICK || (onHud && h->kind == HH_BELT)) favPick = h->arg;
     // whatever happens, the screen underneath sees no input this frame (no step, no pause, no click on the map)
     in.eatKeys(); in.eatMouse();
     for (int k = 0; k < K_COUNT; k++) in.down[k] = false;
@@ -263,40 +266,69 @@ void Game::updateFavPicker(InputState& in) {
         else useFavorite(m, choose);
     } else if (close) { favPick = -1; favAssign.clear(); gAudio.play("ui_close"); }
 }
+std::string Game::favPickLine(bool* empty) {
+    std::string selName;
+    if (favPick >= 0 && favPickMember >= 0 && favPickMember < (int)party.members.size()) {
+        const std::string& f = party.members[favPickMember].favs[favPick];
+        if (!f.empty()) { std::string id = f.substr(f.find(':') + 1); selName = id;
+            if (startsWith(f, "spell:")) { if (auto* s = gd->spell(id)) selName = s->name; } else if (auto* d = gd->item(id)) selName = d->name; }
+    }
+    if (empty) *empty = selName.empty() && favAssign.empty();
+    if (!favAssign.empty()) {
+        std::string id = favAssign.substr(favAssign.find(':') + 1), what = id;
+        if (startsWith(favAssign, "spell:")) { if (auto* s = gd->spell(id)) what = s->name; } else if (auto* d = gd->item(id)) what = d->name;
+        return fmt("%d: %s", favPick + 1, what.c_str()) + (selName.empty() || selName == what ? std::string() : " (instead of " + selName + ")");
+    }
+    return fmt("%d: ", favPick + 1) + (selName.empty() ? std::string("empty") : selName);
+}
+std::string Game::favPickKeys(bool small) {
+    const char* sp = small ? "  " : "   ";
+    if (!gPadGlyphs) return std::string("Left/Right: choose") + sp + "1-8 or Enter: " + (favAssign.empty() ? "use" : "put here") + sp + "Esc: close";
+    std::string move = gKeys.pad[A_LEFT] == K_PAD_LEFT && gKeys.pad[A_RIGHT] == K_PAD_RIGHT ? std::string("D-pad") : UI::bindLabel(A_LEFT) + "/" + UI::bindLabel(A_RIGHT);
+    return move + ": choose" + sp + UI::bindLabel(A_CONFIRM) + (favAssign.empty() ? ": use" : ": put here") + sp + UI::bindLabel(A_CANCEL) + ": close";
+}
 void Game::drawFavPicker(Canvas& cv, InputState& in) {
     if (favPick < 0 || favPickMember < 0 || favPickMember >= (int)party.members.size()) return;
     Theme::NoMap nm; const UiTheme& t = Theme::th(); Pen p{&cv, ctx.font, ctx.ts};
     const Character& m = party.members[favPickMember];
     const bool fight = mode == GMode::COMBAT;
+    std::string title = favAssign.empty() ? m.name + "'s favorites" : "Put it on which favorite?";
+    bool empty = false; const std::string line = favPickLine(&empty);
+    // 1.8.8 (#208): the HUD already shows them with the cursor on the chosen slot: only a tip with what it is and the keys
+    if (favPickOnHud()) {
+        if (favHudText) return;   // one-bit wrote both lines in its own window
+        std::vector<std::pair<std::string, Color8>> tip = {{title, t.tooltipText}, {line, empty ? t.dim : t.accent}, {favPickKeys(), t.dim}};
+        if (Theme::native()) { tip[1].second = empty ? RGB(128, 128, 128) : RGB(0, 0, 128); tip[2].second = RGB(64, 64, 64); }
+        int tw = 0; for (auto& l : tip) tw = std::max(tw, Theme::textW(p, l.first) + (int)l.first.size());
+        tw += 12; const int th = (int)tip.size() * 13 + 6;
+        const Rect& pr = favHudPanel; const Rect& sr = favHudSlot;
+        int tx = clampi(sr.x + sr.w / 2 - tw / 2, 2, SCREEN_W - 2 - tw);
+        int ty = pr.y + pr.h / 2 < SCREEN_H / 2 ? pr.y + pr.h + 4 : pr.y - th - 4;   // below a panel at the top, else above
+        uiRect(tx, ty, tw, th);
+        hudHit(tx, ty, tw, th, HH_TOOL, 0);
+        Theme::tooltip(p, tx, ty, tip, true);
+        (void)in;
+        return;
+    }
     const int cell = 34, gap = 4, stripW = 8 * cell + 7 * gap;
     const int w = std::min(SCREEN_W - 8, std::max(stripW + 28, 360)), h = Theme::onebit() ? 112 : Theme::native() ? 110 : 116;
     const bool overMenu = mode == GMode::MENU;
     int x = overMenu ? (SCREEN_W - w) / 2 : VIEW_X + (VIEW_W - w) / 2;
     int y = overMenu ? (SCREEN_H - h) / 2 : Theme::onebit() ? VIEW_Y + (VIEW_H - h) / 2 - 30 : VIEW_Y + VIEW_H - h - 10;   // one-bit: above its bottom windows
-    std::string title = favAssign.empty() ? m.name + "'s favorites" : "Put it on which favorite?";
     uiRect(x, y, w + 4, h + 4);
     hudHit(x, y, w, h, HH_TOOL, 0);
     Rect r = Theme::toolWindow(p, x, y, w, h, title);
     int sx = r.x + (r.w - stripW) / 2, sy = r.y + 4;
-    std::string selName;
     for (int i = 0; i < 8; i++) {
         int cx = sx + i * (cell + gap);
         Color8 wf = t.well; Theme::well(cv, cx, sy, cell, cell, &wf);
-        std::string nm2; beltSlot(*this, cv, favPickMember, i, cx + 5, sy + 5, 2, fight, &nm2);
+        beltSlot(*this, cv, favPickMember, i, cx + 5, sy + 5, 2, fight);
         Theme::small(p, cx + 2, sy + 1, std::to_string(i + 1), t.dim);
-        if (i == favPick) { Theme::glow(cv, cx - 2, sy - 2, cell + 4, cell + 4); selName = nm2; }
+        if (i == favPick) Theme::glow(cv, cx - 2, sy - 2, cell + 4, cell + 4);
         hudHit(cx, sy, cell, cell, HH_FAVPICK, i);
     }
-    std::string line;
-    if (!favAssign.empty()) {
-        std::string id = favAssign.substr(favAssign.find(':') + 1), what = id;
-        if (startsWith(favAssign, "spell:")) { if (auto* s = gd->spell(id)) what = s->name; } else if (auto* d = gd->item(id)) what = d->name;
-        line = fmt("%d: %s", favPick + 1, what.c_str()) + (selName.empty() || selName == what ? std::string() : " (instead of " + selName + ")");
-    } else line = fmt("%d: ", favPick + 1) + (selName.empty() ? std::string("empty") : selName);
-    Theme::text(p, r.x + 10, sy + cell + 6, Theme::fit(p, line, r.w - 20), selName.empty() && favAssign.empty() ? t.dim : t.accent);
-    std::string keys = (gKeys.pad[A_LEFT] == K_PAD_LEFT && gKeys.pad[A_RIGHT] == K_PAD_RIGHT ? std::string("D-pad") : UI::bindLabel(A_LEFT) + "/" + UI::bindLabel(A_RIGHT)) + ": choose   " + UI::bindLabel(A_CONFIRM) + (favAssign.empty() ? ": use   " : ": put here   ") + UI::bindLabel(A_CANCEL) + ": close";
-    if (!gPadGlyphs) keys = std::string("Left/Right: choose   1-8 or Enter: ") + (favAssign.empty() ? "use" : "put here") + "   Esc: close";
-    Theme::small(p, r.x + 10, sy + cell + 22, Theme::fit(p, keys, r.w - 20), t.dim);
+    Theme::text(p, r.x + 10, sy + cell + 6, Theme::fit(p, line, r.w - 20), empty ? t.dim : t.accent);
+    Theme::small(p, r.x + 10, sy + cell + 22, Theme::fit(p, favPickKeys(), r.w - 20), t.dim);
     (void)in;
 }
 
@@ -558,18 +590,21 @@ void Game::drawFrameHud(Canvas& cv, InputState& in) {
         // 1.8.5 (#195): every slot shows its picture at 2x, centred under the slot's number (the fight's smaller slots
         // used to draw it at 1x in a corner, under the number)
         int sw = small ? 30 : 46, sh = small ? (big ? 34 : 33) : (big ? 40 : 32), pitchX = small ? 31 : 52, pitchY = small ? sh + 2 : (big ? 46 : 36);
+        const int cur = favHudCursor(member);   // 1.8.8 (#208): the picker's cursor is right here
         for (int i = 0; i < 8; i++) {
             int cx = bx + 10 + (i % 4) * pitchX, cy = y0 + 26 + (i / 4) * pitchY;
             Color8 wf = t.well; Theme::well(cv, cx, cy, sw, sh, &wf);
-            bool hover = in.mouseX >= cx && in.mouseX < cx + sw && in.mouseY >= cy && in.mouseY < cy + sh;
+            bool hover = cur < 0 && in.mouseX >= cx && in.mouseX < cx + sw && in.mouseY >= cy && in.mouseY < cy + sh;
             if (hover) cv.rect(cx, cy, sw, sh, t.accent);
-            if (i == favLitSlot(member)) Theme::glow(cv, cx - 1, cy - 1, sw + 2, sh + 2);   // 1.8.6 (#201): being aimed (press it again to go back to moving)
+            if (i == favLitSlot(member) || i == cur) Theme::glow(cv, cx - 1, cy - 1, sw + 2, sh + 2);   // 1.8.6 (#201): being aimed (press it again to go back to moving)
+            if (i == cur) favHudShown(member, Rect{bx, y0, bw, botH}, Rect{cx, cy, sw, sh});
             std::string k = bindName(A_FAV1 + i); if (gPadGlyphs || k.empty()) k = std::to_string(i + 1);
             Theme::small(p, cx + 3, cy + 2, k.substr(0, small ? 1 : 2), t.dim);
             if (small) beltSlot(*this, cv, member, i, cx + 3, cy + sh - 26, 2, combat);
             else beltSlot(*this, cv, member, i, cx + (sw - 24) / 2 + 2, cy + (sh - 24) / 2 + (big ? 1 : 2), 2, combat);
             hudHit(cx, cy, sw, sh, HH_BELT, i);
         }
+        if (cur >= 0) { const Rect& c = favHudSlot; cv.rect(c.x - 3, c.y - 3, c.w + 6, c.h + 6, t.accent); }   // over the neighbours' wells
     };
     if (combat) {
         // the target card: what the combat cursor is on

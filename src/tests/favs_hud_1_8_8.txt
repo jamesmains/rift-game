@@ -1,0 +1,118 @@
+# 1.8.8 (#208): with a controller, the Favorites button moves a cursor onto the HUD's own favorites when the theme shows
+# them (frame's Favorites panel, native's toolbar, one-bit's Favorites window) instead of opening a window over them.
+# The window is still used when they aren't on screen: over the Spells tab, one-bit's window rolled up, native's narrow
+# fight toolbar. Switches through all three themes itself.
+frames 5
+installed
+newgame Kai mage 1 20261116
+god
+con clearmap hollowmere
+teleport hollowmere 20 20
+frames 120
+expect mode == EXPLORE
+pad 1
+# put Spark on favorite 1 from the Spells tab: the HUD is covered there, so it is the window
+theme frame
+key B
+frames 5
+key RIGHT
+frames 5
+expect mode == MENU
+key PADRT
+frames 5
+expect favpick == 0
+expect favonhud == 0
+key PADA
+frames 5
+expect favs:0 == spell:spark,,,,,,,
+key PADB
+frames 5
+key PADB
+frames 5
+expect mode == EXPLORE
+# --- frame: the cursor is on the panel; it is 4 x 2, so Down goes to the second row
+key PADRT
+frames 5
+expect favpick == 0
+expect favonhud == 1
+shot frame_cursor.png
+key PADDOWN
+frames 3
+expect favpick == 4
+key PADUP
+frames 3
+expect favpick == 0
+key PADB
+frames 5
+expect favpick == -1
+expect mode == EXPLORE
+# a click on the HUD's slot while it is open uses that slot (an empty one: it just closes)
+key PADRT
+frames 5
+hudclick belt 2
+frames 5
+expect favpick == -1
+expect mode == EXPLORE
+# --- native: the toolbar's buttons, one row
+theme native
+frames 5
+key PADRT
+frames 5
+expect favonhud == 1
+key PADDOWN
+frames 3
+expect favpick == 1
+shot native_cursor.png
+key PADB
+frames 5
+expect favpick == -1
+# --- one-bit: the Favorites window; rolled up, the picker window comes back
+theme onebit
+frames 5
+key PADRT
+frames 5
+expect favonhud == 1
+shot onebit_cursor.png
+key PADB
+frames 5
+pad 0
+hudclick close 2
+frames 5
+expect obshade:2 == 1
+pad 1
+key PADRT
+frames 5
+expect favpick == 0
+expect favonhud == 0
+shot onebit_rolled.png
+key PADB
+frames 5
+pad 0
+hudclick close 2
+frames 5
+expect obshade:2 == 0
+pad 1
+# --- a fight: native at 640 wide has no room for its favorites (window); the frame's panel takes the cursor
+theme native
+combat rat
+cb forcehit 1
+frames 60
+cb turn 0
+frames 5
+key PADRT
+frames 5
+expect favpick == 0
+expect favonhud == 0
+key PADB
+frames 5
+theme frame
+frames 5
+key PADRT
+frames 5
+expect favonhud == 1
+shot frame_fight.png
+key PADA
+frames 5
+expect favpick == -1
+expect cb:mode == 1
+expect cb:favlit == 0

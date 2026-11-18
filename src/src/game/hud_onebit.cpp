@@ -193,6 +193,8 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
         }
         int chosen = combat ? pointed : (pointed >= 0 ? pointed : first);
         if (combat && favLitSlot(member) >= 0) chosen = favLitSlot(member);   // 1.8.6 (#201): the one being aimed
+        const int cur = favHudCursor(member);   // 1.8.8 (#208): the picker's cursor is in this window
+        if (cur >= 0) chosen = cur;
         std::string chosenName;
         for (int i = 0; i < 8; i++) {
             int cx = r.x + 8 + i * 29, cy = r.y + 24;
@@ -201,11 +203,16 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             std::string k = bindName(A_FAV1 + i); Theme::small(p, cx + 2, cy + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, 1), t.dim);
             beltSlot(*this, cv, member, i, cx + 7, cy + 8, combat);
             if (i == chosen) chosenName = nm2;
+            if (i == cur) { cv.rect(cx - 2, cy - 2, 29, 29, t.text); favHudShown(member, r, Rect{cx, cy, 25, 25}, true); }
             hudHit(cx, cy, 25, 25, HH_BELT, i);
         }
         std::string k1 = keyLow(A_FAV1), k8 = keyLow(A_FAV8);
         std::string range = k1.empty() || k8.empty() ? "1-8" : k1 + "-" + k8;
-        if (combat) {
+        if (cur >= 0) {   // 1.8.8 (#208): the picker's own lines, in this window
+            bool empty = false; std::string line = favPickLine(&empty);
+            Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, line, r.w - 16), empty ? t.dim : t.accent);
+            Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, favPickKeys(true), r.w - 16), t.dim);
+        } else if (combat) {
             std::string terr;   // the ground under the combat cursor
             if (map && map->inBounds(cb.selX, cb.selY) && (map->at(cb.selX, cb.selY).explored || visible(cb.selX, cb.selY))) {
                 const Cell& c = map->at(cb.selX, cb.selY); const TileKind& k = allTileKinds()[c.kind];

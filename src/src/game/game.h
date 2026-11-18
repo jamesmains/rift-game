@@ -571,6 +571,16 @@ public:
     void openFavPicker(int member, const std::string& assign);
     void updateFavPicker(InputState& in);
     void drawFavPicker(Canvas& cv, InputState& in);
+    // 1.8.8 (#208): when the theme's HUD shows that member's favorites, the picker is a cursor on them (no window over
+    // them). The HUD asks favHudCursor(member) for the slot to mark and calls favHudShown with where it drew them.
+    int favHudCursor(int member) const { return favPick >= 0 && favPickMember == member && (mode == GMode::EXPLORE || mode == GMode::COMBAT) ? favPick : -1; }
+    void favHudShown(int member, Rect panel, Rect slot, bool ownText = false) { favHudMember = member; favHudPanel = panel; favHudSlot = slot; favHudText = ownText; }
+    int favHudMember = -1;                // set by this frame's HUD (-1: its favorites aren't on the screen)
+    bool favHudText = false;              // the HUD wrote the picker's lines itself (one-bit's window has room); else a tip does
+    std::string favPickLine(bool* empty = nullptr);   // "3: Fireball" / "3: Fire Oil (instead of Fireball)"
+    std::string favPickKeys(bool small = false);      // the buttons that work while it is open
+    Rect favHudPanel{}, favHudSlot{};     // the HUD's favorites panel and the slot under the cursor
+    bool favPickOnHud() const { return favPick >= 0 && favHudMember == favPickMember && favHudCursor(favPickMember) >= 0; }
     void combatUseFav(int slot);          // the acting unit uses its favorite (#201: the same slot again while aiming it cancels)
     std::vector<int> combatFoesInSight(int unit);   // 1.8.7: living foes that unit's side can see, nearest first (target jumping)
     int favLitSlot(int member) const;     // #201: the slot whose spell / item the fight is aiming now (-1 none): the HUDs light it

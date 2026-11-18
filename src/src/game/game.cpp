@@ -1759,6 +1759,7 @@ void Game::draw(Canvas& cv, InputState& in) {
     if (mode == GMode::ENDING) { drawEnding(cv, in); return; }
     computeLayout();
     hudHits.clear();
+    favHudMember = -1;   // 1.8.8 (#208): the HUD says again where it put the favorites
     // 1.8.6 (#205): window close boxes drawn from here on become hot spots (HH_CLOSE)
     struct CloseHook { CloseHook(Game* g) { Theme::closeBoxOwner = g; Theme::closeBoxHook = [](void* o, Rect r) { Game* gg = (Game*)o; gg->hudHit(r.x + gg->closeOffX, r.y + gg->closeOffY, r.w, r.h, Game::HH_CLOSE, -1); }; }
                        ~CloseHook() { Theme::closeBoxHook = nullptr; Theme::closeBoxOwner = nullptr; } } closeHook(this);
