@@ -1,5 +1,6 @@
 // The retro PC desktop that serves as the main menu.
 #pragma once
+#include "../core/spatnav.h"
 #include <map>
 #include <array>
 #include <string>
@@ -66,6 +67,7 @@ public:
     std::vector<Rect> hots, hotsPrev;   // clickable things drawn last frame: the D-pad / arrow keys hop the cursor between them
     void hot(int x, int y, int w, int h) { hots.push_back({x, y, w, h}); }
     bool snapCursor(int dx, int dy);    // move the cursor to the nearest hotspot in a direction; false if none
+    SpatNav::Memory snapNav;            // 1.8.6 (#204): the last snap (the opposite press goes back)
     bool padNavWindows = false;         // this frame: a window is open and the pad/keyboard is steering the cursor
     bool cursorHand = false;
     int iconPress = -1, iconDrag = -1;

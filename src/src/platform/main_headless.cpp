@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
             // 1.8.3 (#184): click the HUD hot spot of that kind (action belt combat unit pause member craft ptab slot pick lead)
             // and arg, wherever the active theme put it: tests stay the same in every theme
             if (cmd == "hudclick") {
-                static const std::map<std::string, int> kinds = {{"action", Game::HH_ACTION}, {"member", Game::HH_MEMBER}, {"belt", Game::HH_BELT}, {"combat", Game::HH_COMBAT}, {"unit", Game::HH_UNIT}, {"pause", Game::HH_PAUSE}, {"craft", Game::HH_CRAFT}, {"ptab", Game::HH_PTAB}, {"hostclose", Game::HH_HOSTCLOSE}, {"slot", Game::HH_SLOT}, {"pick", Game::HH_PICK}, {"lead", Game::HH_LEAD}};
+                static const std::map<std::string, int> kinds = {{"action", Game::HH_ACTION}, {"member", Game::HH_MEMBER}, {"belt", Game::HH_BELT}, {"combat", Game::HH_COMBAT}, {"unit", Game::HH_UNIT}, {"pause", Game::HH_PAUSE}, {"craft", Game::HH_CRAFT}, {"ptab", Game::HH_PTAB}, {"hostclose", Game::HH_HOSTCLOSE}, {"slot", Game::HH_SLOT}, {"pick", Game::HH_PICK}, {"lead", Game::HH_LEAD}, {"close", Game::HH_CLOSE}, {"favpick", Game::HH_FAVPICK}};
                 auto it = kinds.find(p.size() > 1 ? p[1] : ""); int arg = p.size() > 2 ? atoi(p[2].c_str()) : 0;
                 const Game::HudHit* hit = nullptr; if (it != kinds.end()) for (auto& h : app.game.hudHits) if (h.kind == it->second && h.arg == arg) hit = &h;
                 if (!hit) { printf("BOT FAIL: hudclick %s %d - no such hot spot on screen\n", p.size() > 1 ? p[1].c_str() : "", arg); return true; }
@@ -307,6 +307,11 @@ int main(int argc, char** argv) {
 #endif
                 // 1.8.3 (#184): the active UI theme, a settings.ini value, the open Settings screen's page
                 if (key == "theme") { got = Theme::key(Theme::id()); num = false; return true; }
+                // 1.8.6 (#203-#206): favpick = the open favorites picker's slot (-1 closed); obshade:N = 1 if that one-bit HUD
+                // window is rolled up; setprobe:page|focus|kind|combo|combosel|value = the in-game Settings screen
+                if (key == "favpick") { got = std::to_string(app.game.favPick); return true; }
+                if (startsWith(key, "obshade:")) { int i = atoi(key.substr(8).c_str()); got = i >= 0 && i < 4 && app.game.obShade[i] ? "1" : "0"; return true; }
+                if (startsWith(key, "setprobe:")) { got = app.game.settingsProbe(key.substr(9)); num = !got.empty() && (isdigit((unsigned char)got[0]) || got[0] == '-'); return true; }
                 if (startsWith(key, "settingsini:")) { got = "none"; num = false; std::string t; if (readFile(app.saveDir + "/settings.ini", t)) for (auto& sec : parseConfig(t)) if (sec.name == "settings" && sec.has(key.substr(12))) got = sec.get(key.substr(12)); return true; }
                 if (key == "topwindow") { got = app.desktop.windows.empty() ? "none" : app.desktop.windows.back().title; num = false; return true; }
                 if (key == "deskslots") { app.desktop.refreshSlots(); got.clear(); for (int i = 0; i < 4; i++) got += app.desktop.slots[i].exists ? "1" : "0"; num = false; return true; }

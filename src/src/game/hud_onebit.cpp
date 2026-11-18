@@ -130,10 +130,23 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
     Font& font = *ctx.font;
     auto hover = [&](int x, int y, int w, int h) { return in.mouseX >= x && in.mouseX < x + w && in.mouseY >= y && in.mouseY < y + h; };
 
+    // 1.8.6 (#205): a window's close box rolls it up to its title bar (the bottom ones sink to the bottom edge, so the
+    // map shows); a click on the rolled-up bar brings it back. `shade` draws the bar and says so; `closeHit` makes an
+    // open window's box roll it up.
+    auto shade = [&](int id, const Rect& r, const char* title, bool bottom) -> bool {
+        if (!obShade[id]) return false;
+        const int bh = 18, y = bottom ? r.y + r.h - bh : r.y;
+        uiRect(r.x, y, r.w + 4, bh + 4);
+        Theme::toolWindow(p, r.x, y, r.w, bh, title);
+        hudHit(r.x, y, r.w, bh, HH_CLOSE, id);
+        return true;
+    };
+    auto closeHit = [&](int id, const Rect& r) { Rect c = Theme::closeBoxRect(r.x, r.y, r.w, r.h, true); hudHit(c.x, c.y, c.w, c.h, HH_CLOSE, id); };
     // ---------------- the bottom tool windows ----------------
     auto partyWin = [&](const Rect& r) {
+        if (shade(0, r, "Party", true)) return;
         uiRect(r.x, r.y, r.w + 4, r.h + 4); hudHit(r.x, r.y, r.w, r.h, HH_TOOL, 0);
-        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Party");
+        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Party"); closeHit(0, r);
         int pitch = std::min(110, (r.w - 12) / 4), bw = pitch - 14;
         for (int i = 0; i < n && i < 4; i++) {
             const Character& m = viewOf(*this, i);
@@ -155,8 +168,9 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
         }
     };
     auto newsWin = [&](const Rect& r) {
+        if (shade(1, r, "News", true)) return;
         uiRect(r.x, r.y, r.w + 4, r.h + 4); hudHit(r.x, r.y, r.w, r.h, HH_TOOL, 0);
-        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "News");
+        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "News"); closeHit(1, r);
         std::vector<std::pair<std::string, Color8>> lines;
         std::string hint;
         if (combat && cb.playerTurn && cb.mode == 0) hint = "right-drag pans, " + keyLow(A_CENTER) + " centers";
@@ -167,8 +181,9 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
         if (!hint.empty()) Theme::text(p, r.x + 8, r.y + 20 + 4 * 16, Theme::fit(p, hint, r.w - 16), t.dim);
     };
     auto beltWin = [&](const Rect& r) {
+        if (shade(2, r, "Favorites", true)) return;
         uiRect(r.x, r.y, r.w + 4, r.h + 4); hudHit(r.x, r.y, r.w, r.h, HH_TOOL, 0);
-        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Favorites");   // 1.8.4 (#192): was "Belt"
+        Theme::toolWindow(p, r.x, r.y, r.w, r.h, "Favorites"); closeHit(2, r);   // 1.8.4 (#192): was "Belt"
         int member = combat && cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() && cb.units[cb.selectedUnit].partyIndex >= 0 ? cb.units[cb.selectedUnit].partyIndex : lead;
         int pointed = -1, first = -1;
         for (int i = 0; i < 8; i++) {
@@ -177,6 +192,7 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             if (first < 0 && !beltSlot(*this, cv, member, i, 0, 0, combat, false).empty()) first = i;
         }
         int chosen = combat ? pointed : (pointed >= 0 ? pointed : first);
+        if (combat && favLitSlot(member) >= 0) chosen = favLitSlot(member);   // 1.8.6 (#201): the one being aimed
         std::string chosenName;
         for (int i = 0; i < 8; i++) {
             int cx = r.x + 8 + i * 29, cy = r.y + 24;
@@ -199,11 +215,11 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
             }
             if (!chosenName.empty()) Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, chosenName, r.w - 16), t.accent);
             else Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, terr.empty() ? std::string("") : "Terrain: " + lower(terr), r.w - 16), t.dim);
-            Theme::small(p, r.x + 8, r.y + 76, gPadGlyphs ? keyLow(A_ITEMS) + " items   " + keyLow(A_SPELLS) + " spells" : range + " use an item in combat", t.dim);   // 1.8.5 (#200): the pad has no 1-8
+            Theme::small(p, r.x + 8, r.y + 76, gPadGlyphs ? keyLow(A_FAVBAR) + " pick   " + keyLow(A_ITEMS) + " items   " + keyLow(A_SPELLS) + " spells" : range + " use an item in combat", t.dim);   // 1.8.5 (#200): the pad has no 1-8
         } else {
             if (!chosenName.empty()) Theme::text(p, r.x + 8, r.y + 58, Theme::fit(p, chosenName, r.w - 16), t.accent);
             else Theme::text(p, r.x + 8, r.y + 58, "No favorites yet", t.dim);
-            Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, (gPadGlyphs ? std::string() : range + " use   ") + keyLow(A_MENU) + " menu   " + keyLow(A_INTERACT) + " act", r.w - 16), t.dim);
+            Theme::small(p, r.x + 8, r.y + 76, Theme::fit(p, (gPadGlyphs ? (gKeys.pad[A_FAVBAR] ? keyLow(A_FAVBAR) + " pick   " : std::string()) : range + " use   ") + keyLow(A_MENU) + " menu   " + keyLow(A_INTERACT) + " act", r.w - 16), t.dim);
         }
     };
 
@@ -217,7 +233,7 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
         int uy = L.colTop;
         int au = cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() ? cb.selectedUnit : -1;
         uiRect(ux, uy, uw + 4, uh + 4); hudHit(ux, uy, uw, uh, HH_TOOL, 0);
-        Theme::windowChrome(p, ux, uy, uw, uh, au >= 0 ? Theme::fit(p, cb.units[au].ch.name, uw - 80) : "Fight", true);
+        Theme::windowChrome(p, ux, uy, uw, uh, au >= 0 ? Theme::fit(p, cb.units[au].ch.name, uw - 80) : "Fight", true, false);   // 1.8.6 (#205): the fight's command window can't close: no box
         if (au >= 0) {
             const Character& m = cb.units[au].ch;
             bool foe = !cb.units[au].friendly();
@@ -256,8 +272,9 @@ void Game::drawOneBitHud(Canvas& cv, InputState& in) {
         }
         // the target window under it
         int ty0 = uy + uh + 6, th0 = roomy ? 120 : std::max(84, L.colBottom - ty0);
+        if (shade(3, Rect{ux, ty0, uw, th0}, "Target", false)) return;
         uiRect(ux, ty0, uw + 4, th0 + 4); hudHit(ux, ty0, uw, th0, HH_TOOL, 0);
-        Rect in2 = Theme::toolWindow(p, ux, ty0, uw, th0, "Target");
+        Rect in2 = Theme::toolWindow(p, ux, ty0, uw, th0, "Target"); closeHit(3, Rect{ux, ty0, uw, th0});
         (void)in2;
         TargetOdds o = targetOdds();
         int y = ty0 + 20, bottom = ty0 + th0 - 4;

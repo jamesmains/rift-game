@@ -1,6 +1,7 @@
 // 1.8.3 (#170 #174 #175 #178 #179 #182 #183): the Settings pages in the active UI theme (see settings_ui.h).
 #include "settings_ui.h"
 #include "../core/audio.h"
+#include "../core/spatnav.h"
 #include <algorithm>
 
 using namespace Theme;
@@ -8,7 +9,7 @@ using UI::VIEW_X; using UI::VIEW_Y; using UI::VIEW_W; using UI::VIEW_H; using UI
 
 void SettingsPanel::begin(const GameSettings& s) {
     orig = s; origKeys = gKeys; haveOrig = true;
-    page = 0; focus = 0; scroll = 0; row = 0; col = 0; waiting = -1; openCombo = -1;
+    page = 0; focus = 0; scroll = 0; row = 0; col = 0; waiting = -1; openCombo = -1; nav = SpatNav::Memory();
 }
 
 std::string SettingsPanel::helpLine() const {
@@ -116,8 +117,10 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
             Color8 f = t.face; int bx = x + w - 18; bevel(cv, bx, y, 16, 16, t.hi, t.lo, &f); bevel(cv, bx + 1, y + 1, 14, 14, t.hi2, t.lo2);
             for (int i = 0; i < 4; i++) cv.fillRect(bx + 4 + i, y + 6 + i, 8 - 2 * i, 1, t.lo);
             // 1.8.4 (#187): the click that opens the list must not also close it (it used to reach the "click elsewhere" test below)
-            if (st.click && openCombo != myIdx) { openCombo = myIdx; in.mousePressed[0] = false; }
-            if (st.activate || (st.focused && leftRight)) v = (v + (leftRight < 0 ? (int)opts.size() - 1 : 1)) % (int)opts.size();
+            if (st.click && openCombo != myIdx) { openCombo = myIdx; comboSel = v; in.mousePressed[0] = false; }
+            // 1.8.6 (#203): Confirm (the pad's A) opens the list like a click; Left / Right still step the value in place
+            if (st.activate && openCombo != myIdx) { openCombo = myIdx; comboSel = v; in.eatKeys(); gAudio.play("ui_open"); }
+            else if (st.focused && leftRight) v = (v + (leftRight < 0 ? (int)opts.size() - 1 : 1)) % (int)opts.size();
             if (openCombo == myIdx) {
                 // the list drops below the field; a click picks, a click elsewhere (the field too) closes it. It is drawn
                 // after everything else (dropList), so the rows under it can't cover it.
@@ -128,14 +131,17 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
                     if (pressed && orc.contains(in.mouseX, in.mouseY)) { v = i; openCombo = -1; in.mousePressed[0] = false; pressed = false; }
                 }
                 if (pressed) { openCombo = -1; in.mousePressed[0] = false; (void)field; }
-                if (openCombo == myIdx && active) {   // keys walk the open list, Enter closes it
+                if (openCombo == myIdx && active) {   // 1.8.6 (#203): keys walk a highlight in the open list; Confirm takes it, Cancel leaves the value
                     int n = (int)opts.size();
-                    if (actP(in, A_UP)) v = (v + n - 1) % n; else if (actP(in, A_DOWN)) v = (v + 1) % n;
-                    else if (actP(in, A_CONFIRM)) { openCombo = -1; in.eatKeys(); }
+                    comboSel = std::clamp(comboSel, 0, n - 1);
+                    for (int i = 0; i < n; i++) { Rect orc{x + 1, ly + 1 + i * lh, w - 2, lh}; if ((in.mouseDX || in.mouseDY) && orc.contains(in.mouseX, in.mouseY)) comboSel = i; }
+                    if (actP(in, A_UP)) { comboSel = (comboSel + n - 1) % n; gAudio.play("ui_move"); }
+                    else if (actP(in, A_DOWN)) { comboSel = (comboSel + 1) % n; gAudio.play("ui_move"); }
+                    else if (actP(in, A_CONFIRM)) { v = comboSel; openCombo = -1; in.eatKeys(); gAudio.play("ui_confirm"); }
+                    else if (actP(in, A_CANCEL)) { openCombo = -1; in.eatKeys(); gAudio.play("ui_cancel"); }
                 }
-                if (openCombo == myIdx) { dropList.open = true; dropList.x = x; dropList.y = ly; dropList.w = w; dropList.lh = lh; dropList.opts = opts; dropList.sel = v; }
+                if (openCombo == myIdx) { dropList.open = true; dropList.x = x; dropList.y = ly; dropList.w = w; dropList.lh = lh; dropList.opts = opts; dropList.sel = comboSel; }
             }
-            if (actP(in, A_CANCEL) && openCombo == myIdx) { openCombo = -1; in.pressed[K_ESCAPE] = false; }
             return v != before;
         }
         int hoverOpt = choiceHit(p, x, y, opts, in.mouseX, in.mouseY);
@@ -347,30 +353,26 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
         cv.fillRect(x, ly, w, n * lh + 2, white2); cv.rect(x, ly, w, n * lh + 2, t.lo);
         for (int i = 0; i < n; i++) {
             Rect orc{x + 1, ly + 1 + i * lh, w - 2, lh}; bool ho = orc.contains(in.mouseX, in.mouseY);
-            if (ho || i == dropList.sel) cv.fillRect(orc.x, orc.y, orc.w, orc.h, ho ? t.rowSel : RGB(216, 216, 232));
-            text(p, x + 5, orc.y + 1, dropList.opts[i], ho ? t.selText : t.text);
+            bool on = i == dropList.sel;   // 1.8.6: the keys' / pad's highlight (the mouse moves it too)
+            if (on) cv.fillRect(orc.x, orc.y, orc.w, orc.h, t.rowSel); else if (ho) cv.fillRect(orc.x, orc.y, orc.w, orc.h, RGB(216, 216, 232));
+            text(p, x + 5, orc.y + 1, dropList.opts[i], on ? t.selText : t.text);
         }
     }
     // own navigation moves the focus through what was drawn (the Controls table is control 0 there)
     lastCount = idx;
-    // 1.8.5 (#200): by place, not drawing order: Up / Down go to the nearest control above / below (Down from the page
-    // tabs goes into the page, not along the tabs), Left / Right to the nearest on the same line for tabs, check
-    // boxes and buttons (choices and sliders keep Left / Right for their value); past the last control it wraps
+    // 1.8.5 (#200) / 1.8.6 (#204): by place, grid-like (core/spatnav.h): Up / Down walk a column, Left / Right go to the
+    // control at the same height (tabs, check boxes and buttons; choices and sliders keep Left / Right for their value),
+    // the opposite press goes back where you came from; Up / Down past the last control wrap round
     if (keyNav && lastCount > 0 && focus >= 0 && focus < lastCount && (upP || downP || ((leftP || rightP) && (now[focus].kind == 0 || now[focus].kind == 1 || now[focus].kind == 5)))) {
-        const Rect cur = now[focus].r; const int fx = cur.x + cur.w / 2, fy = cur.y + cur.h / 2;
-        int best = -1; long bs = 0;
-        for (int i = 0; i < lastCount; i++) {
-            if (i == focus) continue;
-            const Rect& c = now[i].r; int cx = c.x + c.w / 2, cy = c.y + c.h / 2;
-            long sc;
-            if (upP || downP) { int dy = downP ? cy - fy : fy - cy; if (dy <= 4) continue; sc = (long)dy * 6 + std::abs(c.x - cur.x); }   // the same column first
-            else { if (std::abs(cy - fy) > 6) continue; int dx = rightP ? cx - fx : fx - cx; if (dx <= 4) continue; sc = dx; }
-            if (best < 0 || sc < bs) { best = i; bs = sc; }
-        }
+        std::vector<Rect> rs; for (auto& c : now) rs.push_back(c.r);
+        const int dx = leftP ? -1 : rightP ? 1 : 0, dy = upP ? -1 : downP ? 1 : 0;
+        int best = SpatNav::move(rs, now[focus].r, dy ? 0 : dx, dy, nav, focus);
         if (best < 0 && (upP || downP)) {   // wrap round: the top-most (Down) or bottom-most (Up) control
+            long bs = 0;
             for (int i = 0; i < lastCount; i++) { const Rect& c = now[i].r; long sc = (long)(downP ? c.y : -(c.y + c.h)) * 4096 + c.x; if (best < 0 || sc < bs) { best = i; bs = sc; } }
+            nav = SpatNav::Memory();
         }
-        if (best >= 0) { focus = best; if (now[best].kind == 5 && (leftP || rightP) && best < 3) { page = best; } }
+        if (best >= 0) { focus = best; gAudio.play("ui_move"); if (now[best].kind == 5 && (leftP || rightP) && best < 3) { page = best; } }
     }
     if (focus >= lastCount) focus = std::max(0, lastCount - 1);
     ctls = now;
@@ -392,6 +394,19 @@ static Rect settingsRect() {
     int colW = W >= 853 ? 236 : 200;
     if (W - colW - 2 < 600) return {0, 0, W, H};
     return {2, 2, W - colW - 6, H - 4};
+}
+std::string Game::settingsProbe(const std::string& what) {
+    SettingsPanel& sp = gamePanel();
+    if (what == "page") return std::to_string(sp.page);
+    if (what == "focus") return std::to_string(sp.focus);
+    if (what == "combo") return std::to_string(sp.openCombo);
+    if (what == "combosel") return std::to_string(sp.comboSel);
+    if (what == "theme") return std::to_string(settings ? settings->theme : -1);
+    bool ok = sp.focus >= 0 && sp.focus < (int)sp.ctls.size();
+    if (what == "kind") return ok ? std::to_string(sp.ctls[sp.focus].kind) : "-1";
+    if (what == "x") return ok ? std::to_string(sp.ctls[sp.focus].r.x) : "-1";
+    if (what == "y") return ok ? std::to_string(sp.ctls[sp.focus].r.y) : "-1";
+    return "?";
 }
 void Game::updateSettingsScreen(InputState& in) {
     SettingsPanel& sp = gamePanel();

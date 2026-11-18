@@ -551,6 +551,17 @@ void Game::update(InputState& in, float dt, Canvas& cv) {
         if (h->kind == HH_HOSTCLOSE) { in.eatMouse(); if (mode == GMode::MENU) { menuPrompt.clear(); menuSubFocus = false; } popMode(); return; }
         if (h->kind == HH_PTAB && mode == GMode::MENU) { in.eatMouse(); menuTab = clampi(h->arg, 0, 3); menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; menuPrompt.clear(); gAudio.play("ui_move"); return; }
     }
+    // 1.8.6 (#205): every window's close box does something: a one-bit HUD window rolls up to its title bar (and down
+    // again), the favorites picker closes, a fight's open list closes, any other popup / screen gets its Esc
+    if (in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) if (h->kind == HH_CLOSE) {
+        in.eatMouse(); gAudio.play("ui_close");
+        if (h->arg >= 0 && h->arg < 4) obShade[h->arg] = !obShade[h->arg];
+        else if (favPick >= 0) { favPick = -1; favAssign.clear(); }
+        else if (mode == GMode::COMBAT) { if (cb.mode != 0) cb.mode = 0; }
+        else if (mode != GMode::EXPLORE) injectAction = A_CANCEL;
+    }
+    // 1.8.6 (#206): the favorites picker takes the input before the screen under it (which then sees none)
+    if (favPick >= 0) updateFavPicker(in);
     Rect svR; const bool sv = modeArea(mode, svR);
     const int svX = svR.x, svY = svR.y;
     const bool hostedNow = menuHosted(mode);   // 1.8.5: measured on the whole screen, before SCREEN_W/H change
@@ -622,6 +633,7 @@ void Game::updateExplore(InputState& in, float dt) {
     if (actP(in, A_ITEMS)) { menuTab = 1; menuSel = 0; menuScroll = 0; menuSubFocus = false; pushMode(GMode::MENU); return; }
     if (actP(in, A_JOURNAL)) { jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; }
     if (actP(in, A_WORLDMAP)) { openWorldMap(); return; }
+    if (actP(in, A_FAVBAR)) { openFavPicker(activeLeader(), ""); return; }   // 1.8.6 (#206): the controller's Favorites button
     for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f)) { useFavorite(activeLeader(), f); return; }
     // 1.8.3: the theme HUD's buttons, party cards and belt slots (hud.cpp)
     if (in.mousePressed[0] && hudClick(in)) return;
@@ -1153,7 +1165,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
     else if (k == "take") { for (auto& it : split(v, ',')) { auto p = split(trim(it), ':'); party.removeItem(trim(p[0]), p.size() > 1 ? atoi(p[1].c_str()) : 1); if (auto* d = gd->item(trim(p[0]))) log("Gave " + d->name + "."); } }
     else if (k == "gold") { int g = atoi(v.c_str()); party.gold = std::max(0, party.gold + g); if (g > 0) stats.goldEarned += g; else stats.goldSpent -= g; log(g >= 0 ? fmt("Received %d gold.", g) : fmt("Paid %d gold.", -g)); gAudio.play("gold"); }
     else if (k == "xp") giveXP(atoi(v.c_str()));
-    else if (k == "heal") { for (auto& m : party.members) { m.wounds = 0; m.fullHeal(*gd); } log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; }
+    else if (k == "heal") { for (auto& m : party.members) { m.wounds = 0; m.fullHeal(*gd); } log("The party is fully rested."); gAudio.play("rest"); if (clockMin > 7 * 60) { day++; } clockMin = 7 * 60; nightWeather(); }
     else if (k == "shop") { std::string hrs; if (shopRefuses(v)) return; if (!shopOpen(v, hrs)) { if (mode == GMode::DIALOGUE) popMode(); showMessage("Closed", "The shop is closed right now. Opening hours: " + hrs + "."); } else { shopId = v; shopTab = 0; shopSel = 0; shopScroll = 0; shopQty = -1; shopRestockCheck(shopId); shopFaction = shopFactionOf(shopId); if (mode == GMode::DIALOGUE) popMode(); pushMode(GMode::SHOP); } }
     else if (k == "join") {
         // 1.1.9 (#33): join=<npc id> takes class, name, party picture, level, stats, gear and spells from the NPC (npcs.txt);
@@ -1227,7 +1239,7 @@ void Game::runActionInner(const std::string& k, const std::string& v) {
         int* f = sn == "travels" ? &stats.travels : sn == "kills" ? &stats.kills : sn == "chests" ? &stats.chests : sn == "crafted" ? &stats.crafted : sn == "bounties" ? &stats.bounties : sn == "fights" ? &stats.fightsWon : nullptr;
         if (f) *f += d; }
     else if (k == "rest") { bool hadW = false; for (auto& m : party.members) { if (m.wounds) hadW = true; m.wounds = 0; } if (hadW) log("A night in a real bed: the Wounded are on their feet again.");   // 1.5.0 (#94): an inn night cures wounds
-        for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; }
+        for (auto& m : party.members) { m.hp = m.maxHP(*gd); m.mp = m.maxMP(*gd); m.alive = true; m.effects.clear(); } log("You rest until morning."); gAudio.play("rest"); if (clockMin > 7 * 60) day++; clockMin = 7 * 60; nightWeather(); }
     else if (k == "teach") teachAction(v);   // 1.4.0 (#81): teach=bram:spell|loyal_spell - a lasting ability (standing.cpp)
 }
 
@@ -1363,7 +1375,7 @@ void Game::drawMessage(Canvas& cv, InputState& in) {
     cv.dim(0, 0, SCREEN_W, SCREEN_H, 90); uiRect(0, 0, SCREEN_W, SCREEN_H);
     panelTitle(ctx, x, y, bw, h, pendingMessageTitle);
     int cy = y + 22; for (auto& l : lines) { if (cy + lh > y + h - 20) break; UI::text(ctx, x + 20, cy, l, C::White, ts); cy += lh; }
-    textCenter(ctx, SCREEN_W / 2, y + h - 18, "[Enter]", C::Gray);
+    textCenter(ctx, SCREEN_W / 2, y + h - 18, "[" + UI::bindLabel(A_CONFIRM) + "] OK", C::Gray);   // 1.8.6: the pad's button on a controller
     (void)in;
 }
 // The pause menu (Esc). 1.1.3: also opens in combat (Party & Items and World Map are greyed out there: they would
@@ -1746,6 +1758,10 @@ void Game::draw(Canvas& cv, InputState& in) {
     if (mode == GMode::ENDING) { drawEnding(cv, in); return; }
     computeLayout();
     hudHits.clear();
+    // 1.8.6 (#205): window close boxes drawn from here on become hot spots (HH_CLOSE)
+    struct CloseHook { CloseHook(Game* g) { Theme::closeBoxOwner = g; Theme::closeBoxHook = [](void* o, Rect r) { Game* gg = (Game*)o; gg->hudHit(r.x + gg->closeOffX, r.y + gg->closeOffY, r.w, r.h, Game::HH_CLOSE, -1); }; }
+                       ~CloseHook() { Theme::closeBoxHook = nullptr; Theme::closeBoxOwner = nullptr; } } closeHook(this);
+    closeOffX = closeOffY = 0;
     const bool combat = mode == GMode::COMBAT || std::find(modeStack.begin(), modeStack.end(), GMode::COMBAT) != modeStack.end();
     // ---- the world, on its own canvas the size of the theme's view, then put in place ----
     {
@@ -1777,6 +1793,7 @@ void Game::draw(Canvas& cv, InputState& in) {
     if (combat) drawCombatPopups(cv, in);
     drawModeUI(cv, in);
     Theme::endUiMap();
+    drawFavPicker(cv, in);   // 1.8.6 (#206)
     if (fadeIn > 0) cv.dim(0, 0, SCREEN_W, SCREEN_H, (uint8_t)(std::min(1.0f, fadeIn / 0.6f) * 255));
     // mouse cursor (the platform hides the OS cursor)
     if (!in.gamepadActive && in.mouseInWindow) {
@@ -1807,6 +1824,7 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
         subCv.resetClip();
         SCREEN_W = svW; SCREEN_H = svH; ctx.cv = &subCv;
         subIn = fullIn; subIn.mouseX -= svX; subIn.mouseY -= svY;
+        closeOffX = svX; closeOffY = svY;   // close boxes drawn in here are hot spots on the whole screen
     }
     Canvas& cv = sv ? subCv : full;
     InputState& in = sv ? subIn : fullIn;
@@ -1847,6 +1865,7 @@ void Game::drawModeUI(Canvas& full, InputState& fullIn) {
     if (sv) {
         for (int y = 0; y < svH; y++) std::copy_n(&subCv.px[(size_t)y * svW], svW, &full.px[(size_t)(y + svY) * full.w + svX]);
         SCREEN_W = fullW; SCREEN_H = fullH; ctx.cv = &full;
+        closeOffX = closeOffY = 0;
         for (size_t i = rects0; i < uiRects.size(); i++) { uiRects[i].x += svX; uiRects[i].y += svY; }
         (void)drawnMode;
     }

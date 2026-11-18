@@ -250,6 +250,11 @@ void Game::combatNextTurn() {
                 // 1.5.0: also after six rounds with no blow struck, even in sight (a foe nobody can get at)
                 if (!seen || cb.quietRounds >= 6) { cb.log.push_back("Neither side can reach the other. The fight breaks off."); log("The fight breaks off - the enemy has lost sight of you."); cb.ending = true; cb.fled = true; cb.disengaged = true; cb.endTimer = 0.4f; return; }
             }
+            // 1.8.6: and after fifteen rounds in which nobody lost (or got back) a hit point - blows that only ever miss,
+            // or foes nobody on the field can hurt (a party on auto in the dark used to stand there for ever)
+            { long sum = 0; for (auto& x : cb.units) sum += x.ch.alive ? x.ch.hp + 100000 : 0;
+              if (sum == cb.hpSum) cb.harmlessRounds++; else { cb.harmlessRounds = 0; cb.hpSum = sum; }
+              if (cb.harmlessRounds >= 15) { cb.log.push_back("Nobody can hurt anybody here. The fight breaks off."); log("The fight breaks off - neither side can land a blow."); cb.ending = true; cb.fled = true; cb.disengaged = true; cb.endTimer = 0.4f; return; } }
             groundRoundTick();                        // 1.4.0: fire / ice / smoke burn down, fire spreads
             if (lightSteps > 0) { lightSteps = std::max(0, lightSteps - 3); if (lightSteps == 0 && map->dark) cb.log.push_back("Your torch burns out."); }   // (#79) torches burn in a fight too
             goalCheck(true);
@@ -894,6 +899,9 @@ bool Game::combatAttack(int ai, int ti, bool aimed) {
     Combatant& a = cb.units[ai]; Combatant& t = cb.units[ti];
     int cost = a.ch.attackAP(*gd) + (aimed ? 2 : 0);
     if (a.ch.ap < cost) { if (a.partyIndex >= 0) log("Not enough AP."); return false; }
+    // 1.8.6: with the party on auto, a foe striking from the dark gives itself away until the next round is over (the
+    // auto party can't aim at what it can't see, and a dark fight with the torch burnt out used to go on for ever)
+    if (autoCombat && map->dark && !a.friendly() && t.friendly() && !visible(a.x, a.y)) { cb.lights.push_back({a.x, a.y, 1, 2}); revealAround(); }
     const ItemDef* w = a.ch.weapon(*gd);
     // out of ammunition: a gun or bow can still be swung at someone standing right next to you (half damage)
     bool clubbing = false;
@@ -1290,6 +1298,15 @@ void Game::combatAI(float dt) {
     if (cb.aiAction > 6) { combatEndTurn(); return; }
     cb.aiAction++;
     if (u.rift) { combatEndTurn(); return; }
+    // 1.8.6: a party member on auto in the dark, with no foe in sight, lights a torch from the pack (with the torch burnt
+    // out nobody could see anything to hit, and a fight on auto stalled for good)
+    if (u.partyIndex >= 0 && map->dark && lightSteps <= 0 && u.ch.ap >= 2) {
+        bool seen = false; for (auto& o : cb.units) if (o.ch.alive && !o.friendly() && (visible(o.x, o.y) || chebyshev(o.x, o.y, u.x, u.y) <= 1)) seen = true;
+        if (!seen) for (auto& st : party.inventory) if (const ItemDef* d = gd->item(st.id)) if (d->effect == "torch") {
+            std::string id = d->id; party.removeItem(id, 1); u.ch.ap -= 2; lightSteps = std::max(lightSteps, 220); lightPower = std::max(lightPower, 5);
+            cb.log.push_back(u.ch.name + " lights a torch."); gAudio.play("light"); revealAround(); return;
+        }
+    }
     // 1.4.0 (#63) a draught when badly hurt - Hard: every living foe, Normal: leaders and bosses, Story: never; once a fight
     if (!u.friendly() && !u.potionUsed && !u.summoned && !u.ch.mechanical && !u.ch.undead && u.ch.ap >= 3 && u.ch.hp * 100 < u.ch.maxHP(*gd) * 35 && (aiSmart() >= 2 || (aiSmart() == 1 && (u.ch.boss || u.ch.role == "leader")))) {
         u.potionUsed = true; u.ch.ap -= 3; int h = u.ch.maxHP(*gd) * (aiSmart() >= 2 ? 35 : 20) / 100; u.ch.hp = std::min(u.ch.maxHP(*gd), u.ch.hp + h);
@@ -1506,7 +1523,37 @@ void Game::combatAI(float dt) {
 }
 
 // ---------------- player input ----------------
-// Runs one of the action-bar commands (shared by the bar, the action menu and hotkeys).
+// A favorite of the acting unit (number keys, a click on the HUD's slot, the pad's favorites picker).
+// 1.8.6 (#201): pressing the slot whose spell / item is being aimed again goes back to moving.
+void Game::combatUseFav(int slot) {
+    if (cb.selectedUnit < 0 || cb.selectedUnit >= (int)cb.units.size() || slot < 0 || slot >= 8) return;
+    Combatant& u = cb.units[cb.selectedUnit];
+    std::string f = u.partyIndex >= 0 ? party.members[u.partyIndex].favs[slot] : "";
+    if (f.empty()) { log(gPadGlyphs ? fmt("Favorite %d is empty: open Spells or Items, highlight one and press %s.", slot + 1, UI::bindLabel(A_FAVBAR).c_str()) : fmt("Favorite %d is empty: open Spells or Items, highlight one and press %d.", slot + 1, slot + 1)); return; }
+    std::string kind = f.substr(0, f.find(':')), id = f.substr(f.find(':') + 1);
+    if ((cb.mode == 1 && kind == "spell" && cb.pendingSpell == id) || (cb.mode == 2 && kind != "spell" && cb.pendingItem == id)) {
+        cb.mode = 0; log("Back to moving."); gAudio.play("ui_cancel"); return;
+    }
+    if (kind == "spell") {
+        const SpellDef* sp = gd->spell(id); if (!sp) return;
+        if (std::find(u.ch.spells.begin(), u.ch.spells.end(), id) == u.ch.spells.end()) { log(u.ch.name + " doesn't know " + sp->name + "."); return; }
+        if (!spellUsableInCombat(*sp)) { log(sp->name + " has no effect in combat."); return; }
+        if (u.ch.mp < sp->cost) { log("Not enough MP."); return; } if (u.ch.ap < sp->ap) { log("Not enough AP."); return; }
+        cb.pendingSpell = id;
+        if (sp->target == "self") { combatCast(cb.selectedUnit, id, u.x, u.y); cb.mode = 0; } else { cb.mode = 1; log("Choose a target for " + sp->name + "."); }
+    } else {
+        const ItemDef* d = gd->item(id); if (!d) return;
+        if (!party.hasItem(id)) { log("No " + d->name + " left."); return; }
+        cb.pendingItem = id; cb.mode = 2; log("Choose a target for " + d->name + ".");
+    }
+}
+int Game::favLitSlot(int member) const {
+    if (!inCombat() || (cb.mode != 1 && cb.mode != 2) || cb.selectedUnit < 0 || cb.selectedUnit >= (int)cb.units.size()) return -1;
+    if (cb.units[cb.selectedUnit].partyIndex != member || member < 0 || member >= (int)party.members.size()) return -1;
+    std::string want = cb.mode == 1 ? "spell:" + cb.pendingSpell : "item:" + cb.pendingItem;
+    for (int i = 0; i < 8; i++) if (party.members[member].favs[i] == want) return i;
+    return -1;
+}
 static bool g_dummy;
 void Game::updateCombat(InputState& in, float dt) {
     for (auto& u : cb.units) { u.hitFlash = std::max(0.0f, u.hitFlash - dt); float k = std::min(1.0f, dt * 12); u.offX -= u.offX * k; u.offY -= u.offY * k; }
@@ -1585,42 +1632,28 @@ void Game::updateCombat(InputState& in, float dt) {
     if (actP(in, A_OVERWATCH, CB)) { runCommand(5); return; }
     if (actP(in, A_FLEE, CB)) { runCommand(7); return; }
     if (actP(in, A_ACTIONMENU, CB)) { cb.mode = cb.mode == 3 ? 0 : 3; cb.menuSel = 0; return; }
-    // favorites
-    auto useFav = [&](int slot) {
-        std::string f = u.partyIndex >= 0 ? party.members[u.partyIndex].favs[slot] : "";
-        if (f.empty()) { log(fmt("Favorite %d is empty: open Spells or Items, highlight one and press %d.", slot + 1, slot + 1)); return; }
-        std::string kind = f.substr(0, f.find(':')), id = f.substr(f.find(':') + 1);
-        if (kind == "spell") {
-            const SpellDef* sp = gd->spell(id); if (!sp) return;
-            if (std::find(u.ch.spells.begin(), u.ch.spells.end(), id) == u.ch.spells.end()) { log(u.ch.name + " doesn't know " + sp->name + "."); return; }
-            if (!spellUsableInCombat(*sp)) { log(sp->name + " has no effect in combat."); return; }
-            if (u.ch.mp < sp->cost) { log("Not enough MP."); return; } if (u.ch.ap < sp->ap) { log("Not enough AP."); return; }
-            cb.pendingSpell = id;
-            if (sp->target == "self") { combatCast(cb.selectedUnit, id, u.x, u.y); cb.mode = 0; } else { cb.mode = 1; log("Choose a target for " + sp->name + "."); }
-        } else {
-            const ItemDef* d = gd->item(id); if (!d) return;
-            if (!party.hasItem(id)) { log("No " + d->name + " left."); return; }
-            cb.pendingItem = id; cb.mode = 2; log("Choose a target for " + d->name + ".");
-        }
-    };
     // with the Spells / Items list open, a favorite key puts the highlighted entry on that hotbar slot (as in the party
-    // screen) instead of using whatever is there
+    // screen) instead of using whatever is there; 1.8.6 (#206): the pad's Favorites button opens the picker to choose the slot
     if ((cb.mode == 4 || cb.mode == 5) && u.partyIndex >= 0) {
-        for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f, CB)) {
+        bool padFav = actP(in, A_FAVBAR, CB);
+        for (int f = 0; f < 8; f++) if (padFav || actP(in, A_FAV1 + f, CB)) {
             std::vector<std::string> list;
             if (cb.mode == 4) { for (auto& id : u.ch.spells) if (auto* sp = gd->spell(id)) if (spellUsableInCombat(*sp)) list.push_back(id); } else for (auto& it : party.inventory) if (gd->item(it.id) && gd->item(it.id)->type == IT_CONSUMABLE && std::find(list.begin(), list.end(), it.id) == list.end()) list.push_back(it.id);
             if (list.empty()) return;
             const std::string& id = list[clampi(cb.menuSel, 0, (int)list.size() - 1)];
+            if (padFav) { openFavPicker(u.partyIndex, (cb.mode == 4 ? "spell:" : "item:") + id); return; }
             party.members[u.partyIndex].favs[f] = (cb.mode == 4 ? "spell:" : "item:") + id;
             std::string nm = cb.mode == 4 ? (gd->spell(id) ? gd->spell(id)->name : id) : (gd->item(id) ? gd->item(id)->name : id);
             log(fmt("%s set as favorite %d for %s.", nm.c_str(), f + 1, u.ch.name.c_str())); gAudio.play("ui_click");
             return;
         }
     }
-    for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f, CB)) { useFav(f); return; }
+    // 1.8.6 (#206): the controller's Favorites button
+    if (actP(in, A_FAVBAR, CB) && u.partyIndex >= 0) { openFavPicker(u.partyIndex, ""); return; }
+    for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f, CB)) { combatUseFav(f); return; }
     // 1.8.3: the theme HUD's belt slots and action buttons
     if (in.mousePressed[0]) if (const HudHit* h = hudHitAt(in.mouseX, in.mouseY)) {
-        if (h->kind == HH_BELT) { in.eatMouse(); useFav(h->arg); return; }
+        if (h->kind == HH_BELT) { in.eatMouse(); combatUseFav(h->arg); return; }
         if (h->kind == HH_COMBAT) { in.eatMouse(); if (h->arg == 8) { cb.mode = cb.mode == 3 ? 0 : 3; cb.menuSel = 0; } else { if (cb.mode == 3) cb.menuSel = h->arg; runCommand(h->arg); } return; }
         if (h->kind != HH_UNIT) { in.eatMouse(); return; }
     }
@@ -2114,6 +2147,8 @@ std::string Game::combatProbe(const std::string& what) {
     auto unit = [&](int i) -> Combatant* { return inCombat() && i >= 0 && i < (int)cb.units.size() ? &cb.units[i] : nullptr; };
     const std::string& k = q[0];
     if (k == "units") return std::to_string(cb.units.size());
+    if (k == "mode") return std::to_string(cb.mode);   // 1.8.6: 0 move/attack, 1 aim a spell, 2 aim an item, 3 action menu, 4/5 spell/item list
+    if (k == "favlit") return std::to_string(cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() ? favLitSlot(cb.units[cb.selectedUnit].partyIndex) : -1);
     if (k == "unit") { Combatant* u = unit(I(1)); if (!u) return "none"; return fmt("%d,%d,%d,%d,%d", u->x, u->y, u->ch.hp, u->ch.alive ? 1 : 0, u->friendly() ? 1 : 0); }
     if (k == "hp") { Combatant* u = unit(I(1)); return u ? std::to_string(u->ch.hp) : "-1"; }
     if (k == "alive") { Combatant* u = unit(I(1)); return u && u->ch.alive ? "1" : "0"; }

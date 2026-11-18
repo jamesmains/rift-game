@@ -98,6 +98,9 @@ bump 52 39
 choose Dig
 expect flag:metro_open == 1
 goto metro
+# 1.8.6: the metro is dark and its wisps shrug off steel: the auto-party needs a light to see them (a run that reaches it
+# with the torch burnt out - weather changes the route since inns change it - can't win the fight otherwise)
+con light 600
 bump 22 3
 expect flag:metro_drained == 1
 talk rook
@@ -105,6 +108,10 @@ choose Break the chains
 expect flag:rook_freed == 1
 bump 43 4
 expect flag:metro_power == 1
+con light 600
+# and ammunition: on some routes Tessa arrives with an empty pistol, and the Vigil (warded by a wisp that shrugs off
+# steel) then takes 1 damage a round - won, but past the bot's time limit
+con give ammo_pistol 60
 fight vigil_dead
 fight hierophant_dead
 expect flag:q_cult == 2

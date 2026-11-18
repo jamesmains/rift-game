@@ -6,6 +6,7 @@
 #pragma once
 #include "game.h"
 #include <functional>
+#include "../core/spatnav.h"
 
 struct SettingsPanel {
     int page = 0;                 // 0 General, 1 Controls, 2 Access
@@ -14,6 +15,8 @@ struct SettingsPanel {
     int row = 0, col = 0;         // Controls: chosen action and column (0 key, 1 alt key, 2 gamepad)
     int waiting = -1;             // Controls: action * 3 + column waiting for a key (-1 none)
     int openCombo = -1;           // desktop-native: an open drop-down (its control index)
+    int comboSel = 0;             // 1.8.6 (#203): the open drop-down's highlighted entry (Confirm takes it, Cancel doesn't)
+    SpatNav::Memory nav;          // 1.8.6 (#204): the last focus move (the opposite press goes back)
     bool ownNav = true;           // true: Up/Down/Left/Right/Enter drive the focus here (the game); false: the desktop's cursor does
     bool inGame = false;          // buttons: Apply + Done (game) or Defaults / Apply / OK (+ Cancel in desktop-native)
     std::function<void(Rect)> hot;        // desktop: register a control for the pad cursor

@@ -19,18 +19,38 @@ float Game::nightAmount() const {
 std::string Game::clockText() const { return fmt("Day %d  %02d:%02d", day, clockMin / 60, clockMin % 60); }
 void Game::advanceClock(int minutes) { clockMin += minutes; while (clockMin >= 24 * 60) { clockMin -= 24 * 60; day++; } }
 
-void Game::rerollWeather() {
+void Game::rerollWeather(bool mustChange, bool quiet, Rng* own) {
+    Rng& rng = own ? *own : this->rng;
     weatherSteps = rng.range(180, 420);
     std::string biome; if (map && map->inBounds(px, py)) biome = allTileKinds()[map->at(px, py).kind].biome;
-    int r = rng.range(1, 100);
     std::string w = "clear";
-    if (biome == "snow") w = r < 45 ? "clear" : r < 85 ? "snow" : "fog";
-    else if (biome == "desert" || biome == "wasteland") w = r < 85 ? "clear" : "fog";
-    else if (biome == "swamp") w = r < 35 ? "clear" : r < 65 ? "fog" : r < 90 ? "rain" : "storm";
-    else w = r < 55 ? "clear" : r < 78 ? "rain" : r < 90 ? "fog" : "storm";
-    // the first half hour of a new game stays calm: a new player should see the world before the weather hides it
-    if (playtimeSec < 30 * 60 && (w == "fog" || w == "storm")) w = biome == "snow" ? "snow" : "clear";
+    for (int tries = 0; tries < (mustChange ? 12 : 1); tries++) {   // 1.8.6 (#202): a night at the inn asks for a change
+        int r = rng.range(1, 100);
+        if (biome == "snow") w = r < 45 ? "clear" : r < 85 ? "snow" : "fog";
+        else if (biome == "desert" || biome == "wasteland") w = r < 85 ? "clear" : "fog";
+        else if (biome == "swamp") w = r < 35 ? "clear" : r < 65 ? "fog" : r < 90 ? "rain" : "storm";
+        else w = r < 55 ? "clear" : r < 78 ? "rain" : r < 90 ? "fog" : "storm";
+        // the first half hour of a new game stays calm: a new player should see the world before the weather hides it
+        if (playtimeSec < 30 * 60 && (w == "fog" || w == "storm")) w = biome == "snow" ? "snow" : "clear";
+        if (w != weather) break;
+    }
+    if (w != weather && quiet) { weather = w; precip.clear(); return; }
     if (w != weather) { weather = w; precip.clear(); if (w == "rain") notify("It starts to rain."); else if (w == "storm") notify("A storm rolls in."); else if (w == "fog") notify("Fog creeps over the land."); else if (w == "snow") notify("Snow begins to fall."); else notify("The sky clears."); }
+}
+
+// 1.8.6 (#202): a whole night passes at an inn: the morning most likely brings other weather (4 in 5), said in the log
+// as what the party wakes to. Indoors too: the weather is the world's, and it shows on the way out. It rolls with its own
+// generator (from the day and the time played), so a night's sleep doesn't change how the next fight's dice fall.
+void Game::nightWeather() {
+    Rng night((uint64_t)day * 7919u + (uint64_t)playtimeSec * 31u + (uint64_t)weather.size());
+    if (night.range(1, 100) > 80) return;
+    std::string before = weather; const int steps = weatherSteps;
+    rerollWeather(true, true, &night);
+    weatherSteps = steps;   // the next change on the road comes when it was due anyway
+    if (weather == before) return;
+    const char* what = weather == "rain" ? "The morning brings rain." : weather == "storm" ? "You wake to a storm rattling the shutters."
+                     : weather == "fog" ? "Fog has settled in overnight." : weather == "snow" ? "Snow fell in the night." : "You wake to a clear sky.";
+    log(what);
 }
 
 // ---------------- 1.8.0 (#160-#162): the Stage palette, the lantern circle, dark-map light ----------------

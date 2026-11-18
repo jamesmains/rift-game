@@ -108,6 +108,11 @@ enum RowState { RS_IDLE = 0, RS_SELECTED = 1, RS_WAITING = 2, RS_HOVER = 3 };
 void listRow(const Pen& p, int x, int y, int w, int h, int state);
 Rect windowChrome(const Pen& p, int x, int y, int w, int h, const std::string& title, bool active = true, bool closeBox = true);
 Rect toolWindow(const Pen& p, int x, int y, int w, int h, const std::string& title, bool active = true);
+// 1.8.6 (#205): where a window's close box is (empty rect: none - the frame's tool windows have no box). Every close box
+// drawn is also passed to closeBoxHook when one is set (the game makes it a hot spot, so no close box is dead).
+Rect closeBoxRect(int x, int y, int w, int h, bool tool);
+extern void (*closeBoxHook)(void* owner, Rect r);
+extern void* closeBoxOwner;
 void scrollbar(Canvas& cv, int x, int y, int w, int h, int first, int visible, int total);
 void bar(Canvas& cv, int x, int y, int w, int h, int value, int maxValue, Color8 fill);
 void pips(Canvas& cv, int x, int y, int n, int on, Color8 onC, int pw = 9, int ph = 7, int gap = 2);

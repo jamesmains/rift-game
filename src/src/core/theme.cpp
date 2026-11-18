@@ -468,8 +468,18 @@ static void onebitTitleBar(const Pen& p, int x, int y, int w, int h, const std::
     if (closeBox) { int bs = h - 6; cv.fillRect(x + 6, y + 3, bs + 2, bs, t.text); cv.rect(x + 7, y + 3, bs, bs, t.back); }
 }
 
+void (*closeBoxHook)(void* owner, Rect r) = nullptr;
+void* closeBoxOwner = nullptr;
+Rect closeBoxRect(int x, int y, int w, int h, bool tool) {
+    (void)h;
+    if (th().id == ThemeId::OneBit) return tool ? Rect{x + 4, y + 2, 18, 14} : Rect{x + 4, y + 2, 22, 18};
+    if (tool && th().id == ThemeId::Frame) return {0, 0, 0, 0};
+    return tool ? Rect{x + w - 22, y + 4, 18, 12} : Rect{x + w - 22, y + 4, 18, 16};
+}
+static void announceClose(int x, int y, int w, int h, bool tool) { if (!closeBoxHook) return; Rect r = closeBoxRect(x, y, w, h, tool); if (r.w > 0) closeBoxHook(closeBoxOwner, r); }
 Rect windowChrome(const Pen& p, int x, int y, int w, int h, const std::string& tt, bool active, bool closeBox) {
     NoMap nm; const UiTheme& t = th(); Canvas& cv = *p.cv;
+    if (closeBox) announceClose(x, y, w, h, false);
     if (t.id == ThemeId::OneBit) {
         cv.fillRect(x + 4, y + 4, w, h, t.back);   // the 4 px drop shadow
         cv.fillRect(x, y, w, h, t.back); cv.rect(x, y, w, h, t.text);
@@ -485,6 +495,7 @@ Rect windowChrome(const Pen& p, int x, int y, int w, int h, const std::string& t
 }
 Rect toolWindow(const Pen& p, int x, int y, int w, int h, const std::string& tt, bool active) {
     NoMap nm; const UiTheme& t = th(); Canvas& cv = *p.cv;
+    announceClose(x, y, w, h, true);
     if (t.id == ThemeId::OneBit) {
         cv.fillRect(x + 4, y + 4, w, h, t.back); cv.fillRect(x, y, w, h, t.back); cv.rect(x, y, w, h, t.text);
         onebitTitleBar(p, x + 1, y + 1, w - 2, 16, tt, 4, true);

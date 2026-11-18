@@ -229,6 +229,7 @@ void Game::updateMenu(InputState& in, float dt) {
             if (d->effect == "lure" || startsWith(d->effect, "lure:")) acts.push_back("Throw...");   // 1.5.0 (#99): a noisemaker is thrown, not used on someone
             else if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
             if (d->equippable()) acts.push_back("Equip on...");
+            if (d->type == IT_CONSUMABLE) acts.push_back("Favorite...");   // 1.8.6 (#206): a controller has no number keys
             acts.push_back(d->quest ? "Quest item - can't drop" : "Drop");
             if (menuPrompt.empty()) {
                 int na = (int)acts.size();
@@ -239,6 +240,7 @@ void Game::updateMenu(InputState& in, float dt) {
                     std::string a = acts[clampi(menuSub, 0, na - 1)];
                     if (a == "Quest item - can't drop") { log(d->name + " is needed for a quest. You keep it."); gAudio.play("ui_error"); }
                     else if (a == "Throw...") { menuSubFocus = false; useItemOn(d->id, party.members[0], false); return; }
+                    else if (a == "Favorite...") { menuSubFocus = false; openFavPicker(clampi(menuMember, 0, nMembers - 1), "item:" + d->id); return; }
                     else if (a == "Drop") { log("Dropped " + d->name + "."); party.removeItem(d->id, 1); menuSubFocus = false; menuSel = clampi(menuSel, 0, std::max(0, (int)invView().size() - 1)); }
                     else { menuPrompt = a == "Use on..." ? "use" : "equipitem"; menuMember = 0; }
                 }
@@ -270,6 +272,7 @@ void Game::updateMenu(InputState& in, float dt) {
             }
             menuSel = clampi(menuSel, 0, std::max(0, n - 1));
             for (int i = 0; i < n; i++) if (in.mouseX >= 170 && in.mouseX < 450 && in.mouseY >= 50 + i * 18 && in.mouseY < 68 + i * 18) { if (in.mouseDX || in.mouseDY) { menuSel = i; spellCol = 1; } if (in.mousePressed[0]) { menuSel = i; spellCol = 1; in.pressed[K_ENTER] = true; } }
+            if (spellCol == 1 && n > 0 && actP(in, A_FAVBAR)) { openFavPicker(menuMember, "spell:" + sp[menuSel]); return; }   // 1.8.6 (#206)
             if (spellCol == 1) for (int f = 0; f < 8; f++) if (actP(in, A_FAV1 + f) && n > 0) { party.members[menuMember].favs[f] = "spell:" + sp[menuSel]; log(fmt("%s set as favorite %d for %s.", gd->spell(sp[menuSel]) ? gd->spell(sp[menuSel])->name.c_str() : "?", f + 1, party.members[menuMember].name.c_str())); }
             if (spellCol == 1 && (actP(in, A_CONFIRM) || in.pressed[K_ENTER]) && n > 0) { const SpellDef* s = gd->spell(sp[menuSel]); if (s && spellUsableOutside(*s)) { if (!s->utility.empty() || s->target == "self") { castUtility(menuMember, sp[menuSel], menuMember); } else { menuSubFocus = true; menuSub = 0; } } else log("That spell can only be used in combat."); }
         } else {
@@ -369,6 +372,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
                 if (d->effect == "lure" || startsWith(d->effect, "lure:")) acts.push_back("Throw...");   // 1.5.0 (#99)
                 else if (d->type == IT_CONSUMABLE && d->dmgMax == 0 && d->useSpell.empty()) acts.push_back("Use on...");
                 if (d->equippable()) acts.push_back("Equip on...");
+                if (d->type == IT_CONSUMABLE) acts.push_back("Favorite...");
                 acts.push_back(d->quest ? "Quest item - can't drop" : "Drop");
                 for (size_t i = 0; i < acts.size(); i++) { bool sel = (int)i == menuSub && menuPrompt.empty(); listRow(ctx, in, 330, INV_ACT_Y + (int)i * 18, 270, 18, sel); UI::text(ctx, 340, INV_ACT_Y + 3 + (int)i * 18, acts[i], sel ? C::Yellow : C::White); }
                 if (!menuPrompt.empty()) {
@@ -377,7 +381,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
                 }
             }
         }
-        { int hx = keyHint(ctx, 20, SCREEN_H - 30, "Enter", "actions"); hx = keyHint(ctx, hx, SCREEN_H - 30, "1-8", "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back");
+        { int hx = keyHint(ctx, 20, SCREEN_H - 30, "Enter", gPadGlyphs ? "actions, favorite" : "actions"); if (!gPadGlyphs) hx = keyHint(ctx, hx, SCREEN_H - 30, "1-8", "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back");
           keyHint(ctx, std::max(hx, 330), SCREEN_H - 30, gPadGlyphs && gKeys.pad[A_INTERACT] ? keyName(gKeys.pad[A_INTERACT]) : "C", "field crafting"); }
         { int hx = keyHint(ctx, 20, SCREEN_H - 44, gKeys.label(A_CATPREV) + "/" + gKeys.label(A_CATNEXT), "category"); keyHint(ctx, hx, SCREEN_H - 44, gKeys.label(A_SORT), "sort"); }
     } else if (menuTab == 2) {
@@ -400,7 +404,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
         }
         { int hx = 170;
           if (spellCol == 0) { hx = keyHint(ctx, hx, SCREEN_H - 30, "Up/Down", "member"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Right", "spells"); hx = keyHint(ctx, hx, SCREEN_H - 30, gKeys.label(A_PAGEDOWN), "next tab"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); }
-          else { hx = keyHint(ctx, hx, SCREEN_H - 30, "Enter", "cast"); hx = keyHint(ctx, hx, SCREEN_H - 30, "1-8", "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Left", "members"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); } }
+          else { hx = keyHint(ctx, hx, SCREEN_H - 30, "Enter", "cast"); hx = keyHint(ctx, hx, SCREEN_H - 30, gPadGlyphs && gKeys.pad[A_FAVBAR] ? UI::bindLabel(A_FAVBAR) : std::string("1-8"), "set favorite"); hx = keyHint(ctx, hx, SCREEN_H - 30, "Left", "members"); keyHint(ctx, hx, SCREEN_H - 30, "Esc", "back"); } }
     } else if (menuTab == 3) {
         // Each quest's text wraps to the width of the list, and the row grows to fit it. The list scrolls to keep the
         // selected quest on screen.

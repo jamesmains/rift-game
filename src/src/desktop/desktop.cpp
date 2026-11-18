@@ -1177,31 +1177,16 @@ void Desktop::drawBoot(Canvas& cv, float t) {
     f.draw(cv, *ctx.ts, 16, cv.h - 24, "Press any key to continue", DIMG);
 }
 
+// 1.8.6 (#204): grid-like (core/spatnav.h): Up / Down walk a column of controls, Left / Right land on the control at the
+// same height in the next column or list, the opposite press goes back where the cursor came from. The cursor stands
+// for the control it is on (else a point).
 bool Desktop::snapCursor(int dx, int dy) {
-    if (dy) {   // up/down: the nearest row of controls in that direction, then the control in it closest to the cursor
-        int minAlong = 1 << 30;
-        for (auto& r : hotsPrev) { if (r.contains(cursorX, cursorY)) continue; int along = dy * (r.y + r.h / 2 - cursorY); if (along > 3 && along < minAlong) minAlong = along; }
-        if (minAlong == (1 << 30)) return false;
-        int best = -1, bestAcross = 1 << 30;
-        for (size_t i = 0; i < hotsPrev.size(); i++) { const Rect& r = hotsPrev[i]; if (r.contains(cursorX, cursorY)) continue; int along = dy * (r.y + r.h / 2 - cursorY); if (along <= 3 || along > minAlong + 8) continue;
-            int across = cursorX < r.x ? r.x - cursorX : cursorX >= r.x + r.w ? cursorX - (r.x + r.w - 1) : 0; if (across < bestAcross) { bestAcross = across; best = (int)i; } }
-        if (best < 0) return false;
-        cursorX = hotsPrev[best].x + hotsPrev[best].w / 2; cursorY = hotsPrev[best].y + hotsPrev[best].h / 2;
-        return true;
-    }
-    // left/right: the hotspot whose centre lies most directly in the requested direction from the cursor
-    int best = -1; float bestScore = 1e9f;
-    for (size_t i = 0; i < hotsPrev.size(); i++) {
-        const Rect& r = hotsPrev[i]; int cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-        if (r.contains(cursorX, cursorY)) continue;
-        int ox = cx - cursorX, oy = cy - cursorY;
-        int along = dx * ox + dy * oy; if (along <= 0) continue;
-        int across = abs(dx ? oy : ox);
-        // a hotspot that overlaps the cursor's row/column (for horizontal/vertical moves) wins over a far-off diagonal one
-        bool inLine = dx ? (cursorY >= r.y - 2 && cursorY < r.y + r.h + 2) : (cursorX >= r.x - 2 && cursorX < r.x + r.w + 2);
-        float score = (float)along + (inLine ? 0.0f : across * 2.5f + 40.0f);
-        if (score < bestScore) { bestScore = score; best = (int)i; }
-    }
+    int self = -1;
+    for (size_t i = 0; i < hotsPrev.size(); i++) if (hotsPrev[i].contains(cursorX, cursorY)) { if (self < 0 || hotsPrev[i].w * hotsPrev[i].h < hotsPrev[self].w * hotsPrev[self].h) self = (int)i; }
+    Rect cur = self >= 0 ? hotsPrev[self] : Rect{cursorX, cursorY, 1, 1};
+    std::vector<Rect> rs;
+    for (size_t i = 0; i < hotsPrev.size(); i++) rs.push_back((int)i != self && hotsPrev[i].contains(cursorX, cursorY) ? Rect{0, 0, 0, 0} : hotsPrev[i]);   // controls under the cursor aren't somewhere to go
+    int best = SpatNav::move(rs, cur, dx, dy, snapNav, self);
     if (best < 0) return false;
     cursorX = hotsPrev[best].x + hotsPrev[best].w / 2; cursorY = hotsPrev[best].y + hotsPrev[best].h / 2;
     return true;

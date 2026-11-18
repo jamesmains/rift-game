@@ -34,6 +34,7 @@ enum Action : uint8_t {
     A_QUICKSAVE, A_PAGEUP, A_PAGEDOWN, A_FULLSCREEN,
     A_OVERWATCH, A_WORLDMAP, A_JOURNAL, A_CONSOLE,
     A_CATNEXT, A_CATPREV, A_SORT,   // item lists: next / previous category, change the sort order
+    A_FAVBAR,                       // 1.8.6 (#206): open the favorites picker (a controller has no number keys)
     A_COUNT
 };
 const char* actionName(int a);   // identifier (saved in settings)

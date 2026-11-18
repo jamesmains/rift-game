@@ -99,6 +99,7 @@ struct CombatState {
     std::vector<Light> lights; // temporary combat lights (Light spell, flares, explosions)
     int lastRoundJoined = 0;   // reinforcement check runs once per round
     bool actionThisRound = false; int quietRounds = 0; bool disengaged = false;
+    long hpSum = -1; int harmlessRounds = 0;   // 1.8.6: rounds in a row in which nobody's hit points changed
     float hitstop = 0;         // a beat of stillness after a kill or a critical hit
     float banner = 0; std::string bannerText;   // "Round 3" / "Your turn: Bram" under the top bar   // rounds without a blow: the fight breaks off
     // 1.4.0 (#58 #61): ground effects for this fight (kind 1 fire, 2 ice, 3 smoke) and damage soaked by breakable cover
@@ -235,7 +236,8 @@ public:
     float nightAmount() const;          // 0 = day, 1 = deep night
     std::string clockText() const;
     void advanceClock(int minutes);
-    void rerollWeather();
+    void rerollWeather(bool mustChange = false, bool quiet = false, Rng* own = nullptr);   // own: roll with that generator, not the game's
+    void nightWeather();                // 1.8.6 (#202): a night slept through (an inn): the weather has most likely changed by morning
     void drawWeather(Canvas& cv, float dt);
     // 1.8.0 (#160-#162): night and dark maps. After ground, trails and props (before objects and people) drawWorld runs
     // this per tile in view: outdoors at night the scenery goes through the grey-blue Stage ramp, except the stepped
@@ -452,8 +454,6 @@ public:
     std::vector<std::string> cutLines; int cutIndex = 0; float cutTimer = 0; std::function<void()> cutDone;
     // in-game save/load
     bool slMode = false; int slSel = 0; int slConfirm = -1; SaveSlotInfo slots[3]; std::string slStatus; // slMode: false=load, true=save
-    // favorites assignment prompt
-    int favAssign = -1; // index of pending favorite slot while picking (unused now)
 
     bool init(GameData* data, GameSettings* s, const std::string& assets, Tileset* ts, Font* font);
     // demo build (TRIFFALL_DEMO, or the console's 'demo 1'): the base campaign is limited to demo.txt's maps
@@ -520,7 +520,8 @@ public:
     // HH_MEMBER: open that member's sheet, HH_BELT: use hotbar slot, HH_COMBAT: a combat command, HH_UNIT: look at a
     // unit, HH_PAUSE: a pause entry id, HH_CRAFT: field crafting, HH_CLOSE: close a tool window)
     enum { HH_ACTION = 1, HH_MEMBER, HH_BELT, HH_COMBAT, HH_UNIT, HH_PAUSE, HH_CRAFT, HH_TOOL,
-           HH_PTAB, HH_SLOT, HH_PICK, HH_LEAD, HH_RANKUP, HH_HOSTCLOSE };   // party screen: tab, equipment slot, equip-list row (0 = remove), lead, class +1
+           HH_PTAB, HH_SLOT, HH_PICK, HH_LEAD, HH_RANKUP, HH_HOSTCLOSE,   // party screen: tab, equipment slot, equip-list row (0 = remove), lead, class +1
+           HH_CLOSE, HH_FAVPICK };   // 1.8.6: HH_CLOSE = a window's close box (arg -1: Esc for the open popup; >= 0: one-bit HUD window to roll up), HH_FAVPICK = a favorites picker slot
     // 1.8.3 (#173 #177 #181): the Party tab drawn in the theme's own layout (frame: hud.cpp, native: hud_native.cpp,
     // onebit: hud_onebit.cpp) when the screen has room; its clicks come through the HUD hot spots (updateMenu).
     bool themedParty() const;
@@ -552,11 +553,25 @@ public:
     void openSettings();
     void drawSettingsScreen(Canvas& cv, InputState& in);
     void updateSettingsScreen(InputState& in);
+    std::string settingsProbe(const std::string& what);   // 1.8.6: tests (page, focus, kind, x, y, combo, combosel, theme)
     PlatformRequests* req = nullptr;      // set by App: Settings asks the platform for fullscreen / scale / vsync
     bool spellUsableOutside(const SpellDef& s) const;
     bool spellUsableInCombat(const SpellDef& s) const { return s.dmgMax > 0 || s.heal > 0 || !s.effect.empty() || s.utility == "light" || !s.summon.empty() || s.smoke > 0; }
     bool castUtility(int member, const std::string& spellId, int target);
     void useFavorite(int member, int slot);
+    // 1.8.6 (#206): the favorites picker. A controller has no number keys: the Favorites button (pad RT) opens a strip of
+    // the 8 slots; Left / Right pick, Confirm uses the slot (or puts favAssign on it), Cancel / the button close it.
+    // Taken in Game::update before the screen's own update, which then sees no input.
+    int favPick = -1;                     // the chosen slot while open (-1 = closed)
+    int favPickMember = 0;                // whose favorites
+    std::string favAssign;                // non-empty ("spell:id" / "item:id"): put it on the chosen slot instead of using it
+    void openFavPicker(int member, const std::string& assign);
+    void updateFavPicker(InputState& in);
+    void drawFavPicker(Canvas& cv, InputState& in);
+    void combatUseFav(int slot);          // the acting unit uses its favorite (#201: the same slot again while aiming it cancels)
+    int favLitSlot(int member) const;     // #201: the slot whose spell / item the fight is aiming now (-1 none): the HUDs light it
+    int closeOffX = 0, closeOffY = 0;     // 1.8.6: where the screen being drawn sits (close boxes drawn in a sub-view)
+    bool obShade[4] = {false, false, false, false};   // 1.8.6 (#205): one-bit HUD windows rolled up to their title bar (party, news, favorites, target)
 
     // helpers used by subsystems
     bool hasFlag(const std::string& f) const { auto it = flags.find(f); return it != flags.end() && it->second != 0; }

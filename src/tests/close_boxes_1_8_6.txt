@@ -1,0 +1,102 @@
+# 1.8.6 (#205): every close box does something. One-bit: the bottom windows roll up to their title bar and back; the
+# Save / Load window's box closes it. Native: the Save / Load box too. #203: a native drop-down opens with the pad's A,
+# the d-pad walks it, B leaves the value, A takes it. #202: a night at the inn most likely changes the weather.
+frames 5
+installed
+screen 853 480
+theme onebit
+newgame Kai mage 1 20261116
+frames 120
+expect mode == EXPLORE
+expect obshade:1 == 0
+hudclick close 1
+frames 3
+expect obshade:1 == 1
+shot onebit_news_rolled.png
+hudclick close 1
+frames 3
+expect obshade:1 == 0
+hudclick close 2
+frames 3
+expect obshade:2 == 1
+hudclick close 2
+frames 3
+expect obshade:2 == 0
+con run message:A Note|Words on a page.
+frames 10
+expect mode == MESSAGE
+hudclick close -1
+frames 5
+expect mode == EXPLORE
+key ESC
+frames 3
+key DOWN
+key DOWN
+frames 2
+key ENTER
+frames 5
+expect mode == SAVELOAD
+shot onebit_load.png
+hudclick close -1
+frames 5
+expect mode == EXPLORE
+# --- native: the same Save / Load box, then the Theme drop-down with the pad
+theme native
+frames 5
+key ESC
+frames 3
+key DOWN
+key DOWN
+frames 2
+key ENTER
+frames 5
+expect mode == SAVELOAD
+hudclick close -1
+frames 5
+expect mode == EXPLORE
+key ESC
+frames 3
+keys DOWN DOWN DOWN DOWN DOWN
+frames 3
+key ENTER
+frames 5
+expect mode == SETTINGS
+pad 1
+key PADDOWN
+frames 2
+expect setprobe:kind == 3
+key PADA
+frames 3
+expect setprobe:combo >= 0
+expect setprobe:combosel == 1
+key PADDOWN
+frames 2
+expect setprobe:combosel == 2
+shot native_dropdown.png
+key PADB
+frames 3
+expect setprobe:combo == -1
+expect setprobe:theme == 1
+expect mode == SETTINGS
+key PADA
+frames 3
+key PADUP
+frames 2
+key PADA
+frames 3
+expect setprobe:combo == -1
+expect setprobe:theme == 0
+theme native
+frames 3
+key PADB
+frames 5
+key PADB
+frames 5
+expect mode == EXPLORE
+# --- #202: a night at the inn: the weather changes most nights
+pad 0
+weather clear
+con run rest
+frames 5
+expect mode == EXPLORE
+# (the change is random, 4 nights in 5: checked by hand, 12 nights in a row changed it)

@@ -245,7 +245,7 @@ void Game::drawNativeHud(Canvas& cv, InputState& in) {
     auto favorites = [&](int member, bool fight, bool clickable) -> int {
         for (int i = 0; i < 8; i++) {
             int sx = 8 + i * 30; bool hover = clickable && over(in, sx, TY, 28, TH);
-            raised(cv, sx, TY, 28, TH);
+            if (fight && i == favLitSlot(member)) pressedBox(cv, sx, TY, 28, TH); else raised(cv, sx, TY, 28, TH);   // 1.8.6 (#201): held down while it is being aimed
             if (hover) { for (int xx = sx + 3; xx < sx + 25; xx += 2) { cv.put(xx, TY + 2, SH); cv.put(xx, TY + TH - 3, SH); } }
             std::string k = bindName(A_FAV1 + i); Theme::small(p, sx + 3, TY + 2, k.empty() ? std::to_string(i + 1) : k.substr(0, 2), SH);
             if (member >= 0 && member < n) {
