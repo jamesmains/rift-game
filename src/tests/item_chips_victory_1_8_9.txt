@@ -1,0 +1,84 @@
+# 1.8.9 (#209): with items of every category in the pack, every category chip can be reached (the row scrolls
+# with < > instead of leaving chips out). (#210): a long loot list stays inside the Victory panel and on screen.
+newgame Kai warrior 1 20261118
+god
+con clearmap hollowmere
+teleport hollowmere 20 20
+frames 120
+give iron_dagger
+give leather_armor
+give ring_dex
+give bread
+give arrows
+give torch_item
+give wolf_pelt
+give formula_steel
+give chief_tusk
+give firewater
+give mud_drawing
+give key_cellar
+key TAB
+frames 3
+key PGDN
+frames 3
+expect mode == MENU
+expect menutab == 1
+shot chips_all.png
+# the first chips and a ">" at the right end: more categories are there
+expect catchips contains All
+expect catchips contains >
+# walk to the last category with the category key: it comes into view, "<" at the left
+keys T T T T T T T T T T T T
+frames 3
+shot chips_last.png
+expect catchips contains <
+expect catchips contains Quest
+expect catchips contains Keepsakes
+# and back round to All
+key T
+frames 3
+expect catchips contains All
+key ESC
+frames 5
+# 1.8.9 (#210): a victory with 30 different finds plus duplicates
+combat rat
+cb forcehit 1
+frames 60
+victoryloot Ember_Cap Healing_Potion Scrap_Metal Venom_Sac Scrap_Metal Rough_Gem Ember_Cap Ember_Cap Antidote Salamander_Charm Emberbrand Salamander_Charm Elixir Dragon_Scale Dragon_Scale Dragon_Scale Ember_Cap
+victoryloot Item_A Item_B Item_C Item_D Item_E Item_F Item_G Item_H Item_I Item_J Item_K Item_L Item_M Item_N Item_O Item_P Item_Q Item_R Item_S Item_T Item_U Item_V Item_W Item_X Item_Y Item_Z
+victoryloot A_Very_Long_Affixed_Item_Name_of_the_Burning_Ember_Wastes
+con kill
+frames 120
+expect mode == VICTORY
+shot victory_long.png
+expect victoryfit == 1
+expect victorylines > 20
+key ENTER
+frames 60
+expect mode == EXPLORE
+# a small win looks as before: one column
+combat rat
+cb forcehit 1
+frames 60
+victoryloot Rat_Tail
+con kill
+frames 120
+expect mode == VICTORY
+shot victory_short.png
+expect victoryfit == 1
+expect victorylines == 1
+key ENTER
+frames 60
+# a 960x540 screen, as most players have
+screen 960 540
+combat rat
+cb forcehit 1
+frames 60
+victoryloot Ember_Cap Healing_Potion Scrap_Metal Venom_Sac Rough_Gem Antidote Salamander_Charm Emberbrand Elixir Dragon_Scale Item_A Item_B Item_C Item_D Item_E Item_F Item_G Item_H Item_I Item_J Item_K Item_L Item_M Item_N
+con kill
+frames 120
+expect mode == VICTORY
+shot victory_960.png
+expect victoryfit == 1
+key ENTER
+frames 60

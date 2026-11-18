@@ -1881,14 +1881,36 @@ void Game::drawGameOver(Canvas& cv, InputState& in) {
     (void)in;
 }
 void Game::drawVictory(Canvas& cv, InputState& in) {
-    cv.dim(0, 0, SCREEN_W, SCREEN_H - 72, 100);
-    int x = SCREEN_W / 2 - 160, y = 90, h = 150 + (int)cb.itemsGained.size() * 13;
-    panelTitle(ctx, x, y, 320, h, "Victory!");
+    cv.dim(0, 0, SCREEN_W, SCREEN_H, 100);
+    // 1.8.9 (#210): the loot list always stays inside the panel and the panel inside the screen. Same items are one
+    // line ("Dragon Scale x3"); a long list goes into two columns; what still doesn't fit is "...and N more".
+    std::vector<std::pair<std::string, int>> loot;
+    for (auto& s : cb.itemsGained) { bool f = false; for (auto& l : loot) if (l.first == s) { l.second++; f = true; break; } if (!f) loot.push_back({s, 1}); }
+    std::vector<std::string> lines; for (auto& l : loot) lines.push_back(l.second > 1 ? l.first + fmt(" x%d", l.second) : l.first);
+    const int LH = 13, TOP = 56, FOOT = 36;                    // rows start under Experience / Gold; [Enter] sits in the footer
+    const int listTop = lines.empty() ? TOP : TOP + LH;         // + the "Loot:" line
+    const int maxH = std::max(120, SCREEN_H - 16);
+    const int maxRows = std::max(1, (maxH - listTop - FOOT) / LH);
+    int cols = (int)lines.size() > maxRows ? 2 : 1;
+    int w = cols == 2 ? std::min(460, SCREEN_W - 16) : 320;
+    int colW = (w - 52) / cols;                                 // text starts at x + 32, 20 px right margin
+    int rows = std::min(maxRows, ((int)lines.size() + cols - 1) / cols);
+    int cap = rows * cols;
+    bool cut = (int)lines.size() > cap;
+    if (cut) { int more = (int)lines.size() - (cap - 1); lines.resize(cap - 1); lines.push_back(fmt("...and %d more", more)); }
+    int h = std::max(120, listTop + rows * LH + FOOT);
+    int x = SCREEN_W / 2 - w / 2, y = std::max(8, std::min(90, (SCREEN_H - h) / 2));
+    panelTitle(ctx, x, y, w, h, "Victory!");
+    victoryBox = {x, y, w, h}; victoryLines = lines;
     UI::text(ctx, x + 20, y + 24, fmt(party.members.size() > 1 ? "Experience: %d each" : "Experience: %d", cb.xpGained), C::White);
     UI::text(ctx, x + 20, y + 38, fmt("Gold: %d", cb.goldGained), C::Gold);
-    int cy = y + 56;
-    if (!cb.itemsGained.empty()) UI::text(ctx, x + 20, cy, "Loot:", C::LtGray), cy += 13;
-    for (auto& s : cb.itemsGained) { UI::text(ctx, x + 32, cy, s, C::Cream); cy += 13; }
+    if (!lines.empty()) UI::text(ctx, x + 20, y + TOP, "Loot:", C::LtGray);
+    auto fit = [&](std::string t, int mw) { if (ctx.font->width(t) <= mw) return t; while (!t.empty() && ctx.font->width(t + "..") > mw) t.pop_back(); return t + ".."; };
+    for (size_t i = 0; i < lines.size(); i++) {
+        int c = (int)i / rows, r = (int)i % rows;              // down the first column, then the second
+        bool more = cut && i + 1 == lines.size();
+        UI::text(ctx, x + 32 + c * colW, y + listTop + r * LH, fit(lines[i], colW - 8), more ? C::Gray : C::Cream);
+    }
     textCenter(ctx, SCREEN_W / 2, y + h - 20, "[Enter]", C::Gray);
     (void)in;
 }

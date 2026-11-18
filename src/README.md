@@ -29,6 +29,13 @@ still hum. Now the Rift is waking again - and your village elder has sent for yo
 * A retro desktop with the Triffall launcher (play, saves, How to Play, achievements, settings, the Editor),
   Minesweeper, Solitaire and a screensaver
 
+## 1.8.9 every category, every find
+
+* The category row over the pack and shop lists no longer leaves categories out when there are too many to fit: it
+  scrolls, with < and > at its ends, and the chosen category is always in view.
+* The Victory window keeps a long loot list inside it: the same find is one line ("Dragon Scale x3"), a long list
+  goes into two columns, and whatever still doesn't fit is counted ("...and 4 more").
+
 ## 1.8.5 every menu in its theme
 
 * Every menu now sits in the theme's own window: the Party screen's Items, Spells and Quests tabs, the shop,

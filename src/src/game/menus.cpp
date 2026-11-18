@@ -33,18 +33,35 @@ std::vector<int> Game::shopView() const {
     if (shopTab == 0) { auto stock = const_cast<Game*>(this)->shopItems(shopId); for (auto& s : stock) ids.push_back(s.first); } else for (auto& s : party.inventory) ids.push_back(s.id);
     return itemView(ids, shopCat, shopSort, shopTab == 0);
 }
-// the category chips over an item list: "All" + every category present, then the sort button at the right end
-struct CatChip { std::string cat, label; int x, w; };
-static std::vector<CatChip> catChips(const Ctx& ctx, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int maxW) {
-    std::vector<CatChip> out; int cx = x;
-    auto add = [&](const std::string& c, int n) { std::string l = c + " " + std::to_string(n); int w = ctx.font->width(l) + 10; if (cx + w > x + maxW) return; out.push_back({c, l, cx, w}); cx += w + 3; };
+// the category chips over an item list: "All" + every category present, then the sort button at the right end.
+// 1.8.9 (#209): chips that don't fit used to be left out (Materials, Formulas, Trophies vanished with a full pack).
+// Now the row scrolls: "<" and ">" chips at its ends, the chosen category always in view, every category reachable.
+struct CatChip { std::string cat, label; int x, w; int step = 0; };   // step -1 / +1 = the scroll arrows
+static std::vector<std::string> catOrder(const std::vector<std::pair<std::string, int>>& cats) { std::vector<std::string> o{"All"}; for (auto& c : cats) o.push_back(c.first); return o; }
+static std::vector<CatChip> catChips(const Ctx& ctx, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int maxW, const std::string& cur) {
+    const int GAP = 3, AW = 13;
+    std::vector<CatChip> all;
+    auto add = [&](const std::string& c, int n) { std::string l = c + " " + std::to_string(n); all.push_back({c, l, 0, ctx.font->width(l) + 10}); };
     add("All", total); for (auto& c : cats) add(c.first, c.second);
+    int sum = 0; for (auto& c : all) sum += c.w + GAP;
+    std::vector<CatChip> out;
+    if (sum - GAP <= maxW) { int cx = x; for (auto& c : all) { c.x = cx; cx += c.w + GAP; out.push_back(c); } return out; }
+    // scrolling: the window starts as far left as it can while the chosen chip still fits, then fills to the right
+    int sel = 0; for (size_t i = 0; i < all.size(); i++) if (all[i].cat == cur) sel = (int)i;
+    const int inner = maxW - 2 * (AW + GAP);
+    auto fits = [&](int a, int b) { int w = 0; for (int i = a; i <= b; i++) w += all[i].w + (i > a ? GAP : 0); return w <= inner; };
+    int first = 0; while (first < sel && !fits(first, sel)) first++;
+    int last = sel; while (last + 1 < (int)all.size() && fits(first, last + 1)) last++;
+    if (first > 0) out.push_back({"", "<", x, AW, -1});
+    int cx = x + AW + GAP;
+    for (int i = first; i <= last; i++) { all[i].x = cx; cx += all[i].w + GAP; out.push_back(all[i]); }
+    if (last + 1 < (int)all.size()) out.push_back({"", ">", x + maxW - AW, AW, 1});
     return out;
 }
 // mouse + keys for a chip bar; returns true when the category or sort changed
 static bool catBarInput(const Ctx& ctx, const InputState& in, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int y, int maxW, std::string& cat, int& sort) {
     bool ch = false;
-    std::vector<std::string> order{"All"}; for (auto& c : cats) order.push_back(c.first);
+    std::vector<std::string> order = catOrder(cats);
     int cur = 0; for (size_t i = 0; i < order.size(); i++) if (order[i] == cat) cur = (int)i;
     // keyboard: T next category (shift+T back), R sort.  Pad: LT / RT change category, Y sorts (LB/RB already change tabs)
     // rebindable (Settings > Controls): next / previous category, sort.  Shift + next also goes back.
@@ -52,17 +69,22 @@ static bool catBarInput(const Ctx& ctx, const InputState& in, const std::vector<
     if (actP(in, A_CATNEXT) && !in.shift()) { cat = order[(cur + 1) % n]; ch = true; }
     else if (actP(in, A_CATPREV) || (actP(in, A_CATNEXT) && in.shift())) { cat = order[(cur + n - 1) % n]; ch = true; }
     if (actP(in, A_SORT)) { sort = (sort + 1) % 4; ch = true; }
-    if (in.mousePressed[0] && in.mouseY >= y && in.mouseY < y + 13) {
-        for (auto& c : catChips(ctx, cats, total, x, maxW - 116)) if (in.mouseX >= c.x && in.mouseX < c.x + c.w) { cat = c.cat; ch = true; }
+    if (!ch && in.mousePressed[0] && in.mouseY >= y && in.mouseY < y + 13) {
+        for (auto& c : catChips(ctx, cats, total, x, maxW - 116, cat)) if (in.mouseX >= c.x && in.mouseX < c.x + c.w) {
+            if (c.step) cat = order[clampi(cur + c.step, 0, n - 1)]; else cat = c.cat;
+            ch = true; break;
+        }
         if (in.mouseX >= x + maxW - 112 && in.mouseX < x + maxW) { sort = (sort + 1) % 4; ch = true; }
     }
     return ch;
 }
-static void catBarDraw(Ctx& ctx, Canvas& cv, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int y, int maxW, const std::string& cat, int sort) {
-    for (auto& c : catChips(ctx, cats, total, x, maxW - 116)) UI::chip(ctx, c.x, y, c.w, 13, c.label, c.cat == cat);   // 1.8.4 (#189)
+static std::string catBarDraw(Ctx& ctx, Canvas& cv, const std::vector<std::pair<std::string, int>>& cats, int total, int x, int y, int maxW, const std::string& cat, int sort) {
+    std::string shown;
+    for (auto& c : catChips(ctx, cats, total, x, maxW - 116, cat)) { UI::chip(ctx, c.x, y, c.w, 13, c.label, !c.step && c.cat == cat); shown += (shown.empty() ? "" : "|") + c.label; }   // 1.8.4 (#189)
     std::string sl = std::string("sort: ") + SORT_NAMES[clampi(sort, 0, 3)];
     if (Theme::native()) { Theme::NoMap nm; Theme::Pen p{&cv, ctx.font, ctx.ts}; Color8 f = Theme::th().face; Theme::bevel(cv, x + maxW - 112, y, 92, 13, Theme::th().hi, Theme::th().lo, &f); Theme::text(p, x + maxW - 108, y, sl, Theme::th().text); }
     else { cv.fillRect(x + maxW - 112, y, 92, 13, RGB(40, 40, 54)); cv.rect(x + maxW - 112, y, 92, 13, C::DkGray); UI::text(ctx, x + maxW - 108, y + 1, sl, C::LtGray); }
+    return shown;
 }
 
 
@@ -345,7 +367,7 @@ void Game::drawMenu(Canvas& cv, InputState& in) {
             if (party.members.size() > 1 && !menuSubFocus) { hx = keyHint(ctx, 170, SCREEN_H - 44, gKeys.label(A_INTERACT), leader == menuMember ? "leading the party" : "make party leader"); if (menuMember > 0) keyHint(ctx, hx, SCREEN_H - 44, gKeys.label(A_ITEMS), "talk to " + party.members[menuMember].name); }
         }
     } else if (menuTab == 1) {
-        { std::vector<std::string> ids; for (auto& st : party.inventory) ids.push_back(st.id); catBarDraw(ctx, cv, itemCats(ids), (int)ids.size(), 20, 36, 600, invCat, invSort); }
+        { std::vector<std::string> ids; for (auto& st : party.inventory) ids.push_back(st.id); lastCatChips = catBarDraw(ctx, cv, itemCats(ids), (int)ids.size(), 20, 36, 600, invCat, invSort); }
         auto view = invView();
         int n = (int)view.size();
         if (n == 0) UI::text(ctx, 24, 54, party.inventory.empty() ? "Your pack is empty." : "Nothing in this category.", C::Gray);
@@ -561,7 +583,7 @@ void Game::drawShop(Canvas& cv, InputState& in) {
     textRight(ctx, SCREEN_W - 20, 18, fmt("%d gold", party.gold), C::Gold);
     if (!shopFaction.empty()) { int r = reputation.count(shopFaction) ? reputation.at(shopFaction) : 0; textRight(ctx, SCREEN_W - 110, 18, factionName(shopFaction) + ": " + repTier(r), r >= 10 ? C::Cyan : r <= -10 ? C::Red : C::LtGray); }
     auto stock = shopItems(shopId);
-    { std::vector<std::string> ids; if (shopTab == 0) for (auto& s2 : stock) ids.push_back(s2.first); else for (auto& s2 : party.inventory) ids.push_back(s2.id); catBarDraw(ctx, cv, itemCats(ids), (int)ids.size(), 20, 36, 600, shopCat, shopSort); }
+    { std::vector<std::string> ids; if (shopTab == 0) for (auto& s2 : stock) ids.push_back(s2.first); else for (auto& s2 : party.inventory) ids.push_back(s2.id); lastCatChips = catBarDraw(ctx, cv, itemCats(ids), (int)ids.size(), 20, 36, 600, shopCat, shopSort); }
     auto view = shopView();
     int n = (int)view.size();
     const ItemDef* cur = nullptr; int curReal = -1;

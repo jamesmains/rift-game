@@ -430,6 +430,8 @@ public:
     int menuTab = 0, menuSel = 0, menuSub = 0, menuMember = 0, menuScroll = 0; bool menuSubFocus = false; int spellCol = 0; std::string menuPrompt;
     // item lists (inventory, shop): category filter + sort order. sort: 0 default order, 1 name, 2 value, 3 category
     std::string invCat = "All", shopCat = "All"; int invSort = 0, shopSort = 0;
+    std::string lastCatChips;              // 1.8.9 (#209): the category chips drawn last frame, "|" between (tests)
+    Rect victoryBox{}; std::vector<std::string> victoryLines;   // 1.8.9 (#210): the Victory panel and its loot lines last drawn (tests)
     std::vector<int> itemView(const std::vector<std::string>& ids, const std::string& cat, int sort, bool buying) const;
     std::vector<std::pair<std::string, int>> itemCats(const std::vector<std::string>& ids) const;   // categories present, with counts
     std::vector<int> invView() const;                 // inventory slots shown in the Items tab, in order

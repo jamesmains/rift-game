@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
                 in.mousePressed[0] = true; in.mouseDown[0] = true; step(1); in.mouseDown[0] = false; in.mouseReleased[0] = true; step(3);
                 return true;
             }
+            if (cmd == "victoryloot") { for (size_t i = 1; i < p.size(); i++) { std::string s = p[i]; for (auto& ch : s) if (ch == '_') ch = ' '; app.game.cb.itemsGained.push_back(s); } return true; }   // 1.8.9 (#210): add names to the fight's loot list (_ = space)
             if (cmd == "nightclassic") { app.settings.nightClassic = p.size() > 1 && atoi(p[1].c_str()) != 0; return true; }   // 1.8.0 (#160): Settings > Display "Night colours"
             // 1.6.0 game commands
 
@@ -267,6 +268,10 @@ int main(int argc, char** argv) {
                 // 1.8.5 (#196 #197 #199): the open menu sits in the theme's host; the Party tab; what the Talk button says
                 if (key == "menuhosted") { got = g.menuHosted(g.mode) ? "1" : "0"; return true; }
                 if (key == "menutab") { got = std::to_string(g.menuTab); return true; }
+                // 1.8.9 (#209 #210): the item category chips on screen; the Victory panel inside the screen, its loot lines
+                if (key == "catchips") { got = g.lastCatChips; num = false; return true; }
+                if (key == "victoryfit") { const Rect& v = g.victoryBox; got = (v.w > 0 && v.x >= 0 && v.y >= 0 && v.x + v.w <= UI::SCREEN_W && v.y + v.h <= UI::SCREEN_H) ? "1" : "0"; return true; }
+                if (key == "victorylines") { got = std::to_string(g.victoryLines.size()); return true; }
                 if (key == "talkverb") { got = g.interactVerb(); if (got.empty()) got = "-"; num = false; return true; }
                 // 1.6.0 game expects
 
