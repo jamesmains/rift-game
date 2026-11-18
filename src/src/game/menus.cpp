@@ -161,7 +161,8 @@ void Game::updateMenu(InputState& in, float dt) {
     auto keyP = [&](int a) { return (gKeys.key1[a] && in.pressed[gKeys.key1[a]]) || (gKeys.key2[a] && in.pressed[gKeys.key2[a]]); };
     if (menuPrompt.empty() && !menuSubFocus) {
         int want = -1;
-        if (actP(in, A_JOURNAL)) { if (menuTab == 3) { jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; } want = 3; }
+        // 1.8.7: in the Tactics pad layout Back is also the Favorites button: on a highlighted spell it puts it on a slot
+        if (actP(in, A_JOURNAL) && !(menuTab == 2 && spellCol == 1 && actP(in, A_FAVBAR))) { if (menuTab == 3) { jTab = 0; jSel = 0; jScroll = 0; pushMode(GMode::JOURNAL); return; } want = 3; }
         else if (keyP(A_SPELLS) && menuTab != 2) want = 2;
         else if (keyP(A_ITEMS) && menuTab != 1 && !(menuTab == 0 && menuMember > 0)) want = 1;
         if (want >= 0) { menuTab = want; menuSel = 0; spellCol = 0; menuScroll = 0; menuSubFocus = false; gAudio.play("ui_move"); return; }
@@ -918,8 +919,8 @@ void Game::updateName(InputState& in, float dt) {
             char& c = inputBuf.back(); size_t i = CH.find((char)toupper((unsigned char)c)); if (i == std::string::npos) i = 0;
             i = (i + (in.pressed[K_PAD_UP] ? 1 : CH.size() - 1)) % CH.size(); c = CH[i]; gAudio.play("text_key");
         }
-        if (in.pressed[K_PAD_A]) { textInputDone(true); in.eatKeys(); return; }
-        if (in.pressed[K_PAD_B]) { textInputDone(false); in.eatKeys(); return; }
+        if (gKeys.pad[A_CONFIRM] && in.pressed[gKeys.pad[A_CONFIRM]]) { textInputDone(true); in.eatKeys(); return; }   // 1.8.7: A / B may be swapped
+        if (gKeys.pad[A_CANCEL] && in.pressed[gKeys.pad[A_CANCEL]]) { textInputDone(false); in.eatKeys(); return; }
     }
     if (in.pressed[K_ENTER]) { textInputDone(true); in.eatKeys(); return; }
     if (in.pressed[K_ESCAPE]) { textInputDone(false); in.eatKeys(); return; }
@@ -938,5 +939,5 @@ void Game::drawName(Canvas& cv, InputState& in) {
     int fh = 16 * ts + 4; cv.fillRect(x + 20, cy, bw - 40, fh, RGB(10, 14, 10)); cv.rect(x + 20, cy, bw - 40, fh, C::Gray);
     std::string shown = inputBuf; bool caret = (ctx.frame / 20) % 2 == 0;
     UI::text(ctx, x + 26, cy + 3, shown + (caret ? "_" : " "), RGB(120, 255, 140), ts);
-    textCenter(ctx, SCREEN_W / 2, y + h - 18, gPadGlyphs ? "D-pad: letters   A: enter   B: cancel" : "[Enter] OK    [Esc] Cancel", C::Gray);
+    textCenter(ctx, SCREEN_W / 2, y + h - 18, gPadGlyphs ? "D-pad: letters   " + UI::bindLabel(A_CONFIRM) + ": enter   " + UI::bindLabel(A_CANCEL) + ": cancel" : "[Enter] OK    [Esc] Cancel", C::Gray);
 }

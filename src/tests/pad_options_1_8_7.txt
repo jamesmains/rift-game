@@ -1,0 +1,125 @@
+# 1.8.7: Settings > Controls > Gamepad. The Tactics layout (LB / RB jump between foes, LT spells, RT items, Y action
+# menu, Back favorites in a fight, LS end turn), the A / B swap, "hold End turn" and "start the fight cursor on a foe".
+# The Settings rows are frame's layout; the rest runs the same in every theme.
+theme frame
+frames 5
+installed
+newgame Kai mage 1 20261116
+god
+con clearmap hollowmere
+teleport hollowmere 20 20
+frames 120
+expect setprobe:padlayout == 0
+expect setprobe:padswap == 0
+# Pause > Settings > Controls page: Down from the tab reaches the layout choice, Right picks Tactics
+key ESC
+frames 3
+keys DOWN DOWN DOWN DOWN DOWN
+frames 3
+key ENTER
+frames 5
+expect mode == SETTINGS
+key TAB
+frames 3
+expect setprobe:page == 1
+key DOWN
+frames 2
+expect setprobe:kind == 3
+key RIGHT
+frames 2
+expect setprobe:padlayout == 1
+shot controls_tactics.png
+# the two fight habits under the layout row, then the swap box above the right-hand one
+key DOWN
+frames 2
+expect setprobe:kind == 1
+key ENTER
+frames 2
+expect setprobe:padhold == 1
+key RIGHT
+frames 2
+key ENTER
+frames 2
+expect setprobe:padfoe == 1
+key UP
+frames 2
+key ENTER
+frames 2
+expect setprobe:padswap == 1
+expect setprobe:padlayout == 1
+key ENTER
+frames 2
+expect setprobe:padswap == 0
+key DOWN
+frames 2
+expect setprobe:kind == 1
+# Down from the habits goes into the key table (Up comes back)
+key DOWN
+frames 2
+expect setprobe:kind == 4
+key UP
+frames 2
+expect setprobe:kind == 1
+key ESC
+frames 5
+expect settingsini:padholdend == 1
+expect settingsini:padcursorfoe == 1
+key ESC
+frames 5
+expect mode == EXPLORE
+# a fight against two rats: the cursor starts on the nearest, RB / LB jump between them
+combat rat,rat
+cb forcehit 1
+frames 60
+cb turn 0
+frames 5
+pad 1
+expect cb:mode == 0
+expect cb:selunit >= 1
+expect cb:selunit == 1
+key PADRB
+frames 3
+expect cb:selunit == 2
+key PADRB
+frames 3
+expect cb:selunit == 1
+key PADLB
+frames 3
+expect cb:selunit == 2
+# LT opens the spell list (Tactics), again closes it; Y opens the action menu
+key PADLT
+frames 3
+expect cb:mode == 4
+key PADLT
+frames 3
+expect cb:mode == 0
+key PADY
+frames 3
+expect cb:mode == 3
+key PADB
+frames 3
+expect cb:mode == 0
+# LS ends the turn only when held (hold End turn is on): a tap does nothing
+key PADLS
+frames 5
+expect cb:turnunit == 0
+hold PADLS 45
+frames 5
+expect cb:turnunit != 0
+# after the fight: in Tactics, Back on a highlighted spell opens the favorites picker (not the Quests tab)
+con kill
+frames 120
+key PADA
+frames 60
+expect mode == EXPLORE
+key B
+frames 5
+key RIGHT
+frames 5
+key PADBACK
+frames 5
+expect favpick >= 0
+key PADA
+frames 5
+expect favpick == -1
+expect favs:0 contains spell:

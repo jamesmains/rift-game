@@ -296,6 +296,9 @@ void Game::combatBeginTurn() {
     cb.selX = u.x; cb.selY = u.y;
     if (u.partyIndex >= 0) { px = u.x; py = u.y; }
     revealAround();
+    // 1.8.7: Settings > Controls > Gamepad "Start the fight cursor on a foe": the nearest one in sight (pad / keys; the mouse
+    // keeps its own cursor)
+    if (cb.playerTurn && !autoCombat && settings && settings->padCursorFoe) { auto foes = combatFoesInSight(cb.selectedUnit); if (!foes.empty()) { cb.selX = cb.units[foes[0]].x; cb.selY = cb.units[foes[0]].y; } }
     if (u.friendly() || visible(u.x, u.y)) { camFree = false; camCenterOn(u.x, u.y); }   // don't give away a monster lurking in the dark
     combatComputeReachable(); cb.reachDirty = false;
     if (u.ch.ap == 0 && u.ch.move == 0) { combatEndTurn(); }
@@ -1523,6 +1526,22 @@ void Game::combatAI(float dt) {
 }
 
 // ---------------- player input ----------------
+static const float END_HOLD = 0.5f;   // 1.8.7: seconds the pad's End turn button is held with "Hold to end a turn" on
+// 1.8.7: the living foes the acting unit's side can see (in the dark: lit, or right next to it), nearest first
+std::vector<int> Game::combatFoesInSight(int ui) {
+    std::vector<int> out;
+    if (ui < 0 || ui >= (int)cb.units.size()) return out;
+    const Combatant& u = cb.units[ui];
+    for (int i = 0; i < (int)cb.units.size(); i++) {
+        const Combatant& o = cb.units[i];
+        if (!o.ch.alive || o.friendly() == u.friendly()) continue;   // rift tears too: they're closed from next to them
+        if (map->dark && !visible(o.x, o.y) && chebyshev(u.x, u.y, o.x, o.y) > 1) continue;
+        out.push_back(i);
+    }
+    std::stable_sort(out.begin(), out.end(), [&](int a, int b) { const Combatant& A = cb.units[a]; const Combatant& B = cb.units[b];
+        int da = chebyshev(u.x, u.y, A.x, A.y), db = chebyshev(u.x, u.y, B.x, B.y); if (da != db) return da < db; return A.y != B.y ? A.y < B.y : A.x < B.x; });
+    return out;
+}
 // A favorite of the acting unit (number keys, a click on the HUD's slot, the pad's favorites picker).
 // 1.8.6 (#201): pressing the slot whose spell / item is being aimed again goes back to moving.
 void Game::combatUseFav(int slot) {
@@ -1624,7 +1643,18 @@ void Game::updateCombat(InputState& in, float dt) {
         if (cb.mode == 3) cb.mode = 0;
     };
     // hotkeys work in every sub-mode
-    if (actP(in, A_ENDTURN, CB)) { combatEndTurn(); return; }
+    // 1.8.7: Settings > Controls > Gamepad "Hold to end a turn": the pad's End turn button has to be held half a second
+    // (a bar fills over the fight); keys still end the turn at once
+    {
+        const int endPad = gKeys.pad[A_ENDTURN];
+        const bool hold = endPad && settings && settings->padHoldEndTurn;
+        if (hold && in.down[endPad]) {
+            if (in.pressed[endPad]) cb.endHold = 0.0001f;
+            if (cb.endHold > 0) { cb.endHold += dt; if (cb.endHold >= END_HOLD) { cb.endHold = 0; combatEndTurn(); return; } }
+        } else cb.endHold = 0;
+        bool keyEnd = false; for (int k : {(int)gKeys.key1[A_ENDTURN], (int)gKeys.key2[A_ENDTURN]}) if (k && in.pressed[k]) keyEnd = true;
+        if (keyEnd || (!hold && endPad && in.pressed[endPad])) { combatEndTurn(); return; }
+    }
     if (actP(in, A_ATTACKMODE, CB)) { runCommand(cb.aimed ? 0 : 1); return; }
     if (actP(in, A_SPELLS, CB)) { if (cb.mode == 4) cb.mode = 0; else runCommand(2); return; }
     if (actP(in, A_ITEMS, CB)) { if (cb.mode == 5) cb.mode = 0; else runCommand(3); return; }
@@ -1702,6 +1732,15 @@ void Game::updateCombat(InputState& in, float dt) {
     if (in.gamepadActive) cb.cursorMouse = false;
     else if (cb.cursorMouse && overMap && in.mouseInWindow) { cb.selX = (wmx + camX) / TILE; cb.selY = (wmy + camY) / TILE; }
     bool moved = false;
+    // 1.8.7: jump the cursor between the foes in sight, nearest first (the Tactics pad layout's LB / RB; keys Z / X)
+    if (int dir = actP(in, A_TARGETNEXT, CB) ? 1 : actP(in, A_TARGETPREV, CB) ? -1 : 0) {
+        std::vector<int> foes = combatFoesInSight(cb.selectedUnit);
+        if (!foes.empty()) {
+            int at = -1; for (size_t i = 0; i < foes.size(); i++) if (cb.units[foes[i]].x == cb.selX && cb.units[foes[i]].y == cb.selY) at = (int)i;
+            int next = at < 0 ? (dir > 0 ? 0 : (int)foes.size() - 1) : (at + dir + (int)foes.size()) % (int)foes.size();
+            cb.selX = cb.units[foes[next]].x; cb.selY = cb.units[foes[next]].y; moved = true; gAudio.play("ui_move");
+        } else log("No foe in sight.");
+    }
     if (actP(in, A_LEFT, CB)) { cb.selX--; moved = true; } if (actP(in, A_RIGHT, CB)) { cb.selX++; moved = true; }
     if (actP(in, A_UP, CB)) { cb.selY--; moved = true; } if (actP(in, A_DOWN, CB)) { cb.selY++; moved = true; }
     if (moved) cb.cursorMouse = false;
@@ -1999,6 +2038,14 @@ void Game::drawCombatWorld(Canvas& cv, InputState& in) {   // 1.8.3: on the worl
 // on the screen canvas; the action bar, turn order, target card and hotbar are drawn by the theme's HUD (hud.cpp).
 void Game::drawCombatPopups(Canvas& cv, InputState& in) {
     bool myTurn = cb.playerTurn && !cb.ending && cb.selectedUnit >= 0;
+    // 1.8.7: "Hold to end a turn": a bar fills while the pad's End turn button is held
+    if (myTurn && cb.endHold > 0) {
+        Theme::NoMap nm; Theme::Pen p{&cv, ctx.font, ctx.ts}; const UiTheme& t = Theme::th();
+        const int w = 180, h = 40, x = VIEW_X + (VIEW_W - w) / 2, y = VIEW_Y + VIEW_H - h - 40;
+        Theme::panel(cv, x, y, w, h);
+        Theme::text(p, x + 10, y + 6, "Ending the turn...", t.text);
+        Theme::bar(cv, x + 10, y + 24, w - 20, 8, (int)(cb.endHold * 1000), (int)(END_HOLD * 1000), t.accent);
+    }
     // 1.4.0 (#78): the fight's goal, top middle under the bar
     if (!cb.goal.kind.empty()) {
         std::string gt = "Goal: " + cb.goal.text;
@@ -2147,7 +2194,9 @@ std::string Game::combatProbe(const std::string& what) {
     auto unit = [&](int i) -> Combatant* { return inCombat() && i >= 0 && i < (int)cb.units.size() ? &cb.units[i] : nullptr; };
     const std::string& k = q[0];
     if (k == "units") return std::to_string(cb.units.size());
-    if (k == "mode") return std::to_string(cb.mode);   // 1.8.6: 0 move/attack, 1 aim a spell, 2 aim an item, 3 action menu, 4/5 spell/item list
+    if (k == "mode") return std::to_string(cb.mode);
+    if (k == "turnunit") return std::to_string(cb.selectedUnit);   // 1.8.7: whose turn it is
+    if (k == "selunit") return std::to_string(inCombat() ? combatUnitAt(cb.selX, cb.selY) : -1);   // 1.8.7: the unit under the fight cursor (-1 none)   // 1.8.6: 0 move/attack, 1 aim a spell, 2 aim an item, 3 action menu, 4/5 spell/item list
     if (k == "favlit") return std::to_string(cb.selectedUnit >= 0 && cb.selectedUnit < (int)cb.units.size() ? favLitSlot(cb.units[cb.selectedUnit].partyIndex) : -1);
     if (k == "unit") { Combatant* u = unit(I(1)); if (!u) return "none"; return fmt("%d,%d,%d,%d,%d", u->x, u->y, u->ch.hp, u->ch.alive ? 1 : 0, u->friendly() ? 1 : 0); }
     if (k == "hp") { Combatant* u = unit(I(1)); return u ? std::to_string(u->ch.hp) : "-1"; }

@@ -1,4 +1,4 @@
-# Triffall controller map (as of 1.8.6)
+# Triffall controller map (as of 1.8.6; layouts added in 1.8.7)
 
 Asked for in #207: every place the game reads the controller and what each button does there, so the flow can be
 rethought. Everything below is the default binding; every action can be rebound in Settings > Controls, and two actions
@@ -134,3 +134,18 @@ may share a button (the game decides by where you are). Keyboard keys are in bra
 
 Questions for the owner: should target cycling be added? Which actions should be one press in a fight, and which can
 live in the action menu? Should the map and the fight use the same buttons for Spells / Items?
+
+## 1.8.7: choose in Settings
+
+Settings > Controls now starts with a Gamepad block, so the layout question can be settled by playing:
+
+- **Gamepad layout: Classic / Tactics.** Classic is everything above. Tactics changes only the pad column:
+  LB / RB jump the fight cursor between foes in sight (nearest first; previous / next tab in menus as before),
+  LT spells, RT items (categories in item lists as before), Y the action menu (aimed shot, defend, overwatch, flee...),
+  Back favorites in a fight (Journal on the map), LS end turn in a fight (world map on the map). Rebinding any pad
+  button by hand shows "changed by hand"; picking a layout again puts it back.
+- **Swap A and B** (confirm on B, back on A), on top of either layout.
+- **Hold End turn for half a second**: the pad's End turn button needs a hold (a bar fills), keys stay instant.
+- **Start the fight cursor on a foe**: each turn the cursor starts on the nearest foe in sight instead of your unit.
+
+Keyboard: Z / X jump between foes in any layout.

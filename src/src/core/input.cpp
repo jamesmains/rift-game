@@ -22,7 +22,7 @@ static const char* kActNames[A_COUNT] = {
     "fav1", "fav2", "fav3", "fav4", "fav5", "fav6", "fav7", "fav8",
     "quicksave", "pageup", "pagedown", "fullscreen",
     "overwatch", "worldmap", "journal", "console",
-    "catnext", "catprev", "sort", "favbar"
+    "catnext", "catprev", "sort", "favbar", "targetprev", "targetnext"
 };
 static const char* kActLabels[A_COUNT] = {
     "Move up / cursor up", "Move down / cursor down", "Move left / cursor left", "Move right / cursor right",
@@ -31,7 +31,7 @@ static const char* kActLabels[A_COUNT] = {
     "Favorite 1", "Favorite 2", "Favorite 3", "Favorite 4", "Favorite 5", "Favorite 6", "Favorite 7", "Favorite 8",
     "Quick save (at shrine)", "Previous tab", "Next tab", "Toggle fullscreen",
     "Overwatch (combat)", "World map", "Journal", "Dev console",
-    "Next item category", "Previous item category", "Sort items", "Favorites (pick one)"
+    "Next item category", "Previous item category", "Sort items", "Favorites (pick one)", "Previous target (fight)", "Next target (fight)"
 };
 const char* actionName(int a) { return (a >= 0 && a < A_COUNT) ? kActNames[a] : "?"; }
 const char* actionLabel(int a) { return (a >= 0 && a < A_COUNT) ? kActLabels[a] : "?"; }
@@ -49,6 +49,7 @@ void Keybinds::reset() {
     set(A_OVERWATCH, K_O, K_NONE, K_PAD_LS); set(A_WORLDMAP, K_M, K_NONE, K_PAD_LS); /* LS: overwatch in a fight, world map outside */ set(A_JOURNAL, K_J, K_NONE, K_PAD_BACK); set(A_CONSOLE, K_GRAVE, K_NONE, K_NONE);
     set(A_CATNEXT, K_T, K_NONE, K_PAD_RT); set(A_CATPREV, K_G, K_NONE, K_PAD_LT); set(A_SORT, K_R, K_NONE, K_PAD_Y);
     set(A_FAVBAR, K_NONE, K_NONE, K_PAD_RT);   // 1.8.6 (#206): RT opens the favorites (Defend moved to the action menu on a pad)
+    set(A_TARGETPREV, K_Z, K_NONE, K_NONE); set(A_TARGETNEXT, K_X, K_NONE, K_NONE);   // 1.8.7: Tactics puts them on LB / RB
 }
 std::string Keybinds::serialize() const {
     std::string s = "[keys]\n";
@@ -73,6 +74,29 @@ void Keybinds::deserialize(const std::string& text) {
     // 1.8.6 (#206): RT became the favorites button; an older file still has it on Defend (the default then)
     if (!sawFavbar && pad[A_DEFEND] == K_PAD_RT) pad[A_DEFEND] = K_NONE;
     if (pad[A_WORLDMAP] == K_NONE) { bool used = false; for (int i = 0; i < A_COUNT; i++) if (i != A_OVERWATCH && pad[i] == K_PAD_LS) used = true; if (!used) pad[A_WORLDMAP] = K_PAD_LS; }
+}
+void Keybinds::padLayout(int layout, uint8_t out[A_COUNT]) {
+    Keybinds classic; for (int a = 0; a < A_COUNT; a++) out[a] = classic.pad[a];
+    if (layout != PAD_TACTICS) return;
+    auto set = [&](int a, int k) { out[a] = (uint8_t)k; };
+    set(A_ATTACKMODE, K_NONE); set(A_ACTIONMENU, K_PAD_Y); set(A_DEFEND, K_NONE); set(A_OVERWATCH, K_NONE);
+    set(A_TARGETPREV, K_PAD_LB); set(A_TARGETNEXT, K_PAD_RB); set(A_SPELLS, K_PAD_LT); set(A_ITEMS, K_PAD_RT);
+    set(A_FAVBAR, K_PAD_BACK); set(A_JOURNAL, K_PAD_BACK); set(A_ENDTURN, K_PAD_LS); set(A_WORLDMAP, K_PAD_LS);
+}
+void Keybinds::applyPadLayout(int layout) {
+    bool sw = padSwapped();
+    padLayout(layout, pad);
+    if (sw) setPadSwap(true);
+}
+int Keybinds::padLayoutNow() const {
+    uint8_t mine[A_COUNT]; for (int a = 0; a < A_COUNT; a++) mine[a] = pad[a];
+    if (padSwapped()) for (int a = 0; a < A_COUNT; a++) mine[a] = mine[a] == K_PAD_A ? K_PAD_B : mine[a] == K_PAD_B ? K_PAD_A : mine[a];
+    for (int l = 0; l < PAD_LAYOUTS; l++) { uint8_t want[A_COUNT]; padLayout(l, want); bool same = true; for (int a = 0; a < A_COUNT; a++) if (want[a] != mine[a]) same = false; if (same) return l; }
+    return -1;
+}
+void Keybinds::setPadSwap(bool on) {
+    if (on == padSwapped()) return;
+    for (int a = 0; a < A_COUNT; a++) pad[a] = pad[a] == K_PAD_A ? K_PAD_B : pad[a] == K_PAD_B ? K_PAD_A : pad[a];
 }
 bool Keybinds::isDirectionKey(int k) const { if (!k) return false; for (int a = A_UP; a <= A_RIGHT; a++) if (key1[a] == k || key2[a] == k) return true; return false; }
 bool Keybinds::pressed(const InputState& in, int a, bool combat) const {

@@ -35,6 +35,7 @@ enum Action : uint8_t {
     A_OVERWATCH, A_WORLDMAP, A_JOURNAL, A_CONSOLE,
     A_CATNEXT, A_CATPREV, A_SORT,   // item lists: next / previous category, change the sort order
     A_FAVBAR,                       // 1.8.6 (#206): open the favorites picker (a controller has no number keys)
+    A_TARGETPREV, A_TARGETNEXT,     // 1.8.7: fights - the combat cursor jumps to the previous / next foe in sight
     A_COUNT
 };
 const char* actionName(int a);   // identifier (saved in settings)
@@ -87,6 +88,17 @@ struct Keybinds {
     bool down(const InputState& in, int a, bool combat = false) const;
     std::string label(int a) const; // e.g. "E / A"
     bool isDirectionKey(int k) const;
+    // 1.8.7: gamepad layouts (Settings > Controls > Gamepad). Only the pad column changes; keyboard keys stay.
+    //   Classic: the layout up to 1.8.6 (Y aimed, LB spells, RB end turn, LT items, RT favorites, Back action menu).
+    //   Tactics: LB / RB jump between foes, LT spells, RT items, Y action menu (aimed, defend, overwatch, flee...),
+    //            Back favorites (Journal outside fights), LS end turn (world map outside fights).
+    // The A / B swap is kept apart (padSwapped) so a layout can be picked with either.
+    enum { PAD_CLASSIC = 0, PAD_TACTICS = 1, PAD_LAYOUTS = 2 };
+    static void padLayout(int layout, uint8_t out[A_COUNT]);   // a layout's pad column, unswapped
+    void applyPadLayout(int layout);   // keeps the A / B swap as it is
+    int padLayoutNow() const;          // which layout the pad column is (-1 = changed by hand)
+    bool padSwapped() const { return pad[A_CONFIRM] == K_PAD_B && pad[A_CANCEL] == K_PAD_A; }
+    void setPadSwap(bool on);          // confirm on B and back on A (and every other A / B binding swapped)
 };
 extern Keybinds gKeys;
 extern bool gPadGlyphs;   // true while a gamepad is the active input: labels/hints show controller buttons

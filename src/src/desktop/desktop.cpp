@@ -478,7 +478,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
                     dblTimer = 0;
                 }
                 if (iconDrag >= 0) setIconPosition(iconDrag, cursorX - iconDragOffsetX, cursorY - iconDragOffsetY);
-                if (in.released[K_ENTER] || in.released[K_PAD_A]) {
+                if (in.released[K_ENTER] || (gKeys.pad[A_CONFIRM] && in.released[gKeys.pad[A_CONFIRM]])) {   // 1.8.7: the confirm button (A, or B when swapped)
                     if (iconDrag < 0) runAction(iconDefs[iconPress].action); else dropIcon(iconDrag);
                     iconPress = iconDrag = -1; iconPressPad = false;
                 }
@@ -511,7 +511,7 @@ void Desktop::update(InputState& in, float dt, Canvas& cv) {
         }
         in.mouseX = cursorX; in.mouseY = cursorY;
         if (!bindingKey && !padActivated && !startOpen) { if (actP(in, A_CONFIRM)) { in.mousePressed[0] = true; in.mouseDown[0] = true; } if (actD(in, A_CONFIRM)) in.mouseDown[0] = true; }
-        if (in.released[K_ENTER] || in.released[K_PAD_A]) in.mouseReleased[0] = true;
+        if (in.released[K_ENTER] || (gKeys.pad[A_CONFIRM] && in.released[gKeys.pad[A_CONFIRM]])) in.mouseReleased[0] = true;
     } else if (kbNav) {
         bool hopped = false;
         if (actP(in, A_UP)) hopped = snapCursor(0, -1); if (actP(in, A_DOWN)) hopped = snapCursor(0, 1) || hopped; if (!onSlider) { if (actP(in, A_LEFT)) hopped = snapCursor(-1, 0) || hopped; if (actP(in, A_RIGHT)) hopped = snapCursor(1, 0) || hopped; }

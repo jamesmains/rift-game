@@ -14,8 +14,8 @@ using namespace UI;
 // ---------------- settings ----------------
 void GameSettings::save(const std::string& path) const {
     std::string s = "[settings]\n";
-    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\nclassic43=%d\nnightclassic=%d\ntheme=%s\n\n",
-             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, (int)classic43, (int)nightClassic, Theme::key((ThemeId)theme));
+    s += fmt("fullscreen=%d\nscale=%d\nvsync=%d\ninteger=%d\ncrt=%d\nmaster=%d\nmusic=%d\nsfx=%d\ngamepad=%d\nshake=%d\nfastcombat=%d\ninteractmoving=%d\nedgescroll=%d\nbanter=%d\nlargetext=%d\ncolorblind=%d\ntextspeed=%d\nreduceflash=%d\nambient=%d\nfont=%d\nclassic43=%d\nnightclassic=%d\ntheme=%s\npadholdend=%d\npadcursorfoe=%d\n\n",
+             fullscreen, scale, vsync, integerScaling, crt, masterVolume, musicVolume, sfxVolume, gamepad, screenShake, fastCombat, interactWhileMoving, edgeScroll, banter, largeText, colorblind, textSpeed, reduceFlashing, ambientVolume, fontStyle, (int)classic43, (int)nightClassic, Theme::key((ThemeId)theme), (int)padHoldEndTurn, (int)padCursorFoe);
     if (!discord.empty()) s += "[links]\ndiscord=" + discord + "\n\n";
     s += gKeys.serialize();
     writeFile(path, s);
@@ -33,6 +33,7 @@ bool GameSettings::load(const std::string& path) {
         interactWhileMoving = sec.geti("interactmoving", interactWhileMoving);
         largeText = sec.geti("largetext", largeText) != 0; colorblind = sec.geti("colorblind", colorblind) != 0; textSpeed = clampi(sec.geti("textspeed", textSpeed), 0, 3); reduceFlashing = sec.geti("reduceflash", reduceFlashing) != 0;
         nightClassic = sec.geti("nightclassic", nightClassic) != 0;   // 1.8.0 (#160)
+        padHoldEndTurn = sec.geti("padholdend", padHoldEndTurn) != 0; padCursorFoe = sec.geti("padcursorfoe", padCursorFoe) != 0;   // 1.8.7
         theme = (int)Theme::fromKey(sec.get("theme"));   // 1.8.3 (#170): no key (an older settings.ini) or an unknown one = Adventurer's Frame
         ambientVolume = clampi(sec.geti("ambient", ambientVolume), 0, 100); fontStyle = Font::STYLE_CLEAR;   // 1.1.1: the clear font is the only text face (no setting any more)
     }

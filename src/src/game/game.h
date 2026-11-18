@@ -100,6 +100,7 @@ struct CombatState {
     int lastRoundJoined = 0;   // reinforcement check runs once per round
     bool actionThisRound = false; int quietRounds = 0; bool disengaged = false;
     long hpSum = -1; int harmlessRounds = 0;   // 1.8.6: rounds in a row in which nobody's hit points changed
+    float endHold = 0;   // 1.8.7: how long the pad's End turn button has been held (Settings: hold to end a turn)
     float hitstop = 0;         // a beat of stillness after a kill or a critical hit
     float banner = 0; std::string bannerText;   // "Round 3" / "Your turn: Bram" under the top bar   // rounds without a blow: the fight breaks off
     // 1.4.0 (#58 #61): ground effects for this fight (kind 1 fire, 2 ice, 3 smoke) and damage soaked by breakable cover
@@ -187,6 +188,8 @@ struct GameSettings {
     bool fastCombat = false;
     bool interactWhileMoving = false;
     bool edgeScroll = true;
+    bool padHoldEndTurn = false;    // 1.8.7: Settings > Controls > Gamepad: End turn on the pad needs a half-second hold
+    bool padCursorFoe = false;      // 1.8.7: a turn's fight cursor starts on the nearest foe in sight (pad / keyboard), not on the unit
     int banter = 2;                 // companion chatter: 0 off, 1 rare, 2 normal, 3 often
     // accessibility (Settings > Access)
     bool largeText = false;         // dialogue, messages, cutscenes, tutorial hints and the epilogue in double-size text
@@ -569,6 +572,7 @@ public:
     void updateFavPicker(InputState& in);
     void drawFavPicker(Canvas& cv, InputState& in);
     void combatUseFav(int slot);          // the acting unit uses its favorite (#201: the same slot again while aiming it cancels)
+    std::vector<int> combatFoesInSight(int unit);   // 1.8.7: living foes that unit's side can see, nearest first (target jumping)
     int favLitSlot(int member) const;     // #201: the slot whose spell / item the fight is aiming now (-1 none): the HUDs light it
     int closeOffX = 0, closeOffY = 0;     // 1.8.6: where the screen being drawn sits (close boxes drawn in a sub-view)
     bool obShade[4] = {false, false, false, false};   // 1.8.6 (#205): one-bit HUD windows rolled up to their title bar (party, news, favorites, target)

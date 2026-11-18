@@ -93,7 +93,7 @@ void Game::drawEnding(Canvas& cv, InputState& in) {
         ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, y, sl.title, C::Gold, 2); ctx.font->bold = false; y += 40;
         for (auto& lines : paras) { for (auto& l : lines) { textCenter(ctx, SCREEN_W / 2, y, l, C::Cream, ts); y += lh; } y += 8; }
         textCenter(ctx, SCREEN_W / 2, SCREEN_H - 48, fmt("%d / %d", endPage + 1, n), RGB(70, 70, 90));
-        hint(gPadGlyphs ? "A: next   B: skip to the end" : "[Enter] next   [Esc] skip to the end");
+        hint(gPadGlyphs ? UI::bindLabel(A_CONFIRM) + ": next   " + UI::bindLabel(A_CANCEL) + ": skip to the end" : "[Enter] next   [Esc] skip to the end");
     } else if (endPage == stat) {
         ctx.font->bold = true; textCenter(ctx, SCREEN_W / 2, 60, "The Journey", C::Gold, 2); ctx.font->bold = false;
         int h = playtimeSec / 3600, m = (playtimeSec / 60) % 60;
@@ -109,7 +109,7 @@ void Game::drawEnding(Canvas& cv, InputState& in) {
         for (auto& r : rows) { textRight(ctx, SCREEN_W / 2 - 10, y, r.first, C::LtGray); UI::text(ctx, SCREEN_W / 2 + 10, y, r.second, C::White); y += 18; }
         int px0 = SCREEN_W / 2 - (int)party.members.size() * 30;
         for (size_t i = 0; i < party.members.size(); i++) drawUnitSprite(cv, party.members[i], px0 + (int)i * 60 + 6, y + 14, false);
-        hint(gPadGlyphs ? "A: credits" : "[Enter] credits");
+        hint(gPadGlyphs ? UI::bindLabel(A_CONFIRM) + ": credits" : "[Enter] credits");
     } else if (endPage == credits) {
         int y = SCREEN_H + 10 - (int)endScroll;
         for (auto& l : creditLines) {

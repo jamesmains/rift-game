@@ -236,7 +236,23 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
     } else {
         // ---- controls: every action x Key / Alt key / Gamepad ----
         text(p, gx + 4, top, helpLine(), t.dim);
-        int ly = top + 18, lh = bottom - 8 - ly;
+        // 1.8.7: gamepad behaviour - a layout for the whole pad column (the table shows what it binds), the A / B swap,
+        // and two fight habits. A layout changed by hand shows "changed by hand" (picking one rebinds the pad column).
+        int gy = top + 18;
+        {
+            const int c1 = gx + 8, c2 = gx + gw / 2 + 6;
+            text(p, c1, gy + 3, "Gamepad layout", nat ? t.text : t.dim);
+            int lay = gKeys.padLayoutNow(), v = lay, lw = textW(p, "Gamepad layout") + 14;
+            if (choiceRow(c1 + lw, gy, {"Classic", "Tactics"}, v, true) && v >= 0 && v != lay) gKeys.applyPadLayout(v);
+            if (lay < 0) small(p, c1 + lw, gy + 21, "changed by hand", t.dim);
+            bool sw = gKeys.padSwapped();
+            if (checkRow(c2, gy + 2, "Swap A and B (confirm on B)", sw)) gKeys.setPadSwap(sw);
+            gy += 30;
+            checkRow(c1, gy + 2, "Hold End turn for half a second", s.padHoldEndTurn);
+            checkRow(c2, gy + 2, "Start the fight cursor on a foe", s.padCursorFoe);
+            gy += 24;
+        }
+        int ly = gy, lh = bottom - 8 - ly;
         if (nat) { Color8 white{255, 255, 255, 255}; well(cv, gx, ly, gw, lh, &white); }
         else if (one) { /* black, no box */ }
         else well(cv, gx, ly, gw, lh);
@@ -251,7 +267,8 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
         int rows = std::max(1, (ly + lh - 6 - ry0) / rowH);
         int maxScroll = std::max(0, (int)A_COUNT - rows);
         // keys: Up/Down a row, Left/Right a column, Enter waits for the new key; the wheel scrolls
-        const int tableIdx = idx++;   // the table is one control (after the tabs)
+        const int tableIdx = idx++;   // the table is one control (after the tabs and the gamepad rows)
+        now.push_back({{gx, ly, gw, lh}, 4});   // 1.8.7: its place too (control indexes and now[] used to drift apart after it)
         if (keyNav && focus == tableIdx) {
             if (upP) { if (row > 0) row--; else focus = tableIdx - 1; upP = false; }
             if (downP) { if (row + 1 < (int)A_COUNT) row++; else focus = tableIdx + 1; downP = false; }
@@ -320,7 +337,7 @@ int SettingsPanel::draw(const Pen& p, InputState& in, Rect r, GameSettings& s, P
             if (st.focused) { if (one) glow(cv, bx, by, bw, bh); else if (nat) glow(cv, bx + 4, by + 4, bw - 8, bh - 8); else frameRect(cv, bx - 2, by - 2, bw + 4, bh + 4, t.accentHi); }
             if (st.click || st.activate) {
                 if (b.act == 9) {
-                    if (page == 1) gKeys.reset();
+                    if (page == 1) { gKeys.reset(); GameSettings d; s.padHoldEndTurn = d.padHoldEndTurn; s.padCursorFoe = d.padCursorFoe; }
                     else {
                         GameSettings d;
                         if (page == 0) {
@@ -402,6 +419,10 @@ std::string Game::settingsProbe(const std::string& what) {
     if (what == "combo") return std::to_string(sp.openCombo);
     if (what == "combosel") return std::to_string(sp.comboSel);
     if (what == "theme") return std::to_string(settings ? settings->theme : -1);
+    if (what == "padlayout") return std::to_string(gKeys.padLayoutNow());   // 1.8.7: 0 Classic, 1 Tactics, -1 changed by hand
+    if (what == "padswap") return gKeys.padSwapped() ? "1" : "0";
+    if (what == "padhold") return settings && settings->padHoldEndTurn ? "1" : "0";
+    if (what == "padfoe") return settings && settings->padCursorFoe ? "1" : "0";
     bool ok = sp.focus >= 0 && sp.focus < (int)sp.ctls.size();
     if (what == "kind") return ok ? std::to_string(sp.ctls[sp.focus].kind) : "-1";
     if (what == "x") return ok ? std::to_string(sp.ctls[sp.focus].r.x) : "-1";
